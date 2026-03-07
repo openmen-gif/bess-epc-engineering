@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json as _json
 import streamlit as st
 import utils.auth_helper as _auth_mod          # for _sidebar_shown reset
 from utils.css_loader import apply_custom_css
@@ -16,6 +17,30 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 apply_custom_css()
+
+# ── Cookie-based session restore ─────────────────────────────────────────────
+_COOKIE_KEY = "bess_auth_v1"
+try:
+    from streamlit_cookies_controller import CookieController as _CC
+    _cc = _CC()
+    if not is_authenticated():
+        _raw = _cc.get(_COOKIE_KEY)
+        if _raw:
+            try:
+                _sd = _json.loads(_raw)
+                st.session_state["auth_user"] = _sd["u"]
+                st.session_state["auth_role"] = _sd["r"]
+                st.session_state["auth_name"] = _sd["n"]
+            except Exception:
+                _cc.remove(_COOKIE_KEY)
+    if is_authenticated():
+        _cc.set(_COOKIE_KEY, _json.dumps({
+            "u": st.session_state["auth_user"],
+            "r": st.session_state["auth_role"],
+            "n": st.session_state["auth_name"],
+        }), max_age=86400 * 7)   # 7일 유지
+except Exception:
+    _cc = None
 
 # ── Reset per-run sidebar dedup flag ─────────────────────────────────────────
 _auth_mod._sidebar_shown = False

@@ -6,11 +6,15 @@ User authentication and role-based access control
 """
 import hashlib
 import json
+import os
+import secrets
 from pathlib import Path
+from filelock import FileLock
 import streamlit as st
 
 # ── User data file ─────────────────────────────────────────────────────────────
 _USERS_FILE = Path(__file__).parent / "users.json"
+_LOCK_FILE  = Path(__file__).parent / "users.json.lock"
 
 # ── Role definitions ───────────────────────────────────────────────────────────
 ROLES = ["admin", "engineer", "viewer"]
@@ -40,29 +44,69 @@ PAGE_MIN_ROLE: dict[str, str] = {
 
 # ── Internal helpers ───────────────────────────────────────────────────────────
 
-def _hash(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+def _hash_password(password: str) -> str:
+    """Generate a PBKDF2-HMAC-SHA256 hash with a random 16-byte salt."""
+    salt = secrets.token_hex(16)
+    hashed = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        bytes.fromhex(salt),
+        100000
+    ).hex()
+    return f"pbkdf2:sha256:100000${salt}${hashed}"
+
+
+def _verify_password(password: str, stored_hash: str) -> bool:
+    """Verify password against stored hash. Retains legacy SHA256 support for migration."""
+    # Legacy SHA256 Check (64 hex characters)
+    if len(stored_hash) == 64 and "$" not in stored_hash:
+        return hashlib.sha256(password.encode("utf-8")).hexdigest() == stored_hash
+    
+    # Modern PBKDF2 Check
+    try:
+        parts = stored_hash.split("$")
+        if len(parts) != 3:
+            return False
+        algo_info, salt, expected_hash = parts
+        algo_name, hash_algo, iters = algo_info.split(":")
+        
+        computed = hashlib.pbkdf2_hmac(
+            hash_algo,
+            password.encode("utf-8"),
+            bytes.fromhex(salt),
+            int(iters)
+        ).hex()
+        return secrets.compare_digest(computed, expected_hash)
+    except Exception:
+        return False
 
 
 def _load_users() -> dict:
-    if _USERS_FILE.exists():
-        with open(_USERS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    # First run: create default admin account
-    default = {
-        "admin": {
-            "password": _hash("admin123"),
-            "role": "admin",
-            "name": "관리자",
+    with FileLock(_LOCK_FILE, timeout=5):
+        if _USERS_FILE.exists():
+            with open(_USERS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        # First run: create default admin account
+        default = {
+            "admin": {
+                "password": _hash_password("admin123"),
+                "role": "admin",
+                "name": "관리자",
+            }
         }
-    }
-    _save_users(default)
-    return default
+        with open(_USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(default, f, ensure_ascii=False, indent=2)
+        return default
 
 
 def _save_users(users: dict) -> None:
-    with open(_USERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(users, f, ensure_ascii=False, indent=2)
+    tmp_file = _USERS_FILE.with_suffix('.json.tmp')
+    with FileLock(_LOCK_FILE, timeout=5):
+        with open(tmp_file, "w", encoding="utf-8") as f:
+            json.dump(users, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_file, _USERS_FILE)
 
 
 # ── Public auth functions ──────────────────────────────────────────────────────
@@ -70,7 +114,12 @@ def _save_users(users: dict) -> None:
 def login(username: str, password: str) -> bool:
     users = _load_users()
     user = users.get(username.strip())
-    if user and user["password"] == _hash(password):
+    if user and _verify_password(password, user["password"]):
+        # Auto-migration hook for legacy SHA256 users
+        if len(user["password"]) == 64 and "$" not in user["password"]:
+            user["password"] = _hash_password(password)
+            _save_users(users)
+        
         st.session_state["auth_user"] = username.strip()
         st.session_state["auth_role"] = user["role"]
         st.session_state["auth_name"] = user.get("name", username.strip())
@@ -81,6 +130,12 @@ def login(username: str, password: str) -> bool:
 def logout() -> None:
     for k in ["auth_user", "auth_role", "auth_name"]:
         st.session_state.pop(k, None)
+    # Clear persistent cookie if available
+    try:
+        from streamlit_cookies_controller import CookieController as _CC
+        _CC().remove("bess_auth_v1")
+    except Exception:
+        pass
 
 
 def register(username: str, password: str, role: str, name: str) -> tuple[bool, str]:
@@ -93,7 +148,7 @@ def register(username: str, password: str, role: str, name: str) -> tuple[bool, 
     if username in users:
         return False, f"'{username}' 계정이 이미 존재합니다. / Account already exists."
     users[username] = {
-        "password": _hash(password),
+        "password": _hash_password(password),
         "role": role,
         "name": name.strip() or username,
     }
@@ -132,7 +187,7 @@ def update_user(username: str, new_role: str = None, new_name: str = None,
     if new_name:
         users[username]["name"] = new_name.strip()
     if new_password:
-        users[username]["password"] = _hash(new_password)
+        users[username]["password"] = _hash_password(new_password)
     _save_users(users)
     return True, f"'{username}' 정보가 업데이트되었습니다. / Account updated."
 
@@ -145,9 +200,9 @@ def change_password(username: str, old_pw: str, new_pw: str) -> tuple[bool, str]
     user = users.get(username)
     if not user:
         return False, "존재하지 않는 계정입니다. / Account not found."
-    if user["password"] != _hash(old_pw):
+    if not _verify_password(old_pw, user["password"]):
         return False, "현재 비밀번호가 올바르지 않습니다. / Current password is incorrect."
-    users[username]["password"] = _hash(new_pw)
+    users[username]["password"] = _hash_password(new_pw)
     _save_users(users)
     return True, "비밀번호가 변경되었습니다. / Password changed successfully."
 

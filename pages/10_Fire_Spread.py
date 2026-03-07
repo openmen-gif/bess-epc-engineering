@@ -309,9 +309,14 @@ def run_fire_spread_module():
     frames   = st.session_state["fire_frames"]
     fire_cnt = st.session_state["fire_cnt"]
     supp_cnt = st.session_state["fire_supp"]
-    sim_params = st.session_state.get("fire_sim_params",
-                                      (rows, cols, origin_r, origin_c, chem_key, agent_key, response_sec))
-    _, _, sim_or, sim_oc, sim_chem, sim_agent, sim_resp = sim_params
+    sim_params = st.session_state.get(
+        "fire_sim_params",
+        (rows, cols, origin_r, origin_c, chem_key, agent_key, response_sec, max_steps)
+    )
+    if len(sim_params) == 7:
+        sim_params = (*sim_params, max_steps)
+        
+    _, _, sim_or, sim_oc, sim_chem, sim_agent, sim_resp, sim_max_steps = sim_params
     n_steps  = len(frames)
 
     max_fire  = max(fire_cnt)

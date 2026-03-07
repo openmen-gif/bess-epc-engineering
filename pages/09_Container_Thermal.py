@@ -366,8 +366,40 @@ def run_container_thermal_module():
             vent_y    = [v[1] * dy for v in sim_vents]
             vent_z_fin= [float(T_floor[min(max(v[1], 0), NY-1), min(max(v[0], 0), NX-1)]) for v in sim_vents]
 
-            def _snap_surface(T_snap: np.ndarray) -> go.Surface:
-                return go.Surface(
+            _scene_t1 = dict(
+                **_base_scene,
+                zaxis=dict(title="온도 (°C)" if not is_en else "Temperature (°C)", **_ax),
+                aspectmode='manual',
+                aspectratio=dict(x=con_l / con_w, y=1.0, z=0.7),
+                camera=dict(eye=dict(x=1.6, y=-1.9, z=1.3)),
+            )
+
+            @st.fragment(run_every=0.5)
+            def _thermal_anim():
+                fi = int(st.session_state.get("th_frame", n_snaps - 1)) % n_snaps
+                playing = st.session_state.get("th_playing", False)
+                
+                # Controls inside fragment to prevent full page rerun (tab reset)
+                _t1_sc1, _t1_sc2 = st.columns([6, 2])
+                with _t1_sc1:
+                    _step = st.slider(
+                        "반복 재생 스텝 (~Iter):" if not is_en else "Playback Step (~Iter):",
+                        0, n_snaps - 1, fi,
+                        format="%d",
+                        key="th_step_slider",
+                    )
+                with _t1_sc2:
+                    if st.button("▶ 시작" if not is_en else "▶ Start", key="th_play_btn", type="primary", use_container_width=True):
+                        st.session_state["th_playing"] = True
+                        st.session_state["th_frame"] = 0
+                    if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="th_pause_btn", type="secondary", use_container_width=True):
+                        st.session_state["th_playing"] = False
+                if _step != fi and not playing:
+                    fi = _step
+                    st.session_state["th_frame"] = fi
+
+                T_snap = snapshots[fi]
+                surf = go.Surface(
                     x=x_c, y=y_c, z=T_snap,
                     colorscale="RdYlBu_r",
                     cmin=amb, cmax=max(float(T_snap.max()), amb + 1),
@@ -375,99 +407,47 @@ def run_container_thermal_module():
                     hovertemplate="X: %{x:.1f}m | Y: %{y:.1f}m | <b>T: %{z:.1f}°C</b><extra></extra>",
                     name="Temp Field",
                 )
-
-            rack_trace = go.Scatter3d(
-                x=src_x, y=src_y, z=[z + 0.15 for z in src_z_fin],
-                mode='markers',
-                marker=dict(size=7, color='#111', opacity=0.9, symbol='square'),
-                name="배터리 랙" if not is_en else "Battery Rack",
-                hovertemplate="Rack X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
-            )
-            init_data = [_snap_surface(snapshots[0]), rack_trace]
-            if vent_x:
-                init_data.append(go.Scatter3d(
-                    x=vent_x, y=vent_y, z=[z + 0.2 for z in vent_z_fin],
+                rack_trace = go.Scatter3d(
+                    x=src_x, y=src_y, z=[z + 0.15 for z in src_z_fin],
                     mode='markers',
-                    marker=dict(size=8, color='#00b4d8', opacity=0.9, symbol='diamond'),
-                    name="HVAC 덕트" if not is_en else "HVAC Duct",
-                    hovertemplate="Duct X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
-                ))
-
-            # One Plotly frame per snapshot — only trace 0 (Surface) is re-drawn
-            anim_frames_t = [
-                go.Frame(data=[_snap_surface(snapshots[i])], name=str(i), traces=[0])
-                for i in range(n_snaps)
-            ]
-            slider_steps_t = [
-                dict(
-                    args=[[str(i)], {"frame": {"duration": 0, "redraw": True},
-                                     "mode": "immediate", "transition": {"duration": 0}}],
-                    label=f"~{SNAP_ITERS[i]}",
-                    method="animate",
+                    marker=dict(size=7, color='#111', opacity=0.9, symbol='square'),
+                    name="배터리 랙" if not is_en else "Battery Rack",
+                    hovertemplate="Rack X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
                 )
-                for i in range(n_snaps)
-            ]
+                init_data = [surf, rack_trace]
+                if vent_x:
+                    init_data.append(go.Scatter3d(
+                        x=vent_x, y=vent_y, z=[z + 0.2 for z in vent_z_fin],
+                        mode='markers',
+                        marker=dict(size=8, color='#00b4d8', opacity=0.9, symbol='diamond'),
+                        name="HVAC 덕트" if not is_en else "HVAC Duct",
+                        hovertemplate="Duct X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
+                    ))
 
-            fig3d = go.Figure(
-                data=init_data,
-                frames=anim_frames_t,
-                layout=go.Layout(
+                fig3d = go.Figure(data=init_data)
+                fig3d.update_layout(
                     **dark_layout,
-                    title="3D 컨테이너 온도 진행 — ▶ Play" if not is_en
-                          else "3D Container Temperature Evolution — ▶ Play",
-                    scene=dict(
-                        **_base_scene,
-                        zaxis=dict(title="온도 (°C)" if not is_en else "Temperature (°C)", **_ax),
-                        aspectmode='manual',
-                        aspectratio=dict(x=con_l / con_w, y=1.0, z=0.7),
-                        camera=dict(eye=dict(x=1.6, y=-1.9, z=1.3)),
-                    ),
-                    updatemenus=[dict(
-                        type="buttons", showactive=False,
-                        x=0.05, y=1.12, xanchor="left",
-                        buttons=[
-                            dict(
-                                label="▶ Play",
-                                method="animate",
-                                args=[None, {
-                                    "frame": {"duration": 650, "redraw": True},
-                                    "fromcurrent": True,
-                                    "transition": {"duration": 400, "easing": "cubic-in-out"},
-                                    "mode": "immediate",
-                                }],
-                            ),
-                            dict(
-                                label="⏸ Pause",
-                                method="animate",
-                                args=[[None], {
-                                    "frame": {"duration": 0, "redraw": False},
-                                    "mode": "immediate",
-                                    "transition": {"duration": 0},
-                                }],
-                            ),
-                        ],
-                    )],
-                    sliders=[dict(
-                        currentvalue={
-                            "prefix": "반복: " if not is_en else "Iter: ",
-                            "font": {"size": 13},
-                        },
-                        pad={"t": 50},
-                        steps=slider_steps_t,
-                    )],
-                ),
-            )
-            st.plotly_chart(fig3d, use_container_width=True)
+                    title=f"3D 컨테이너 온도 진행 (~{SNAP_ITERS[fi]} 반복)" if not is_en
+                          else f"3D Container Temp Evolution (~{SNAP_ITERS[fi]} Iters)",
+                    scene=_scene_t1,
+                )
+                st.plotly_chart(fig3d, use_container_width=True, key="th_chart")
+
+                if playing:
+                    if fi < n_snaps - 1:
+                        st.session_state["th_frame"] = fi + 1
+                    else:
+                        st.session_state["th_playing"] = False
+
+            _thermal_anim()
             st.caption(
                 "■ = 배터리 랙 | ◆ = HVAC 덕트 | 높이·색상 = 온도 | ▶ Play = 시간 진행 | 드래그로 회전" if not is_en
                 else "■ = Battery racks | ◆ = HVAC ducts | ▶ Play = time evolution | Drag to rotate"
             )
-
         # ── Tab 2: Animated single horizontal slice (floor → ceiling) ──────────
         with tab2:
             xl, yw, zh = float(con_l), float(con_w), float(con_h)
 
-            # Wire-frame edges (static — not updated per frame)
             wire_data = []
             for ex, ey, ez in [
                 ([0, xl, xl, 0, 0], [0, 0, yw, yw, 0], [0, 0, 0, 0, 0]),
@@ -489,10 +469,42 @@ def run_container_thermal_module():
                     showlegend=False, hoverinfo='skip',
                 ))
 
-            def _slice_surf(zi: int) -> go.Surface:
+            n_z = NZ
+            
+            _scene_t2 = dict(
+                **_base_scene,
+                zaxis=dict(title=t("p9_z_label"), range=[0, con_h], **_ax),
+                aspectmode='manual',
+                aspectratio=_ar_phys,
+                camera=dict(eye=dict(x=1.8, y=-1.6, z=1.5)),
+            )
+
+            @st.fragment(run_every=0.4)
+            def _slice_anim():
+                zi = int(st.session_state.get("sl_frame", 0)) % n_z
+                playing = st.session_state.get("sl_playing", False)
+                
+                _t2_sc1, _t2_sc2 = st.columns([6, 2])
+                with _t2_sc1:
+                    _step = st.slider(
+                        "높이 슬라이더 (m):" if not is_en else "Height Slider (m):",
+                        0, n_z - 1, zi,
+                        format="%d",
+                        key="sl_step_slider",
+                    )
+                with _t2_sc2:
+                    if st.button("▶ 시작" if not is_en else "▶ Start", key="sl_play_btn", type="primary", use_container_width=True):
+                        st.session_state["sl_playing"] = True
+                        st.session_state["sl_frame"] = 0
+                    if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="sl_pause_btn", type="secondary", use_container_width=True):
+                        st.session_state["sl_playing"] = False
+                if _step != zi and not playing:
+                    zi = _step
+                    st.session_state["sl_frame"] = zi
+
                 z_val   = float(z_vals[zi])
                 T_slice = T_3d[zi]
-                return go.Surface(
+                surf = go.Surface(
                     x=x_c, y=y_c,
                     z=np.full_like(T_slice, z_val),
                     surfacecolor=T_slice,
@@ -501,80 +513,32 @@ def run_container_thermal_module():
                     showscale=True,
                     colorbar=dict(title="°C", x=1.02, thickness=12),
                     opacity=0.92,
-                    customdata=T_slice.round(1),
                     hovertemplate=(
                         f"z={z_val:.2f}m | X: %{{x:.1f}}m | Y: %{{y:.1f}}m | "
-                        f"<b>%{{customdata}}°C</b><extra></extra>"
+                        f"<b>%{{surfacecolor:.1f}}°C</b><extra></extra>"
                     ),
                 )
-
-            n_z = NZ
-            slice_steps = [
-                dict(
-                    args=[[str(zi)], {"frame": {"duration": 0, "redraw": True},
-                                      "mode": "immediate", "transition": {"duration": 0}}],
-                    label=f"{z_vals[zi]:.1f}m",
-                    method="animate",
-                )
-                for zi in range(n_z)
-            ]
-
-            fig_s = go.Figure(
-                data=[_slice_surf(0)] + wire_data,
-                frames=[
-                    go.Frame(data=[_slice_surf(zi)], traces=[0], name=str(zi))
-                    for zi in range(n_z)
-                ],
-                layout=go.Layout(
+                
+                fig_s = go.Figure(data=[surf] + wire_data)
+                fig_s.update_layout(
                     **dark_layout,
-                    title="3D 수평 단면 온도 — 높이 슬라이더로 탐색" if not is_en
-                          else "3D Horizontal Temp Slice — Scrub by Height",
-                    scene=dict(
-                        **_base_scene,
-                        zaxis=dict(title=t("p9_z_label"), range=[0, con_h], **_ax),
-                        aspectmode='manual',
-                        aspectratio=_ar_phys,
-                        camera=dict(eye=dict(x=1.8, y=-1.6, z=1.5)),
-                    ),
-                    updatemenus=[dict(
-                        type="buttons", showactive=False,
-                        x=0.02, y=1.10, xanchor="left",
-                        buttons=[
-                            dict(
-                                label="▶ " + ("재생" if not is_en else "Play"),
-                                method="animate",
-                                args=[None, {
-                                    "frame": {"duration": 300, "redraw": True},
-                                    "fromcurrent": True,
-                                    "transition": {"duration": 200, "easing": "cubic-in-out"},
-                                    "mode": "immediate",
-                                }],
-                            ),
-                            dict(
-                                label="⏸",
-                                method="animate",
-                                args=[[None], {"frame": {"duration": 0, "redraw": False},
-                                               "mode": "immediate",
-                                               "transition": {"duration": 0}}],
-                            ),
-                        ],
-                    )],
-                    sliders=[dict(
-                        currentvalue={
-                            "prefix": "높이: " if not is_en else "Height: ",
-                            "font": {"size": 13},
-                        },
-                        pad={"t": 50},
-                        steps=slice_steps,
-                    )],
-                ),
-            )
-            st.plotly_chart(fig_s, use_container_width=True)
+                    title=f"3D 수평 단면 온도 — {z_val:.2f}m" if not is_en
+                          else f"3D Horizontal Temp Slice — {z_val:.2f}m",
+                    scene=_scene_t2,
+                )
+                st.plotly_chart(fig_s, use_container_width=True, key="sl_chart")
+
+                if playing:
+                    if zi < n_z - 1:
+                        st.session_state["sl_frame"] = zi + 1
+                    else:
+                        st.session_state["sl_playing"] = False
+
+            _slice_anim()
             st.caption(
                 "▶ 재생으로 바닥→천장 단면 스캔 | 슬라이더로 높이 선택 | 청록 선 = HVAC 덕트" if not is_en
                 else "▶ Play scans floor→ceiling | Slider selects height | Cyan = HVAC ducts"
             )
-
         # ── Tab 3: 3D Airflow — fragment-based particle animation ──────────────
         with tab3:
             U, V = vent_airflow_vectors(T_floor, sim_vents, NX, NY)
@@ -619,25 +583,8 @@ def run_container_thermal_module():
                 st.session_state[traj_key] = (traj_x_b, traj_y_b)
             traj_x, traj_y = st.session_state[traj_key]
 
-            # Speed control (outside fragment — changing speed triggers full rerun)
+            # Speed stored in session state; fragment reads it on each run
             _af_iv = st.session_state.get("af_interval", 0.3)
-            _sc1, _sc2, _ = st.columns([2, 2, 4])
-            with _sc1:
-                _new_iv = st.select_slider(
-                    "속도 (초/프레임)" if not is_en else "Speed (sec/frame)",
-                    options=[0.1, 0.15, 0.2, 0.3, 0.5, 0.8, 1.0],
-                    value=_af_iv,
-                    key="af_speed_sel",
-                )
-                if _new_iv != _af_iv:
-                    st.session_state["af_interval"] = _new_iv
-                    st.rerun()
-            with _sc2:
-                if st.button("▶ 시작" if not is_en else "▶ Start", key="af_play_btn"):
-                    st.session_state["af_playing"] = True
-                    st.session_state["af_frame"] = 0
-                if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="af_pause_btn"):
-                    st.session_state["af_playing"] = False
 
             _scene_c = dict(
                 **_base_scene,
@@ -652,6 +599,26 @@ def run_container_thermal_module():
                 fi = int(st.session_state.get("af_frame", 0)) % N_FRAMES
                 playing = st.session_state.get("af_playing", False)
                 phase = fi / N_FRAMES * 2 * np.pi
+
+                # Controls inside fragment — prevents full page rerun / tab reset
+                _af_c1, _af_c2, _af_c3 = st.columns([3, 1, 1])
+                with _af_c1:
+                    _new_iv = st.select_slider(
+                        "속도 (초/프레임)" if not is_en else "Speed (sec/frame)",
+                        options=[0.1, 0.15, 0.2, 0.3, 0.5, 0.8, 1.0],
+                        value=st.session_state.get("af_interval", 0.3),
+                        key="af_speed_sel",
+                    )
+                    st.session_state["af_interval"] = _new_iv
+                with _af_c2:
+                    if st.button("▶ 시작" if not is_en else "▶ Start", key="af_play_btn",
+                                 type="primary", use_container_width=True):
+                        st.session_state["af_playing"] = True
+                        st.session_state["af_frame"] = 0
+                with _af_c3:
+                    if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="af_pause_btn",
+                                 type="secondary", use_container_width=True):
+                        st.session_state["af_playing"] = False
 
                 traces = []
                 # Tail traces (fading)
