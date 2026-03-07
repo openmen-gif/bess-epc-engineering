@@ -203,11 +203,17 @@ def _home():
     
     col_dl1, col_dl2, col_empty = st.columns([2, 2, 6])
     
-    import utils.report_generator as rg
-    
+    try:
+        import utils.report_generator as rg
+        _rg_ok = True
+    except Exception as _rg_err:
+        _rg_ok = False
+
     with col_dl1:
         st.markdown("**Word (.docx)**")
-        if st.button("📄 Word 리포트 생성 (Generate Report)", use_container_width=True, key="btn_prep_word"):
+        if not _rg_ok:
+            st.warning("리포트 생성 모듈 로드 실패 (서버 패키지 설치 확인 필요)")
+        elif st.button("📄 Word 리포트 생성 (Generate Report)", use_container_width=True, key="btn_prep_word"):
             with st.spinner("Word 보고서 생성 중..."):
                 try:
                     import os
@@ -231,7 +237,9 @@ def _home():
 
     with col_dl2:
         st.markdown("**PDF (.pdf)**")
-        if st.button("📄 PDF 리포트 생성 (Generate Report)", use_container_width=True, key="btn_prep_pdf"):
+        if not _rg_ok:
+            st.warning("리포트 생성 모듈 로드 실패")
+        elif st.button("📄 PDF 리포트 생성 (Generate Report)", use_container_width=True, key="btn_prep_pdf"):
             with st.spinner("PDF 보고서 생성 중 (약 30~60초)..."):
                 try:
                     import os
