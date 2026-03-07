@@ -279,12 +279,13 @@ def _add_chart_to_doc(doc, fig, width_inches=5.8):
             pass
 
 def _chart_growth():
+    yr = md.LATEST_ACTUAL_YEAR
     names = md.REGIONS
-    gwh = [md.REGIONAL_DATA[r]["installed_gwh"][2024] for r in names]
+    gwh = [md.REGIONAL_DATA[r]["installed_gwh"].get(yr, 0) for r in names]
     fig, ax = plt.subplots(figsize=(8, 4))
     bars = ax.bar(names, gwh, color=["#1F4E79", "#2E75B6", "#5B9BD5", "#A5C8E1", "#D6E4F0", "#F0C27B", "#E8856C"])
-    ax.set_ylabel("설치 용량 (GWh)")
-    ax.set_title("BESS 시장별 설치 용량 현황 (2024)", fontsize=13, fontweight="bold")
+    ax.set_ylabel("Installed Capacity (GWh)")
+    ax.set_title(f"BESS Installed Capacity by Market ({yr})", fontsize=13, fontweight="bold")
     for bar, val in zip(bars, gwh):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3, f"{val}", ha="center", fontsize=9)
     ax.grid(axis="y", alpha=0.3)
@@ -292,12 +293,13 @@ def _chart_growth():
     return fig
 
 def _chart_region():
+    yr = md.LATEST_ACTUAL_YEAR
     names = md.REGIONS
-    gwh = [md.REGIONAL_DATA[r]["installed_gwh"][2024] for r in names]
+    gwh = [md.REGIONAL_DATA[r]["installed_gwh"].get(yr, 0) for r in names]
     fig, ax = plt.subplots(figsize=(7, 5))
     colors = ["#1F4E79", "#2E75B6", "#5B9BD5", "#A5C8E1", "#D6E4F0", "#F0C27B", "#E8856C"]
     ax.pie(gwh, labels=names, autopct="%1.1f%%", colors=colors, startangle=90)
-    ax.set_title("지역별 BESS 시장 점유율 (2024)", fontsize=13, fontweight="bold")
+    ax.set_title(f"BESS Market Share by Region ({yr})", fontsize=13, fontweight="bold")
     fig.tight_layout()
     return fig
 
@@ -356,11 +358,12 @@ def generate_word_report():
         "분석 시점 기준 글로벌 시장의 성장률과 가격 동향, 정책 프레임워크를 조망합니다."
     )
     doc.add_heading("핵심 지표 요약", level=2)
+    _yr = md.LATEST_ACTUAL_YEAR
     summary_rows = [
-        ["글로벌 2024년 설치 용량", f"{md.GLOBAL_CAPACITY_GWH[2024]} GWh"],
-        ["LFP 셀 가격 (2024)", f"${md.LFP_CELL_PRICE[2024]}/kWh"],
-        ["NMC 셀 가격 (2024)", f"${md.NMC_CELL_PRICE[2024]}/kWh"],
-        ["시스템 CAPEX (2024)", f"${md.SYSTEM_CAPEX[2024]}/kWh"],
+        [f"글로벌 {_yr}년 설치 용량", f"{md.GLOBAL_CAPACITY_GWH.get(_yr, 'N/A')} GWh"],
+        [f"LFP 셀 가격 ({_yr})", f"${md.LFP_CELL_PRICE.get(_yr, 'N/A')}/kWh"],
+        [f"NMC 셀 가격 ({_yr})", f"${md.NMC_CELL_PRICE.get(_yr, 'N/A')}/kWh"],
+        [f"시스템 CAPEX ({_yr})", f"${md.SYSTEM_CAPEX.get(_yr, 'N/A')}/kWh"],
         ["분석 시점", now_str],
     ]
     _styled_table(doc, ["항목", "값"], summary_rows, col_widths_mm=[70, 90])
@@ -373,7 +376,7 @@ def generate_word_report():
         doc.add_heading(f"2.{idx+1} {r_name} ({r_data['name_en']})", level=2)
         
         detail_rows = [
-            ["설치 용량 (2024)", f"{r_data['installed_gwh'][2024]} GWh"],
+            [f"설치 용량 ({_yr})", f"{r_data['installed_gwh'].get(_yr, 'N/A')} GWh"],
             ["성장률", f"{r_data['growth_rate_pct']}%"],
             ["파이프라인 (허가/계획)", f"{r_data['pipeline_gwh']} GWh"],
             ["매출 모델", r_data['revenue_model']],

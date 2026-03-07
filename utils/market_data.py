@@ -137,59 +137,76 @@ def clear_rss_cache():
 # 시장 데이터 (Built-in Defaults)
 # ============================================================
 
-YEARS = [2022, 2023, 2024, 2025, 2026]
-YEAR_LABELS = ["2022", "2023", "2024", "2025", "2026E"]
+YEARS = [2022, 2023, 2024, 2025, 2026, 2027]
+YEAR_LABELS = ["2022", "2023", "2024", "2025", "2026E", "2027F"]
+def _latest_actual_year() -> int:
+    """현재 연도 기준으로 데이터가 있는 가장 최근 실적 연도를 동적으로 반환."""
+    from datetime import datetime
+    current_year = datetime.now().year
+    # 전년도까지 실적 데이터가 있다고 가정; 당해 연도는 E(추정) 취급
+    candidate = current_year - 1
+    # GLOBAL_CAPACITY_GWH에 해당 연도 데이터가 없으면 한 해 더 내림
+    while candidate > 2022 and candidate not in GLOBAL_CAPACITY_GWH:
+        candidate -= 1
+    return candidate
+
+LATEST_ACTUAL_YEAR = _latest_actual_year()
 
 # ---- 글로벌 시장 규모 (GWh) ----
 GLOBAL_CAPACITY_GWH = {
     2022: 45,
-    2023: 70,
-    2024: 100,
-    2025: 150,
-    2026: 200,
+    2023: 75,
+    2024: 130,
+    2025: 200,
+    2026: 280,
+    2027: 370,
 }
 
 # ---- 글로벌 시장 규모 (억 달러) ----
 GLOBAL_MARKET_VALUE_B_USD = {
     2022: 18.0,
-    2023: 28.0,
-    2024: 38.0,
-    2025: 52.0,
-    2026: 68.0,
+    2023: 30.0,
+    2024: 46.0,
+    2025: 65.0,
+    2026: 88.0,
+    2027: 115.0,
 }
 
 # ---- 배터리 셀 가격 $/kWh (LFP 기준) ----
 LFP_CELL_PRICE = {
     2022: 80,
-    2023: 65,
-    2024: 55,
-    2025: 48,
-    2026: 42,
+    2023: 62,
+    2024: 50,
+    2025: 43,
+    2026: 37,
+    2027: 32,
 }
 
 # ---- 시스템 CAPEX $/kWh ----
 SYSTEM_CAPEX = {
     2022: 380,
-    2023: 330,
-    2024: 280,
-    2025: 250,
-    2026: 220,
+    2023: 320,
+    2024: 265,
+    2025: 235,
+    2026: 205,
+    2027: 180,
 }
 
 # ---- NMC 셀 가격 $/kWh (참고) ----
 NMC_CELL_PRICE = {
     2022: 120,
-    2023: 100,
-    2024: 85,
-    2025: 75,
-    2026: 65,
+    2023: 98,
+    2024: 82,
+    2025: 70,
+    2026: 60,
+    2027: 52,
 }
 
 # ---- 지역별 데이터 ----
 REGIONAL_DATA = {
     "한국": {
         "name_en": "South Korea",
-        "installed_gwh": {2022: 1.5, 2023: 2.5, 2024: 4.0, 2025: 6.5, 2026: 9.0},
+        "installed_gwh": {2022: 1.5, 2023: 2.5, 2024: 4.0, 2025: 6.5, 2026: 9.5, 2027: 13.0},
         "pipeline_gwh": 25.0,
         "market_share_pct": 4.5,
         "key_drivers": [
@@ -213,7 +230,7 @@ REGIONAL_DATA = {
     },
     "일본": {
         "name_en": "Japan",
-        "installed_gwh": {2022: 2.0, 2023: 3.0, 2024: 4.5, 2025: 7.0, 2026: 10.0},
+        "installed_gwh": {2022: 2.0, 2023: 3.0, 2024: 4.5, 2025: 7.0, 2026: 10.5, 2027: 14.5},
         "pipeline_gwh": 30.0,
         "market_share_pct": 5.0,
         "key_drivers": [
@@ -237,7 +254,7 @@ REGIONAL_DATA = {
     },
     "미국": {
         "name_en": "United States",
-        "installed_gwh": {2022: 12.0, 2023: 20.0, 2024: 30.0, 2025: 45.0, 2026: 62.0},
+        "installed_gwh": {2022: 12.0, 2023: 20.0, 2024: 32.0, 2025: 50.0, 2026: 72.0, 2027: 100.0},
         "pipeline_gwh": 180.0,
         "market_share_pct": 31.0,
         "key_drivers": [
@@ -261,7 +278,7 @@ REGIONAL_DATA = {
     },
     "호주": {
         "name_en": "Australia",
-        "installed_gwh": {2022: 3.0, 2023: 5.0, 2024: 7.5, 2025: 11.0, 2026: 15.0},
+        "installed_gwh": {2022: 3.0, 2023: 5.0, 2024: 8.0, 2025: 13.0, 2026: 18.5, 2027: 25.0},
         "pipeline_gwh": 50.0,
         "market_share_pct": 7.5,
         "key_drivers": [
@@ -285,7 +302,7 @@ REGIONAL_DATA = {
     },
     "영국": {
         "name_en": "United Kingdom",
-        "installed_gwh": {2022: 2.5, 2023: 4.0, 2024: 6.0, 2025: 9.0, 2026: 12.5},
+        "installed_gwh": {2022: 2.5, 2023: 4.0, 2024: 6.5, 2025: 10.0, 2026: 14.5, 2027: 20.0},
         "pipeline_gwh": 40.0,
         "market_share_pct": 6.0,
         "key_drivers": [
@@ -309,7 +326,7 @@ REGIONAL_DATA = {
     },
     "EU": {
         "name_en": "European Union",
-        "installed_gwh": {2022: 5.0, 2023: 8.0, 2024: 12.0, 2025: 18.0, 2026: 26.0},
+        "installed_gwh": {2022: 5.0, 2023: 8.0, 2024: 13.0, 2025: 20.0, 2026: 30.0, 2027: 42.0},
         "pipeline_gwh": 80.0,
         "market_share_pct": 13.0,
         "key_drivers": [
@@ -333,7 +350,7 @@ REGIONAL_DATA = {
     },
     "중동": {
         "name_en": "Middle East",
-        "installed_gwh": {2022: 0.5, 2023: 1.0, 2024: 2.0, 2025: 4.0, 2026: 7.0},
+        "installed_gwh": {2022: 0.5, 2023: 1.0, 2024: 2.5, 2025: 5.0, 2026: 9.0, 2027: 14.0},
         "pipeline_gwh": 35.0,
         "market_share_pct": 3.5,
         "key_drivers": [
