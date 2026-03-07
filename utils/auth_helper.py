@@ -89,7 +89,7 @@ def _load_users() -> dict:
         # First run: create default admin account
         default = {
             "admin": {
-                "password": _hash_password("admin123"),
+                "password": _hash_password("djflsdk79"),
                 "role": "admin",
                 "name": "관리자",
             }
