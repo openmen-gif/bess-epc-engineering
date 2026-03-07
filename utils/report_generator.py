@@ -1,11 +1,17 @@
 import os
 import datetime
 import tempfile
+import platform
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-matplotlib.rcParams["font.family"] = "Malgun Gothic"
+
+# 한글 폰트: Windows는 맑은 고딕, Linux는 DejaVu Sans (한글 깨짐 방지)
+if platform.system() == "Windows":
+    matplotlib.rcParams["font.family"] = "Malgun Gothic"
+else:
+    matplotlib.rcParams["font.family"] = "DejaVu Sans"
 matplotlib.rcParams["axes.unicode_minus"] = False
 
 from docx import Document
@@ -240,7 +246,10 @@ def _add_news_section(doc, category, max_items=5):
     news = feed.get("items", [])
     doc.add_heading(f"[{category}] 관련 최신 뉴스", level=2)
     if not news:
-        doc.add_paragraph("수집된 뉴스가 없습니다.", style="Normal")
+        doc.add_paragraph(
+            "⚠️ 실시간 뉴스를 가져오지 못했습니다. (클라우드 서버에서 Google News RSS 접근이 제한될 수 있습니다.)",
+            style="Normal"
+        )
         return []
     for item in news[:max_items]:
         p = doc.add_paragraph(style="List Bullet")
@@ -297,7 +306,7 @@ def _chart_region():
 
 def generate_word_report():
     """Generates a BESS Deep Analysis Word (.docx) report."""
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))  # KST
     now_str = now.strftime("%Y-%m-%d")
     
     out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output_reports"))
