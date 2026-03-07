@@ -437,30 +437,44 @@ def generate_word_report():
 def generate_pdf_report():
     """Generate PDF by converting the Word Deep Report via docx2pdf in an STA thread."""
     import threading
+    import shutil
     import docx2pdf
+
     word_path = generate_word_report()
     pdf_path = word_path.replace('.docx', '.pdf')
-    
+
+    # COM/Word cannot handle paths with Korean (non-ASCII) characters.
+    # Convert using an ASCII temp path, then copy to the final destination.
+    tmp_dir = tempfile.gettempdir()
+    tmp_docx = os.path.join(tmp_dir, "bess_report_tmp.docx")
+    tmp_pdf  = os.path.join(tmp_dir, "bess_report_tmp.pdf")
+    shutil.copy2(word_path, tmp_docx)
+
     errors = []
     def _convert():
         try:
             import pythoncom
             pythoncom.CoInitialize()
             try:
-                docx2pdf.convert(word_path, pdf_path)
+                docx2pdf.convert(tmp_docx, tmp_pdf)
             finally:
                 pythoncom.CoUninitialize()
         except Exception as e:
             errors.append(e)
-    
+
     t = threading.Thread(target=_convert, daemon=True)
     t.start()
     t.join(timeout=120)
-    
+
     if errors:
         raise RuntimeError(f"PDF 변환 오류: {errors[0]}")
-    
-    pdf_abs = os.path.abspath(pdf_path)
-    if os.path.exists(pdf_abs):
-        return pdf_abs
-    raise FileNotFoundError(f"PDF가 생성되지 않았습니다: {pdf_abs}")
+
+    if os.path.exists(tmp_pdf):
+        shutil.copy2(tmp_pdf, pdf_path)
+        for p in (tmp_docx, tmp_pdf):
+            try:
+                os.unlink(p)
+            except Exception:
+                pass
+        return os.path.abspath(pdf_path)
+    raise FileNotFoundError(f"PDF가 생성되지 않았습니다: {pdf_path}")
