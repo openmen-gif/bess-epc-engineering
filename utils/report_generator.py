@@ -7,11 +7,22 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-# 한글 폰트: Windows는 맑은 고딕, Linux는 DejaVu Sans (한글 깨짐 방지)
-if platform.system() == "Windows":
-    matplotlib.rcParams["font.family"] = "Malgun Gothic"
-else:
-    matplotlib.rcParams["font.family"] = "DejaVu Sans"
+# 한글 폰트 설정: Windows=맑은 고딕, Linux=Noto Sans CJK KR (설치 필요: packages.txt)
+def _set_korean_font():
+    if platform.system() == "Windows":
+        matplotlib.rcParams["font.family"] = "Malgun Gothic"
+        return
+    # Linux: Noto CJK 폰트 파일 직접 탐색
+    import matplotlib.font_manager as fm
+    noto_candidates = [f for f in fm.findSystemFonts() if "NotoSansCJK" in f or "NotoSerifCJK" in f or "noto" in f.lower()]
+    if noto_candidates:
+        prop = fm.FontProperties(fname=noto_candidates[0])
+        matplotlib.rcParams["font.family"] = prop.get_name()
+    else:
+        # 폰트 없으면 영문 레이블 사용 (chart 제목/축은 영문으로 이미 변경됨)
+        matplotlib.rcParams["font.family"] = "DejaVu Sans"
+
+_set_korean_font()
 matplotlib.rcParams["axes.unicode_minus"] = False
 
 from docx import Document
@@ -280,8 +291,8 @@ def _add_chart_to_doc(doc, fig, width_inches=5.8):
 
 def _chart_growth():
     yr = md.LATEST_ACTUAL_YEAR
-    names = md.REGIONS
-    gwh = [md.REGIONAL_DATA[r]["installed_gwh"].get(yr, 0) for r in names]
+    names = [md.REGIONAL_DATA[r]["name_en"] for r in md.REGIONS]
+    gwh = [md.REGIONAL_DATA[r]["installed_gwh"].get(yr, 0) for r in md.REGIONS]
     fig, ax = plt.subplots(figsize=(8, 4))
     bars = ax.bar(names, gwh, color=["#1F4E79", "#2E75B6", "#5B9BD5", "#A5C8E1", "#D6E4F0", "#F0C27B", "#E8856C"])
     ax.set_ylabel("Installed Capacity (GWh)")
@@ -294,8 +305,8 @@ def _chart_growth():
 
 def _chart_region():
     yr = md.LATEST_ACTUAL_YEAR
-    names = md.REGIONS
-    gwh = [md.REGIONAL_DATA[r]["installed_gwh"].get(yr, 0) for r in names]
+    names = [md.REGIONAL_DATA[r]["name_en"] for r in md.REGIONS]
+    gwh = [md.REGIONAL_DATA[r]["installed_gwh"].get(yr, 0) for r in md.REGIONS]
     fig, ax = plt.subplots(figsize=(7, 5))
     colors = ["#1F4E79", "#2E75B6", "#5B9BD5", "#A5C8E1", "#D6E4F0", "#F0C27B", "#E8856C"]
     ax.pie(gwh, labels=names, autopct="%1.1f%%", colors=colors, startangle=90)
