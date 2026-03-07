@@ -1,0 +1,19 @@
+# Streamlit
+streamlit.log
+streamlit.err
+.streamlit/secrets.toml
+
+# User data (auto-generated on first run)
+utils/users.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
