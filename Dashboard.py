@@ -31,6 +31,7 @@ try:
                 st.session_state["auth_user"] = _sd["u"]
                 st.session_state["auth_role"] = _sd["r"]
                 st.session_state["auth_name"] = _sd["n"]
+                st.rerun()   # nav 재구성을 위해 즉시 rerun
             except Exception:
                 _cc.remove(_COOKIE_KEY)
     if is_authenticated():
