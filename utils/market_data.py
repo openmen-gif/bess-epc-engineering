@@ -6,50 +6,101 @@ from datetime import datetime
 import streamlit as st
 
 # ============================================================
-# RSS 피드 URL (Google News)
+# RSS 피드 URL — 직접 뉴스 사이트 (클라우드 서버 접근 가능)
+# 각 카테고리마다 복수 소스를 순서대로 시도
 # ============================================================
 
 RSS_FEEDS = {
-    "배터리 가격": "https://news.google.com/rss/search?q=battery+cell+price+LFP+NMC+BESS&hl=en&gl=US&ceid=US:en",
-    "한국 시장": "https://news.google.com/rss/search?q=ESS+BESS+에너지저장+한국&hl=ko&gl=KR&ceid=KR:ko",
-    "미국 시장": "https://news.google.com/rss/search?q=battery+energy+storage+BESS+US+policy&hl=en&gl=US&ceid=US:en",
-    "호주 시장": "https://news.google.com/rss/search?q=AEMO+battery+storage+Australia&hl=en&gl=AU&ceid=AU:en",
-    "영국 시장": "https://news.google.com/rss/search?q=UK+battery+storage+grid+National+Grid&hl=en&gl=GB&ceid=GB:en",
-    "EU 시장": "https://news.google.com/rss/search?q=Europe+BESS+battery+storage+regulation&hl=en&gl=US&ceid=US:en",
-    "일본 시장": "https://news.google.com/rss/search?q=蓄電池+BESS+日本&hl=ja&gl=JP&ceid=JP:ja",
-    "프로젝트": "https://news.google.com/rss/search?q=battery+storage+project+GW+tender+award&hl=en&gl=US&ceid=US:en",
-    "경쟁사": "https://news.google.com/rss/search?q=Tesla+Megapack+OR+CATL+BESS+OR+Fluence+OR+BYD+storage&hl=en&gl=US&ceid=US:en",
-    "공급망": "https://news.google.com/rss/search?q=lithium+battery+supply+chain+lead+time&hl=en&gl=US&ceid=US:en",
-    "안전·화재": "https://news.google.com/rss/search?q=BESS+ESS+fire+safety+incident&hl=en&gl=US&ceid=US:en",
-    "정책·규제": "https://news.google.com/rss/search?q=battery+storage+IRA+ITC+policy+regulation&hl=en&gl=US&ceid=US:en",
+    "배터리 가격": [
+        "https://electrek.co/tag/battery/feed/",
+        "https://www.pv-tech.org/feed/",
+        "https://feeds.feedburner.com/oreilly/radar/atom",
+    ],
+    "한국 시장": [
+        "https://www.energy-storage.news/feed/",
+        "https://electrek.co/tag/energy-storage/feed/",
+    ],
+    "미국 시장": [
+        "https://electrek.co/tag/energy-storage/feed/",
+        "https://www.utilitydive.com/feeds/news/",
+    ],
+    "호주 시장": [
+        "https://www.energy-storage.news/feed/",
+        "https://reneweconomy.com.au/feed/",
+    ],
+    "영국 시장": [
+        "https://www.energy-storage.news/feed/",
+        "https://www.pv-tech.org/feed/",
+    ],
+    "EU 시장": [
+        "https://www.energy-storage.news/feed/",
+        "https://www.pv-tech.org/feed/",
+    ],
+    "일본 시장": [
+        "https://www.energy-storage.news/feed/",
+        "https://electrek.co/tag/energy-storage/feed/",
+    ],
+    "프로젝트": [
+        "https://www.energy-storage.news/feed/",
+        "https://www.pv-tech.org/feed/",
+        "https://electrek.co/tag/energy-storage/feed/",
+    ],
+    "경쟁사": [
+        "https://electrek.co/tag/tesla-megapack/feed/",
+        "https://www.energy-storage.news/feed/",
+    ],
+    "공급망": [
+        "https://www.pv-tech.org/feed/",
+        "https://electrek.co/tag/battery/feed/",
+    ],
+    "안전·화재": [
+        "https://www.energy-storage.news/feed/",
+        "https://electrek.co/tag/energy-storage/feed/",
+    ],
+    "정책·규제": [
+        "https://www.utilitydive.com/feeds/news/",
+        "https://www.energy-storage.news/feed/",
+    ],
 }
 
-@st.cache_data(ttl=1800) # Cache for 30 minutes
-def fetch_rss_feed(category, max_items=6, timeout=10):
-    """Fetch and parse RSS feed for a specific category without feedparser dependency"""
-    if category not in RSS_FEEDS:
-        return {"items": [], "timestamp": datetime.now()}
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
+}
 
-    url = RSS_FEEDS[category]
-    items = []
+def _fetch_one_rss(url: str, max_items: int, timeout: int) -> list:
+    """Try to fetch a single RSS URL. Returns list of items or empty list."""
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        req = urllib.request.Request(url, headers=_HEADERS)
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             tree = ET.parse(resp)
+        items = []
         for item in tree.findall(".//item")[:max_items]:
             title = item.findtext("title", "")
-            link = item.findtext("link", "")
-            pub = item.findtext("pubDate", "")
-            desc = unescape(item.findtext("description", ""))
-            # Strip HTML tags from description
-            desc = re.sub(r"<[^>]+>", "", desc).strip()
-            # Reduce desc length for better UI
-            items.append({"title": title, "link": link, "pubDate": pub, "description": desc[:150] + "..."})
+            link  = item.findtext("link", "")
+            pub   = item.findtext("pubDate", "")
+            desc  = unescape(item.findtext("description", ""))
+            desc  = re.sub(r"<[^>]+>", "", desc).strip()
+            if title:
+                items.append({"title": title, "link": link, "pubDate": pub, "description": desc[:150] + "..."})
+        return items
     except Exception as e:
-        print(f"Error fetching RSS for {category}: {e}")
-        pass
-    
-    return {"items": items, "timestamp": datetime.now()}
+        print(f"RSS fetch failed [{url}]: {e}")
+        return []
+
+@st.cache_data(ttl=1800)
+def fetch_rss_feed(category, max_items=6, timeout=12):
+    """Try each RSS source in order until we get results."""
+    urls = RSS_FEEDS.get(category, [])
+    if isinstance(urls, str):
+        urls = [urls]
+    for url in urls:
+        items = _fetch_one_rss(url, max_items, timeout)
+        if items:
+            return {"items": items, "timestamp": datetime.now(), "source": url}
+    return {"items": [], "timestamp": datetime.now(), "source": None}
 
 def clear_rss_cache():
     """Clear the Streamlit cache for RSS feeds to force a refresh."""
