@@ -229,7 +229,11 @@ def run_fire_spread_module():
         rows = int(st.number_input(t("p10_rows"), min_value=2, max_value=20, value=6, step=1))
         cols = int(st.number_input(t("p10_cols"), min_value=2, max_value=20, value=8, step=1))
     with p2:
-        response_sec = int(st.number_input(t("p10_response"), min_value=1, max_value=60, value=10, step=1))
+        response_sec = int(st.number_input(t("p10_response"), min_value=1, max_value=300, value=10, step=1))
+        max_steps    = int(st.number_input(
+            "최대 시뮬레이션 시간 (초)" if not is_en else "Max Simulation Time (sec)",
+            min_value=10, max_value=600, value=60, step=10,
+        ))
     with p3:
         agent_labels = {k: (v["label_ko"] if not is_en else v["label_en"]) for k, v in AGENT_PARAMS.items()}
         agent_key = st.selectbox(t("p10_agent"), list(agent_labels.keys()),
@@ -286,11 +290,12 @@ def run_fire_spread_module():
             frames, fire_cnt, supp_cnt = simulate_fire_spread(
                 rows, cols, origin_r, origin_c,
                 chem_key, agent_key, response_sec,
+                max_steps=max_steps,
             )
         st.session_state["fire_frames"] = frames
         st.session_state["fire_cnt"]    = fire_cnt
         st.session_state["fire_supp"]   = supp_cnt
-        st.session_state["fire_sim_params"] = (rows, cols, origin_r, origin_c, chem_key, agent_key, response_sec)
+        st.session_state["fire_sim_params"] = (rows, cols, origin_r, origin_c, chem_key, agent_key, response_sec, max_steps)
         st.session_state["_fire_step_val"] = 0   # reset animation step
         st.session_state["fire_playing"]  = False
 

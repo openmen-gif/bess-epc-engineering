@@ -234,10 +234,21 @@ def run_container_thermal_module():
     if "hvac_vents" not in st.session_state:
         st.session_state["hvac_vents"] = [(0, 1), (0, 2), (HVAC_NX - 1, 1), (HVAC_NX - 1, 2)]
 
-    hvac_vents = st.session_state["hvac_vents"]
+    # Normalize to tuples (session state may contain lists after JSON round-trip)
+    hvac_vents = [tuple(v) for v in st.session_state["hvac_vents"]]
+    # Deduplicate while preserving order
+    _seen: set = set()
+    _dedup = []
+    for _v in hvac_vents:
+        if _v not in _seen:
+            _seen.add(_v)
+            _dedup.append(_v)
+    if len(_dedup) != len(hvac_vents):
+        st.session_state["hvac_vents"] = _dedup
+        hvac_vents = _dedup
 
     # ── Button grid for duct toggle ────────────────────────────────────────
-    hvac_vents_set = set((v[0], v[1]) for v in hvac_vents)
+    hvac_vents_set = set(hvac_vents)
 
     # Column number header
     header_cols = st.columns([1] + [1] * HVAC_NX)
@@ -257,7 +268,7 @@ def run_container_thermal_module():
                     use_container_width=True,
                     type="primary" if is_duct else "secondary",
                 ):
-                    new_vents = list(st.session_state.get("hvac_vents", []))
+                    new_vents = [tuple(v) for v in st.session_state.get("hvac_vents", [])]
                     coord = (gx, gy)
                     if coord in new_vents:
                         new_vents.remove(coord)
@@ -564,122 +575,69 @@ def run_container_thermal_module():
                 else "▶ Play scans floor→ceiling | Slider selects height | Cyan = HVAC ducts"
             )
 
-        # ── Tab 3: 3D Airflow — smooth particle-flow animation ──────────────
+        # ── Tab 3: 3D Airflow — fragment-based particle animation ──────────────
         with tab3:
             U, V = vent_airflow_vectors(T_floor, sim_vents, NX, NY)
 
-            N_FRAMES = 36   # frames for one loop (~3.6 s at 100 ms/frame)
-            N_COLS   = 7    # particle columns
-            N_ROWS   = 5    # particle rows
-            N_P      = N_COLS * N_ROWS
+            N_FRAMES = 48
+            N_COLS, N_ROWS = 8, 5
+            N_P = N_COLS * N_ROWS
+            TAIL_LEN = 6
 
-            # Particle start positions: regular grid over container floor
             gx_arr = np.linspace(con_l * 0.07, con_l * 0.93, N_COLS)
             gy_arr = np.linspace(con_w * 0.10, con_w * 0.90, N_ROWS)
             G_X, G_Y = np.meshgrid(gx_arr, gy_arr)
             p0x = G_X.flatten()
             p0y = G_Y.flatten()
 
-            # Staggered base heights so particles occupy the full vertical column
             base_z = np.array([
-                con_h * (0.10 + 0.80 * (i / (N_P - 1)))
-                for i in range(N_P)
+                con_h * (0.10 + 0.80 * (i / (N_P - 1))) for i in range(N_P)
             ])
-
-            # Step size: each frame moves particle ~7 % of container extent
             step_x = con_l * 0.07
             step_y = con_w * 0.07
 
-            # Build particle trajectories (xy-plane, wrap at boundaries)
-            traj_x = [p0x.copy()]
-            traj_y = [p0y.copy()]
-            px_cur, py_cur = p0x.copy(), p0y.copy()
-            for _ in range(N_FRAMES - 1):
-                nx_arr = np.empty_like(px_cur)
-                ny_arr = np.empty_like(py_cur)
-                for i in range(N_P):
-                    gxi = max(0, min(NX - 1, int(px_cur[i] / dx)))
-                    gyi = max(0, min(NY - 1, int(py_cur[i] / dy)))
-                    ux  = float(U[gyi, gxi])
-                    vy_ = float(V[gyi, gxi])
-                    mag = max(np.sqrt(ux ** 2 + vy_ ** 2), 1e-6)
-                    nx_arr[i] = (px_cur[i] + ux  / mag * step_x) % con_l
-                    ny_arr[i] = (py_cur[i] + vy_ / mag * step_y) % con_w
-                px_cur, py_cur = nx_arr, ny_arr
-                traj_x.append(px_cur.copy())
-                traj_y.append(py_cur.copy())
+            # Pre-compute trajectories once per simulation result
+            traj_key = f"af_traj_{id(T_floor)}"
+            if traj_key not in st.session_state:
+                traj_x_b = [p0x.copy()]
+                traj_y_b = [p0y.copy()]
+                px_c, py_c = p0x.copy(), p0y.copy()
+                for _ in range(N_FRAMES - 1):
+                    nx_a = np.empty_like(px_c)
+                    ny_a = np.empty_like(py_c)
+                    for i in range(N_P):
+                        gxi = max(0, min(NX - 1, int(px_c[i] / dx)))
+                        gyi = max(0, min(NY - 1, int(py_c[i] / dy)))
+                        ux  = float(U[gyi, gxi])
+                        vy_ = float(V[gyi, gxi])
+                        mag = max(np.sqrt(ux ** 2 + vy_ ** 2), 1e-6)
+                        nx_a[i] = (px_c[i] + ux  / mag * step_x) % con_l
+                        ny_a[i] = (py_c[i] + vy_ / mag * step_y) % con_w
+                    px_c, py_c = nx_a, ny_a
+                    traj_x_b.append(px_c.copy())
+                    traj_y_b.append(py_c.copy())
+                st.session_state[traj_key] = (traj_x_b, traj_y_b)
+            traj_x, traj_y = st.session_state[traj_key]
 
-            # Floor temperature surface (static — not re-rendered each frame)
-            floor_surf = go.Surface(
-                x=x_c, y=y_c, z=np.zeros_like(T_floor),
-                surfacecolor=T_floor,
-                colorscale="RdYlBu_r", cmin=amb, cmax=max(peak, amb + 1),
-                showscale=False, opacity=0.40,
-                name="Floor Temp", hoverinfo='skip',
-            )
-
-            # Duct markers (static)
-            duct_traces_c = []
-            if sim_vents:
-                duct_traces_c.append(go.Scatter3d(
-                    x=[float(v[0]) * dx for v in sim_vents],
-                    y=[float(v[1]) * dy for v in sim_vents],
-                    z=[con_h * 0.55] * len(sim_vents),
-                    mode='markers',
-                    marker=dict(size=10, color='#00b4d8', symbol='diamond', opacity=1.0),
-                    name="HVAC 덕트" if not is_en else "HVAC Duct",
-                    hovertemplate="Duct X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
-                ))
-
-            def _particle_cones(fi: int) -> go.Cone:
-                """Build cone trace for frame fi with smooth z oscillation."""
-                phase = fi / N_FRAMES * 2 * np.pi
-                cx_, cy_, cz_, cu_, cv_, cw_ = [], [], [], [], [], []
-                for i in range(N_P):
-                    px_i = float(traj_x[fi][i])
-                    py_i = float(traj_y[fi][i])
-                    # Smooth z: base height + small sine oscillation per particle
-                    z_i  = float(base_z[i]) + con_h * 0.06 * np.sin(phase + i * 0.42)
-                    z_i  = max(0.05 * con_h, min(0.95 * con_h, z_i))
-                    # Flow direction at current grid cell
-                    gxi  = max(0, min(NX - 1, int(px_i / dx)))
-                    gyi  = max(0, min(NY - 1, int(py_i / dy)))
-                    ux   = float(U[gyi, gxi])
-                    vy_  = float(V[gyi, gxi])
-                    mag  = max(np.sqrt(ux ** 2 + vy_ ** 2), 1e-6)
-                    scale = 0.28
-                    cx_.append(px_i); cy_.append(py_i); cz_.append(z_i)
-                    cu_.append(ux / mag * scale)
-                    cv_.append(vy_ / mag * scale)
-                    # Gentle vertical component: slight rise near vent height
-                    cw_.append(0.04 * np.cos(phase + i * 0.3))
-                return go.Cone(
-                    x=cx_, y=cy_, z=cz_,
-                    u=cu_, v=cv_, w=cw_,
-                    colorscale="Blues",
-                    cmin=0, cmax=0.4,
-                    sizemode="absolute", sizeref=0.5,
-                    showscale=False,
-                    opacity=0.82,
-                    hovertemplate="X: %{x:.1f}m | Y: %{y:.1f}m | Z: %{z:.2f}m<extra></extra>",
-                    name="Airflow",
+            # Speed control (outside fragment — changing speed triggers full rerun)
+            _af_iv = st.session_state.get("af_interval", 0.3)
+            _sc1, _sc2, _ = st.columns([2, 2, 4])
+            with _sc1:
+                _new_iv = st.select_slider(
+                    "속도 (초/프레임)" if not is_en else "Speed (sec/frame)",
+                    options=[0.1, 0.15, 0.2, 0.3, 0.5, 0.8, 1.0],
+                    value=_af_iv,
+                    key="af_speed_sel",
                 )
-
-            # Animation frames — only update trace 0 (cones); floor & ducts stay fixed
-            anim_frames = [
-                go.Frame(data=[_particle_cones(fi)], name=str(fi), traces=[0])
-                for fi in range(N_FRAMES)
-            ]
-
-            slider_steps_c = [
-                dict(
-                    args=[[str(fi)], {"frame": {"duration": 0, "redraw": True},
-                                      "mode": "immediate", "transition": {"duration": 0}}],
-                    label=f"{fi}",
-                    method="animate",
-                )
-                for fi in range(N_FRAMES)
-            ]
+                if _new_iv != _af_iv:
+                    st.session_state["af_interval"] = _new_iv
+                    st.rerun()
+            with _sc2:
+                if st.button("▶ 시작" if not is_en else "▶ Start", key="af_play_btn"):
+                    st.session_state["af_playing"] = True
+                    st.session_state["af_frame"] = 0
+                if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="af_pause_btn"):
+                    st.session_state["af_playing"] = False
 
             _scene_c = dict(
                 **_base_scene,
@@ -688,50 +646,89 @@ def run_container_thermal_module():
                 aspectratio=_ar_phys,
                 camera=dict(eye=dict(x=1.6, y=-1.8, z=1.5)),
             )
-            fig_c = go.Figure(
-                data=[_particle_cones(0), floor_surf] + duct_traces_c,
-                frames=anim_frames,
-                layout=go.Layout(
+
+            @st.fragment(run_every=_af_iv)
+            def _airflow_anim():
+                fi = int(st.session_state.get("af_frame", 0)) % N_FRAMES
+                playing = st.session_state.get("af_playing", False)
+                phase = fi / N_FRAMES * 2 * np.pi
+
+                traces = []
+                # Tail traces (fading)
+                for tb in range(min(TAIL_LEN, fi), 0, -1):
+                    alpha = (1.0 - tb / TAIL_LEN) * 0.45
+                    fi_b = fi - tb
+                    ph_b = fi_b / N_FRAMES * 2 * np.pi
+                    tz = np.array([
+                        base_z[i] + con_h * 0.04 * np.sin(ph_b + i * 0.42)
+                        for i in range(N_P)
+                    ])
+                    traces.append(go.Scatter3d(
+                        x=traj_x[fi_b], y=traj_y[fi_b], z=tz,
+                        mode='markers',
+                        marker=dict(size=3, color=f'rgba(0,180,216,{alpha:.2f})'),
+                        showlegend=False, hoverinfo='skip',
+                    ))
+
+                # Current frame — bright particles coloured by height
+                cur_z = np.array([
+                    base_z[i] + con_h * 0.06 * np.sin(phase + i * 0.42)
+                    for i in range(N_P)
+                ])
+                traces.append(go.Scatter3d(
+                    x=traj_x[fi], y=traj_y[fi], z=cur_z,
+                    mode='markers',
+                    marker=dict(
+                        size=6, color=cur_z, colorscale='Blues',
+                        cmin=0, cmax=con_h, opacity=0.95,
+                    ),
+                    name="공기 파티클" if not is_en else "Air Particles",
+                    hovertemplate="X=%{x:.1f}m Y=%{y:.1f}m Z=%{z:.2f}m<extra></extra>",
+                ))
+
+                # Floor temperature surface
+                traces.append(go.Surface(
+                    x=x_c, y=y_c, z=np.zeros_like(T_floor),
+                    surfacecolor=T_floor,
+                    colorscale="RdYlBu_r", cmin=amb, cmax=max(peak, amb + 1),
+                    showscale=False, opacity=0.35,
+                    name="Floor Temp", hoverinfo='skip',
+                ))
+
+                # Duct markers at ceiling height, small size to avoid label overlap
+                if sim_vents:
+                    traces.append(go.Scatter3d(
+                        x=[float(v[0]) * dx for v in sim_vents],
+                        y=[float(v[1]) * dy for v in sim_vents],
+                        z=[con_h * 0.95] * len(sim_vents),
+                        mode='markers+text',
+                        marker=dict(size=5, color='#00b4d8', symbol='diamond', opacity=0.9),
+                        text=["D"] * len(sim_vents),
+                        textposition="bottom center",
+                        textfont=dict(size=9, color='#00b4d8'),
+                        name="HVAC 덕트" if not is_en else "HVAC Duct",
+                        hovertemplate="Duct X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
+                    ))
+
+                fig_c = go.Figure(data=traces)
+                fig_c.update_layout(
                     **dark_layout,
-                    title="3D 공기 흐름 파티클 애니메이션 — ▶ Play" if not is_en
-                          else "3D Airflow Particle Animation — ▶ Play",
+                    title=(
+                        f"3D 공기 흐름 — {'▶ 재생 중' if playing else '⏸ 정지'} (프레임 {fi + 1}/{N_FRAMES})"
+                        if not is_en else
+                        f"3D Airflow — {'▶ Playing' if playing else '⏸ Paused'} (Frame {fi + 1}/{N_FRAMES})"
+                    ),
                     scene=_scene_c,
-                    updatemenus=[dict(
-                        type="buttons", showactive=False,
-                        x=0.05, y=1.14, xanchor="left",
-                        buttons=[
-                            dict(
-                                label="▶ Play",
-                                method="animate",
-                                args=[None, {
-                                    "frame": {"duration": 100, "redraw": True},
-                                    "fromcurrent": True,
-                                    "transition": {"duration": 70, "easing": "cubic-in-out"},
-                                    "mode": "immediate",
-                                }],
-                            ),
-                            dict(
-                                label="⏸",
-                                method="animate",
-                                args=[[None], {
-                                    "frame": {"duration": 0, "redraw": False},
-                                    "mode": "immediate",
-                                    "transition": {"duration": 0},
-                                }],
-                            ),
-                        ],
-                    )],
-                    sliders=[dict(
-                        currentvalue={"prefix": "Frame: ", "font": {"size": 12}},
-                        pad={"t": 50},
-                        steps=slider_steps_c,
-                    )],
-                ),
-            )
-            st.plotly_chart(fig_c, use_container_width=True)
+                )
+                st.plotly_chart(fig_c, use_container_width=True, key="af_chart")
+
+                if playing:
+                    st.session_state["af_frame"] = (fi + 1) % N_FRAMES
+
+            _airflow_anim()
             st.caption(
-                "▶ Play → 파티클이 덕트 방향으로 부드럽게 흐름 | 원뿔 방향 = 공기 흐름 방향 | ◆ = HVAC 덕트" if not is_en
-                else "▶ Play → particles flow smoothly toward ducts | Cone = airflow direction | ◆ = HVAC duct"
+                "파란 점 = 공기 파티클 | 꼬리 = 이동 궤적 | ◆D = HVAC 덕트 | ▶ 시작 / ⏸ 정지 버튼으로 제어" if not is_en
+                else "Blue dots = air particles | Trail = trajectory | ◆D = HVAC duct | Use ▶ Start / ⏸ Pause buttons"
             )
 
     else:
