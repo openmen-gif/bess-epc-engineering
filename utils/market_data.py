@@ -12,54 +12,81 @@ import streamlit as st
 
 RSS_FEEDS = {
     "배터리 가격": [
+        "https://www.energy-storage.news/feed/",
         "https://electrek.co/tag/battery/feed/",
         "https://www.pv-tech.org/feed/",
-        "https://feeds.feedburner.com/oreilly/radar/atom",
+        "https://cleantechnica.com/feed/",
+        "https://www.rechargenews.com/rss",
     ],
     "한국 시장": [
         "https://www.energy-storage.news/feed/",
+        "https://cleantechnica.com/feed/",
         "https://electrek.co/tag/energy-storage/feed/",
+        "https://www.pv-tech.org/feed/",
     ],
     "미국 시장": [
-        "https://electrek.co/tag/energy-storage/feed/",
         "https://www.utilitydive.com/feeds/news/",
+        "https://electrek.co/tag/energy-storage/feed/",
+        "https://cleantechnica.com/feed/",
+        "https://www.energy-storage.news/feed/",
+        "https://www.rechargenews.com/rss",
     ],
     "호주 시장": [
-        "https://www.energy-storage.news/feed/",
         "https://reneweconomy.com.au/feed/",
+        "https://www.energy-storage.news/feed/",
+        "https://electrek.co/tag/energy-storage/feed/",
+        "https://cleantechnica.com/feed/",
     ],
     "영국 시장": [
         "https://www.energy-storage.news/feed/",
+        "https://www.rechargenews.com/rss",
         "https://www.pv-tech.org/feed/",
+        "https://cleantechnica.com/feed/",
     ],
     "EU 시장": [
         "https://www.energy-storage.news/feed/",
         "https://www.pv-tech.org/feed/",
+        "https://www.rechargenews.com/rss",
+        "https://cleantechnica.com/feed/",
     ],
     "일본 시장": [
         "https://www.energy-storage.news/feed/",
         "https://electrek.co/tag/energy-storage/feed/",
+        "https://cleantechnica.com/feed/",
+        "https://www.pv-tech.org/feed/",
     ],
     "프로젝트": [
         "https://www.energy-storage.news/feed/",
         "https://www.pv-tech.org/feed/",
         "https://electrek.co/tag/energy-storage/feed/",
+        "https://www.utilitydive.com/feeds/news/",
+        "https://www.rechargenews.com/rss",
     ],
     "경쟁사": [
         "https://electrek.co/tag/tesla-megapack/feed/",
         "https://www.energy-storage.news/feed/",
+        "https://www.pv-tech.org/feed/",
+        "https://cleantechnica.com/feed/",
     ],
     "공급망": [
         "https://www.pv-tech.org/feed/",
         "https://electrek.co/tag/battery/feed/",
+        "https://cleantechnica.com/feed/",
+        "https://www.rechargenews.com/rss",
+        "https://www.energy-storage.news/feed/",
     ],
     "안전·화재": [
         "https://www.energy-storage.news/feed/",
         "https://electrek.co/tag/energy-storage/feed/",
+        "https://cleantechnica.com/feed/",
+        "https://www.utilitydive.com/feeds/news/",
     ],
     "정책·규제": [
         "https://www.utilitydive.com/feeds/news/",
         "https://www.energy-storage.news/feed/",
+        "https://cleantechnica.com/feed/",
+        "https://www.rechargenews.com/rss",
+        "https://electrek.co/tag/energy-storage/feed/",
     ],
 }
 

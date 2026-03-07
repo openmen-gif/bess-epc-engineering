@@ -247,7 +247,7 @@ def _add_news_section(doc, category, max_items=5):
     doc.add_heading(f"[{category}] 관련 최신 뉴스", level=2)
     if not news:
         doc.add_paragraph(
-            "⚠️ 실시간 뉴스를 가져오지 못했습니다. (클라우드 서버에서 Google News RSS 접근이 제한될 수 있습니다.)",
+            "⚠️ 실시간 뉴스를 가져오지 못했습니다. (네트워크 접근 제한 또는 일시적 오류일 수 있습니다.)",
             style="Normal"
         )
         return []
