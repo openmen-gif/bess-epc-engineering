@@ -163,6 +163,7 @@ def _setup_doc(title=None):
     h1.font.color.rgb = CLR_H1
     h1.font.name = FONT
     h1.element.rPr.rFonts.set(qn("w:eastAsia"), FONT)
+    h1.paragraph_format.page_break_before = False
     h2 = doc.styles["Heading 2"]
     h2.font.size = Pt(13)
     h2.font.bold = True
