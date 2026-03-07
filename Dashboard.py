@@ -237,7 +237,10 @@ def _home():
 
     with col_dl2:
         st.markdown("**PDF (.pdf)**")
-        if not _rg_ok:
+        import platform
+        if platform.system() != "Windows":
+            st.info("PDF 변환은 Windows 환경에서만 지원됩니다.\nWord 파일을 다운로드 후 PDF로 변환해주세요.")
+        elif not _rg_ok:
             st.warning("리포트 생성 모듈 로드 실패")
         elif st.button("📄 PDF 리포트 생성 (Generate Report)", use_container_width=True, key="btn_prep_pdf"):
             with st.spinner("PDF 보고서 생성 중 (약 30~60초)..."):
@@ -253,7 +256,7 @@ def _home():
                         st.error("PDF 생성에 실패했습니다. Word 형식을 사용해주세요.")
                 except Exception as e:
                     st.error(f"보고서 생성 실패: {e}")
-        
+
         if st.session_state.get("dl_pdf_bytes"):
             st.download_button(
                 label="⬇️ PDF 다운로드",
