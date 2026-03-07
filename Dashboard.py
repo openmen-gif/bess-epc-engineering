@@ -7,6 +7,8 @@ from utils.lang_helper import t
 from utils.auth_helper import (
     require_auth, sidebar_user_info, is_authenticated,
 )
+import utils.market_data as _market_data
+import utils.project_store as _ps
 import pandas as pd
 import plotly.express as px
 
@@ -151,15 +153,16 @@ def _home():
 
     st.markdown("---")
 
+    _kpi = _ps.get_kpi()
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric(label=t("hp_m1"), value="3",    delta="+1")
+        st.metric(label=t("hp_m1"), value=str(_kpi["active"]))
     with col2:
-        st.metric(label=t("hp_m2"), value="124",  delta=t("hp_m2_delta"))
+        st.metric(label=t("hp_m2"), value=str(_kpi["total"]))
     with col3:
-        st.metric(label=t("hp_m3"), value=f"{pct}%")
+        st.metric(label=t("hp_m3"), value=f"{_kpi['avg_progress']}%")
     with col4:
-        st.metric(label=t("hp_m4"), value="5",    delta="-2", delta_color="inverse")
+        st.metric(label=t("hp_m4"), value=str(_kpi["completed"]))
 
     st.markdown("---")
 
@@ -193,6 +196,67 @@ def _home():
             st.page_link("pages/11_Cyber_Security.py",      label=t("hp_cyber_link"))
 
     st.markdown("---")
+    
+    # ── Market Report Download Section ──────────────────────────────────────────
+    st.subheader(t("hp_market_trends_title") if t("hp_market_trends_title") != "hp_market_trends_title" else "📈 Global BESS Market Trends")
+    st.markdown("최신 글로벌 BESS 시장 동향 및 뉴스 리포트를 다운로드하세요.")
+    
+    col_dl1, col_dl2, col_empty = st.columns([2, 2, 6])
+    
+    import utils.report_generator as rg
+    
+    with col_dl1:
+        st.markdown("**Word (.docx)**")
+        if st.button("📄 Word 리포트 생성 (Generate Report)", use_container_width=True, key="btn_prep_word"):
+            with st.spinner("Word 보고서 생성 중..."):
+                try:
+                    import os
+                    report_path = rg.generate_word_report()
+                    with open(report_path, "rb") as f:
+                        st.session_state["dl_word_bytes"] = f.read()
+                    st.session_state["dl_word_name"] = os.path.basename(report_path)
+                    st.success("✅ 생성 완료! 아래 버튼으로 다운로드하세요.")
+                except Exception as e:
+                    st.error(f"보고서 생성 실패: {e}")
+        
+        if st.session_state.get("dl_word_bytes"):
+            st.download_button(
+                label="⬇️ Word 다운로드",
+                data=st.session_state["dl_word_bytes"],
+                file_name=st.session_state.get("dl_word_name", "BESS_Report.docx"),
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True,
+                key="dl_word_btn"
+            )
+
+    with col_dl2:
+        st.markdown("**PDF (.pdf)**")
+        if st.button("📄 PDF 리포트 생성 (Generate Report)", use_container_width=True, key="btn_prep_pdf"):
+            with st.spinner("PDF 보고서 생성 중 (약 30~60초)..."):
+                try:
+                    import os
+                    pdf_path = rg.generate_pdf_report()
+                    if pdf_path:
+                        with open(pdf_path, "rb") as f:
+                            st.session_state["dl_pdf_bytes"] = f.read()
+                        st.session_state["dl_pdf_name"] = os.path.basename(pdf_path)
+                        st.success("✅ 생성 완료! 아래 버튼으로 다운로드하세요.")
+                    else:
+                        st.error("PDF 생성에 실패했습니다. Word 형식을 사용해주세요.")
+                except Exception as e:
+                    st.error(f"보고서 생성 실패: {e}")
+        
+        if st.session_state.get("dl_pdf_bytes"):
+            st.download_button(
+                label="⬇️ PDF 다운로드",
+                data=st.session_state["dl_pdf_bytes"],
+                file_name=st.session_state.get("dl_pdf_name", "BESS_Report.pdf"),
+                mime="application/pdf",
+                use_container_width=True,
+                key="dl_pdf_btn"
+            )
+
+    st.markdown("---")
 
     st.subheader(t("hp_arch_title"))
     st.info(t("hp_arch_info"))
@@ -200,7 +264,10 @@ def _home():
     x_col  = t("hp_chart_x")
     y_col  = t("hp_chart_y")
     phases = [t("hp_phase_design"), t("hp_phase_proc"), t("hp_phase_const"), t("hp_phase_comm")]
-    data   = pd.DataFrame({x_col: phases, y_col: [95, 60, 20, 0]})
+    _pa    = _kpi["phase_avg"]
+    data   = pd.DataFrame({x_col: phases, y_col: [
+        _pa.get("설계", 0), _pa.get("조달", 0), _pa.get("시공", 0), _pa.get("시운전", 0)
+    ]})
     fig = px.bar(
         data, x=x_col, y=y_col, color=x_col,
         title=t("hp_chart_title"),
@@ -230,9 +297,11 @@ _p08 = st.Page("pages/08_Tool_Launcher.py",           title="08 Tool Launcher", 
 _p09 = st.Page("pages/09_Container_Thermal.py",       title="09 Container Thermal", icon="🌡️")
 _p10 = st.Page("pages/10_Fire_Spread.py",             title="10 Fire Spread",       icon="🔥")
 _p11 = st.Page("pages/11_Cyber_Security.py",          title="11 Cyber Security",    icon="🔒")
+_p12 = st.Page("pages/12_Project_Schedule.py",        title="12 Project Schedule",  icon="📅")
+_p_market = st.Page("pages/00_Market_Dashboard.py",  title="Dashboard: Market",    icon="📈")
 
 _viewer_pages   = [_p01, _p02, _p03, _p04, _p05, _p06]
-_engineer_pages = [_p07, _p08, _p09, _p10, _p11]
+_engineer_pages = [_p07, _p08, _p09, _p10, _p11, _p12]
 
 role   = st.session_state.get("auth_role", "")
 authed = is_authenticated()
@@ -241,20 +310,22 @@ if not authed:
     nav = st.navigation([_login_pg])
 elif role == "admin":
     nav = st.navigation({
-        "":               [_home_pg, _login_pg],
+        "":               [_home_pg, _p_market, _login_pg],
         "📋 Tools 01~06": _viewer_pages,
         "🔧 Tools 07~11": _engineer_pages,
     })
 elif role == "engineer":
     nav = st.navigation({
-        "":               [_home_pg],
+        "":               [_home_pg, _p_market],
         "📋 Tools 01~06": _viewer_pages,
         "🔧 Tools 07~11": _engineer_pages,
     })
-else:  # viewer
+elif role == "viewer":
     nav = st.navigation({
-        "":               [_home_pg],
+        "":               [_home_pg, _p_market],
         "📋 Tools 01~06": _viewer_pages,
     })
+else:
+    nav = st.navigation([_home_pg, _p_market, _login_pg])
 
 nav.run()
