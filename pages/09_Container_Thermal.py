@@ -112,26 +112,29 @@ def scale_vents_to_sim(hvac_vents, NX, NY):
     return result
 
 
-def vent_airflow_vectors(T_floor, sim_vent_cells, NX, NY):
-    """Return U, V arrays (dimensionless) pointing from each cell toward nearest vent."""
-    if not sim_vent_cells:
+def vent_airflow_vectors(T_floor, sim_exhaust_cells, sim_intake_cells, NX, NY):
+    """Return U, V arrays. Exhaust: flow toward duct. Intake: flow away from duct."""
+    all_cells = list(sim_exhaust_cells) + list(sim_intake_cells)
+    if not all_cells:
         gy, gx = np.gradient(T_floor)
         return -gx * 0.05, -gy * 0.05
 
     U = np.zeros((NY, NX))
     V = np.zeros((NY, NX))
-    vx_arr = np.array([v[0] for v in sim_vent_cells], dtype=float)
-    vy_arr = np.array([v[1] for v in sim_vent_cells], dtype=float)
+    vx_all   = np.array([v[0] for v in all_cells], dtype=float)
+    vy_all   = np.array([v[1] for v in all_cells], dtype=float)
+    # +1 = exhaust (flow toward), -1 = intake (flow away)
+    signs    = np.array([1.0] * len(sim_exhaust_cells) + [-1.0] * len(sim_intake_cells))
 
     for iy in range(NY):
         for ix in range(NX):
-            dists = (vx_arr - ix) ** 2 + (vy_arr - iy) ** 2
+            dists   = (vx_all - ix) ** 2 + (vy_all - iy) ** 2
             nearest = int(np.argmin(dists))
-            dvx = float(vx_arr[nearest]) - ix
-            dvy = float(vy_arr[nearest]) - iy
+            dvx = float(vx_all[nearest]) - ix
+            dvy = float(vy_all[nearest]) - iy
             mag = max(np.sqrt(dvx ** 2 + dvy ** 2), 0.1)
-            U[iy, ix] = dvx / mag * 0.05
-            V[iy, ix] = dvy / mag * 0.05
+            U[iy, ix] = signs[nearest] * dvx / mag * 0.05
+            V[iy, ix] = signs[nearest] * dvy / mag * 0.05
     return U, V
 
 
@@ -207,32 +210,40 @@ def run_container_thermal_module():
     pb1, pb2, pb3, pb4, _ = st.columns([1, 1, 1, 1, 3])
     with pb1:
         if st.button("⬛ " + ("양 끝" if not is_en else "End Walls"), key="hvac_p_ends"):
-            st.session_state["hvac_vents"] = [
-                (0, 1), (0, 2), (HVAC_NX - 1, 1), (HVAC_NX - 1, 2)
-            ]
+            _v = [(0, 1), (0, 2), (HVAC_NX - 1, 1), (HVAC_NX - 1, 2)]
+            st.session_state["hvac_vents"] = _v
+            st.session_state["hvac_vent_types"] = {(0, 1): "intake", (0, 2): "intake",
+                                                    (HVAC_NX-1, 1): "exhaust", (HVAC_NX-1, 2): "exhaust"}
             st.rerun()
     with pb2:
         if st.button("⬛ " + ("중앙" if not is_en else "Center"), key="hvac_p_center"):
             mid = HVAC_NX // 2
-            st.session_state["hvac_vents"] = [
-                (mid - 1, 0), (mid, 0), (mid - 1, HVAC_NY - 1), (mid, HVAC_NY - 1)
-            ]
+            _v = [(mid - 1, 0), (mid, 0), (mid - 1, HVAC_NY - 1), (mid, HVAC_NY - 1)]
+            st.session_state["hvac_vents"] = _v
+            st.session_state["hvac_vent_types"] = {(mid-1, 0): "intake", (mid, 0): "intake",
+                                                    (mid-1, HVAC_NY-1): "exhaust", (mid, HVAC_NY-1): "exhaust"}
             st.rerun()
     with pb3:
         if st.button("⬛ " + ("양 측면" if not is_en else "Side Walls"), key="hvac_p_sides"):
-            st.session_state["hvac_vents"] = (
-                [(i, 0) for i in range(1, HVAC_NX - 1, 2)] +
-                [(i, HVAC_NY - 1) for i in range(1, HVAC_NX - 1, 2)]
-            )
+            _top = [(i, 0) for i in range(1, HVAC_NX - 1, 2)]
+            _bot = [(i, HVAC_NY - 1) for i in range(1, HVAC_NX - 1, 2)]
+            st.session_state["hvac_vents"] = _top + _bot
+            st.session_state["hvac_vent_types"] = {v: "intake" for v in _top} | {v: "exhaust" for v in _bot}
             st.rerun()
     with pb4:
         if st.button("🗑 " + ("초기화" if not is_en else "Clear"), key="hvac_p_clear"):
             st.session_state["hvac_vents"] = []
+            st.session_state["hvac_vent_types"] = {}
             st.rerun()
 
-    # Default: end-wall vents
+    # Default: end-wall vents (left=intake, right=exhaust)
     if "hvac_vents" not in st.session_state:
         st.session_state["hvac_vents"] = [(0, 1), (0, 2), (HVAC_NX - 1, 1), (HVAC_NX - 1, 2)]
+    if "hvac_vent_types" not in st.session_state:
+        st.session_state["hvac_vent_types"] = {
+            (0, 1): "intake", (0, 2): "intake",
+            (HVAC_NX - 1, 1): "exhaust", (HVAC_NX - 1, 2): "exhaust",
+        }
 
     # Normalize to tuples (session state may contain lists after JSON round-trip)
     hvac_vents = [tuple(v) for v in st.session_state["hvac_vents"]]
@@ -249,6 +260,7 @@ def run_container_thermal_module():
 
     # ── Button grid for duct toggle ────────────────────────────────────────
     hvac_vents_set = set(hvac_vents)
+    hvac_vent_types = st.session_state.get("hvac_vent_types", {})
 
     # Column number header
     header_cols = st.columns([1] + [1] * HVAC_NX)
@@ -261,25 +273,35 @@ def run_container_thermal_module():
         row_cols[0].caption(str(gy))
         for gx in range(HVAC_NX):
             with row_cols[gx + 1]:
-                is_duct = (gx, gy) in hvac_vents_set
+                coord = (gx, gy)
+                is_duct = coord in hvac_vents_set
+                dtype = hvac_vent_types.get(coord, "exhaust") if is_duct else None
+                label = ("🔵" if dtype == "intake" else "💨") if is_duct else "▫️"
                 if st.button(
-                    "💨" if is_duct else "▫️",
+                    label,
                     key=f"hvac_{gx}_{gy}",
                     use_container_width=True,
                     type="primary" if is_duct else "secondary",
                 ):
                     new_vents = [tuple(v) for v in st.session_state.get("hvac_vents", [])]
-                    coord = (gx, gy)
-                    if coord in new_vents:
-                        new_vents.remove(coord)
-                    else:
+                    new_types = dict(st.session_state.get("hvac_vent_types", {}))
+                    if coord not in new_vents:
                         new_vents.append(coord)
+                        new_types[coord] = "exhaust"
+                    elif new_types.get(coord) == "exhaust":
+                        new_types[coord] = "intake"
+                    else:
+                        new_vents.remove(coord)
+                        new_types.pop(coord, None)
                     st.session_state["hvac_vents"] = new_vents
+                    st.session_state["hvac_vent_types"] = new_types
                     st.rerun()
 
+    n_exhaust = sum(1 for v in hvac_vents if hvac_vent_types.get(v, "exhaust") == "exhaust")
+    n_intake  = len(hvac_vents) - n_exhaust
     st.caption(
-        f"💨 덕트 수: {len(hvac_vents)}개 | 💨 = 덕트, ▫️ = 빈 공간" if not is_en
-        else f"💨 Ducts: {len(hvac_vents)} | 💨 = duct, ▫️ = empty"
+        f"💨 배기 덕트: {n_exhaust}개 | 🔵 흡기 덕트: {n_intake}개 | 클릭 순서: ▫️→💨(배기)→🔵(흡기)→제거" if not is_en
+        else f"💨 Exhaust: {n_exhaust} | 🔵 Intake: {n_intake} | Click: ▫️→💨(exhaust)→🔵(intake)→remove"
     )
 
     # ── Run Button ────────────────────────────────────────────────────────────
@@ -296,22 +318,31 @@ def run_container_thermal_module():
         T_rack = amb + min(dT, 50.0)
         sources = make_heat_sources(NX, NY, n_racks, T_rack)
 
-        # Scale HVAC vent positions to simulation grid
-        sim_vents = scale_vents_to_sim(hvac_vents, NX, NY)
+        # Scale HVAC vent positions to simulation grid (split by type)
+        _vent_types   = st.session_state.get("hvac_vent_types", {})
+        _exhaust_ui   = [v for v in hvac_vents if _vent_types.get(v, "exhaust") == "exhaust"]
+        _intake_ui    = [v for v in hvac_vents if _vent_types.get(v, "exhaust") == "intake"]
+        sim_exhaust   = scale_vents_to_sim(_exhaust_ui, NX, NY)
+        sim_intake    = scale_vents_to_sim(_intake_ui,  NX, NY)
+        sim_vents     = sim_exhaust + sim_intake  # all ducts for thermal simulation
 
         if run:
             with st.spinner("3D 시뮬레이션 계산 중…" if not is_en else "Running 3D simulation…"):
                 snapshots = solve_temperature_transient(NX, NY, dx, dy, amb, sources,
                                                         hvac_kw, area, sim_vents)
-            st.session_state["thermal_snapshots"] = snapshots
-            st.session_state["thermal_sources"]   = sources
-            st.session_state["thermal_sim_vents"] = sim_vents
-            st.session_state["thermal_params"]    = (NX, NY, dx, dy, amb, hvac_kw, area, con_l, con_w, con_h)
+            st.session_state["thermal_snapshots"]   = snapshots
+            st.session_state["thermal_sources"]     = sources
+            st.session_state["thermal_sim_vents"]   = sim_vents
+            st.session_state["thermal_sim_exhaust"] = sim_exhaust
+            st.session_state["thermal_sim_intake"]  = sim_intake
+            st.session_state["thermal_params"]      = (NX, NY, dx, dy, amb, hvac_kw, area, con_l, con_w, con_h)
             st.session_state["thermal_snap_slider"] = 0
         else:
-            snapshots = st.session_state["thermal_snapshots"]
-            sources   = st.session_state.get("thermal_sources", sources)
-            sim_vents = st.session_state.get("thermal_sim_vents", sim_vents)
+            snapshots   = st.session_state["thermal_snapshots"]
+            sources     = st.session_state.get("thermal_sources", sources)
+            sim_vents   = st.session_state.get("thermal_sim_vents",   sim_vents)
+            sim_exhaust = st.session_state.get("thermal_sim_exhaust", sim_vents)
+            sim_intake  = st.session_state.get("thermal_sim_intake",  [])
             NX, NY, dx, dy, amb, hvac_kw, area, con_l, con_w, con_h = st.session_state["thermal_params"]
 
         T_floor = snapshots[-1]  # steady-state
@@ -508,6 +539,7 @@ def run_container_thermal_module():
                     x=x_c, y=y_c,
                     z=np.full_like(T_slice, z_val),
                     surfacecolor=T_slice,
+                    customdata=T_slice,
                     colorscale="RdYlBu_r",
                     cmin=amb, cmax=max(peak, amb + 1),
                     showscale=True,
@@ -515,7 +547,7 @@ def run_container_thermal_module():
                     opacity=0.92,
                     hovertemplate=(
                         f"z={z_val:.2f}m | X: %{{x:.1f}}m | Y: %{{y:.1f}}m | "
-                        f"<b>%{{surfacecolor:.1f}}°C</b><extra></extra>"
+                        f"<b>%{{customdata:.1f}}°C</b><extra></extra>"
                     ),
                 )
                 
@@ -541,7 +573,7 @@ def run_container_thermal_module():
             )
         # ── Tab 3: 3D Airflow — fragment-based particle animation ──────────────
         with tab3:
-            U, V = vent_airflow_vectors(T_floor, sim_vents, NX, NY)
+            U, V = vent_airflow_vectors(T_floor, sim_exhaust, sim_intake, NX, NY)
 
             N_FRAMES = 48
             N_COLS, N_ROWS = 8, 5
@@ -662,19 +694,35 @@ def run_container_thermal_module():
                     name="Floor Temp", hoverinfo='skip',
                 ))
 
-                # Duct markers at ceiling height, small size to avoid label overlap
-                if sim_vents:
+                # Exhaust duct markers (cyan)
+                if sim_exhaust:
                     traces.append(go.Scatter3d(
-                        x=[float(v[0]) * dx for v in sim_vents],
-                        y=[float(v[1]) * dy for v in sim_vents],
-                        z=[con_h * 0.95] * len(sim_vents),
+                        x=[float(v[0]) * dx for v in sim_exhaust],
+                        y=[float(v[1]) * dy for v in sim_exhaust],
+                        z=[con_h * 0.95] * len(sim_exhaust),
                         mode='markers+text',
-                        marker=dict(size=5, color='#00b4d8', symbol='diamond', opacity=0.9),
-                        text=["D"] * len(sim_vents),
+                        marker=dict(size=6, color='#00b4d8', symbol='diamond', opacity=0.9),
+                        text=["💨"] * len(sim_exhaust),
                         textposition="bottom center",
                         textfont=dict(size=9, color='#00b4d8'),
-                        name="HVAC 덕트" if not is_en else "HVAC Duct",
-                        hovertemplate="Duct X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
+                        name="배기 덕트" if not is_en else "Exhaust Duct",
+                        hovertemplate=("배기 X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>" if not is_en
+                                       else "Exhaust X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>"),
+                    ))
+                # Intake duct markers (orange)
+                if sim_intake:
+                    traces.append(go.Scatter3d(
+                        x=[float(v[0]) * dx for v in sim_intake],
+                        y=[float(v[1]) * dy for v in sim_intake],
+                        z=[con_h * 0.95] * len(sim_intake),
+                        mode='markers+text',
+                        marker=dict(size=6, color='#ff7f0e', symbol='diamond', opacity=0.9),
+                        text=["🔵"] * len(sim_intake),
+                        textposition="bottom center",
+                        textfont=dict(size=9, color='#ff7f0e'),
+                        name="흡기 덕트" if not is_en else "Intake Duct",
+                        hovertemplate=("흡기 X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>" if not is_en
+                                       else "Intake X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>"),
                     ))
 
                 fig_c = go.Figure(data=traces)
@@ -694,8 +742,8 @@ def run_container_thermal_module():
 
             _airflow_anim()
             st.caption(
-                "파란 점 = 공기 파티클 | 꼬리 = 이동 궤적 | ◆D = HVAC 덕트 | ▶ 시작 / ⏸ 정지 버튼으로 제어" if not is_en
-                else "Blue dots = air particles | Trail = trajectory | ◆D = HVAC duct | Use ▶ Start / ⏸ Pause buttons"
+                "파란 점 = 공기 파티클 | 💨(청록) = 배기 덕트 (공기 흡입) | 🔵(주황) = 흡기 덕트 (공기 공급) | ▶ 시작 / ⏸ 정지" if not is_en
+                else "Blue dots = air particles | 💨(cyan) = Exhaust duct (air out) | 🔵(orange) = Intake duct (air in) | ▶ Start / ⏸ Pause"
             )
 
     else:

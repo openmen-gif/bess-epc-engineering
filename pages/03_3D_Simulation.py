@@ -79,7 +79,7 @@ def _T():
             "str_xnode":    "Node",
             "str_yload":    "Load Type",
             "str_zload":    "Load (kN)",
-            "str_hover2":   "<b>Load: {cat}</b><br>Node: {node}<br>Value: {val:.1f} kN<extra></extra>",
+            "str_hover2":   "<b>Load: {cat}</b><br>Node: {node}<br>Value: {val:.1f} kN",
             # Fire FDS
             "fds_info":     "Fire Dynamics Simulation for smoke extraction and thermal runaway propagation.",
             "fds_params":   "FDS Parameters",
@@ -175,7 +175,7 @@ def _T():
             "str_xnode":    "절점 (Node)",
             "str_yload":    "하중 종류",
             "str_zload":    "하중 크기 (kN)",
-            "str_hover2":   "<b>하중: {cat}</b><br>절점: {node}<br>값: {val:.1f} kN<extra></extra>",
+            "str_hover2":   "<b>하중: {cat}</b><br>절점: {node}<br>값: {val:.1f} kN",
             # Fire FDS
             "fds_info":     "화재 역학 시뮬레이션으로 연기 배출 및 열폭주 전파를 분석합니다.",
             "fds_params":   "FDS 파라미터",
