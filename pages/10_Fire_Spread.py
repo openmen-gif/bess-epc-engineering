@@ -236,89 +236,43 @@ def run_fire_spread_module():
         agent_key = st.selectbox(t("p10_agent"), list(agent_labels.keys()),
                                  format_func=lambda k: agent_labels[k])
 
-    # ── 🔥 Click-to-Set Fire Origin ───────────────────────────────────────────
+    # ── 🔥 Fire Origin Button Grid ─────────────────────────────────────────────
     st.markdown("---")
     st.markdown("#### 🔥 " + ("화재 발원 지점 선택" if not is_en else "Select Fire Origin"))
     st.caption(
-        "아래 격자에서 셀을 클릭하면 화재 발원 지점이 지정됩니다." if not is_en
-        else "Click any cell in the grid below to set the fire origin rack."
+        "셀 버튼을 클릭하면 화재 발원 지점이 지정됩니다. 🔥 = 현재 발원 지점" if not is_en
+        else "Click a cell button to set the fire origin. 🔥 = current origin"
     )
 
     # Resolve current origin from session state (clamped to grid)
     origin_r = min(int(st.session_state.get("fire_origin_r", 0)), rows - 1)
     origin_c = min(int(st.session_state.get("fire_origin_c", 0)), cols - 1)
 
-    # Build selector grid
-    grid_z = np.zeros((rows, cols), dtype=float)
-    grid_z[origin_r, origin_c] = 1.0
+    # Column header row
+    hdr = st.columns([1] + [1] * cols)
+    hdr[0].caption("R\\C")
+    for gc in range(cols):
+        hdr[gc + 1].caption(str(gc))
 
-    fig_sel = go.Figure()
-    fig_sel.add_trace(go.Heatmap(
-        z=grid_z,
-        x=list(range(cols)),
-        y=list(range(rows)),
-        colorscale=[[0, "#1a3a5c"], [1, "#c0392b"]],
-        zmin=0, zmax=1,
-        showscale=False,
-        hovertemplate=(
-            ("행 %{y} · 열 %{x}<extra></extra>") if not is_en
-            else ("Row %{y} · Col %{x}<extra></extra>")
-        ),
-    ))
-    fig_sel.add_trace(go.Scatter(
-        x=[origin_c], y=[origin_r],
-        mode='markers+text',
-        marker=dict(size=18, color='#ff4444', symbol='x', line=dict(width=3, color='white')),
-        text=["🔥"], textfont=dict(size=15),
-        textposition="top center",
-        name="발원 지점" if not is_en else "Fire Origin",
-        hovertemplate=(
-            ("현재 발원: 행 %{y} · 열 %{x}<extra></extra>") if not is_en
-            else ("Current origin: Row %{y} · Col %{x}<extra></extra>")
-        ),
-    ))
-    for r_l in range(rows + 1):
-        fig_sel.add_hline(y=r_l - 0.5, line=dict(color="#30363d", width=1))
-    for c_l in range(cols + 1):
-        fig_sel.add_vline(x=c_l - 0.5, line=dict(color="#30363d", width=1))
-
-    fig_sel.update_layout(
-        height=max(200, rows * 40),
-        margin=dict(l=40, r=20, t=20, b=30),
-        xaxis=dict(title="열 (Col)" if not is_en else "Col",
-                   tickmode='linear', tick0=0, dtick=1,
-                   gridcolor='rgba(0,0,0,0)', zeroline=False),
-        yaxis=dict(title="행 (Row)" if not is_en else "Row",
-                   tickmode='linear', tick0=0, dtick=1,
-                   gridcolor='rgba(0,0,0,0)', zeroline=False,
-                   autorange='reversed'),
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#c9d1d9",
-        showlegend=False,
-        dragmode='select',
-        clickmode='event+select',
-    )
-
-    sel_event = st.plotly_chart(
-        fig_sel,
-        use_container_width=True,
-        on_select="rerun",
-        selection_mode="points",
-        key="fire_origin_selector",
-    )
-
-    # Process click event — no guard needed; on_select only fires on real user clicks
-    if sel_event and sel_event.selection and sel_event.selection.points:
-        pt    = sel_event.selection.points[0]
-        new_c = max(0, min(int(round(float(pt.get("x", origin_c)))), cols - 1))
-        new_r = max(0, min(int(round(float(pt.get("y", origin_r)))), rows - 1))
-        st.session_state["fire_origin_r"] = new_r
-        st.session_state["fire_origin_c"] = new_c
-        st.rerun()
+    # Button grid
+    for gr in range(rows):
+        row_cols = st.columns([1] + [1] * cols)
+        row_cols[0].caption(str(gr))
+        for gc in range(cols):
+            with row_cols[gc + 1]:
+                is_origin = (gr == origin_r and gc == origin_c)
+                if st.button(
+                    "🔥" if is_origin else "▫️",
+                    key=f"fire_orig_{gr}_{gc}",
+                    use_container_width=True,
+                    type="primary" if is_origin else "secondary",
+                ):
+                    st.session_state["fire_origin_r"] = gr
+                    st.session_state["fire_origin_c"] = gc
+                    st.rerun()
 
     st.info(
-        f"🔥 " + ("현재 발원 지점: " if not is_en else "Current fire origin: ") +
+        "🔥 " + ("현재 발원 지점: " if not is_en else "Current fire origin: ") +
         f"**{'행' if not is_en else 'Row'} {origin_r + 1}** · "
         f"**{'열' if not is_en else 'Col'} {origin_c + 1}**"
     )
@@ -365,6 +319,10 @@ def run_fire_spread_module():
 
     st.markdown("---")
 
+    # ── Animation state (hoisted outside tabs to avoid double-render on rerun) ──
+    playing  = st.session_state.get("fire_playing", False)
+    step_val = min(int(st.session_state.get("_fire_step_val", 0)), n_steps - 1)
+
     tab1, tab2, tab3 = st.tabs([
         "🔥 " + ("3D 확산 애니메이션"        if not is_en else "3D Spread Animation"),
         "📈 " + ("확산 면적 추이"             if not is_en else "Spread Area Over Time"),
@@ -373,10 +331,6 @@ def run_fire_spread_module():
 
     # ── Tab 1: 3D + 2D — Streamlit-native animation (single Play control) ──
     with tab1:
-        # ── Animation state ───────────────────────────────────────────────
-        playing  = st.session_state.get("fire_playing", False)
-        step_val = min(int(st.session_state.get("_fire_step_val", 0)), n_steps - 1)
-
         fire_cs = [
             [0.00, STATE_COLORS[NORMAL]],
             [0.25, STATE_COLORS[HEATING]],
@@ -500,15 +454,6 @@ def run_fire_spread_module():
             cc.metric("🌡️ " + ("가열" if not is_en else "Heat"),
                       str(int(np.sum(cur_g == HEATING)) + int(np.sum(cur_g == THERMAL_RUNAWAY))))
 
-        # ── Auto-advance animation ─────────────────────────────────────────
-        if playing:
-            time.sleep(0.4)
-            if step < n_steps - 1:
-                st.session_state["_fire_step_val"] = step + 1
-            else:
-                st.session_state["fire_playing"] = False
-            st.rerun()
-
     # ── Tab 2: Area Over Time ─────────────────────────────────────────────────
     with tab2:
         times = list(range(len(fire_cnt)))
@@ -574,6 +519,15 @@ def run_fire_spread_module():
             font_color="#c9d1d9", showlegend=False,
         )
         st.plotly_chart(fig_cmp, use_container_width=True)
+
+    # ── Auto-advance animation (outside all tabs to prevent double-render) ────
+    if playing:
+        time.sleep(0.4)
+        if step < n_steps - 1:
+            st.session_state["_fire_step_val"] = step + 1
+        else:
+            st.session_state["fire_playing"] = False
+        st.rerun()
 
 
 run_fire_spread_module()

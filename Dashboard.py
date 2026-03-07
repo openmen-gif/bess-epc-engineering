@@ -191,19 +191,19 @@ def _home():
 
 # ── Dynamic navigation based on role ─────────────────────────────────────────
 
-_login_pg = st.Page("pages/00_Login.py",             title="🔑 Login / 계정관리",    icon="🔑")
-_home_pg  = st.Page(_home,                            title="🏠 Dashboard",            icon="🏠")
-_p01 = st.Page("pages/01_Project_Setup.py",           title="01 Project Setup",        icon="📋")
-_p02 = st.Page("pages/02_System_Engineering.py",      title="02 System Engineering",   icon="⚙️")
-_p03 = st.Page("pages/03_3D_Simulation.py",           title="03 3D Simulation",        icon="🏗️")
-_p04 = st.Page("pages/04_EBOP_Engineer.py",           title="04 EBOP Engineer",        icon="⚡")
-_p05 = st.Page("pages/05_CBOP_Engineer.py",           title="05 CBOP Engineer",        icon="🏗️")
-_p06 = st.Page("pages/06_Data_Analyst.py",            title="06 Data Analyst",         icon="📊")
-_p07 = st.Page("pages/07_IPO_Checklists.py",          title="07 IPO Checklists",       icon="✅")
-_p08 = st.Page("pages/08_Tool_Launcher.py",           title="08 Tool Launcher",        icon="🚀")
-_p09 = st.Page("pages/09_Container_Thermal.py",       title="09 Container Thermal",    icon="🌡️")
-_p10 = st.Page("pages/10_Fire_Spread.py",             title="10 Fire Spread",          icon="🔥")
-_p11 = st.Page("pages/11_Cyber_Security.py",          title="11 Cyber Security",       icon="🔒")
+_login_pg = st.Page("pages/00_Login.py",             title="Login / 계정관리",    icon="🔑")
+_home_pg  = st.Page(_home,                            title="Dashboard",            icon="🏠")
+_p01 = st.Page("pages/01_Project_Setup.py",           title="01 Project Setup",     icon="📋")
+_p02 = st.Page("pages/02_System_Engineering.py",      title="02 System Engineering",icon="⚙️")
+_p03 = st.Page("pages/03_3D_Simulation.py",           title="03 3D Simulation",     icon="🏗️")
+_p04 = st.Page("pages/04_EBOP_Engineer.py",           title="04 EBOP Engineer",     icon="⚡")
+_p05 = st.Page("pages/05_CBOP_Engineer.py",           title="05 CBOP Engineer",     icon="🏗️")
+_p06 = st.Page("pages/06_Data_Analyst.py",            title="06 Data Analyst",      icon="📊")
+_p07 = st.Page("pages/07_IPO_Checklists.py",          title="07 IPO Checklists",    icon="✅")
+_p08 = st.Page("pages/08_Tool_Launcher.py",           title="08 Tool Launcher",     icon="🚀")
+_p09 = st.Page("pages/09_Container_Thermal.py",       title="09 Container Thermal", icon="🌡️")
+_p10 = st.Page("pages/10_Fire_Spread.py",             title="10 Fire Spread",       icon="🔥")
+_p11 = st.Page("pages/11_Cyber_Security.py",          title="11 Cyber Security",    icon="🔒")
 
 _viewer_pages   = [_p01, _p02, _p03, _p04, _p05, _p06]
 _engineer_pages = [_p07, _p08, _p09, _p10, _p11]

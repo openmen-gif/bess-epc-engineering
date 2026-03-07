@@ -17,7 +17,7 @@ except Exception:
 
 from utils.css_loader import apply_custom_css
 from utils.auth_helper import (
-    login, logout, register, delete_user, update_user, change_password,
+    login, register, delete_user, update_user, change_password,
     get_all_users, is_authenticated, current_role,
     ROLES, ROLE_LABEL, PAGE_MIN_ROLE, PROTECTED_USERS, sidebar_user_info,
 )
@@ -44,27 +44,18 @@ def run_login_page():
             ("✅ 로그인됨: " if not is_en else "✅ Logged in as: ") +
             f"**{name}** ({role_label})"
         )
+        st.info("🏠 " + ("왼쪽 사이드바에서 Dashboard를 클릭하세요." if not is_en else "Click Dashboard in the left sidebar to return."))
         if role == "admin":
-            tab_dash, tab_myacct, tab_manage = st.tabs([
-                "🏠 " + ("대시보드" if not is_en else "Dashboard"),
+            tab_myacct, tab_manage = st.tabs([
                 "👤 " + ("내 계정 설정" if not is_en else "My Account"),
                 "⚙️ " + ("계정 관리" if not is_en else "Manage Accounts"),
             ])
-            with tab_dash:
-                st.page_link("Dashboard.py", label="🏠 " + ("대시보드로 이동" if not is_en else "Go to Dashboard"))
             with tab_myacct:
                 _my_account_form(username, is_en)
             with tab_manage:
                 _admin_manage(is_en)
         else:
-            tab_dash, tab_myacct = st.tabs([
-                "🏠 " + ("대시보드" if not is_en else "Dashboard"),
-                "👤 " + ("내 계정 설정" if not is_en else "My Account"),
-            ])
-            with tab_dash:
-                st.page_link("Dashboard.py", label="🏠 " + ("대시보드로 이동" if not is_en else "Go to Dashboard"))
-            with tab_myacct:
-                _my_account_form(username, is_en)
+            _my_account_form(username, is_en)
         return
 
     # ── Not logged in: Login / Register tabs ──────────────────────────────
