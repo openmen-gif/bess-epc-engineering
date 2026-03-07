@@ -407,6 +407,13 @@ _TRANSLATIONS = {
                           "EN": "IEC 62443 · NERC CIP · Network Security · Access Control checklists"},
     "hp_cyber_link":     {"KO": "📂 사이버보안 체크리스트로",     "EN": "📂 Cybersecurity Checklist"},
 
+    # ─── Market Trends (Homepage) ────────────────────────────────────
+    "hp_market_trends_title": {"KO": "📈 글로벌 BESS 시장 동향", "EN": "📈 Global BESS Market Trends"},
+    "hp_market_refresh_btn":  {"KO": "🔄 실시간 갱신", "EN": "🔄 Real-time Refresh"},
+    "hp_market_category":     {"KO": "뉴스 카테고리", "EN": "News Category"},
+    "hp_market_last_updated": {"KO": "마지막 통신: {time}", "EN": "Last Sync: {time}"},
+    "hp_market_no_news":      {"KO": "뉴스를 불러오지 못했습니다.", "EN": "Failed to load news."}
+
 }
 
 

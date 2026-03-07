@@ -420,7 +420,12 @@ def generate_pdf_report():
     errors = []
     def _convert():
         try:
-            docx2pdf.convert(word_path, pdf_path)
+            import pythoncom
+            pythoncom.CoInitialize()
+            try:
+                docx2pdf.convert(word_path, pdf_path)
+            finally:
+                pythoncom.CoUninitialize()
         except Exception as e:
             errors.append(e)
     

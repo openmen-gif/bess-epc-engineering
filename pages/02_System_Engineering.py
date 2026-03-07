@@ -48,6 +48,17 @@ def run_system_engineering_module():
         c_rate = st.selectbox(t("p2_crate"), c_rate_opts,
                               index=c_rate_opts.index(c_rate_str) if c_rate_str in c_rate_opts else 0)
 
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("**단위 용량설정 (Unit Sizing)**" if st.session_state.get('lang', 'KO') == 'KO' else "**Unit Capacity Settings**")
+        pcs_unit_mw = st.number_input(
+            "PCS 스키드 단위 용량 (MW)" if st.session_state.get('lang', 'KO') == 'KO' else "PCS Skid Rating (MW/MVA)", 
+            min_value=0.1, value=2.5, step=0.1
+        )
+        batt_unit_mwh = st.number_input(
+            "배터리 인클로저 단위 용량 (MWh)" if st.session_state.get('lang', 'KO') == 'KO' else "Battery Enclosure Rating (MWh)", 
+            min_value=0.1, value=3.5, step=0.1
+        )
+
     with col2:
         st.subheader(t("p2_sizing"))
 
@@ -62,14 +73,12 @@ def run_system_engineering_module():
         st.metric(label=t("p2_nameplate"), value=f"{required_dc_nameplate:.2f} MWh",
                   help=f"Includes {epc_margin*100}% Margin, {aux_loss*100}% Aux Loss, {(1-rte)*100:.1f}% RTE Derating.")
 
-        container_capacity = 3.5
-        num_containers = np.ceil(required_dc_nameplate / container_capacity)
-        st.metric(label=t("p2_enclosure"), value=f"{int(num_containers)} Units")
+        num_containers = np.ceil(required_dc_nameplate / batt_unit_mwh)
+        st.metric(label=t("p2_enclosure"), value=f"{int(num_containers)} Units", help=f"Capacity per unit: {batt_unit_mwh} MWh")
 
-        pcs_rating = 2.5
         required_pcs_mw = power_mw * (1 + aux_loss)
-        num_pcs = np.ceil(required_pcs_mw / pcs_rating)
-        st.metric(label=t("p2_pcs"), value=f"{int(num_pcs)} Skids")
+        num_pcs = np.ceil(required_pcs_mw / pcs_unit_mw)
+        st.metric(label=t("p2_pcs"), value=f"{int(num_pcs)} Skids", help=f"Rating per unit: {pcs_unit_mw} MW")
 
     st.markdown("---")
     st.subheader(t("regional_std"))
