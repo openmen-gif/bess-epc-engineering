@@ -10,7 +10,6 @@ try:
 except Exception:
     pass
 
-import time
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -292,7 +291,8 @@ def run_fire_spread_module():
         st.session_state["fire_cnt"]    = fire_cnt
         st.session_state["fire_supp"]   = supp_cnt
         st.session_state["fire_sim_params"] = (rows, cols, origin_r, origin_c, chem_key, agent_key, response_sec)
-        st.session_state["fire_3d_slider"] = 0  # reset animation
+        st.session_state["_fire_step_val"] = 0   # reset animation step
+        st.session_state["fire_playing"]  = False
 
     if "fire_frames" not in st.session_state:
         st.info(
@@ -319,27 +319,23 @@ def run_fire_spread_module():
 
     st.markdown("---")
 
-    # ── Animation state (hoisted outside tabs to avoid double-render on rerun) ──
-    playing  = st.session_state.get("fire_playing", False)
-    step_val = min(int(st.session_state.get("_fire_step_val", 0)), n_steps - 1)
-
     tab1, tab2, tab3 = st.tabs([
         "🔥 " + ("3D 확산 애니메이션"        if not is_en else "3D Spread Animation"),
         "📈 " + ("확산 면적 추이"             if not is_en else "Spread Area Over Time"),
         "⚖️ " + ("방화 시스템 비교"           if not is_en else "Suppression Comparison"),
     ])
 
-    # ── Tab 1: 3D + 2D — Streamlit-native animation (single Play control) ──
+    # ── Tab 1: @st.fragment — runs every 0.4s independently, no full-page rerun ──
     with tab1:
-        fire_cs = [
+        _fire_cs = [
             [0.00, STATE_COLORS[NORMAL]],
             [0.25, STATE_COLORS[HEATING]],
             [0.50, STATE_COLORS[THERMAL_RUNAWAY]],
             [0.75, STATE_COLORS[FIRE]],
             [1.00, STATE_COLORS[SUPPRESSED]],
         ]
-        state_labels = [t("p10_state0"), t("p10_state1"), t("p10_state2"),
-                        t("p10_state3"), t("p10_state4")]
+        _state_labels = [t("p10_state0"), t("p10_state1"), t("p10_state2"),
+                         t("p10_state3"), t("p10_state4")]
         _dark = dict(
             paper_bgcolor="rgba(0,0,0,0)",
             font_color="#c9d1d9",
@@ -347,29 +343,26 @@ def run_fire_spread_module():
             margin=dict(l=0, r=10, t=40, b=40),
         )
 
-        # ── Play / Pause controls ──────────────────────────────────────────
-        bcol1, bcol2, _ = st.columns([1, 1, 10])
-        with bcol1:
-            if st.button("▶ " + ("재생" if not is_en else "Play"), key="fire_play_btn"):
-                if step_val >= n_steps - 1:
+        @st.fragment(run_every=0.4)
+        def _fire_anim():
+            _playing  = st.session_state.get("fire_playing", False)
+            _step_val = min(int(st.session_state.get("_fire_step_val", 0)), n_steps - 1)
+
+            # Play / Pause
+            bcol1, bcol2, _ = st.columns([1, 1, 10])
+            with bcol1:
+                if st.button("▶ " + ("재생" if not is_en else "Play"), key="fire_play_btn"):
                     st.session_state["_fire_step_val"] = 0
-                    step_val = 0
-                st.session_state["fire_playing"] = True
-                st.rerun()
-        with bcol2:
-            if st.button("⏸", key="fire_pause_btn"):
-                st.session_state["fire_playing"] = False
-                playing = False
+                    st.session_state["fire_playing"] = True
+            with bcol2:
+                if st.button("⏸", key="fire_pause_btn"):
+                    st.session_state["fire_playing"] = False
 
-        # Time slider (keyless — driven by _fire_step_val session var)
-        step = st.slider("t (sec)", 0, n_steps - 1, step_val)
-        st.session_state["_fire_step_val"] = step
+            _step = st.slider("t (sec)", 0, n_steps - 1, _step_val, key="fire_step_sl")
+            st.session_state["_fire_step_val"] = _step
 
-        # ── 3D + 2D static charts for current step ────────────────────────
-        col3d, col2d = st.columns([6, 5])
-
-        with col3d:
-            st.markdown("**🔥 " + ("3D 화재 확산" if not is_en else "3D Fire Spread") + "**")
+            # 3D + 2D
+            col3d, col2d = st.columns([6, 5])
 
             def _3d_surf(grid: np.ndarray) -> go.Surface:
                 r_n, c_n = grid.shape
@@ -378,7 +371,7 @@ def run_fire_spread_module():
                 return go.Surface(
                     x=list(range(c_n)), y=list(range(r_n)), z=z_surf,
                     surfacecolor=grid.astype(float).tolist(),
-                    colorscale=fire_cs, cmin=0, cmax=4,
+                    colorscale=_fire_cs, cmin=0, cmax=4,
                     showscale=False, opacity=0.92,
                     hovertemplate=("행: %{y} · 열: %{x}<extra></extra>" if not is_en
                                    else "Row: %{y} · Col: %{x}<extra></extra>"),
@@ -393,66 +386,75 @@ def run_fire_spread_module():
                 name="발원 지점" if not is_en else "Fire Origin",
             )
 
-            fig_3d = go.Figure(data=[_3d_surf(frames[step]), origin_marker])
-            fig_3d.update_layout(
-                **_dark, height=460,
-                scene=dict(
-                    xaxis=dict(title="열 (Col)" if not is_en else "Col",
-                               backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                               tickmode='linear', tick0=0, dtick=1),
-                    yaxis=dict(title="행 (Row)" if not is_en else "Row",
-                               backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                               tickmode='linear', tick0=0, dtick=1),
-                    zaxis=dict(title="강도" if not is_en else "Intensity",
-                               backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                               range=[0, 1.5]),
-                    bgcolor="rgba(0,0,0,0)",
-                    camera=dict(eye=dict(x=1.6, y=-1.8, z=1.4)),
-                ),
-                legend=dict(bgcolor="rgba(30,30,30,0.6)", bordercolor="#30363d", borderwidth=1),
-            )
-            st.plotly_chart(fig_3d, use_container_width=True)
-
-        with col2d:
-            st.markdown("**📋 " + ("2D 뷰" if not is_en else "2D View") + "**")
+            with col3d:
+                st.markdown("**🔥 " + ("3D 화재 확산" if not is_en else "3D Fire Spread") + "**")
+                fig_3d = go.Figure(data=[_3d_surf(frames[_step]), origin_marker])
+                fig_3d.update_layout(
+                    **_dark, height=460,
+                    scene=dict(
+                        xaxis=dict(title="열 (Col)" if not is_en else "Col",
+                                   backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
+                                   tickmode='linear', tick0=0, dtick=1),
+                        yaxis=dict(title="행 (Row)" if not is_en else "Row",
+                                   backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
+                                   tickmode='linear', tick0=0, dtick=1),
+                        zaxis=dict(title="강도" if not is_en else "Intensity",
+                                   backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
+                                   range=[0, 1.5]),
+                        bgcolor="rgba(0,0,0,0)",
+                        camera=dict(eye=dict(x=1.6, y=-1.8, z=1.4)),
+                    ),
+                    legend=dict(bgcolor="rgba(30,30,30,0.6)", bordercolor="#30363d", borderwidth=1),
+                )
+                st.plotly_chart(fig_3d, use_container_width=True)
 
             def _2d_hmap(grid: np.ndarray) -> go.Heatmap:
                 return go.Heatmap(
                     z=grid.astype(float),
-                    colorscale=fire_cs, zmin=0, zmax=4, showscale=True,
-                    colorbar=dict(tickvals=[0, 1, 2, 3, 4], ticktext=state_labels,
+                    colorscale=_fire_cs, zmin=0, zmax=4, showscale=True,
+                    colorbar=dict(tickvals=[0, 1, 2, 3, 4], ticktext=_state_labels,
                                   title="상태" if not is_en else "State", x=1.02,
                                   thickness=12, len=0.8),
                     hovertemplate=("행: %{y} · 열: %{x}<extra></extra>" if not is_en
                                    else "Row: %{y} · Col: %{x}<extra></extra>"),
                 )
 
-            fig_2d = go.Figure(data=[_2d_hmap(frames[step])])
-            fig_2d.update_layout(
-                **_dark, height=460,
-                xaxis=dict(title="열 (Col)" if not is_en else "Col",
-                           tickmode='linear', tick0=0, dtick=1,
-                           gridcolor='rgba(0,0,0,0)', zeroline=False),
-                yaxis=dict(title="행 (Row)" if not is_en else "Row",
-                           tickmode='linear', tick0=0, dtick=1,
-                           gridcolor='rgba(0,0,0,0)', zeroline=False,
-                           autorange='reversed'),
+            with col2d:
+                st.markdown("**📋 " + ("2D 뷰" if not is_en else "2D View") + "**")
+                fig_2d = go.Figure(data=[_2d_hmap(frames[_step])])
+                fig_2d.update_layout(
+                    **_dark, height=460,
+                    xaxis=dict(title="열 (Col)" if not is_en else "Col",
+                               tickmode='linear', tick0=0, dtick=1,
+                               gridcolor='rgba(0,0,0,0)', zeroline=False),
+                    yaxis=dict(title="행 (Row)" if not is_en else "Row",
+                               tickmode='linear', tick0=0, dtick=1,
+                               gridcolor='rgba(0,0,0,0)', zeroline=False,
+                               autorange='reversed'),
+                )
+                st.plotly_chart(fig_2d, use_container_width=True)
+
+            st.caption(
+                "3D: Surface 높이 = 화재 강도 | 2D: 격자 색상 = 상태 | ▶/⏸ + 슬라이더로 시간 제어 | ◆ = 발원 지점"
+                if not is_en else
+                "3D: Surface height = fire intensity | 2D: cell colour = state | ▶/⏸ + slider = time | ◆ = origin"
             )
-            st.plotly_chart(fig_2d, use_container_width=True)
 
-        st.caption(
-            "3D: Surface 높이 = 화재 강도 | 2D: 격자 색상 = 상태 | ▶/⏸ + 슬라이더로 시간 제어 | ◆ = 발원 지점"
-            if not is_en else
-            "3D: Surface height = fire intensity | 2D: cell colour = state | ▶/⏸ + slider = time | ◆ = origin"
-        )
+            with st.expander("📊 " + ("최종 상태 요약" if not is_en else "Final State Summary"), expanded=False):
+                cur_g = frames[-1]
+                ca, cb, cc = st.columns(3)
+                ca.metric("🔥 " + ("화재" if not is_en else "Fire"),  str(int(np.sum(cur_g == FIRE))))
+                cb.metric("💨 " + ("소화" if not is_en else "Supp."), str(int(np.sum(cur_g == SUPPRESSED))))
+                cc.metric("🌡️ " + ("가열" if not is_en else "Heat"),
+                          str(int(np.sum(cur_g == HEATING)) + int(np.sum(cur_g == THERMAL_RUNAWAY))))
 
-        with st.expander("📊 " + ("최종 상태 요약" if not is_en else "Final State Summary"), expanded=False):
-            cur_g = frames[-1]
-            ca, cb, cc = st.columns(3)
-            ca.metric("🔥 " + ("화재" if not is_en else "Fire"),  str(int(np.sum(cur_g == FIRE))))
-            cb.metric("💨 " + ("소화" if not is_en else "Supp."), str(int(np.sum(cur_g == SUPPRESSED))))
-            cc.metric("🌡️ " + ("가열" if not is_en else "Heat"),
-                      str(int(np.sum(cur_g == HEATING)) + int(np.sum(cur_g == THERMAL_RUNAWAY))))
+            # Auto-advance inside fragment — no st.rerun(), no page re-render
+            if _playing and _step < n_steps - 1:
+                st.session_state["_fire_step_val"] = _step + 1
+            elif _playing:
+                st.session_state["fire_playing"] = False
+
+        _fire_anim()
 
     # ── Tab 2: Area Over Time ─────────────────────────────────────────────────
     with tab2:
@@ -520,14 +522,6 @@ def run_fire_spread_module():
         )
         st.plotly_chart(fig_cmp, use_container_width=True)
 
-    # ── Auto-advance animation (outside all tabs to prevent double-render) ────
-    if playing:
-        time.sleep(0.4)
-        if step < n_steps - 1:
-            st.session_state["_fire_step_val"] = step + 1
-        else:
-            st.session_state["fire_playing"] = False
-        st.rerun()
 
 
 run_fire_spread_module()
