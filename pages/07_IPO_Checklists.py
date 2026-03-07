@@ -13,7 +13,7 @@ from utils.lang_helper import t
 from utils.ipo_en_data import EN_IPO
 from utils.auth_helper import require_auth, sidebar_user_info
 
-SKILL_MD_DIR = r"c:\Users\openm\00_AI개발\01_BESS사업\00_Skill_MD"
+SKILL_MD_DIR = str(Path(__file__).parent.parent / "skill_md")
 
 
 def _skill_key(filename: str) -> str:
@@ -153,7 +153,6 @@ def run_ipo_checklists_module():
     try:
         files = sorted([f for f in os.listdir(SKILL_MD_DIR) if f.endswith('.md')])
     except Exception as e:
-        st.error(f"Cannot read skill directory: {e}")
         files = []
 
     if not files:
@@ -314,7 +313,7 @@ def run_ipo_checklists_module():
                 progress_bar.progress(50, text=t("p7_compiling"))
                 time.sleep(0.5)
 
-                deliverable_dir = Path(r"c:\Users\openm\00_AI개발\01_BESS사업\output\10_tools\deliverables")
+                deliverable_dir = Path("/tmp/deliverables")
                 deliverable_dir.mkdir(parents=True, exist_ok=True)
 
                 safe_skill   = selected_file.replace('.md', '').replace(' ', '_')
