@@ -139,18 +139,6 @@ def clear_rss_cache():
 
 YEARS = [2022, 2023, 2024, 2025, 2026, 2027]
 YEAR_LABELS = ["2022", "2023", "2024", "2025", "2026E", "2027F"]
-def _latest_actual_year() -> int:
-    """현재 연도 기준으로 데이터가 있는 가장 최근 실적 연도를 동적으로 반환."""
-    from datetime import datetime
-    current_year = datetime.now().year
-    # 전년도까지 실적 데이터가 있다고 가정; 당해 연도는 E(추정) 취급
-    candidate = current_year - 1
-    # GLOBAL_CAPACITY_GWH에 해당 연도 데이터가 없으면 한 해 더 내림
-    while candidate > 2022 and candidate not in GLOBAL_CAPACITY_GWH:
-        candidate -= 1
-    return candidate
-
-LATEST_ACTUAL_YEAR = _latest_actual_year()
 
 # ---- 글로벌 시장 규모 (GWh) ----
 GLOBAL_CAPACITY_GWH = {
@@ -375,6 +363,15 @@ REGIONAL_DATA = {
 }
 
 REGIONS = list(REGIONAL_DATA.keys())
+
+def _latest_actual_year() -> int:
+    """현재 연도 기준으로 데이터가 있는 가장 최근 실적 연도를 동적으로 반환."""
+    candidate = datetime.now().year - 1
+    while candidate > 2022 and candidate not in GLOBAL_CAPACITY_GWH:
+        candidate -= 1
+    return candidate
+
+LATEST_ACTUAL_YEAR = _latest_actual_year()
 
 # ---- 주요 프로젝트 파이프라인 ----
 PROJECT_PIPELINE = [
