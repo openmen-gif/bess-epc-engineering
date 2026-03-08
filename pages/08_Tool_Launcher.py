@@ -10,8 +10,15 @@ from pathlib import Path
 from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
+from utils.config import IS_API_MODE
 
 EXEC_DIR = Path(r"c:\Users\openm\00_AI개발\01_BESS사업\output\10_tools\executables")
+
+# GitHub Release URL for cloud mode
+GH_RELEASE_TAG = "tools-v1.0"
+GH_REPO = "openmen-gif/bess-epc-engineering"
+GH_RELEASE_URL = f"https://github.com/{GH_REPO}/releases/tag/{GH_RELEASE_TAG}"
+GH_DOWNLOAD_BASE = f"https://github.com/{GH_REPO}/releases/download/{GH_RELEASE_TAG}"
 
 # ── Bilingual tool metadata ────────────────────────────────────────────────
 # key = exact executable name stem (with version, e.g. BESS_ThermalCalc_v1.0)
@@ -232,35 +239,35 @@ def run_tool_launcher_module():
         "**다운로드** 버튼을 눌러 로컬에 저장하세요."
     )
 
-    # ── Directory check ──────────────────────────────────────────────
-    if not EXEC_DIR.exists():
-        st.warning(
-            f"Executables folder not found: `{EXEC_DIR}`" if is_en else
-            f"실행 파일 폴더를 찾을 수 없습니다: `{EXEC_DIR}`"
-        )
-        exe_files = []
-    else:
+    # ── Mode detection ──────────────────────────────────────────────
+    use_local = IS_API_MODE and EXEC_DIR.exists()
+
+    if use_local:
         exe_files = sorted(
             [f for f in EXEC_DIR.iterdir() if f.suffix.lower() == '.exe'],
             key=lambda f: f.name.lower()
         )
+    else:
+        # Cloud mode: build virtual file list from TOOL_META
+        exe_files = []
+        st.info(
+            f"☁️ Cloud mode — tools available for download from [GitHub Releases]({GH_RELEASE_URL})."
+            if is_en else
+            f"☁️ 클라우드 모드 — [GitHub Releases]({GH_RELEASE_URL})에서 도구를 다운로드할 수 있습니다."
+        )
 
     # ── Summary metrics ──────────────────────────────────────────────
+    tool_count = len(exe_files) if use_local else len(TOOL_META)
     col_m1, col_m2, col_m3 = st.columns(3)
-    col_m1.metric("총 도구 수" if not is_en else "Total Tools",    str(len(exe_files)))
+    col_m1.metric("총 도구 수" if not is_en else "Total Tools",    str(tool_count))
     col_m2.metric("분류 수"   if not is_en else "Categories",      str(len(CATEGORY_ORDER_EN)))
-    total_mb = sum(_file_size_mb(f) for f in exe_files)
-    col_m3.metric("전체 크기" if not is_en else "Total Size",      f"{total_mb:.1f} MB")
+    if use_local:
+        total_mb = sum(_file_size_mb(f) for f in exe_files)
+        col_m3.metric("전체 크기" if not is_en else "Total Size",  f"{total_mb:.1f} MB")
+    else:
+        col_m3.metric("배포 방식" if not is_en else "Source",      "GitHub Release")
 
     st.markdown("---")
-
-    if not exe_files:
-        st.info(
-            "No executable (.exe) files found in the folder. "
-            "Place your BESS tools in the executables directory." if is_en else
-            "실행 파일(.exe)이 없습니다. executables 폴더에 BESS 도구를 배치하세요."
-        )
-        return
 
     # ── Search & filter ──────────────────────────────────────────────
     col_search, col_filter = st.columns([3, 1])
@@ -288,14 +295,24 @@ def run_tool_launcher_module():
 
     # ── Category grouping ────────────────────────────────────────────
     grouped: dict[str, list] = {}
-    for f in exe_files:
-        stem = _get_stem(f.name)
-        meta = _get_meta(stem)
-        cat  = meta.get("category_en" if is_en else "category_ko",
-                        "General Tools" if is_en else "일반 도구")
-        if cat not in grouped:
-            grouped[cat] = []
-        grouped[cat].append((f, stem, meta))
+
+    if use_local:
+        for f in exe_files:
+            stem = _get_stem(f.name)
+            meta = _get_meta(stem)
+            cat  = meta.get("category_en" if is_en else "category_ko",
+                            "General Tools" if is_en else "일반 도구")
+            if cat not in grouped:
+                grouped[cat] = []
+            grouped[cat].append((f, stem, meta))
+    else:
+        # Cloud mode: use TOOL_META catalog
+        for stem, meta in TOOL_META.items():
+            cat = meta.get("category_en" if is_en else "category_ko",
+                           "General Tools" if is_en else "일반 도구")
+            if cat not in grouped:
+                grouped[cat] = []
+            grouped[cat].append((None, stem, meta))
 
     category_order = CATEGORY_ORDER_EN if is_en else CATEGORY_ORDER_KO
     sorted_groups  = sorted(grouped.items(),
@@ -305,11 +322,8 @@ def run_tool_launcher_module():
     shown = 0
     for cat_label, tools in sorted_groups:
         # Category filter
-        if cat_filter != "All / 전체":
-            if is_en and cat_filter != cat_label:
-                continue
-            if not is_en and cat_filter != cat_label:
-                continue
+        if cat_filter != "All / 전체" and cat_filter != cat_label:
+            continue
 
         # Search filter
         visible_tools = []
@@ -327,7 +341,6 @@ def run_tool_launcher_module():
         st.markdown(f"### {icon} {cat_label}")
 
         for f, stem, meta in visible_tools:
-            size_mb  = _file_size_mb(f)
             tool_icon = meta.get("icon", "🔧")
             desc = meta.get("desc_en" if is_en else "desc_ko",
                             f"{stem} — engineering tool" if is_en else f"{stem} — 엔지니어링 도구")
@@ -339,20 +352,32 @@ def run_tool_launcher_module():
                 st.markdown(f"**{stem}**")
                 st.caption(desc)
             with c3:
-                st.markdown(f"`{size_mb:.1f} MB`")
+                if use_local and f:
+                    st.markdown(f"`{_file_size_mb(f):.1f} MB`")
+                else:
+                    st.markdown("`EXE`")
             with c4:
-                try:
-                    with open(f, "rb") as fh:
-                        data = fh.read()
-                    st.download_button(
+                if use_local and f:
+                    try:
+                        with open(f, "rb") as fh:
+                            data = fh.read()
+                        st.download_button(
+                            label="📥 Download" if is_en else "📥 다운로드",
+                            data=data,
+                            file_name=f.name,
+                            mime="application/octet-stream",
+                            key=f"dl_{stem}",
+                        )
+                    except Exception:
+                        st.button("⚠️ Error", key=f"err_{stem}", disabled=True)
+                else:
+                    # Cloud mode: link to GitHub Release asset
+                    dl_url = f"{GH_DOWNLOAD_BASE}/{stem}.exe"
+                    st.link_button(
                         label="📥 Download" if is_en else "📥 다운로드",
-                        data=data,
-                        file_name=f.name,
-                        mime="application/octet-stream",
-                        key=f"dl_{stem}",
+                        url=dl_url,
+                        use_container_width=True,
                     )
-                except Exception:
-                    st.button("⚠️ Error", key=f"err_{stem}", disabled=True)
             shown += 1
 
         st.markdown("---")
