@@ -12,6 +12,7 @@ EXPOSE 7860
 ENV STREAMLIT_SERVER_PORT=7860
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ENV STREAMLIT_SERVER_HEADLESS=true
+ENV BESS_MODE=standalone
 
 CMD ["streamlit", "run", "Dashboard.py", \
      "--server.port=7860", \

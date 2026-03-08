@@ -33,38 +33,69 @@ def _make_src_map(heat_sources, nx, ny):
     return src_map
 
 
-import requests
+from utils.config import IS_API_MODE, API_BASE_URL
+
+
+def _solve_local(nx, ny, dx, dy, ambient, heat_sources, hvac_kw, area_m2, sim_vent_cells):
+    """Local FDM solver — standalone mode or API fallback."""
+    T = np.full((ny, nx), ambient, dtype=float)
+    src_map = _make_src_map(heat_sources, nx, ny)
+    hvac_alpha = min((hvac_kw * 1000.0) / max(area_m2 * 60000.0, 1.0), 0.08)
+    vent_extra = hvac_alpha * 2.5
+    vent_set = set()
+    for (vx, vy) in sim_vent_cells:
+        cx = min(max(int(vx), 1), nx - 2)
+        cy = min(max(int(vy), 1), ny - 2)
+        vent_set.add((cy, cx))
+    snap_set = set(SNAP_ITERS)
+    snapshots = []
+    for i in range(1, max(SNAP_ITERS) + 1):
+        T_new = T.copy()
+        T_new[1:-1, 1:-1] = 0.25 * (
+            T[2:,  1:-1] + T[:-2, 1:-1] +
+            T[1:-1, 2:] + T[1:-1, :-2]
+        )
+        T_new[1:-1, 1:-1] += hvac_alpha * (ambient - T_new[1:-1, 1:-1])
+        for (cy, cx) in vent_set:
+            T_new[cy, cx] += vent_extra * (ambient - T_new[cy, cx])
+        T_new[0, :]  = T_new[-1, :] = ambient
+        T_new[:, 0]  = T_new[:, -1] = ambient
+        for (iy, ix), T_src in src_map.items():
+            T_new[iy, ix] = T_src
+        T = T_new
+        if i in snap_set:
+            snapshots.append(T.copy())
+    return snapshots
+
+
+def _solve_via_api(nx, ny, dx, dy, ambient, heat_sources, hvac_kw, area_m2, sim_vent_cells):
+    """Call FastAPI backend for FDM computation."""
+    import requests
+    response = requests.post(
+        f"{API_BASE_URL}/simulation/thermal",
+        json={
+            "nx": nx, "ny": ny, "dx": dx, "dy": dy,
+            "ambient": ambient, "heat_sources": heat_sources,
+            "hvac_kw": hvac_kw, "area_m2": area_m2,
+            "sim_vent_cells": [(int(c[0]), int(c[1])) for c in sim_vent_cells],
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+    return [np.array(snap) for snap in response.json()["snapshots"]]
+
 
 def solve_temperature_transient(nx, ny, dx, dy, ambient, heat_sources,
                                  hvac_kw, area_m2, sim_vent_cells):
-    """
-    Calls the FastAPI backend to run FDM.
-    """
-    url = "http://localhost:8000/api/v1/simulation/thermal"
-    payload = {
-        "nx": nx,
-        "ny": ny,
-        "dx": dx,
-        "dy": dy,
-        "ambient": ambient,
-        "heat_sources": heat_sources,
-        "hvac_kw": hvac_kw,
-        "area_m2": area_m2,
-        "sim_vent_cells": [(int(c[0]), int(c[1])) for c in sim_vent_cells]
-    }
-    
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        snapshots = [np.array(snap) for snap in data["snapshots"]]
-        return snapshots
-    except requests.exceptions.RequestException as e:
-        import streamlit as st
-        st.error(f"백엔드 시뮬레이션 서버 연결 실패 (Backend connection failed): {e}\\nFastAPI 서버(localhost:8000)가 실행 중인지 확인하세요.")
-        # Fallback empty snapshots to avoid crashing
-        ambient_arr = np.full((ny, nx), ambient, dtype=float)
-        return [ambient_arr] * len(SNAP_ITERS)
+    """Dual-mode: API mode tries backend first with local fallback; standalone runs locally."""
+    if IS_API_MODE:
+        try:
+            return _solve_via_api(nx, ny, dx, dy, ambient, heat_sources,
+                                  hvac_kw, area_m2, sim_vent_cells)
+        except Exception:
+            pass
+    return _solve_local(nx, ny, dx, dy, ambient, heat_sources,
+                        hvac_kw, area_m2, sim_vent_cells)
 
 
 def make_heat_sources(nx, ny, n_racks, T_rack):
