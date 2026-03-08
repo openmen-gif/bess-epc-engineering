@@ -17,3 +17,11 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated/temp files
+output_reports/
+test.*
+*.lock
+=0.20.0
+utils/users_backup_*.json
+~$*

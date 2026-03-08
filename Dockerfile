@@ -5,6 +5,7 @@ WORKDIR /app
 COPY packages.txt .
 RUN apt-get update \
     && xargs -a packages.txt apt-get install -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -16,6 +17,9 @@ COPY . .
 RUN mkdir -p /data && chmod 777 /data
 
 EXPOSE 7860
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:7860/_stcore/health || exit 1
 
 ENV STREAMLIT_SERVER_PORT=7860
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
