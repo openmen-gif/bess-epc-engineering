@@ -81,6 +81,10 @@ def render_kpi_metrics(_kpi):
         st.metric(label=t("hp_m4"), value=str(_kpi["completed"]))
 
 def render_tools_grid():
+    from utils.auth_helper import has_access
+    # Tools 07~11 require engineer role; hide from viewers to avoid page_link errors
+    if not has_access("07"):
+        return
     st.markdown(t("hp_tools_title"))
     st.caption(t("hp_tools_sub"))
     ta, tb, tc, td, te = st.columns(5)
