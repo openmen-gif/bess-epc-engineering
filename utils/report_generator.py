@@ -170,6 +170,7 @@ def _setup_doc(title=None):
     h2.font.color.rgb = CLR_H2
     h2.font.name = FONT
     h2.element.rPr.rFonts.set(qn("w:eastAsia"), FONT)
+    h2.paragraph_format.page_break_before = False
     try:
         h3 = doc.styles["Heading 3"]
     except KeyError:
