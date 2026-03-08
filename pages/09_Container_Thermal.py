@@ -33,51 +33,38 @@ def _make_src_map(heat_sources, nx, ny):
     return src_map
 
 
+import requests
+
 def solve_temperature_transient(nx, ny, dx, dy, ambient, heat_sources,
                                  hvac_kw, area_m2, sim_vent_cells):
     """
-    Run FDM up to max(SNAP_ITERS) and return a snapshot list.
-    sim_vent_cells: list of (ix, iy) in simulation grid — extra cooling applied there.
+    Calls the FastAPI backend to run FDM.
     """
-    T = np.full((ny, nx), ambient, dtype=float)
-    src_map = _make_src_map(heat_sources, nx, ny)
-
-    # Base HVAC cooling fraction per iteration
-    hvac_alpha = min((hvac_kw * 1000.0) / max(area_m2 * 60000.0, 1.0), 0.08)
-    vent_extra = hvac_alpha * 2.5  # extra cooling at duct cells
-
-    # Clamp vent cells to interior
-    vent_set = set()
-    for (vx, vy) in sim_vent_cells:
-        cx = min(max(int(vx), 1), nx - 2)
-        cy = min(max(int(vy), 1), ny - 2)
-        vent_set.add((cy, cx))
-
-    snap_set = set(SNAP_ITERS)
-    snapshots = []
-
-    for i in range(1, max(SNAP_ITERS) + 1):
-        T_new = T.copy()
-        T_new[1:-1, 1:-1] = 0.25 * (
-            T[2:,  1:-1] + T[:-2, 1:-1] +
-            T[1:-1, 2:] + T[1:-1, :-2]
-        )
-        # Uniform HVAC cooling
-        T_new[1:-1, 1:-1] += hvac_alpha * (ambient - T_new[1:-1, 1:-1])
-        # Extra cooling at duct cells
-        for (cy, cx) in vent_set:
-            T_new[cy, cx] += vent_extra * (ambient - T_new[cy, cx])
-        # Boundaries = ambient
-        T_new[0, :]  = T_new[-1, :] = ambient
-        T_new[:, 0]  = T_new[:, -1] = ambient
-        # Rack cells = Dirichlet
-        for (iy, ix), T_src in src_map.items():
-            T_new[iy, ix] = T_src
-        T = T_new
-        if i in snap_set:
-            snapshots.append(T.copy())
-
-    return snapshots
+    url = "http://localhost:8000/api/v1/simulation/thermal"
+    payload = {
+        "nx": nx,
+        "ny": ny,
+        "dx": dx,
+        "dy": dy,
+        "ambient": ambient,
+        "heat_sources": heat_sources,
+        "hvac_kw": hvac_kw,
+        "area_m2": area_m2,
+        "sim_vent_cells": [(int(c[0]), int(c[1])) for c in sim_vent_cells]
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        snapshots = [np.array(snap) for snap in data["snapshots"]]
+        return snapshots
+    except requests.exceptions.RequestException as e:
+        import streamlit as st
+        st.error(f"백엔드 시뮬레이션 서버 연결 실패 (Backend connection failed): {e}\\nFastAPI 서버(localhost:8000)가 실행 중인지 확인하세요.")
+        # Fallback empty snapshots to avoid crashing
+        ambient_arr = np.full((ny, nx), ambient, dtype=float)
+        return [ambient_arr] * len(SNAP_ITERS)
 
 
 def make_heat_sources(nx, ny, n_racks, T_rack):
@@ -112,6 +99,7 @@ def scale_vents_to_sim(hvac_vents, NX, NY):
     return result
 
 
+@st.cache_data(show_spinner=False)
 def vent_airflow_vectors(T_floor, sim_exhaust_cells, sim_intake_cells, NX, NY):
     """Return U, V arrays. Exhaust: flow toward duct. Intake: flow away from duct."""
     all_cells = list(sim_exhaust_cells) + list(sim_intake_cells)

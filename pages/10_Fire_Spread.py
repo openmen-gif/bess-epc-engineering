@@ -49,6 +49,7 @@ AGENT_PARAMS = {
 
 
 # ── Simulation engine ─────────────────────────────────────────────────────────
+@st.cache_data(show_spinner=False)
 def simulate_fire_spread(rows, cols, origin_r, origin_c,
                           chem, agent, response_sec, max_steps=60):
     params       = CHEM_PARAMS.get(chem, CHEM_PARAMS["LFP"])
