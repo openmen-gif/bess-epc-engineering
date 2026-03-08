@@ -12,20 +12,66 @@ from pathlib import Path
 from filelock import FileLock
 import streamlit as st
 
-# ── User data file (persistent storage on HuggingFace Spaces) ─────────────────
-_PERSISTENT_DIR = Path("/data")
-_BUNDLED_FILE   = Path(__file__).parent / "users.json"
+# ── User data file ─────────────────────────────────────────────────────────────
+_USERS_FILE = Path(__file__).parent / "users.json"
+_LOCK_FILE  = Path(__file__).parent / "users.json.lock"
 
-if _PERSISTENT_DIR.exists() and _PERSISTENT_DIR.is_dir():
-    _USERS_FILE = _PERSISTENT_DIR / "users.json"
-    _LOCK_FILE  = _PERSISTENT_DIR / "users.json.lock"
-    # Migrate bundled seed data on first run
-    if not _USERS_FILE.exists() and _BUNDLED_FILE.exists():
-        import shutil
-        shutil.copy2(_BUNDLED_FILE, _USERS_FILE)
-else:
-    _USERS_FILE = _BUNDLED_FILE
-    _LOCK_FILE  = Path(__file__).parent / "users.json.lock"
+# ── HuggingFace Hub sync (persistent user data across container restarts) ─────
+_HF_REPO_ID = "openmen-gif/bess-user-data"   # private dataset repo
+_HF_FILENAME = "users.json"
+_HF_TOKEN = os.environ.get("HF_TOKEN", "")
+
+def _hf_download() -> bool:
+    """Download users.json from HF Hub. Returns True on success."""
+    if not _HF_TOKEN:
+        return False
+    try:
+        from huggingface_hub import hf_hub_download
+        path = hf_hub_download(
+            repo_id=_HF_REPO_ID,
+            filename=_HF_FILENAME,
+            repo_type="dataset",
+            token=_HF_TOKEN,
+            local_dir=_USERS_FILE.parent,
+            local_dir_use_symlinks=False,
+        )
+        # hf_hub_download may place it in a cache dir; copy to expected location
+        downloaded = Path(path)
+        if downloaded.resolve() != _USERS_FILE.resolve():
+            import shutil
+            shutil.copy2(downloaded, _USERS_FILE)
+        return True
+    except Exception:
+        return False
+
+
+def _hf_upload() -> None:
+    """Upload users.json to HF Hub (best-effort, non-blocking)."""
+    if not _HF_TOKEN:
+        return
+    try:
+        from huggingface_hub import HfApi
+        api = HfApi(token=_HF_TOKEN)
+        # Ensure private dataset repo exists
+        api.create_repo(
+            repo_id=_HF_REPO_ID,
+            repo_type="dataset",
+            private=True,
+            exist_ok=True,
+        )
+        api.upload_file(
+            path_or_fileobj=str(_USERS_FILE),
+            path_in_repo=_HF_FILENAME,
+            repo_id=_HF_REPO_ID,
+            repo_type="dataset",
+        )
+    except Exception:
+        pass  # best-effort; local file is still the source of truth
+
+
+# On startup: try to restore from HF Hub
+if _HF_TOKEN:
+    _hf_download()
 
 # ── Role definitions ───────────────────────────────────────────────────────────
 ROLES = ["admin", "engineer", "viewer"]
@@ -118,6 +164,9 @@ def _save_users(users: dict) -> None:
             f.flush()
             os.fsync(f.fileno())
         os.replace(tmp_file, _USERS_FILE)
+    # Sync to HF Hub in background thread
+    import threading
+    threading.Thread(target=_hf_upload, daemon=True).start()
 
 
 # ── Public auth functions ──────────────────────────────────────────────────────
