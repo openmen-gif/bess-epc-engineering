@@ -210,51 +210,39 @@ TOOL_META: dict[str, dict] = {
         "desc_ko": "EPC 프로젝트 인력 조직/인원 검색 도구.", "icon": "👥",
     },
 
-    # ─ Legacy / Specialized Tools ─
-    "bess_pcs_battery_tool": {
-        "category_en": "Specialized", "category_ko": "전문 도구",
-        "desc_en": "PCS-Battery interface design and configuration tool.",
-        "desc_ko": "PCS-배터리 인터페이스 설계 및 구성 도구.", "icon": "🔌",
+    # ─ Analysis Workbooks (xlsx) ─
+    "BESS_FluidAnalysis_v1.0": {
+        "category_en": "Engineering Calc", "category_ko": "엔지니어링 계산",
+        "desc_en": "Fluid dynamics and cooling system analysis workbook.",
+        "desc_ko": "유체역학 및 냉각 시스템 분석 워크북.", "icon": "💧", "ext": "xlsx",
     },
-    "bess_psa_tool_v1b": {
-        "category_en": "Specialized", "category_ko": "전문 도구",
-        "desc_en": "Probabilistic Safety Assessment (PSA) analysis tool.",
-        "desc_ko": "확률론적 안전성 평가(PSA) 분석 도구.", "icon": "🎯",
+    "BESS_StructuralAnalysis_v1.0": {
+        "category_en": "Engineering Calc", "category_ko": "엔지니어링 계산",
+        "desc_en": "Structural engineering analysis workbook.",
+        "desc_ko": "구조 엔지니어링 분석 워크북.", "icon": "🏛️", "ext": "xlsx",
     },
-    "bess_tool_v2b": {
-        "category_en": "Specialized", "category_ko": "전문 도구",
-        "desc_en": "BESS general-purpose engineering toolkit v2.",
-        "desc_ko": "BESS 범용 엔지니어링 툴킷 v2.", "icon": "🧰",
+    "BESS_PCS_Battery_Selector_v3.0": {
+        "category_en": "Engineering Calc", "category_ko": "엔지니어링 계산",
+        "desc_en": "PCS-Battery interface selection and configuration workbook v3.",
+        "desc_ko": "PCS-배터리 인터페이스 선정 및 구성 워크북 v3.", "icon": "🔌", "ext": "xlsx",
     },
-    "gen_fluid_tool": {
-        "category_en": "Specialized", "category_ko": "전문 도구",
-        "desc_en": "Fluid dynamics and cooling system design guide generator.",
-        "desc_ko": "유체역학 및 냉각 시스템 설계 가이드 생성기.", "icon": "💧",
-    },
-    "gen_pcs_guide_v3": {
-        "category_en": "Specialized", "category_ko": "전문 도구",
-        "desc_en": "PCS engineering guide document generator v3.",
-        "desc_ko": "PCS 엔지니어링 가이드 문서 생성기 v3.", "icon": "📝",
-    },
-    "gen_psa_guide_v2": {
-        "category_en": "Specialized", "category_ko": "전문 도구",
-        "desc_en": "PSA engineering guide document generator v2.",
-        "desc_ko": "PSA 엔지니어링 가이드 문서 생성기 v2.", "icon": "📝",
-    },
-    "gen_structural_tool": {
-        "category_en": "Specialized", "category_ko": "전문 도구",
-        "desc_en": "Structural engineering design guide generator.",
-        "desc_ko": "구조 엔지니어링 설계 가이드 생성기.", "icon": "🏛️",
+    "BESS_PowerSystem_Analysis_v2.0": {
+        "category_en": "Simulation", "category_ko": "시뮬레이션",
+        "desc_en": "Power system analysis workbook (load flow, short circuit) v2.",
+        "desc_ko": "전력계통 해석 워크북 (조류계산, 단락전류) v2.", "icon": "⚡", "ext": "xlsx",
     },
 }
 
-CATEGORY_ORDER_EN = ["Engineering Calc", "Simulation", "Project Mgmt", "O&M / Reporting", "Standards", "Procurement", "Specialized"]
-CATEGORY_ORDER_KO = ["엔지니어링 계산",  "시뮬레이션",    "프로젝트 관리",    "O&M / 보고서",    "규격/기준",  "조달",       "전문 도구"]
+CATEGORY_ORDER_EN = ["Engineering Calc", "Simulation", "Project Mgmt", "O&M / Reporting", "Standards", "Procurement"]
+CATEGORY_ORDER_KO = ["엔지니어링 계산",  "시뮬레이션",    "프로젝트 관리",    "O&M / 보고서",    "규격/기준",  "조달"]
 
 
 def _get_stem(name: str) -> str:
-    """Remove .exe suffix and return the stem."""
-    return name.removesuffix('.exe').removesuffix('.EXE')
+    """Remove file extension and return the stem."""
+    for ext in ('.exe', '.EXE', '.xlsx', '.XLSX'):
+        if name.endswith(ext):
+            return name[:-len(ext)]
+    return name
 
 
 def _file_size_mb(path: Path) -> float:
@@ -290,7 +278,7 @@ def run_tool_launcher_module():
 
     if use_local:
         exe_files = sorted(
-            [f for f in EXEC_DIR.iterdir() if f.suffix.lower() == '.exe'],
+            [f for f in EXEC_DIR.iterdir() if f.suffix.lower() in ('.exe', '.xlsx') and f.name.startswith('BESS_')],
             key=lambda f: f.name.lower()
         )
     else:
@@ -401,7 +389,8 @@ def run_tool_launcher_module():
                 if use_local and f:
                     st.markdown(f"`{_file_size_mb(f):.1f} MB`")
                 else:
-                    st.markdown("`EXE`")
+                    ext_label = meta.get("ext", "exe").upper()
+                    st.markdown(f"`{ext_label}`")
             with c4:
                 if use_local and f:
                     try:
@@ -418,7 +407,8 @@ def run_tool_launcher_module():
                         st.button("⚠️ Error", key=f"err_{stem}", disabled=True)
                 else:
                     # Cloud mode: link to GitHub Release asset
-                    dl_url = f"{GH_DOWNLOAD_BASE}/{stem}.exe"
+                    ext = meta.get("ext", "exe")
+                    dl_url = f"{GH_DOWNLOAD_BASE}/{stem}.{ext}"
                     st.link_button(
                         label="📥 Download" if is_en else "📥 다운로드",
                         url=dl_url,
