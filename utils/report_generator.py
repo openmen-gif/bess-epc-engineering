@@ -254,10 +254,19 @@ def _styled_table(doc, headers, rows, col_widths_mm=None):
                 tcPr.append(shading)
     return tbl
 
-def _add_news_section(doc, category, max_items=5):
+def _add_news_section(doc, category, max_items=5, analysis: str = ""):
     feed = md.fetch_rss_feed(category, max_items=max_items)
     news = feed.get("items", [])
-    doc.add_heading(f"[{category}] 관련 최신 뉴스", level=2)
+    heading_text = (f"[{category}] 분석 및 최신 뉴스" if analysis
+                    else f"[{category}] 관련 최신 뉴스")
+    doc.add_heading(heading_text, level=2)
+    if analysis:
+        p = doc.add_paragraph(analysis)
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(6)
+        for run in p.runs:
+            run.font.size = Pt(10)
+            run.font.name = FONT
     if not news:
         doc.add_paragraph(
             "⚠️ 실시간 뉴스를 가져오지 못했습니다. (네트워크 접근 제한 또는 일시적 오류일 수 있습니다.)",
@@ -356,16 +365,16 @@ def generate_word_report():
     org_p = doc.add_paragraph()
     org_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     org_p.add_run("BESS EPC AI Agent System").font.size = Pt(12)
-    doc.add_page_break()
 
     # TOC
-    doc.add_heading("목차", level=1)
+    _toc_h = doc.add_heading("목차", level=1)
+    _toc_h.paragraph_format.page_break_before = True
     add_toc(doc)
-    doc.add_page_break()
     add_page_number(sec0)
 
     # 1. Executive Summary
-    doc.add_heading("1. Executive Summary", level=1)
+    _h1 = doc.add_heading("1. Executive Summary", level=1)
+    _h1.paragraph_format.page_break_before = True
     doc.add_paragraph(
         "본 보고서는 주요 글로벌 대상 시장의 BESS(Battery Energy Storage System) 산업 동향을 심층적으로 분석합니다. "
         "분석 시점 기준 글로벌 시장의 성장률과 가격 동향, 정책 프레임워크를 조망합니다."
@@ -382,8 +391,8 @@ def generate_word_report():
     _styled_table(doc, ["항목", "값"], summary_rows, col_widths_mm=[70, 90])
 
     # 2. 시장별 심층 분석
-    doc.add_page_break()
-    doc.add_heading("2. 시장별 심층 분석", level=1)
+    _h2 = doc.add_heading("2. 시장별 심층 분석", level=1)
+    _h2.paragraph_format.page_break_before = True
     for idx, r_name in enumerate(md.REGIONS):
         r_data = md.REGIONAL_DATA[r_name]
         doc.add_heading(f"2.{idx+1} {r_name} ({r_data['name_en']})", level=2)
@@ -403,16 +412,51 @@ def generate_word_report():
         _add_news_section(doc, f"{r_name} 시장", 3)
 
     # 3. 주요 카테고리별 전문 동향
-    doc.add_page_break()
-    doc.add_heading("3. 전문 카테고리 분석", level=1)
+    _h3 = doc.add_heading("3. 전문 카테고리 분석", level=1)
+    _h3.paragraph_format.page_break_before = True
     doc.add_paragraph("BESS 사업에 영향을 미치는 주요 거시적 및 미시적 카테고리 이슈 현황입니다.")
-    cats = ["배터리 가격", "프로젝트", "경쟁사", "공급망", "정책·규제"]
-    for c in cats:
-        _add_news_section(doc, c, 5)
+    _yr = md.LATEST_ACTUAL_YEAR
+    _CAT_ANALYSIS = {
+        "배터리 가격": (
+            f"LFP 셀 단가는 공급 과잉과 기술 혁신으로 지속 하락하여 {_yr}년 기준 "
+            f"${md.LFP_CELL_PRICE.get(_yr, 'N/A')}/kWh 수준이며, NMC는 "
+            f"${md.NMC_CELL_PRICE.get(_yr, 'N/A')}/kWh입니다. "
+            "중국 제조사의 규모의 경제가 가격 하락을 주도하고 있으며, "
+            f"시스템 CAPEX({_yr}: ${md.SYSTEM_CAPEX.get(_yr, 'N/A')}/kWh)는 "
+            "향후 2~3년 내 $150/kWh 이하 진입이 전망됩니다."
+        ),
+        "프로젝트": (
+            "글로벌 BESS 프로젝트는 대형화·장시간화 추세로 4시간 이상 장기저장 비중이 확대되고 있습니다. "
+            "미국·영국·호주를 중심으로 그리드 스케일 독립형(Standalone) BESS 프로젝트가 급증하며, "
+            "재생에너지 연계 하이브리드 구성이 EPC 수주의 핵심 형태로 부각됩니다. "
+            "PPA 기반 장기 수익 모델과 주파수 조정(FR)·용량 시장(Capacity Market) 참여가 사업성의 핵심입니다."
+        ),
+        "경쟁사": (
+            "글로벌 BESS 시장은 CATL, BYD 등 중국 제조사와 Tesla Megapack, Fluence, Wärtsilä 등 "
+            "통합 솔루션 공급자 간 경쟁이 심화되고 있습니다. "
+            "EPC 관점에서는 시스템 통합 역량과 O&M 서비스 패키지가 핵심 차별화 요소이며, "
+            "현지화 전략 및 프로젝트 파이낸싱 조달 역량이 수주 경쟁력을 결정합니다."
+        ),
+        "공급망": (
+            "리튬·코발트·망간 등 핵심 광물의 공급망 안정성이 BESS 원가 리스크의 핵심 변수입니다. "
+            "미국 IRA(인플레이션 감축법) 시행으로 북미 현지 생산 수요가 급증하였고, "
+            "공급망 다변화를 위한 한국·일본·유럽 제조사의 현지 투자가 가속화되고 있습니다. "
+            "셀 소싱 전략(단일 vs 멀티 공급사)이 프로젝트 리스크 관리의 핵심 요소로 부상하고 있습니다."
+        ),
+        "정책·규제": (
+            "미국 IRA, 유럽 Net-Zero Industry Act, 영국 Capacity Market 등 주요 시장의 정책 지원이 "
+            "BESS 수요를 견인하고 있습니다. "
+            "계통 연계 기준(Grid Code) 및 안전 규정(NFPA 855, IEC 62933) 강화가 진행 중이며, "
+            "ESS 화재 안전 기준과 소방 설계가 프로젝트 인허가의 핵심 요건으로 부상하고 있습니다. "
+            "각국의 탄소중립 로드맵 이행이 중장기 BESS 수요 성장의 근본 동인입니다."
+        ),
+    }
+    for c in ["배터리 가격", "프로젝트", "경쟁사", "공급망", "정책·규제"]:
+        _add_news_section(doc, c, 5, analysis=_CAT_ANALYSIS.get(c, ""))
 
     # 4. 시각화
-    doc.add_page_break()
-    doc.add_heading("4. 시각화 분석", level=1)
+    _h4 = doc.add_heading("4. 시각화 분석", level=1)
+    _h4.paragraph_format.page_break_before = True
     doc.add_heading("4.1 시장별 설치 용량", level=2)
     _add_chart_to_doc(doc, _chart_growth())
     
@@ -420,8 +464,8 @@ def generate_word_report():
     _add_chart_to_doc(doc, _chart_region())
 
     # 5. 시나리오 분석
-    doc.add_page_break()
-    doc.add_heading("5. 시나리오 분석", level=1)
+    _h5 = doc.add_heading("5. 시나리오 분석", level=1)
+    _h5.paragraph_format.page_break_before = True
     doc.add_paragraph("각국 시장 및 거시경제 상황에 따른 BESS 확산 중장기 시나리오 전망입니다.")
     scen_rows = []
     scen_rows.append(["연도", "보수적", "기준", "낙관적"])
