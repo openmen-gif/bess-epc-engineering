@@ -390,22 +390,62 @@ def generate_word_report():
     ]
     _styled_table(doc, ["항목", "값"], summary_rows, col_widths_mm=[70, 90])
 
+    # Section 1 interpretation
+    _lfp_2022 = md.LFP_CELL_PRICE.get(2022, 80)
+    _lfp_cur  = md.LFP_CELL_PRICE.get(_yr, _lfp_2022)
+    _lfp_drop = round((1 - _lfp_cur / _lfp_2022) * 100)
+    _cap_cur  = md.GLOBAL_CAPACITY_GWH.get(_yr, 0)
+    _cap_prev = md.GLOBAL_CAPACITY_GWH.get(_yr - 1, 0)
+    _yoy_g    = round((_cap_cur - _cap_prev) / _cap_prev * 100) if _cap_prev else 0
+    _mkt_val  = md.GLOBAL_MARKET_VALUE_B_USD.get(_yr, 0)
+    _p_interp = doc.add_paragraph(
+        f"글로벌 BESS 시장은 {_yr}년 {_cap_cur} GWh를 기록하며 전년 대비 {_yoy_g}% 성장하였습니다. "
+        f"시장 규모는 약 ${_mkt_val}B USD로, LFP 셀 단가는 2022년($80/kWh) 대비 {_lfp_drop}% 하락한 "
+        f"${_lfp_cur}/kWh까지 내려왔습니다. "
+        "가격 하락·정책 지원 확대·재생에너지 연계 수요 증가가 복합적으로 시장 성장을 견인하고 있으며, "
+        "2027년 370 GWh 돌파가 전망됩니다."
+    )
+    _p_interp.paragraph_format.space_before = Pt(4)
+    for _r in _p_interp.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
+
     # 2. 시장별 심층 분석
     _h2 = doc.add_heading("2. 시장별 심층 분석", level=1)
     _h2.paragraph_format.page_break_before = True
     for idx, r_name in enumerate(md.REGIONS):
         r_data = md.REGIONAL_DATA[r_name]
         doc.add_heading(f"2.{idx+1} {r_name} ({r_data['name_en']})", level=2)
-        
+
+        _cur_r  = r_data["installed_gwh"].get(_yr, 0)
+        _prev_r = r_data["installed_gwh"].get(_yr - 1, 0)
+        _yoy_r  = round((_cur_r - _prev_r) / _prev_r * 100) if _prev_r else 0
+        _kp     = ", ".join(r_data.get("key_players", [])[:5])
+        _avg_sz = r_data.get("avg_project_size_mwh", "N/A")
+        _scale  = "대형 그리드 스케일" if isinstance(_avg_sz, (int, float)) and _avg_sz >= 200 else "중소형"
+        _p_ov = doc.add_paragraph(
+            f"{r_name} 시장은 {_yr}년 {_cur_r} GWh를 기록하여 전년 대비 {_yoy_r}% 성장하였습니다. "
+            f"파이프라인 {r_data['pipeline_gwh']} GWh로 향후 성장 잠재력이 크며, "
+            f"평균 프로젝트 규모 {_avg_sz} MWh의 {_scale} 시장이 주도합니다. "
+            f"주요 참여 기업: {_kp}."
+        )
+        _p_ov.paragraph_format.space_after = Pt(4)
+        for _r in _p_ov.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT
+
         detail_rows = [
-            [f"설치 용량 ({_yr})", f"{r_data['installed_gwh'].get(_yr, 'N/A')} GWh"],
-            ["성장률", f"{r_data['growth_rate_pct']}%"],
+            [f"설치 용량 ({_yr})", f"{_cur_r} GWh"],
+            [f"YoY 성장률 ({_yr - 1}→{_yr})", f"+{_yoy_r}%"],
+            ["중기 연간 성장률", f"{r_data['growth_rate_pct']}%"],
             ["파이프라인 (허가/계획)", f"{r_data['pipeline_gwh']} GWh"],
-            ["매출 모델", r_data['revenue_model']],
+            ["주요 수익 모델", r_data['revenue_model']],
         ]
         _styled_table(doc, ["항목", "데이터"], detail_rows, col_widths_mm=[55, 105])
 
-        doc.add_heading("정책 환경 및 드라이버", level=3)
+        doc.add_heading("주요 성장 동인", level=3)
+        for kd in r_data.get("key_drivers", []):
+            doc.add_paragraph(kd, style="List Bullet")
+
+        doc.add_heading("정책 환경 및 규제", level=3)
         for p in r_data['policy']:
             doc.add_paragraph(p, style="List Bullet")
 
@@ -457,11 +497,46 @@ def generate_word_report():
     # 4. 시각화
     _h4 = doc.add_heading("4. 시각화 분석", level=1)
     _h4.paragraph_format.page_break_before = True
+    _yr4 = md.LATEST_ACTUAL_YEAR
+    _bars = [(r, md.REGIONAL_DATA[r]["name_en"],
+              md.REGIONAL_DATA[r]["installed_gwh"].get(_yr4, 0),
+              md.REGIONAL_DATA[r]["growth_rate_pct"]) for r in md.REGIONS]
+    _total4 = sum(x[2] for x in _bars)
+    _bars_sorted = sorted(_bars, key=lambda x: x[2], reverse=True)
+    _top3_sum4   = sum(x[2] for x in _bars_sorted[:3])
+    _top3_pct4   = round(_top3_sum4 / _total4 * 100) if _total4 else 0
+    _fastest4    = sorted(_bars, key=lambda x: x[3], reverse=True)[0]
+
     doc.add_heading("4.1 시장별 설치 용량", level=2)
     _add_chart_to_doc(doc, _chart_growth())
-    
+    _p_bar = doc.add_paragraph(
+        f"[그림 분석] {_yr4}년 글로벌 설치 용량 합계 {_total4:.1f} GWh 중, "
+        f"{_bars_sorted[0][1]}({_bars_sorted[0][2]} GWh)이 1위를 차지합니다. "
+        f"상위 3개 시장({', '.join(x[1] for x in _bars_sorted[:3])})의 합산 비중은 "
+        f"{_top3_pct4}%로 시장 집중도가 높습니다. "
+        f"성장률 최고 시장은 {_fastest4[0]}({_fastest4[1]}, 중기 CAGR {_fastest4[3]}%)로 "
+        f"신흥 시장 중 가장 빠른 확대세를 보입니다."
+    )
+    _p_bar.paragraph_format.space_before = Pt(4)
+    for _r in _p_bar.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
+
+    _pie_sorted = sorted(_bars, key=lambda x: x[2], reverse=True)
+    _shares4    = [(x[1], round(x[2] / _total4 * 100, 1)) for x in _pie_sorted]
+    _top3_sh    = round(sum(s[1] for s in _shares4[:3]), 1)
+
     doc.add_heading("4.2 지역별 시장 점유율", level=2)
     _add_chart_to_doc(doc, _chart_region())
+    _p_pie = doc.add_paragraph(
+        f"[그림 분석] {_shares4[0][0]}이 {_shares4[0][1]}%로 압도적 1위이며, "
+        f"{_shares4[1][0]} {_shares4[1][1]}%, {_shares4[2][0]} {_shares4[2][1]}%가 뒤를 잇습니다. "
+        f"상위 3개 지역 합산 점유율 {_top3_sh}%로 시장이 집중되어 있으며, "
+        f"{_shares4[-1][0]}({_shares4[-1][1]}%)는 아직 소규모이나 "
+        f"중기 성장률 {_fastest4[3]}%로 가장 빠른 성장이 전망됩니다."
+    )
+    _p_pie.paragraph_format.space_before = Pt(4)
+    for _r in _p_pie.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
 
     # 5. 시나리오 분석
     _h5 = doc.add_heading("5. 시나리오 분석", level=1)
@@ -475,6 +550,24 @@ def generate_word_report():
         opti = md.SCENARIOS["낙관적 (Optimistic)"]["capacity_gwh"].get(yr, 0)
         scen_rows.append([str(yr), f"{cons} GWh", f"{base} GWh", f"{opti} GWh"])
     _styled_table(doc, scen_rows[0], scen_rows[1:], col_widths_mm=[30, 40, 40, 40])
+
+    # Section 5 interpretation
+    _sb = md.SCENARIOS["기본 (Base)"]
+    _sc = md.SCENARIOS["보수적 (Conservative)"]
+    _so = md.SCENARIOS["낙관적 (Optimistic)"]
+    _p_scen = doc.add_paragraph(
+        f"기본 시나리오({_sb['description']}) 기준 2024~2030년 CAGR {_sb['cagr_pct']}%로 "
+        f"2030년 {_sb['capacity_gwh'].get(2030, 0)} GWh(시장 가치 ${_sb['market_value_b'].get(2030, 0)}B)가 전망됩니다. "
+        f"낙관 시나리오({_so['description']}) 실현 시 CAGR {_so['cagr_pct']}%로 "
+        f"2030년 {_so['capacity_gwh'].get(2030, 0)} GWh까지 확대 가능하며, "
+        f"보수 시나리오({_sc['description']}) 하에서도 {_sc['capacity_gwh'].get(2030, 0)} GWh(CAGR {_sc['cagr_pct']}%)로 "
+        "견조한 성장이 예상됩니다. "
+        "시나리오 편차의 핵심 변수는 IRA·RE정책 지속성, 배터리 가격 하락 속도, "
+        "전력시장 설계 개혁의 실행 속도입니다."
+    )
+    _p_scen.paragraph_format.space_before = Pt(4)
+    for _r in _p_scen.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
 
     doc.save(out_path)
     return out_path
