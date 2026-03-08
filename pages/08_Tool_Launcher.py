@@ -285,9 +285,9 @@ def run_tool_launcher_module():
         # Cloud mode: build virtual file list from TOOL_META
         exe_files = []
         st.info(
-            f"☁️ Cloud mode — tools available for download from [GitHub Releases]({GH_RELEASE_URL})."
+            "☁️ Cloud mode — download tools using the buttons below."
             if is_en else
-            f"☁️ 클라우드 모드 — [GitHub Releases]({GH_RELEASE_URL})에서 도구를 다운로드할 수 있습니다."
+            "☁️ 클라우드 모드 — 아래 다운로드 버튼을 이용하세요."
         )
 
     # ── Summary metrics ──────────────────────────────────────────────
