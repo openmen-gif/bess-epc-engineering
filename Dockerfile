@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Persistent storage directory for user data (HuggingFace Spaces mounts /data)
+RUN mkdir -p /data && chmod 777 /data
+
 EXPOSE 7860
 
 ENV STREAMLIT_SERVER_PORT=7860

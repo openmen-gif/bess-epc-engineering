@@ -12,9 +12,20 @@ from pathlib import Path
 from filelock import FileLock
 import streamlit as st
 
-# ── User data file ─────────────────────────────────────────────────────────────
-_USERS_FILE = Path(__file__).parent / "users.json"
-_LOCK_FILE  = Path(__file__).parent / "users.json.lock"
+# ── User data file (persistent storage on HuggingFace Spaces) ─────────────────
+_PERSISTENT_DIR = Path("/data")
+_BUNDLED_FILE   = Path(__file__).parent / "users.json"
+
+if _PERSISTENT_DIR.exists() and _PERSISTENT_DIR.is_dir():
+    _USERS_FILE = _PERSISTENT_DIR / "users.json"
+    _LOCK_FILE  = _PERSISTENT_DIR / "users.json.lock"
+    # Migrate bundled seed data on first run
+    if not _USERS_FILE.exists() and _BUNDLED_FILE.exists():
+        import shutil
+        shutil.copy2(_BUNDLED_FILE, _USERS_FILE)
+else:
+    _USERS_FILE = _BUNDLED_FILE
+    _LOCK_FILE  = Path(__file__).parent / "users.json.lock"
 
 # ── Role definitions ───────────────────────────────────────────────────────────
 ROLES = ["admin", "engineer", "viewer"]
