@@ -33,7 +33,6 @@ def _hf_download() -> bool:
             repo_type="dataset",
             token=_HF_TOKEN,
             local_dir=_USERS_FILE.parent,
-            local_dir_use_symlinks=False,
         )
         # hf_hub_download may place it in a cache dir; copy to expected location
         downloaded = Path(path)
