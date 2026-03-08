@@ -21,10 +21,12 @@ _HF_REPO_ID = "openmen-gif/bess-user-data"   # private dataset repo
 _HF_FILENAME = "users.json"
 _HF_TOKEN = os.environ.get("HF_TOKEN", "")
 
-def _hf_download() -> bool:
-    """Download users.json from HF Hub. Returns True on success."""
+import threading as _threading
+
+def _hf_download() -> None:
+    """Download users.json from HF Hub (best-effort). Runs in background."""
     if not _HF_TOKEN:
-        return False
+        return
     try:
         from huggingface_hub import hf_hub_download
         path = hf_hub_download(
@@ -34,14 +36,12 @@ def _hf_download() -> bool:
             token=_HF_TOKEN,
             local_dir=_USERS_FILE.parent,
         )
-        # hf_hub_download may place it in a cache dir; copy to expected location
         downloaded = Path(path)
         if downloaded.resolve() != _USERS_FILE.resolve():
             import shutil
             shutil.copy2(downloaded, _USERS_FILE)
-        return True
     except Exception:
-        return False
+        pass  # first run or network issue — use bundled users.json
 
 
 def _hf_upload() -> None:
@@ -51,7 +51,6 @@ def _hf_upload() -> None:
     try:
         from huggingface_hub import HfApi
         api = HfApi(token=_HF_TOKEN)
-        # Ensure private dataset repo exists
         api.create_repo(
             repo_id=_HF_REPO_ID,
             repo_type="dataset",
@@ -65,12 +64,12 @@ def _hf_upload() -> None:
             repo_type="dataset",
         )
     except Exception:
-        pass  # best-effort; local file is still the source of truth
+        pass
 
 
-# On startup: try to restore from HF Hub
+# On startup: restore from HF Hub in background (non-blocking)
 if _HF_TOKEN:
-    _hf_download()
+    _threading.Thread(target=_hf_download, daemon=True).start()
 
 # ── Role definitions ───────────────────────────────────────────────────────────
 ROLES = ["admin", "engineer", "viewer"]
@@ -164,8 +163,7 @@ def _save_users(users: dict) -> None:
             os.fsync(f.fileno())
         os.replace(tmp_file, _USERS_FILE)
     # Sync to HF Hub in background thread
-    import threading
-    threading.Thread(target=_hf_upload, daemon=True).start()
+    _threading.Thread(target=_hf_upload, daemon=True).start()
 
 
 # ── Public auth functions ──────────────────────────────────────────────────────
