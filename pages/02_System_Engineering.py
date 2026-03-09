@@ -51,12 +51,13 @@ def run_system_engineering_module():
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("**단위 용량설정 (Unit Sizing)**" if st.session_state.get('lang', 'KO') == 'KO' else "**Unit Capacity Settings**")
         pcs_unit_mw = st.number_input(
-            "PCS 스키드 단위 용량 (MW)" if st.session_state.get('lang', 'KO') == 'KO' else "PCS Skid Rating (MW/MVA)", 
-            min_value=0.1, value=2.5, step=0.1
+            "PCS 스키드 단위 용량 (MW)" if st.session_state.get('lang', 'KO') == 'KO' else "PCS Skid Rating (MW/MVA)",
+            min_value=0.1, value=st.session_state.get('pcs_unit_mw', 4.2), step=0.1
         )
         batt_unit_mwh = st.number_input(
-            "배터리 인클로저 단위 용량 (MWh)" if st.session_state.get('lang', 'KO') == 'KO' else "Battery Enclosure Rating (MWh)", 
-            min_value=0.1, value=3.5, step=0.1
+            "배터리 인클로저 단위 용량 (MWh)" if st.session_state.get('lang', 'KO') == 'KO' else "Battery Enclosure Rating (MWh)",
+            min_value=0.1, value=st.session_state.get('batt_unit_mwh', 5.015), step=0.001,
+            format="%.3f"
         )
 
     with col2:
@@ -79,6 +80,14 @@ def run_system_engineering_module():
         required_pcs_mw = power_mw * (1 + aux_loss)
         num_pcs = np.ceil(required_pcs_mw / pcs_unit_mw)
         st.metric(label=t("p2_pcs"), value=f"{int(num_pcs)} Skids", help=f"Rating per unit: {pcs_unit_mw} MW")
+
+        # ── Persist sizing results to session_state for downstream pages ──
+        st.session_state['pcs_unit_mw'] = pcs_unit_mw
+        st.session_state['batt_unit_mwh'] = batt_unit_mwh
+        st.session_state['num_containers'] = int(num_containers)
+        st.session_state['num_pcs'] = int(num_pcs)
+        st.session_state['required_dc_nameplate'] = required_dc_nameplate
+        st.session_state['energy_mwh'] = energy_mwh
 
     st.markdown("---")
     st.subheader(t("regional_std"))

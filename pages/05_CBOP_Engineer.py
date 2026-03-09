@@ -36,10 +36,11 @@ def run_cbop_engineer_module():
             rte        = st.session_state.get('rte_percent', 88.0) / 100.0
             aux_loss   = st.session_state.get('aux_loss_percent', 2.5) / 100.0
             epc_margin = st.session_state.get('epc_margin', 5.0) / 100.0
-            default_power = st.session_state.get('capacity_mw', 100.0)
+            default_power = max(st.session_state.get('capacity_mw', 0.0), 1.0)
             target_ac_energy = default_power * st.session_state.get('duration_h', 4.0)
             required_dc = (target_ac_energy * (1 + aux_loss)) / rte * (1 + epc_margin)
-            default_containers = max(int(np.ceil(required_dc / 3.5)), 1)
+            _batt_unit = st.session_state.get('batt_unit_mwh', 5.015)
+            default_containers = max(int(np.ceil(required_dc / _batt_unit)), 1)
 
             num_enclosures = st.number_input(t("p5_num_enc"), min_value=1, value=default_containers, step=1)
             soil_bearing   = st.slider(t("p5_soil"),  50, 300, 150)
