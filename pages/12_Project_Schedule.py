@@ -95,12 +95,25 @@ with tab_list:
 
         filtered = projects
         if filt_status != "전체":
-            filtered = [p for p in filtered
-                        if p.get("status") == filt_status
-                        or (is_en and STATUS_OPTIONS_EN[STATUS_OPTIONS.index(p.get("status","계획중"))] == filt_status)]
+            def _match_status(p):
+                s = p.get("status", "계획중")
+                if s == filt_status:
+                    return True
+                try:
+                    return is_en and s in STATUS_OPTIONS and STATUS_OPTIONS_EN[STATUS_OPTIONS.index(s)] == filt_status
+                except (ValueError, IndexError):
+                    return False
+            filtered = [p for p in filtered if _match_status(p)]
         if filt_region != "전체":
-            filtered = [p for p in filtered if p.get("region") == filt_region
-                        or (is_en and REGIONS_EN[REGIONS.index(p.get("region","기타"))] == filt_region)]
+            def _match_region(p):
+                r = p.get("region", "기타")
+                if r == filt_region:
+                    return True
+                try:
+                    return is_en and r in REGIONS and REGIONS_EN[REGIONS.index(r)] == filt_region
+                except (ValueError, IndexError):
+                    return False
+            filtered = [p for p in filtered if _match_region(p)]
 
         for proj in filtered:
             phases = proj.get("phases", [])
@@ -196,7 +209,7 @@ with tab_reg:
                 "name": name.strip(), "name_en": name_en.strip(),
                 "client": client.strip(), "region": region,
                 "capacity_mw": cap_mw, "capacity_mwh": cap_mwh,
-                "status": status if not is_en else STATUS_OPTIONS[STATUS_OPTIONS_EN.index(status)],
+                "status": status if not is_en else (STATUS_OPTIONS[STATUS_OPTIONS_EN.index(status)] if status in STATUS_OPTIONS_EN else status),
                 "start_date": str(s_date), "end_date": str(e_date),
                 "notes": notes.strip(), "phases": init_phases,
             })
@@ -238,14 +251,15 @@ with tab_detail:
                 new_name    = st.text_input("프로젝트명", value=proj.get("name",""))
                 new_name_en = st.text_input("Project Name (EN)", value=proj.get("name_en",""))
                 new_client  = st.text_input("발주처", value=proj.get("client",""))
-                new_region  = st.selectbox("지역", _region_opts(),
-                                           index=REGIONS.index(proj.get("region","기타")) if proj.get("region","기타") in REGIONS else 0)
+                _reg = proj.get("region", "기타")
+                _reg_idx = REGIONS.index(_reg) if _reg in REGIONS else 0
+                new_region  = st.selectbox("지역", _region_opts(), index=_reg_idx)
             with e2:
                 new_mw  = st.number_input("용량 (MW)",  value=float(proj.get("capacity_mw", 0)), step=1.0)
                 new_mwh = st.number_input("용량 (MWh)", value=float(proj.get("capacity_mwh", 0)), step=1.0)
                 cur_status = proj.get("status", "계획중")
-                new_status = st.selectbox("상태", _status_opts(),
-                                          index=STATUS_OPTIONS.index(cur_status) if cur_status in STATUS_OPTIONS else 0)
+                _st_idx = STATUS_OPTIONS.index(cur_status) if cur_status in STATUS_OPTIONS else 0
+                new_status = st.selectbox("상태", _status_opts(), index=_st_idx)
                 new_s = st.date_input("착공일", value=date.fromisoformat(proj["start_date"]) if proj.get("start_date") else date.today())
                 new_e = st.date_input("준공일", value=date.fromisoformat(proj["end_date"]) if proj.get("end_date") else date.today())
 
@@ -260,9 +274,10 @@ with tab_detail:
                 with ph_cols2[i]:
                     st.markdown(f"**{ph['name']}**")
                     np_ = st.slider("진행률 %", 0, 100, ph.get("progress", 0), key=f"ep_{proj['id']}_{i}")
+                    _ph_st = ph.get("status", "대기")
+                    _ph_idx = PHASE_STATUS.index(_ph_st) if _ph_st in PHASE_STATUS else 0
                     ns_ = st.selectbox("상태", _phase_status_opts(),
-                                       index=PHASE_STATUS.index(ph.get("status","대기")) if ph.get("status","대기") in PHASE_STATUS else 0,
-                                       key=f"es_{proj['id']}_{i}")
+                                       index=_ph_idx, key=f"es_{proj['id']}_{i}")
                     new_phases.append({**ph, "progress": np_, "status": ns_})
 
             save_btn = st.form_submit_button("💾 " + ("Save" if is_en else "저장"), type="primary")
@@ -272,7 +287,7 @@ with tab_detail:
                 "name": new_name, "name_en": new_name_en,
                 "client": new_client, "region": new_region,
                 "capacity_mw": new_mw, "capacity_mwh": new_mwh,
-                "status": new_status if not is_en else STATUS_OPTIONS[STATUS_OPTIONS_EN.index(new_status)],
+                "status": new_status if not is_en else (STATUS_OPTIONS[STATUS_OPTIONS_EN.index(new_status)] if new_status in STATUS_OPTIONS_EN else new_status),
                 "start_date": str(new_s), "end_date": str(new_e),
                 "notes": new_notes, "phases": new_phases,
             })
