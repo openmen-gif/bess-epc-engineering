@@ -274,17 +274,44 @@ def _styled_table(doc, headers, rows, col_widths_mm=None):
     tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
     tbl.autofit = False
     tblPr = tbl._tbl.tblPr
+    # Force fixed layout (critical for LibreOffice PDF conversion)
+    tblLayout = OxmlElement("w:tblLayout")
+    tblLayout.set(qn("w:type"), "fixed")
+    tblPr.append(tblLayout)
+    total_tw = int(160 / 25.4 * 1440)
     tblW = OxmlElement("w:tblW")
     tblW.set(qn("w:type"), "dxa")
-    tblW.set(qn("w:w"), str(int(160 / 25.4 * 1440)))
+    tblW.set(qn("w:w"), str(total_tw))
     tblPr.append(tblW)
     if col_widths_mm is None:
         col_widths_mm = [160 / n_cols] * n_cols
-    for i, w in enumerate(col_widths_mm):
-        tw = int(w / 25.4 * 1440)
+    # Build w:tblGrid with explicit gridCol widths
+    tblGrid = tbl._tbl.find(qn("w:tblGrid"))
+    if tblGrid is None:
+        tblGrid = OxmlElement("w:tblGrid")
+        tbl._tbl.insert(tbl._tbl.index(tblPr) + 1, tblGrid)
+    else:
+        for child in list(tblGrid):
+            tblGrid.remove(child)
+    col_twips = [int(w / 25.4 * 1440) for w in col_widths_mm]
+    for tw in col_twips:
+        gridCol = OxmlElement("w:gridCol")
+        gridCol.set(qn("w:w"), str(tw))
+        tblGrid.append(gridCol)
+    # Set explicit w:tcW on every cell
+    for i, tw in enumerate(col_twips):
         for row_idx in range(1 + len(rows)):
             cell = tbl.cell(row_idx, i)
-            cell.width = Emu(tw * 635)
+            tcPr = cell._element.find(qn("w:tcPr"))
+            if tcPr is None:
+                tcPr = OxmlElement("w:tcPr")
+                cell._element.insert(0, tcPr)
+            tcW = tcPr.find(qn("w:tcW"))
+            if tcW is None:
+                tcW = OxmlElement("w:tcW")
+                tcPr.insert(0, tcW)
+            tcW.set(qn("w:w"), str(tw))
+            tcW.set(qn("w:type"), "dxa")
     for i, h in enumerate(headers):
         cell = tbl.cell(0, i)
         cell.text = ""
