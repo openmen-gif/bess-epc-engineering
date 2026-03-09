@@ -423,16 +423,17 @@ with tab_gantt:
             for i, t in enumerate(gantt_tasks):
                 y_pos = n - 1 - i  # reverse order so first task is on top
 
-                # Main bar (full duration)
+                # Main bar (full duration — plan, shown faintly)
                 fig_g.add_shape(
                     type="rect",
                     x0=t["start"], x1=t["end"],
                     y0=y_pos - 0.35, y1=y_pos + 0.35,
                     fillcolor=t["color"],
-                    opacity=0.35 if t["is_project"] else 0.8,
+                    opacity=0.15 if t["is_project"] else 0.25,
                     line=dict(
                         color="#ff4444" if t["is_critical"] else t["color"],
                         width=3 if t["is_critical"] else 1,
+                        dash="dot" if not t["is_critical"] else "solid",
                     ),
                     layer="below",
                 )
