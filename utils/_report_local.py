@@ -291,10 +291,12 @@ def _styled_table(doc, headers, rows, col_widths_mm=None):
         p = cell.paragraphs[0]
         r = p.add_run(str(h))
         r.bold = True
-        r.font.size = Pt(12)
+        r.font.size = Pt(9)
         r.font.name = FONT
         r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
         tcPr = cell._element.find(qn("w:tcPr"))
         if tcPr is None:
             tcPr = OxmlElement("w:tcPr")
@@ -310,8 +312,10 @@ def _styled_table(doc, headers, rows, col_widths_mm=None):
             cell.text = ""
             p = cell.paragraphs[0]
             r = p.add_run(str(val))
-            r.font.size = Pt(12)
+            r.font.size = Pt(9)
             r.font.name = FONT
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
             if ri % 2 == 1:
                 tcPr = cell._element.find(qn("w:tcPr"))
                 if tcPr is None:
@@ -1053,10 +1057,10 @@ def generate_word_report():
                 str(_val["share_pct"]),
                 str(_val["avg_revenue_kwh_yr"]),
                 _val["trend"],
-                _val["desc"][:80] + "…" if len(_val["desc"]) > 80 else _val["desc"],
+                _val["desc"][:120] + "…" if len(_val["desc"]) > 120 else _val["desc"],
             ])
             total_rev += _val["avg_revenue_kwh_yr"] * _val["share_pct"] / 100
-        _styled_table(doc, rs_headers, rs_rows, col_widths_mm=[28, 14, 22, 12, 84])
+        _styled_table(doc, rs_headers, rs_rows, col_widths_mm=[24, 12, 18, 10, 96])
         _p_rs = doc.add_paragraph(
             f"→ {mkt_name} 시장 가중평균 예상 수익: ${total_rev:.0f}/kWh/yr (Revenue Stacking 기준)"
         )
@@ -1080,7 +1084,7 @@ def generate_word_report():
             str(_v["project_life_years"]),
             f"${_v['lcoe_kwh']:.2f}",
         ])
-    _styled_table(doc, inv_headers, inv_rows, col_widths_mm=[42, 16, 16, 14, 14, 14, 12, 16])
+    _styled_table(doc, inv_headers, inv_rows, col_widths_mm=[36, 16, 16, 14, 14, 14, 12, 38])
     _p_inv = doc.add_paragraph(
         "유틸리티급 4시간 BESS는 Base Case IRR 12.5%로 안정적이며, 2시간 피크 대응형은 "
         "짧은 duration에도 불구하고 높은 보조서비스 수익으로 14.0% IRR 달성이 가능합니다. "
@@ -1098,9 +1102,9 @@ def generate_word_report():
         oft_rows.append([
             _o["type"], _o["duration_yr"], _o["risk_profile"],
             _o["revenue_certainty"], _o["typical_market"],
-            _o["desc"][:60] + "…" if len(_o["desc"]) > 60 else _o["desc"],
+            _o["desc"][:100] + "…" if len(_o["desc"]) > 100 else _o["desc"],
         ])
-    _styled_table(doc, oft_headers, oft_rows, col_widths_mm=[30, 16, 14, 16, 20, 64])
+    _styled_table(doc, oft_headers, oft_rows, col_widths_mm=[24, 14, 12, 14, 18, 78])
     _p_oft = doc.add_paragraph(
         "프로젝트 파이낸싱 관점에서 Tolling Agreement와 PPA가 가장 유리하며, "
         "비소구금융(Non-recourse Project Finance) 조달 시 장기 계약(10년+)이 필수적입니다. "
@@ -1171,7 +1175,7 @@ def generate_word_report():
     perf_rows = []
     for pk, pv in perf.items():
         perf_rows.append([pk.replace("_", " ").title(), pv["value"], pv["trend"], pv["desc"]])
-    _styled_table(doc, ["지표", "기준값", "추세", "설명"], perf_rows, col_widths_mm=[30, 18, 12, 100])
+    _styled_table(doc, ["지표", "기준값", "추세", "설명"], perf_rows, col_widths_mm=[26, 16, 10, 108])
 
     # 12.2 O&M 비용 추이
     doc.add_heading("12.2 O&M 비용 추이", level=2)
@@ -1198,7 +1202,7 @@ def generate_word_report():
     ems = md.OPERATIONS_DATA["ems_platforms"]
     ems_headers = ["플랫폼", "벤더", "핵심 기능", "주요 시장"]
     ems_rows = [[e["name"], e["vendor"], e["feature"], e["market"]] for e in ems]
-    _styled_table(doc, ems_headers, ems_rows, col_widths_mm=[30, 28, 62, 40])
+    _styled_table(doc, ems_headers, ems_rows, col_widths_mm=[24, 22, 78, 36])
 
     # 12.4 배터리 열화 관리 전략
     doc.add_heading("12.4 배터리 열화 관리 및 수명 연장 전략", level=2)
@@ -1229,12 +1233,12 @@ def generate_word_report():
     doc.add_heading("13.1 글로벌 ESS 안전 규격 비교", level=2)
     sf_headers = ["규격", "적용 지역", "범위", "핵심 요구사항"]
     sf_rows = [[s["standard"], s["region"], s["scope"], s["key_req"]] for s in md.SAFETY_STANDARDS]
-    _styled_table(doc, sf_headers, sf_rows, col_widths_mm=[22, 22, 30, 86])
+    _styled_table(doc, sf_headers, sf_rows, col_widths_mm=[20, 18, 26, 96])
 
     doc.add_heading("13.2 주요 ESS 화재 사고 사례 및 교훈", level=2)
     fi_headers = ["연도", "위치", "원인", "피해", "교훈"]
     fi_rows = [[str(f["year"]), f["location"], f["cause"], f["damage"], f["lesson"]] for f in md.FIRE_INCIDENTS]
-    _styled_table(doc, fi_headers, fi_rows, col_widths_mm=[12, 24, 28, 28, 68])
+    _styled_table(doc, fi_headers, fi_rows, col_widths_mm=[10, 20, 24, 24, 82])
     _p_fi = doc.add_paragraph(
         "ESS 화재 사고는 산업 전체의 안전 규제 강화를 촉발하고 있습니다. "
         "열폭주 전파 방지 설계(셀 간/모듈 간 방화벽), 가스 감지 및 자동 소화 시스템, "
@@ -1272,7 +1276,7 @@ def generate_word_report():
     doc.add_heading("14.1 배터리 기술 비교표", level=2)
     bt_headers = ["기술", "에너지밀도\n(Wh/kg)", "사이클수명", "비용\n($/kWh)", "상용화 단계"]
     bt_rows = [[b["tech"], b["energy_density_wh_kg"], b["cycle_life"], b["cost_per_kwh"], b["status"]] for b in md.BATTERY_TECHNOLOGIES]
-    _styled_table(doc, bt_headers, bt_rows, col_widths_mm=[30, 22, 22, 20, 26])
+    _styled_table(doc, bt_headers, bt_rows, col_widths_mm=[24, 20, 20, 18, 78])
 
     doc.add_heading("14.2 기술별 상세 분석", level=2)
     for bt in md.BATTERY_TECHNOLOGIES:
@@ -1346,8 +1350,8 @@ def generate_word_report():
     pf_rows = []
     for pfs in md.PROJECT_FINANCING["structures"]:
         pf_rows.append([pfs["type"], pfs["leverage"], pfs["tenor_yr"],
-                        pfs["min_dscr"], pfs["key_lenders"][:40] + "…" if len(pfs["key_lenders"]) > 40 else pfs["key_lenders"]])
-    _styled_table(doc, pf_headers, pf_rows, col_widths_mm=[32, 16, 14, 18, 80])
+                        pfs["min_dscr"], pfs["key_lenders"][:70] + "…" if len(pfs["key_lenders"]) > 70 else pfs["key_lenders"]])
+    _styled_table(doc, pf_headers, pf_rows, col_widths_mm=[28, 14, 12, 16, 90])
 
     for pfs in md.PROJECT_FINANCING["structures"]:
         _p_pfs = doc.add_paragraph(f"■ {pfs['type']}: {pfs['desc']}")
@@ -1364,7 +1368,7 @@ def generate_word_report():
     doc.add_heading("16.3 보험 요건", level=2)
     ins_headers = ["보험 유형", "보장 내용", "요율/한도"]
     ins_rows = [[i["type"], i["desc"], i["rate"]] for i in md.PROJECT_FINANCING["insurance_coverage"]]
-    _styled_table(doc, ins_headers, ins_rows, col_widths_mm=[32, 80, 48])
+    _styled_table(doc, ins_headers, ins_rows, col_widths_mm=[28, 88, 44])
 
     # ============================================================
     # 17. EPC 계약 구조
@@ -1382,9 +1386,9 @@ def generate_word_report():
     epc_rows = []
     for ec in md.EPC_CONTRACT_DATA["contract_types"]:
         epc_rows.append([ec["type"], ec["risk_owner"], ec["price_structure"],
-                         ec["pros"][:50] + "…" if len(ec["pros"]) > 50 else ec["pros"],
-                         ec["cons"][:50] + "…" if len(ec["cons"]) > 50 else ec["cons"]])
-    _styled_table(doc, epc_headers, epc_rows, col_widths_mm=[28, 22, 24, 43, 43])
+                         ec["pros"][:70] + "…" if len(ec["pros"]) > 70 else ec["pros"],
+                         ec["cons"][:70] + "…" if len(ec["cons"]) > 70 else ec["cons"]])
+    _styled_table(doc, epc_headers, epc_rows, col_widths_mm=[24, 18, 20, 49, 49])
 
     for ec in md.EPC_CONTRACT_DATA["contract_types"]:
         _p_ec = doc.add_paragraph(f"■ {ec['type']}: {ec['desc']}")
