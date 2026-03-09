@@ -13,8 +13,13 @@ from filelock import FileLock
 import streamlit as st
 
 # ── User data file ─────────────────────────────────────────────────────────────
-_USERS_FILE = Path(__file__).parent / "users.json"
-_LOCK_FILE  = Path(__file__).parent / "users.json.lock"
+# Prefer /data (HF Spaces persistent storage), fallback to code directory
+if os.path.isdir("/data"):
+    _USERS_FILE = Path("/data/users.json")
+    _LOCK_FILE  = Path("/data/users.json.lock")
+else:
+    _USERS_FILE = Path(__file__).parent / "users.json"
+    _LOCK_FILE  = Path(__file__).parent / "users.json.lock"
 
 # ── HuggingFace Hub sync (persistent user data across container restarts) ─────
 _HF_REPO_ID = "openmen-gif/bess-user-data"   # private dataset repo
@@ -66,6 +71,12 @@ def _hf_upload() -> None:
     except Exception:
         pass
 
+
+# On startup: migrate users.json from code directory → /data/ if needed
+_OLD_USERS_FILE = Path(__file__).parent / "users.json"
+if os.path.isdir("/data") and _OLD_USERS_FILE.exists() and not _USERS_FILE.exists():
+    import shutil
+    shutil.copy2(_OLD_USERS_FILE, _USERS_FILE)
 
 # On startup: restore from HF Hub **synchronously** (blocking)
 # Must complete before app serves requests, otherwise users.json appears empty.
