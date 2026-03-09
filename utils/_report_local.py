@@ -104,35 +104,45 @@ def _add_bookmark(paragraph, bm_name):
     paragraph._p.insert(0, bm_start)
     paragraph._p.append(bm_end)
 
-def _add_internal_hyperlink(paragraph, bookmark_name, text, font_size, font_name, color, bold=False):
-    """Add an internal hyperlink (to a bookmark) in a paragraph."""
-    hl = OxmlElement("w:hyperlink")
-    hl.set(qn("w:anchor"), bookmark_name)
+def _make_hl_run(font_size, font_name, color, bold, text):
+    """Create a w:r element for use inside a hyperlink."""
     run = OxmlElement("w:r")
     rPr = OxmlElement("w:rPr")
-    # Font
     rFonts = OxmlElement("w:rFonts")
     rFonts.set(qn("w:ascii"), "Calibri")
     rFonts.set(qn("w:eastAsia"), font_name)
     rPr.append(rFonts)
-    # Size
     twips = str(int(font_size * 2))
     for tag in ("w:sz", "w:szCs"):
         el = OxmlElement(tag); el.set(qn("w:val"), twips); rPr.append(el)
-    # Color
-    clr = OxmlElement("w:color")
-    clr.set(qn("w:val"), f"{color.red:02X}{color.green:02X}{color.blue:02X}" if hasattr(color, 'red') else str(color))
-    rPr.append(clr)
-    # Bold
+    color_hex = f"{color.red:02X}{color.green:02X}{color.blue:02X}" if hasattr(color, 'red') else str(color)
+    clr = OxmlElement("w:color"); clr.set(qn("w:val"), color_hex); rPr.append(clr)
     if bold:
         b = OxmlElement("w:b"); b.set(qn("w:val"), "true"); rPr.append(b)
-    # Underline: none (clean look)
     run.append(rPr)
     t = OxmlElement("w:t")
     t.set(qn("xml:space"), "preserve")
     t.text = text
     run.append(t)
-    hl.append(run)
+    return run
+
+def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_size, font_name, color, bold=False):
+    """Add a TOC entry as a single internal hyperlink: title + tab + page number."""
+    hl = OxmlElement("w:hyperlink")
+    hl.set(qn("w:anchor"), bookmark_name)
+    # Run 1: title text
+    hl.append(_make_hl_run(font_size, font_name, color, bold, title_text))
+    # Run 2: tab character
+    tab_run = OxmlElement("w:r")
+    tab_rPr = OxmlElement("w:rPr")
+    sz = OxmlElement("w:sz"); sz.set(qn("w:val"), str(int(font_size * 2))); tab_rPr.append(sz)
+    tab_run.append(tab_rPr)
+    tab_el = OxmlElement("w:tab")
+    tab_run.append(tab_el)
+    hl.append(tab_run)
+    # Run 3: page number (gray)
+    pg_color = RGBColor(0x80, 0x80, 0x80)
+    hl.append(_make_hl_run(10, font_name, pg_color, False, page_text))
     paragraph._p.append(hl)
 
 def add_toc(doc):
@@ -164,18 +174,11 @@ def add_toc(doc):
         p.paragraph_format.left_indent = indent
         # 점선 탭 스톱 추가
         _add_dotted_tab_stop(p, _TAB_POS)
-        # 내부 하이퍼링크로 제목 추가
+        # 내부 하이퍼링크 (제목 + 탭 + 페이지번호 모두 링크)
         _font_size = 11 if entry_level == 1 else 10
         _color = CLR_H1 if entry_level == 1 else CLR_H2
         _bold = entry_level == 1
-        _add_internal_hyperlink(p, bm_name, entry_title, _font_size, FONT, _color, _bold)
-        # 탭 + 페이지 번호 (점선 리더)
-        tab_run = p.add_run("\t")
-        tab_run.font.size = Pt(_font_size)
-        page_run = p.add_run(str(idx + 3))  # 표지+목차 = 2페이지, 본문 시작 3페이지~
-        page_run.font.size = Pt(10)
-        page_run.font.name = FONT
-        page_run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+        _add_toc_hyperlink(p, bm_name, entry_title, str(idx + 3), _font_size, FONT, _color, _bold)
     # 목차 끝 구분선
     p_sep = doc.add_paragraph()
     p_sep.paragraph_format.space_before = Pt(6)
