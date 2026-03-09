@@ -262,14 +262,34 @@ with tab_detail:
                 cur_status = proj.get("status", "계획중")
                 _st_idx = STATUS_OPTIONS.index(cur_status) if cur_status in STATUS_OPTIONS else 0
                 new_status = st.selectbox("상태", _status_opts(), index=_st_idx)
-                new_s = st.date_input("착공일", value=date.fromisoformat(proj["start_date"]) if proj.get("start_date") else date.today())
-                new_e = st.date_input("준공일", value=date.fromisoformat(proj["end_date"]) if proj.get("end_date") else date.today())
+                def _safe_parse(s, fb=date.today()):
+                    if not s:
+                        return fb
+                    try:
+                        return date.fromisoformat(s)
+                    except (ValueError, TypeError):
+                        return fb
+                new_s = st.date_input("착공일", value=_safe_parse(proj.get("start_date")))
+                new_e = st.date_input("준공일", value=_safe_parse(proj.get("end_date")))
 
             new_notes = st.text_area("비고", value=proj.get("notes",""), height=68)
 
             st.markdown("---")
             st.markdown("**공정 단계별 진행률 / 일정 업데이트**" if not is_en else "**Phase Progress & Schedule Update**")
             phases = proj.get("phases", [dict(ph) for ph in DEFAULT_PHASES])
+
+            # Fallback dates = project-level dates (NOT today)
+            def _parse_date(s, fallback):
+                if not s:
+                    return fallback
+                try:
+                    return date.fromisoformat(s)
+                except (ValueError, TypeError):
+                    return fallback
+
+            _proj_s = _parse_date(proj.get("start_date"), date.today())
+            _proj_e = _parse_date(proj.get("end_date"), date.today())
+
             ph_cols2 = st.columns(len(phases))
             new_phases = []
             for i, ph in enumerate(phases):
@@ -280,13 +300,11 @@ with tab_detail:
                     _ph_idx = PHASE_STATUS.index(_ph_st) if _ph_st in PHASE_STATUS else 0
                     ns_ = st.selectbox("상태" if not is_en else "Status", _phase_status_opts(),
                                        index=_ph_idx, key=f"es_{proj['id']}_{i}")
-                    _phs = ph.get("start_date", "")
-                    _phe = ph.get("end_date", "")
                     phs_ = st.date_input("시작일" if not is_en else "Start",
-                                         value=date.fromisoformat(_phs) if _phs else date.today(),
+                                         value=_parse_date(ph.get("start_date"), _proj_s),
                                          key=f"ephs_{proj['id']}_{i}")
                     phe_ = st.date_input("종료일" if not is_en else "End",
-                                         value=date.fromisoformat(_phe) if _phe else date.today(),
+                                         value=_parse_date(ph.get("end_date"), _proj_e),
                                          key=f"ephe_{proj['id']}_{i}")
                     new_phases.append({**ph, "progress": np_, "status": ns_,
                                        "start_date": str(phs_), "end_date": str(phe_)})
