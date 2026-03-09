@@ -560,3 +560,199 @@ SCENARIOS = {
     },
 }
 
+# ---- BESS 사업 개발 및 수익 모델 데이터 ----
+REVENUE_STACKING = {
+    "미국": {
+        "energy_arbitrage": {"share_pct": 35, "avg_revenue_kwh_yr": 45, "trend": "상승",
+                             "desc": "CAISO/ERCOT 일중 가격 스프레드 확대로 차익거래 수익 증가. 특히 ERCOT 실시간 가격 변동성이 높아 4시간 BESS 기준 $40-55/kWh/yr 수익 가능."},
+        "capacity_market": {"share_pct": 25, "avg_revenue_kwh_yr": 30, "trend": "안정",
+                            "desc": "PJM Capacity Market, CAISO RA(Resource Adequacy) 등 용량 결제 안정적. 연간 $25-35/kWh 수준."},
+        "ancillary_services": {"share_pct": 20, "avg_revenue_kwh_yr": 25, "trend": "하락",
+                               "desc": "주파수조정(Regulation), 스피닝 리저브 시장. BESS 참여 증가로 단가 하락 추세."},
+        "itc_ptc": {"share_pct": 15, "avg_revenue_kwh_yr": 20, "trend": "안정",
+                    "desc": "IRA ITC 30%(독립형 ESS 포함) + 국내 제조 보너스 10% + 에너지 커뮤니티 10%. 최대 50% ITC 가능."},
+        "tolling_ppa": {"share_pct": 5, "avg_revenue_kwh_yr": 8, "trend": "상승",
+                        "desc": "유틸리티/C&I 대상 장기 Tolling Agreement 또는 PPA 구조. 10-15년 장기 계약으로 프로젝트 파이낸싱 안정화."},
+    },
+    "영국": {
+        "ancillary_services": {"share_pct": 40, "avg_revenue_kwh_yr": 50, "trend": "변동",
+                               "desc": "Dynamic Containment(DC), Dynamic Regulation(DR), Dynamic Moderation(DM) 등 주파수 응답 시장. DC 단가 변동폭 크나 고수익 가능."},
+        "capacity_market": {"share_pct": 25, "avg_revenue_kwh_yr": 28, "trend": "상승",
+                            "desc": "T-4 용량시장 경매 참여. 1시간 이상 duration 요구. 2024년 이후 de-rating 강화로 4시간 BESS 유리."},
+        "energy_arbitrage": {"share_pct": 25, "avg_revenue_kwh_yr": 30, "trend": "상승",
+                             "desc": "Wholesale market 일중 스프레드 + Balancing Mechanism(BM) 참여. 풍력 간헐성 증가로 스프레드 확대."},
+        "balancing_mechanism": {"share_pct": 10, "avg_revenue_kwh_yr": 15, "trend": "상승",
+                                "desc": "National Grid ESO Balancing Mechanism 참여. 실시간 수급 조정 시장으로 BESS에 유리."},
+    },
+    "호주": {
+        "fcas": {"share_pct": 35, "avg_revenue_kwh_yr": 55, "trend": "변동",
+                 "desc": "FCAS(Frequency Control Ancillary Services) 8개 시장 참여. 특히 Fast FCAS(6초/60초)에서 BESS 높은 수익 달성."},
+        "energy_arbitrage": {"share_pct": 30, "avg_revenue_kwh_yr": 40, "trend": "상승",
+                             "desc": "NEM 스팟시장 가격 변동성 극대화 활용. 석탄 퇴출 가속으로 가격 스파이크 빈도 증가."},
+        "capacity_payment": {"share_pct": 20, "avg_revenue_kwh_yr": 25, "trend": "상승",
+                             "desc": "Capacity Investment Scheme(CIS) 통한 장기 수익 계약. 연방정부 주도 역경매 방식."},
+        "network_support": {"share_pct": 15, "avg_revenue_kwh_yr": 18, "trend": "안정",
+                            "desc": "TNSP/DNSP 네트워크 지원 계약. 송배전 혼잡 해소, 전압 조정 서비스 제공."},
+    },
+    "한국": {
+        "frequency_regulation": {"share_pct": 50, "avg_revenue_kwh_yr": 35, "trend": "안정",
+                                 "desc": "전력거래소 주파수조정(FR) 시장이 BESS 주요 수익원. SMP+용량요금 구조. 한전 ESS 요금제 개편에 따른 변동 가능성."},
+        "peak_shaving": {"share_pct": 25, "avg_revenue_kwh_yr": 20, "trend": "안정",
+                         "desc": "피크 시간대 수요 저감을 통한 전력요금 절감. 산업용/상업용 수요처 대상."},
+        "re_integration": {"share_pct": 15, "avg_revenue_kwh_yr": 12, "trend": "상승",
+                           "desc": "재생에너지 출력 제한 대응 및 연계 ESS. 제주도 풍력 커튼먼트 해소 중심."},
+        "energy_trading": {"share_pct": 10, "avg_revenue_kwh_yr": 8, "trend": "상승",
+                           "desc": "에너지 차익거래 시장 초기 단계. 전력시장 개편(실시간 시장 도입)에 따라 성장 전망."},
+    },
+    "EU": {
+        "ancillary_services": {"share_pct": 35, "avg_revenue_kwh_yr": 42, "trend": "안정",
+                               "desc": "FCR(주파수 억제 예비력), aFRR(자동 주파수 복원 예비력) 시장 참여. 독일 FCR 시장이 가장 활발."},
+        "energy_arbitrage": {"share_pct": 30, "avg_revenue_kwh_yr": 35, "trend": "상승",
+                             "desc": "Day-ahead/Intraday 시장 가격차 활용. 재생에너지 비중 증가로 음전가(Negative price) 빈도 증가 → 저가 충전 기회."},
+        "capacity_mechanism": {"share_pct": 20, "avg_revenue_kwh_yr": 22, "trend": "상승",
+                               "desc": "이탈리아 Capacity Market, 프랑스 Mécanisme de Capacité, 폴란드 용량시장 등 각국 개별 운영."},
+        "congestion_mgmt": {"share_pct": 15, "avg_revenue_kwh_yr": 15, "trend": "상승",
+                            "desc": "송전망 혼잡 관리(Redispatch) 및 DSO 유연성 시장. 분산 BESS의 새로운 수익원으로 부상."},
+    },
+}
+
+# ---- BESS 사업 투자 경제성 데이터 ----
+INVESTMENT_ECONOMICS = {
+    "4h_utility": {
+        "name": "유틸리티급 4시간 BESS (100MW/400MWh)",
+        "capex_per_kwh": 235, "opex_per_kwh_yr": 8,
+        "irr_base_pct": 12.5, "irr_optimistic_pct": 16.0, "irr_conservative_pct": 8.5,
+        "payback_years": 7, "project_life_years": 20,
+        "degradation_yr_pct": 2.0, "eol_capacity_pct": 70,
+        "revenue_kwh_yr": 35, "lcoe_kwh": 0.12,
+    },
+    "2h_peaker": {
+        "name": "피크 대응 2시간 BESS (50MW/100MWh)",
+        "capex_per_kwh": 260, "opex_per_kwh_yr": 10,
+        "irr_base_pct": 14.0, "irr_optimistic_pct": 18.5, "irr_conservative_pct": 9.0,
+        "payback_years": 6, "project_life_years": 15,
+        "degradation_yr_pct": 2.5, "eol_capacity_pct": 70,
+        "revenue_kwh_yr": 45, "lcoe_kwh": 0.15,
+    },
+    "ci_behindmeter": {
+        "name": "C&I Behind-the-Meter (1MW/4MWh)",
+        "capex_per_kwh": 310, "opex_per_kwh_yr": 12,
+        "irr_base_pct": 10.0, "irr_optimistic_pct": 13.5, "irr_conservative_pct": 6.5,
+        "payback_years": 9, "project_life_years": 15,
+        "degradation_yr_pct": 2.0, "eol_capacity_pct": 70,
+        "revenue_kwh_yr": 40, "lcoe_kwh": 0.18,
+    },
+    "re_hybrid": {
+        "name": "태양광+ESS 하이브리드 (200MW PV + 100MW/400MWh BESS)",
+        "capex_per_kwh": 220, "opex_per_kwh_yr": 7,
+        "irr_base_pct": 11.0, "irr_optimistic_pct": 14.5, "irr_conservative_pct": 7.5,
+        "payback_years": 8, "project_life_years": 25,
+        "degradation_yr_pct": 1.8, "eol_capacity_pct": 70,
+        "revenue_kwh_yr": 30, "lcoe_kwh": 0.10,
+    },
+}
+
+# ---- Offtake / PPA 구조 데이터 ----
+OFFTAKE_STRUCTURES = [
+    {"type": "Tolling Agreement", "duration_yr": "10-15", "risk_profile": "낮음",
+     "revenue_certainty": "높음", "typical_market": "미국, 호주",
+     "desc": "오프테이커가 BESS 충방전 권한을 보유하고 고정 용량 비용 지급. 프로젝트 파이낸싱에 가장 유리한 구조."},
+    {"type": "Merchant (순수 시장)", "duration_yr": "N/A", "risk_profile": "높음",
+     "revenue_certainty": "낮음", "typical_market": "영국, EU",
+     "desc": "전력시장 가격에 100% 노출. 높은 수익 잠재력이나 변동성 큼. 영국 BESS 프로젝트의 주류 모델."},
+    {"type": "Contracted + Merchant 혼합", "duration_yr": "5-10 + 시장", "risk_profile": "중간",
+     "revenue_certainty": "중간", "typical_market": "미국, 호주, EU",
+     "desc": "기본 수익은 장기 계약(Tolling/Capacity)으로 확보하고, 잔여 수익을 시장에서 추가 확보하는 하이브리드 구조."},
+    {"type": "PPA (전력구매계약)", "duration_yr": "15-20", "risk_profile": "낮음",
+     "revenue_certainty": "높음", "typical_market": "미국, 중동",
+     "desc": "유틸리티 또는 C&I 수요처와 장기 고정가 PPA. 태양광+ESS 번들에서 주로 활용. ITC 적용 가능."},
+    {"type": "Capacity Contract", "duration_yr": "1-15", "risk_profile": "낮음-중간",
+     "revenue_certainty": "중간-높음", "typical_market": "영국, EU, 호주",
+     "desc": "용량시장 경매 낙찰을 통한 고정 용량 수익 확보. T-4(영국), CIS(호주) 등 정부 주도 메커니즘."},
+    {"type": "Virtual PPA (VPPA)", "duration_yr": "10-15", "risk_profile": "중간",
+     "revenue_certainty": "중간", "typical_market": "미국, EU",
+     "desc": "물리적 전력 인도 없이 재무적 정산만 수행하는 구조. C&I 기업의 RE100 대응 및 ESS 연계에 활용 증가."},
+]
+
+# ---- 전력시장 구조 및 거래 데이터 ----
+POWER_MARKET_STRUCTURES = {
+    "미국": {
+        "market_type": "ISO/RTO 분산시장",
+        "key_markets": ["CAISO", "ERCOT", "PJM", "NYISO", "ISO-NE", "MISO", "SPP"],
+        "settlement": "5분 실시간 + 시간별 Day-ahead + 보조서비스",
+        "bess_participation": "에너지 시장, 용량 시장, 보조서비스(Regulation, Reserves) 전면 참여 가능",
+        "avg_spread_kwh": "$35-55 (CAISO/ERCOT 기준 일중 스프레드)",
+        "key_trend": "ERCOT 음전가 빈도 증가(태양광 과잉), CAISO Duck Curve 심화로 저녁 피크 스프레드 확대. "
+                     "FERC Order 2222 시행으로 분산자원(DER) 시장 참여 활성화. AI 기반 입찰 최적화 도입 가속.",
+    },
+    "영국": {
+        "market_type": "단일 도매시장",
+        "key_markets": ["N2EX (Day-ahead)", "EPEX Spot", "Balancing Mechanism"],
+        "settlement": "30분 결제 + 실시간 Balancing",
+        "bess_participation": "도매시장, Balancing Mechanism, Dynamic Containment/Regulation/Moderation, T-4 용량시장",
+        "avg_spread_kwh": "£30-50 (일중 스프레드)",
+        "key_trend": "해상풍력 확대로 Balancing 수요 급증. Dynamic Containment 단가 변동성 확대(£5-17/MW/hr). "
+                     "REMA(전력시장개혁) 검토 중으로 Locational Marginal Pricing 도입 가능성. Duration 4시간 이상 우대 논의.",
+    },
+    "호주": {
+        "market_type": "NEM (National Electricity Market)",
+        "key_markets": ["NEM Spot", "FCAS (8개 시장)", "Contract Market"],
+        "settlement": "5분 결제 (2021년 전환)",
+        "bess_participation": "에너지 스팟시장, FCAS 8개 시장(Raise/Lower × Contingency/Regulation × 6s/60s/5min/delayed), 네트워크 지원",
+        "avg_spread_kwh": "A$40-70 (NEM 스팟 일중 스프레드, 변동 극심)",
+        "key_trend": "석탄 퇴출 가속(Eraring 2025, Liddell 폐쇄)으로 가격 스파이크 빈도 증가. "
+                     "FCAS 시장에서 BESS가 지배적 위치(80%+ 점유). Capacity Investment Scheme 도입으로 장기 수익 안정화 기대.",
+    },
+    "한국": {
+        "market_type": "CBP (Cost-Based Pool, 변동비 반영 시장)",
+        "key_markets": ["전력거래소(KPX) 일일 시장", "보조서비스(주파수조정)"],
+        "settlement": "시간별 SMP + 용량요금",
+        "bess_participation": "주파수조정(FR) 시장 중심, 피크저감, 재생에너지 연계. 에너지 차익거래는 제한적(SMP 구조)",
+        "avg_spread_kwh": "₩15,000-25,000/kWh (SMP 기준 제한적 스프레드)",
+        "key_trend": "실시간 시장 도입 논의 진행 중. 전력시장 개편(Cost-Based → Bid-Based) 추진으로 BESS 사업 기회 확대 전망. "
+                     "K-RE100 이행 확대로 재생에너지 연계 ESS 수요 증가. FR 시장 참여자 증가로 단가 하락 추세.",
+    },
+    "EU": {
+        "market_type": "통합 유럽 전력시장 (EUPHEMIA)",
+        "key_markets": ["EPEX Spot", "Nord Pool", "OMIE", "GME", "각국 Balancing 시장"],
+        "settlement": "시간별/15분 Day-ahead + Intraday continuous + Balancing",
+        "bess_participation": "Day-ahead/Intraday, FCR/aFRR/mFRR 예비력 시장, 용량시장(이탈리아, 프랑스, 폴란드)",
+        "avg_spread_kwh": "€25-45 (독일/프랑스 기준)",
+        "key_trend": "재생에너지 비중 증가로 음전가(Negative price) 빈도 급증 → 저가 충전 기회 확대. "
+                     "Intraday 시장 유동성 증가로 BESS 수익 기회 다변화. DSO 유연성 시장 신규 개설 추세.",
+    },
+}
+
+# ---- BESS 운영 및 자산관리 데이터 ----
+OPERATIONS_DATA = {
+    "performance_metrics": {
+        "round_trip_efficiency": {"value": "86-92%", "trend": "개선", "desc": "LFP 기준 RTE 88-90%, NMC 86-89%. 셀 기술 발전 및 PCS 효율 향상으로 지속 개선."},
+        "availability": {"value": "97-99%", "trend": "안정", "desc": "유틸리티급 BESS 평균 가용률 98%+. 예방정비 스케줄링 및 모듈 이중화로 고가용성 유지."},
+        "augmentation_strategy": {"value": "Year 7-10", "trend": "표준화", "desc": "열화 보상을 위한 셀 증설(Augmentation). 초기 설계 시 증설 공간 확보가 표준화되는 추세."},
+        "cycle_life": {"value": "6,000-10,000", "trend": "증가", "desc": "LFP 셀 기준 80% SOH까지 사이클 수. 대형 셀(280Ah+)에서 8,000+ 사이클 달성."},
+    },
+    "om_cost_trends": {
+        2022: {"fixed_per_kw_yr": 12.0, "variable_per_mwh": 2.5, "total_per_kwh_yr": 8.5},
+        2023: {"fixed_per_kw_yr": 11.0, "variable_per_mwh": 2.3, "total_per_kwh_yr": 7.8},
+        2024: {"fixed_per_kw_yr": 10.0, "variable_per_mwh": 2.0, "total_per_kwh_yr": 7.0},
+        2025: {"fixed_per_kw_yr": 9.5, "variable_per_mwh": 1.8, "total_per_kwh_yr": 6.5},
+        2026: {"fixed_per_kw_yr": 9.0, "variable_per_mwh": 1.6, "total_per_kwh_yr": 6.0},
+        2027: {"fixed_per_kw_yr": 8.5, "variable_per_mwh": 1.5, "total_per_kwh_yr": 5.5},
+    },
+    "ems_platforms": [
+        {"name": "Tesla Autobidder", "vendor": "Tesla", "feature": "AI 기반 실시간 입찰 최적화, Megapack 전용", "market": "미국, 호주, 영국"},
+        {"name": "Fluence Mosaic", "vendor": "Fluence", "feature": "멀티벤더 지원, 수익 스태킹 최적화, 클라우드 기반", "market": "글로벌"},
+        {"name": "Wärtsilä GEMS", "vendor": "Wärtsilä", "feature": "하이브리드 발전 최적화, 마이크로그리드 관리", "market": "글로벌"},
+        {"name": "Doosan GridBridge", "vendor": "두산에너바일리티", "feature": "국내 전력시장 최적화, KPX 연계", "market": "한국"},
+        {"name": "Powin StackOS", "vendor": "Powin", "feature": "배터리 수명 최적화, 열관리 AI", "market": "미국, 호주"},
+    ],
+    "degradation_mgmt": [
+        "SOC 관리: 일상 운영 SOC 10-90% 범위 유지로 사이클 수명 극대화",
+        "열관리: 셀 온도 15-35°C 유지. HVAC/액냉 시스템으로 열폭주 방지 및 수명 연장",
+        "C-rate 제어: 0.5C 이하 충방전 우선. 고출력 운전(1C+) 시간 최소화",
+        "Calendar Aging 최소화: 장기 고SOC 대기 회피. 비운전 시 SOC 50% 유지",
+        "Augmentation 계획: 7-10년차 초기 용량 대비 15-20% 셀 증설로 계약 성능 유지",
+        "예방정비: 분기별 절연 저항/접촉 저항 측정, 연 1회 셀 밸런싱 및 BMS 캘리브레이션",
+    ],
+}
+

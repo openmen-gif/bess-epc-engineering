@@ -82,45 +82,43 @@ def add_hyperlink(paragraph, url: str, text: str, size_pt: float = 10):
     paragraph._p.append(hl)
 
 def add_toc(doc):
+    """정적 목차 생성 — Word 필드 갱신 없이 바로 표시됨."""
+    _TOC_ENTRIES = [
+        (1, "1. Executive Summary"),
+        (1, "2. 시장별 심층 분석"),
+        (1, "3. 전문 카테고리 분석"),
+        (1, "4. 시각화 분석"),
+        (1, "5. 글로벌 트렌드 통계 및 YoY 분석"),
+        (1, "6. 경쟁사 심층 분석"),
+        (1, "7. 프로젝트 파이프라인 현황"),
+        (1, "8. 환율 및 원자재 시장 영향 분석"),
+        (1, "9. 시나리오 분석"),
+        (1, "10. BESS 사업 개발 및 투자 분석"),
+        (1, "11. 전력시장 및 거래 동향"),
+        (1, "12. BESS 운영 및 자산관리"),
+        (1, "13. 전문가 종합 의견 및 전략적 시사점"),
+    ]
     from docx.shared import Mm as _Mm
-    for lvl, indent in [("TOC 1", _Mm(0)), ("TOC 2", _Mm(5))]:
-        try:
-            toc_style = doc.styles[lvl]
-        except KeyError:
-            toc_style = doc.styles.add_style(lvl, 1)
-        toc_style.font.size = Pt(10)
-        toc_style.font.name = FONT
-        toc_style.paragraph_format.space_before = Pt(0)
-        toc_style.paragraph_format.space_after = Pt(0)
-        toc_style.paragraph_format.line_spacing = Pt(11)
-        toc_style.paragraph_format.left_indent = indent
-    p = doc.add_paragraph()
-    p.paragraph_format.space_before = Pt(0)
-    p.paragraph_format.space_after = Pt(0)
-    def _fld_run(fld_type=None, instr=None):
-        r = p.add_run()
-        if fld_type:
-            fc = OxmlElement("w:fldChar")
-            fc.set(qn("w:fldCharType"), fld_type)
-            r._element.append(fc)
-        if instr:
-            it = OxmlElement("w:instrText")
-            it.set(qn("xml:space"), "preserve")
-            it.text = instr
-            r._element.append(it)
-        return r
-    _fld_run("begin")
-    _fld_run(instr=' TOC \\o "1-2" \\h \\z \\u ')
-    _fld_run("separate")
-    placeholder = p.add_run("목차 갱신: Ctrl+A → F9")
-    placeholder.italic = True
-    placeholder.font.size = Pt(9)
-    placeholder.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
-    _fld_run("end")
-    settings = doc.settings.element
-    upd = OxmlElement("w:updateFields")
-    upd.set(qn("w:val"), "true")
-    settings.append(upd)
+    for entry_level, entry_title in _TOC_ENTRIES:
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(2)
+        p.paragraph_format.line_spacing = Pt(16)
+        indent = _Mm(0) if entry_level == 1 else _Mm(8)
+        p.paragraph_format.left_indent = indent
+        run = p.add_run(entry_title)
+        run.font.size = Pt(11) if entry_level == 1 else Pt(10)
+        run.font.name = FONT
+        run.font.color.rgb = CLR_H1 if entry_level == 1 else CLR_H2
+        if entry_level == 1:
+            run.bold = True
+    # 목차 끝 구분선
+    p_sep = doc.add_paragraph()
+    p_sep.paragraph_format.space_before = Pt(6)
+    p_sep.paragraph_format.space_after = Pt(6)
+    run_sep = p_sep.add_run("─" * 50)
+    run_sep.font.size = Pt(8)
+    run_sep.font.color.rgb = RGBColor(0xCC, 0xCC, 0xCC)
 
 def add_page_number(section):
     footer = section.footer
@@ -947,11 +945,199 @@ def generate_word_report():
     for _r in _p_scen.runs:
         _r.font.size = Pt(10); _r.font.name = FONT
 
-    # 10. 전문가 종합 의견 및 전략적 시사점
-    _h10 = doc.add_heading("10. 전문가 종합 의견 및 전략적 시사점", level=1)
+    # ============================================================
+    # 10. BESS 사업 개발 및 투자 분석
+    # ============================================================
+    _h10 = doc.add_heading("10. BESS 사업 개발 및 투자 분석", level=1)
     _h10.paragraph_format.page_break_before = True
+    doc.add_paragraph(
+        "BESS 프로젝트의 수익 모델(Revenue Stacking), 투자 경제성(IRR/Payback), "
+        "Offtake/PPA 계약 구조를 시장별로 분석합니다. 사업 개발 단계에서의 핵심 의사결정 요소를 제시합니다."
+    )
 
-    doc.add_heading("10.1 시장 전망 종합", level=2)
+    # 10.1 시장별 수익 스태킹 분석
+    doc.add_heading("10.1 시장별 수익 스태킹(Revenue Stacking) 분석", level=2)
+    for mkt_name in ["미국", "영국", "호주", "한국", "EU"]:
+        mkt_rs = md.REVENUE_STACKING.get(mkt_name, {})
+        if not mkt_rs:
+            continue
+        doc.add_heading(f"  ■ {mkt_name}", level=3)
+        rs_headers = ["수익원", "비중(%)", "평균수익($/kWh/yr)", "추세", "설명"]
+        rs_rows = []
+        total_rev = 0
+        for _key, _val in mkt_rs.items():
+            rs_rows.append([
+                _key.replace("_", " ").title(),
+                str(_val["share_pct"]),
+                str(_val["avg_revenue_kwh_yr"]),
+                _val["trend"],
+                _val["desc"][:80] + "…" if len(_val["desc"]) > 80 else _val["desc"],
+            ])
+            total_rev += _val["avg_revenue_kwh_yr"] * _val["share_pct"] / 100
+        _styled_table(doc, rs_headers, rs_rows, col_widths_mm=[28, 14, 22, 12, 84])
+        _p_rs = doc.add_paragraph(
+            f"→ {mkt_name} 시장 가중평균 예상 수익: ${total_rev:.0f}/kWh/yr (Revenue Stacking 기준)"
+        )
+        _p_rs.paragraph_format.space_before = Pt(2)
+        for _r in _p_rs.runs:
+            _r.font.size = Pt(9); _r.font.name = FONT; _r.bold = True
+
+    # 10.2 투자 경제성 비교
+    doc.add_heading("10.2 프로젝트 유형별 투자 경제성 비교", level=2)
+    inv_headers = ["프로젝트 유형", "CAPEX\n($/kWh)", "OPEX\n($/kWh/yr)", "IRR\n(Base)", "IRR\n(Opt.)",
+                   "Payback\n(년)", "수명\n(년)", "LCOS\n($/kWh)"]
+    inv_rows = []
+    for _k, _v in md.INVESTMENT_ECONOMICS.items():
+        inv_rows.append([
+            _v["name"],
+            str(_v["capex_per_kwh"]),
+            str(_v["opex_per_kwh_yr"]),
+            f"{_v['irr_base_pct']}%",
+            f"{_v['irr_optimistic_pct']}%",
+            str(_v["payback_years"]),
+            str(_v["project_life_years"]),
+            f"${_v['lcoe_kwh']:.2f}",
+        ])
+    _styled_table(doc, inv_headers, inv_rows, col_widths_mm=[42, 16, 16, 14, 14, 14, 12, 16])
+    _p_inv = doc.add_paragraph(
+        "유틸리티급 4시간 BESS는 Base Case IRR 12.5%로 안정적이며, 2시간 피크 대응형은 "
+        "짧은 duration에도 불구하고 높은 보조서비스 수익으로 14.0% IRR 달성이 가능합니다. "
+        "태양광+ESS 하이브리드는 LCOS $0.10/kWh로 가장 낮은 균등화 저장 비용을 보여 "
+        "IRA ITC 적용 시 경쟁력이 극대화됩니다."
+    )
+    for _r in _p_inv.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
+
+    # 10.3 Offtake / PPA 구조 비교
+    doc.add_heading("10.3 Offtake 및 PPA 계약 구조 비교", level=2)
+    oft_headers = ["계약 유형", "계약기간", "리스크", "수익 확실성", "주요 시장", "설명"]
+    oft_rows = []
+    for _o in md.OFFTAKE_STRUCTURES:
+        oft_rows.append([
+            _o["type"], _o["duration_yr"], _o["risk_profile"],
+            _o["revenue_certainty"], _o["typical_market"],
+            _o["desc"][:60] + "…" if len(_o["desc"]) > 60 else _o["desc"],
+        ])
+    _styled_table(doc, oft_headers, oft_rows, col_widths_mm=[30, 16, 14, 16, 20, 64])
+    _p_oft = doc.add_paragraph(
+        "프로젝트 파이낸싱 관점에서 Tolling Agreement와 PPA가 가장 유리하며, "
+        "비소구금융(Non-recourse Project Finance) 조달 시 장기 계약(10년+)이 필수적입니다. "
+        "영국 시장은 Merchant 모델이 주류이나 최근 Contracted+Merchant 혼합 구조로 전환하는 추세입니다. "
+        "한국은 전력시장 구조상 한전/KPX 기반 계약이 중심이나, 전력시장 개편 시 다양한 계약 구조 도입이 예상됩니다."
+    )
+    for _r in _p_oft.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
+
+    # ============================================================
+    # 11. 전력시장 및 거래 동향
+    # ============================================================
+    _h11 = doc.add_heading("11. 전력시장 및 거래 동향", level=1)
+    _h11.paragraph_format.page_break_before = True
+    doc.add_paragraph(
+        "주요 시장별 전력 거래 구조, BESS 참여 메커니즘, 수익 기회를 분석합니다. "
+        "각국 전력시장 설계(Market Design)의 차이가 BESS 사업성에 미치는 영향을 심층 조망합니다."
+    )
+
+    for pm_name, pm_data in md.POWER_MARKET_STRUCTURES.items():
+        doc.add_heading(f"11.{list(md.POWER_MARKET_STRUCTURES.keys()).index(pm_name)+1} {pm_name} 전력시장", level=2)
+        pm_rows = [
+            ["시장 유형", pm_data["market_type"]],
+            ["주요 시장/플랫폼", ", ".join(pm_data["key_markets"])],
+            ["결제 구조", pm_data["settlement"]],
+            ["BESS 참여 범위", pm_data["bess_participation"]],
+            ["평균 스프레드", pm_data["avg_spread_kwh"]],
+        ]
+        _styled_table(doc, ["항목", "내용"], pm_rows, col_widths_mm=[35, 125])
+        _p_pm = doc.add_paragraph(f"[동향] {pm_data['key_trend']}")
+        _p_pm.paragraph_format.space_before = Pt(4)
+        for _r in _p_pm.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT; _r.italic = True
+
+    # 전력 거래 전략 시사점
+    doc.add_heading("11.6 BESS 전력 거래 전략 시사점", level=2)
+    _trading_insights = [
+        "Revenue Stacking 필수화: 단일 수익원 의존은 수익성 리스크가 높아 복수 시장 동시 참여(에너지+보조서비스+용량) 전략이 표준화되고 있습니다.",
+        "AI/ML 기반 입찰 최적화: Tesla Autobidder, Fluence Mosaic 등 AI 기반 EMS가 수동 입찰 대비 15-25% 수익 향상을 달성하고 있어, "
+        "소프트웨어 역량이 BESS 사업의 핵심 차별화 요소로 부상하고 있습니다.",
+        "Duration 장기화 트렌드: 2시간→4시간→8시간으로 저장 시간이 확대되는 추세. 장기 저장(LDES)은 용량시장 및 계통 안정성 측면에서 프리미엄 수익 가능.",
+        "시장 간 수익 다변화: 단일 국가/시장 의존 리스크 분산을 위해 복수 시장 포트폴리오 전략이 중요합니다. "
+        "미국(ITC 수혜)+영국(보조서비스)+호주(FCAS) 조합이 최적 분산 포트폴리오로 평가됩니다.",
+        "한국 전력시장 개편 대비: Cost-Based → Bid-Based Pool 전환 시 BESS 에너지 차익거래 기회가 비약적으로 확대될 전망. "
+        "실시간 시장 도입에 대비한 입찰 전략 및 EMS 역량 확보가 시급합니다.",
+    ]
+    for _ti in _trading_insights:
+        _p_ti = doc.add_paragraph(_ti, style="List Bullet")
+        for _r in _p_ti.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT
+
+    # ============================================================
+    # 12. BESS 운영 및 자산관리
+    # ============================================================
+    _h12 = doc.add_heading("12. BESS 운영 및 자산관리", level=1)
+    _h12.paragraph_format.page_break_before = True
+    doc.add_paragraph(
+        "BESS 프로젝트의 장기 운영 성능, O&M 비용 추이, 배터리 열화 관리, "
+        "에너지관리시스템(EMS) 플랫폼을 분석합니다. 20년 이상 프로젝트 수명 동안의 "
+        "자산 가치 극대화 전략을 제시합니다."
+    )
+
+    # 12.1 핵심 성능 지표
+    doc.add_heading("12.1 핵심 성능 지표(KPI)", level=2)
+    perf = md.OPERATIONS_DATA["performance_metrics"]
+    perf_rows = []
+    for pk, pv in perf.items():
+        perf_rows.append([pk.replace("_", " ").title(), pv["value"], pv["trend"], pv["desc"]])
+    _styled_table(doc, ["지표", "기준값", "추세", "설명"], perf_rows, col_widths_mm=[30, 18, 12, 100])
+
+    # 12.2 O&M 비용 추이
+    doc.add_heading("12.2 O&M 비용 추이", level=2)
+    om = md.OPERATIONS_DATA["om_cost_trends"]
+    om_headers = ["연도", "고정비($/kW/yr)", "변동비($/MWh)", "총 O&M($/kWh/yr)"]
+    om_rows = []
+    for oyr in sorted(om.keys()):
+        od = om[oyr]
+        om_rows.append([str(oyr), str(od["fixed_per_kw_yr"]), str(od["variable_per_mwh"]), str(od["total_per_kwh_yr"])])
+    _styled_table(doc, om_headers, om_rows, col_widths_mm=[20, 30, 30, 30])
+    _first_om = list(sorted(om.keys()))[0]
+    _last_om = list(sorted(om.keys()))[-1]
+    _om_drop = round((1 - om[_last_om]["total_per_kwh_yr"] / om[_first_om]["total_per_kwh_yr"]) * 100)
+    _p_om = doc.add_paragraph(
+        f"O&M 비용은 {_first_om}년 ${om[_first_om]['total_per_kwh_yr']}/kWh/yr에서 "
+        f"{_last_om}년 ${om[_last_om]['total_per_kwh_yr']}/kWh/yr로 {_om_drop}% 감소하였습니다. "
+        "원격 모니터링 확대, 예측정비(Predictive Maintenance) 도입, 규모의 경제가 주요 원인입니다."
+    )
+    for _r in _p_om.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
+
+    # 12.3 EMS 플랫폼 비교
+    doc.add_heading("12.3 에너지관리시스템(EMS) 플랫폼 비교", level=2)
+    ems = md.OPERATIONS_DATA["ems_platforms"]
+    ems_headers = ["플랫폼", "벤더", "핵심 기능", "주요 시장"]
+    ems_rows = [[e["name"], e["vendor"], e["feature"], e["market"]] for e in ems]
+    _styled_table(doc, ems_headers, ems_rows, col_widths_mm=[30, 28, 62, 40])
+
+    # 12.4 배터리 열화 관리 전략
+    doc.add_heading("12.4 배터리 열화 관리 및 수명 연장 전략", level=2)
+    for _dm in md.OPERATIONS_DATA["degradation_mgmt"]:
+        _p_dm = doc.add_paragraph(_dm, style="List Bullet")
+        for _r in _p_dm.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT
+
+    _p_dm_sum = doc.add_paragraph(
+        "체계적인 열화 관리는 BESS 프로젝트의 20년 수명 동안 누적 수익을 15-25% 향상시킬 수 있습니다. "
+        "특히 Augmentation 시점과 규모의 최적화가 프로젝트 NPV에 가장 큰 영향을 미치며, "
+        "초기 설계 단계에서 증설 공간(Bay) 확보가 필수적입니다."
+    )
+    for _r in _p_dm_sum.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
+
+    # ============================================================
+    # 13. 전문가 종합 의견 및 전략적 시사점 (기존 10장 → 13장)
+    # ============================================================
+    _h13 = doc.add_heading("13. 전문가 종합 의견 및 전략적 시사점", level=1)
+    _h13.paragraph_format.page_break_before = True
+
+    doc.add_heading("13.1 시장 전망 종합", level=2)
     _p_exp1 = doc.add_paragraph(
         f"글로벌 BESS 시장은 {_yr}년 기준 {md.GLOBAL_CAPACITY_GWH.get(_yr, 0)} GWh 규모로 "
         f"전년 대비 {_yoy_g}% 성장하였으며, {md.YEARS[-1]}년 "
@@ -964,7 +1150,7 @@ def generate_word_report():
     for _r in _p_exp1.runs:
         _r.font.size = Pt(10); _r.font.name = FONT
 
-    doc.add_heading("10.2 가격 전망 및 경제성 분석", level=2)
+    doc.add_heading("13.2 가격 전망 및 경제성 분석", level=2)
     _p_exp2 = doc.add_paragraph(
         f"LFP 셀 가격은 {md.LFP_CELL_PRICE[_first_yr]}→{md.LFP_CELL_PRICE[_last_yr]} $/kWh "
         f"({abs(_lfp_cagr)}% CAGR 하락)로 빠르게 하락하고 있으며, "
@@ -976,7 +1162,7 @@ def generate_word_report():
     for _r in _p_exp2.runs:
         _r.font.size = Pt(10); _r.font.name = FONT
 
-    doc.add_heading("10.3 EPC 사업 전략 시사점", level=2)
+    doc.add_heading("13.3 EPC 사업 전략 시사점", level=2)
     _epc_insights = [
         "셀 소싱 전략: LFP 중심의 멀티 공급사 전략으로 리스크 분산 및 원가 경쟁력 확보가 필수입니다. "
         "CATL/BYD/EVE 등 중국 Tier 1과 Samsung SDI/LG 등 한국 제조사의 이중 소싱을 권장합니다.",
@@ -995,7 +1181,7 @@ def generate_word_report():
         for _r in _p_ins.runs:
             _r.font.size = Pt(10); _r.font.name = FONT
 
-    doc.add_heading("10.4 핵심 리스크 요인", level=2)
+    doc.add_heading("13.4 핵심 리스크 요인", level=2)
     _risks = [
         ("지정학적 리스크", "미·중 기술 갈등, 수출 통제, 관세 부과 → 셀 공급 다변화 필수"),
         ("정책 불확실성", "IRA 지속 여부, EU 보조금 변경 → 시나리오별 수익 모델링 강화"),
@@ -1021,7 +1207,12 @@ def generate_word_report():
     return out_path
 
 def generate_pdf_report():
-    """Generate PDF by converting the Word Deep Report via docx2pdf in an STA thread."""
+    """Generate PDF — Windows: docx2pdf(COM), Linux: raise informative error."""
+    if platform.system() != "Windows":
+        raise RuntimeError(
+            "PDF 변환은 Windows 환경에서만 지원됩니다. "
+            "Word(.docx) 보고서를 다운로드한 후 Google Docs 또는 LibreOffice에서 PDF로 변환하세요."
+        )
     import threading
     import shutil
     import docx2pdf
@@ -1029,8 +1220,6 @@ def generate_pdf_report():
     word_path = generate_word_report()
     pdf_path = word_path.replace('.docx', '.pdf')
 
-    # COM/Word cannot handle paths with Korean (non-ASCII) characters.
-    # Convert using an ASCII temp path, then copy to the final destination.
     tmp_dir = tempfile.gettempdir()
     tmp_docx = os.path.join(tmp_dir, "bess_report_tmp.docx")
     tmp_pdf  = os.path.join(tmp_dir, "bess_report_tmp.pdf")
