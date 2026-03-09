@@ -10,7 +10,9 @@ import threading as _threading
 from pathlib import Path
 from datetime import datetime
 
-_STORE_PATH = Path(os.environ.get("PROJECT_STORE_PATH", "/tmp/bess_projects.json"))
+# Prefer /data (HF Spaces persistent storage), fallback to /tmp
+_DEFAULT_STORE = "/data/bess_projects.json" if os.path.isdir("/data") else "/tmp/bess_projects.json"
+_STORE_PATH = Path(os.environ.get("PROJECT_STORE_PATH", _DEFAULT_STORE))
 
 # ── HuggingFace Hub sync (persistent project data across container restarts) ──
 _HF_REPO_ID = "openmen-gif/bess-user-data"
@@ -74,11 +76,31 @@ PHASE_STATUS      = ["대기", "진행중", "완료"]
 PHASE_STATUS_EN   = ["Pending", "In Progress", "Completed"]
 
 
+def _sanitize_projects(projects: list) -> list:
+    """Ensure all progress values are int and dates are str."""
+    for p in projects:
+        for ph in p.get("phases", []):
+            try:
+                ph["progress"] = int(ph.get("progress", 0))
+            except (ValueError, TypeError):
+                ph["progress"] = 0
+            if not isinstance(ph.get("start_date"), str):
+                ph["start_date"] = str(ph.get("start_date", ""))
+            if not isinstance(ph.get("end_date"), str):
+                ph["end_date"] = str(ph.get("end_date", ""))
+        if not isinstance(p.get("start_date"), str):
+            p["start_date"] = str(p.get("start_date", ""))
+        if not isinstance(p.get("end_date"), str):
+            p["end_date"] = str(p.get("end_date", ""))
+    return projects
+
+
 def _load_raw() -> list:
     try:
         if _STORE_PATH.exists():
             with open(_STORE_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                return _sanitize_projects(data)
     except Exception:
         pass
     return []

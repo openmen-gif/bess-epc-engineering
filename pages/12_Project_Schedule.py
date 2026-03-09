@@ -438,8 +438,10 @@ with tab_gantt:
                 )
 
                 # Progress overlay
-                if t["progress"] > 0:
-                    prog_end = t["start"] + (t["end"] - t["start"]) * t["progress"] / 100
+                prog_val = int(t["progress"]) if not isinstance(t["progress"], int) else t["progress"]
+                if prog_val > 0:
+                    duration = t["end"] - t["start"]
+                    prog_end = t["start"] + timedelta(days=int(duration.days * prog_val / 100))
                     fig_g.add_shape(
                         type="rect",
                         x0=t["start"], x1=prog_end,
@@ -451,7 +453,7 @@ with tab_gantt:
                     )
 
                 # Invisible scatter for hover
-                mid = t["start"] + (t["end"] - t["start"]) / 2
+                mid = t["start"] + timedelta(days=(t["end"] - t["start"]).days // 2)
                 crit_txt = (" 🔴 Critical Path" if t["is_critical"] else "")
                 fig_g.add_trace(go.Scatter(
                     x=[mid], y=[y_pos],
