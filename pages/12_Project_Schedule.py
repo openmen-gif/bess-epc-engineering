@@ -465,11 +465,16 @@ with tab_gantt:
                     showlegend=False,
                 ))
 
-            # Today line
-            today_str = date.today()
-            fig_g.add_vline(x=today_str.isoformat(), line_dash="dot", line_color="#ff6b6b",
-                            annotation_text="Today" if is_en else "오늘",
-                            annotation_font_color="#ff6b6b")
+            # Today line (use shape instead of add_vline for compatibility)
+            _today = date.today()
+            fig_g.add_shape(
+                type="line", x0=_today, x1=_today, y0=-0.5, y1=n - 0.5,
+                line=dict(color="#ff6b6b", width=2, dash="dot"),
+            )
+            fig_g.add_annotation(
+                x=_today, y=n - 0.5, text="Today" if is_en else "오늘",
+                showarrow=False, font=dict(color="#ff6b6b", size=11), yshift=12,
+            )
 
             fig_g.update_yaxes(
                 tickvals=list(range(n)),
