@@ -756,3 +756,243 @@ OPERATIONS_DATA = {
     ],
 }
 
+# ---- 안전·화재 및 규제 기준 데이터 ----
+SAFETY_STANDARDS = [
+    {"standard": "NFPA 855", "region": "미국", "scope": "ESS 설치 및 화재 안전",
+     "desc": "ESS 설치 기준 (이격거리, 소방설비, 환기, 폭발 방지). 2023년 개정판에서 실외 ESS 이격거리 강화 및 열폭주 시험 요건 추가.",
+     "key_req": "열폭주 전파 시험, 가스 감지, 폭발 방지 환기, 소화 시스템, 비상 대응 계획"},
+    {"standard": "UL 9540", "region": "미국/글로벌", "scope": "ESS 제품 안전 인증",
+     "desc": "배터리 에너지 저장 시스템 안전 표준. UL 9540A는 열폭주 화재 전파 시험 방법론을 규정.",
+     "key_req": "셀→모듈→랙→설치 레벨 4단계 열폭주 시험, 가스 방출량 측정, 연소 생성물 분석"},
+    {"standard": "IEC 62933", "region": "글로벌", "scope": "ESS 안전 및 성능",
+     "desc": "에너지 저장 시스템의 안전, 성능, 환경 요건. IEC 62933-5-2는 ESS 안전 요건 상세 규정.",
+     "key_req": "전기적 안전, 기능 안전(SIL), 환경 시험, 수송 안전, EMC"},
+    {"standard": "KS C 8564", "region": "한국", "scope": "ESS 화재 안전",
+     "desc": "국내 ESS 화재 안전 기준. 2020년 ESS 화재 사고 이후 대폭 강화. 셀 안전성 시험 + 시스템 레벨 안전 요건.",
+     "key_req": "PCS 절연 강화, BMS 이중화, 접지 감시, 온도 모니터링, 소화 설비, 이격거리"},
+    {"standard": "AS/NZS 5139", "region": "호주/뉴질랜드", "scope": "ESS 설치 안전",
+     "desc": "호주 ESS 설치 안전 기준. 가정용~유틸리티급 ESS 전체 커버. 2024년 개정으로 대형 BESS 요건 강화.",
+     "key_req": "설치 위치 제한, 환기 요건, 화재 등급, 비상 차단, 표시 및 라벨링"},
+    {"standard": "EN 62619", "region": "EU", "scope": "산업용 리튬이온 배터리 안전",
+     "desc": "산업용(ESS 포함) 리튬이온 배터리 안전 요건. CE 마킹 필수. EU Battery Regulation(2027)과 연계.",
+     "key_req": "과충전/과방전 보호, 단락 보호, 열 안전, 기계적 안전, 환경 시험"},
+]
+
+FIRE_INCIDENTS = [
+    {"year": 2017, "location": "한국 (고창)", "cause": "접속 불량/아크", "damage": "시스템 전소", "lesson": "접촉 저항 관리 및 아크 감지 시스템 도입 계기"},
+    {"year": 2019, "location": "미국 AZ (McMicken)", "cause": "열폭주 → 가스 축적 → 폭발", "damage": "소방관 부상, 시설 전소", "lesson": "환기 설계 및 가스 감지 의무화(NFPA 855 개정 촉발)"},
+    {"year": 2021, "location": "호주 (Victorian Big Battery)", "cause": "냉각 시스템 오작동", "damage": "Tesla Megapack 2대 소손", "lesson": "냉각 시스템 이중화, BMS 알람 즉시 대응 프로토콜"},
+    {"year": 2022, "location": "미국 CA (Moss Landing)", "cause": "과열 → 열폭주", "damage": "시스템 정지, 주민 대피", "lesson": "대규모 BESS 열관리 설계 강화, 모듈 간 이격 확대"},
+    {"year": 2023, "location": "한국 (나주)", "cause": "BMS 오류/셀 불량 추정", "damage": "컨테이너 전소", "lesson": "BMS 이중화 의무, 셀 수입 검사 강화"},
+]
+
+# ---- 배터리 기술 동향 데이터 ----
+BATTERY_TECHNOLOGIES = [
+    {"tech": "LFP (리튬인산철)", "chemistry": "LiFePO₄", "status": "주류 상용화",
+     "energy_density_wh_kg": "140-170", "cycle_life": "6,000-10,000", "cost_per_kwh": "$43-55",
+     "pros": "높은 안전성, 긴 수명, 원가 경쟁력, 코발트 무함유",
+     "cons": "낮은 에너지 밀도, 저온 성능 저하",
+     "outlook": "BESS 시장 지배적 지위 유지. 280Ah+ 대형셀 표준화. LMFP(망간 첨가) 변형으로 에너지 밀도 개선 추진."},
+    {"tech": "NMC (니켈망간코발트)", "chemistry": "LiNiMnCoO₂", "status": "상용화 (EV 중심)",
+     "energy_density_wh_kg": "200-280", "cycle_life": "3,000-5,000", "cost_per_kwh": "$60-82",
+     "pros": "높은 에너지 밀도, 높은 출력",
+     "cons": "코발트 의존, 열 안정성 LFP 대비 낮음, 높은 원가",
+     "outlook": "ESS 시장에서 LFP에 점유율 양보 중. 고에너지 밀도 필요한 공간 제약 프로젝트에서 틈새 활용."},
+    {"tech": "나트륨이온 (Na-ion)", "chemistry": "Na₃V₂(PO₄)₃ 등", "status": "초기 상용화",
+     "energy_density_wh_kg": "100-140", "cycle_life": "3,000-6,000", "cost_per_kwh": "$30-45 (목표)",
+     "pros": "리튬 무함유, 저원가 잠재력, 저온 성능 우수, 풍부한 원재료",
+     "cons": "낮은 에너지 밀도, 초기 단계 신뢰성 검증 부족",
+     "outlook": "CATL/BYD 양산 돌입(2024~). 단기저장(1-2시간) 및 신흥시장에서 LFP 보완 역할. 2027년 이후 ESS 시장 점유율 10-15% 전망."},
+    {"tech": "전고체 배터리", "chemistry": "Li-고체전해질", "status": "R&D/파일럿",
+     "energy_density_wh_kg": "350-500", "cycle_life": "5,000+ (목표)", "cost_per_kwh": "$100+ (현재)",
+     "pros": "높은 안전성(불연), 높은 에너지 밀도, 넓은 온도 범위",
+     "cons": "높은 제조 비용, 계면 저항, 양산 기술 미확립",
+     "outlook": "2028-2030년 EV 우선 상용화 예상. ESS 적용은 2030년 이후. Samsung SDI, Toyota 등 선두."},
+    {"tech": "바나듐 레독스 흐름전지 (VRFB)", "chemistry": "V²⁺/V³⁺ ↔ V⁴⁺/V⁵⁺", "status": "상용화 (틈새)",
+     "energy_density_wh_kg": "15-25", "cycle_life": "20,000+", "cost_per_kwh": "$300-500",
+     "pros": "극장수명, 용량/출력 독립 설계, 비인화성, 재활용 용이",
+     "cons": "낮은 에너지 밀도, 높은 초기 비용, 바나듐 가격 변동",
+     "outlook": "4시간+ 장기저장(LDES) 시장에서 리튬이온 대안. 중국 Dalian 400MW/1.6GWh 가동 시작(2022). 호주·일본 도입 확대."},
+    {"tech": "철-공기 배터리", "chemistry": "Fe-Air", "status": "파일럿/데모",
+     "energy_density_wh_kg": "80-150", "cycle_life": "조기 단계", "cost_per_kwh": "$20-30 (목표)",
+     "pros": "극저원가 잠재력, 풍부한 원재료(철), 100시간+ 저장 가능",
+     "cons": "낮은 RTE(45-55%), 대형 풋프린트, 초기 기술",
+     "outlook": "Form Energy(미국) 주도. 100시간 저장으로 계절성 저장 시장 타겟. 2025년 첫 상용 프로젝트 착공."},
+]
+
+LDES_MARKET = {
+    "definition": "4시간 이상 장기 에너지 저장(Long Duration Energy Storage)",
+    "market_size_2025_gwh": 15,
+    "market_size_2030_gwh": 120,
+    "cagr_pct": 52,
+    "key_drivers": [
+        "재생에너지 간헐성 증가 → 다일(multi-day) 저장 필요성",
+        "석탄/가스 기저 발전 퇴출 → 계통 안정성 확보",
+        "미국 DOE LDES 프로그램 ($5B+ 투자)",
+        "EU 전략적 에너지 저장 이니셔티브",
+    ],
+    "competing_techs": [
+        {"tech": "리튬이온 (4-8h)", "share_pct": 60, "advantage": "성숙 기술, 검증된 공급망"},
+        {"tech": "VRFB (4-12h)", "share_pct": 15, "advantage": "장수명, 용량 확장 용이"},
+        {"tech": "압축공기(CAES)", "share_pct": 10, "advantage": "대규모 저장, 지리적 이점"},
+        {"tech": "철-공기 (100h+)", "share_pct": 5, "advantage": "극저원가 잠재력"},
+        {"tech": "수소/P2G", "share_pct": 10, "advantage": "계절성 저장, 섹터 커플링"},
+    ],
+}
+
+# ---- 인허가 및 사업 개발 프로세스 데이터 ----
+PERMITTING_DATA = {
+    "미국": {
+        "total_timeline_months": "18-36",
+        "grid_connection_wait_months": "24-60",
+        "key_permits": ["NEPA 환경영향평가(연방 토지)", "주(State) 에너지 인허가", "카운티/시 건축 허가",
+                        "소방서 검토(NFPA 855)", "FERC/ISO 상호연결 신청"],
+        "grid_challenge": "PJM/CAISO 상호연결 대기열(Interconnection Queue) 적체 심각. 평균 4-5년 소요. "
+                          "FERC Order 2023 개혁으로 개선 기대이나 아직 초기 단계.",
+        "land_req_acre_per_mwh": 0.5,
+        "tips": "상호연결 신청 조기 진행 필수. Brownfield 부지(폐발전소) 활용 시 인허가 단축. 지역 커뮤니티 수용성 사전 확보.",
+    },
+    "영국": {
+        "total_timeline_months": "12-24",
+        "grid_connection_wait_months": "36-84",
+        "key_permits": ["Planning Permission (지방의회)", "National Grid 상호연결", "환경영향평가(EIA)",
+                        "건축 규정(Building Regulations)", "HSE 안전 검토"],
+        "grid_challenge": "그리드 연결 대기시간이 최대 7년+ (영국 최대 과제). "
+                          "National Grid 연결 개혁(Connections Reform) 진행 중. 기존 발전소 연결점(Grid Supply Point) 활용이 유리.",
+        "land_req_acre_per_mwh": 0.4,
+        "tips": "기존 그리드 연결점 확보가 핵심 경쟁 우위. Planning Permission은 50MW 미만 시 지방의회 승인으로 가능.",
+    },
+    "호주": {
+        "total_timeline_months": "12-24",
+        "grid_connection_wait_months": "12-36",
+        "key_permits": ["Development Approval (주정부)", "AEMO 상호연결", "환경영향평가",
+                        "원주민 문화유산 평가", "소방 안전 검토(AS/NZS 5139)"],
+        "grid_challenge": "NEM 상호연결 프로세스 비교적 원활하나, 송전 제약(Marginal Loss Factor) 고려 필요. "
+                          "REZ(Renewable Energy Zone) 내 프로젝트 우선 연결.",
+        "land_req_acre_per_mwh": 0.6,
+        "tips": "REZ(신재생 에너지 존) 내 부지 확보 시 인허가 및 그리드 연결 우선권. 원주민 문화유산 평가 조기 착수.",
+    },
+    "한국": {
+        "total_timeline_months": "12-18",
+        "grid_connection_wait_months": "6-18",
+        "key_permits": ["전기사업 허가(산업통상자원부)", "발전사업 허가", "환경영향평가(대규모)",
+                        "건축 허가", "소방 검토(KS C 8564)", "한전 계통연계 협의"],
+        "grid_challenge": "상대적으로 짧은 대기 기간이나, 제주도 등 계통 제약 지역에서 연결 거부 사례 증가. "
+                          "ESS 의무설치 연계 프로젝트는 인허가 간소화.",
+        "land_req_acre_per_mwh": 0.3,
+        "tips": "전력거래소 사전 협의 필수. ESS 화재 안전기준(KS C 8564) 충족 증빙 사전 준비. 주민 수용성 확보 중요.",
+    },
+    "EU": {
+        "total_timeline_months": "18-36",
+        "grid_connection_wait_months": "12-48",
+        "key_permits": ["국가별 에너지 인허가", "환경영향평가(EIA Directive)", "TSO/DSO 상호연결",
+                        "건축 허가", "EU Battery Regulation 준수(2027~)"],
+        "grid_challenge": "국가별 편차 큼. 독일 비교적 원활, 이탈리아/스페인 3-4년 소요. "
+                          "EU 에너지저장 규제 프레임워크 통일 논의 진행 중.",
+        "land_req_acre_per_mwh": 0.4,
+        "tips": "EU Battery Regulation(2027) 대비 필수 — 탄소발자국 신고, 재활용 요건, 디지털 배터리 여권. 국가별 Fast-track 인허가 활용.",
+    },
+}
+
+# ---- 프로젝트 파이낸싱 데이터 ----
+PROJECT_FINANCING = {
+    "structures": [
+        {"type": "Non-recourse Project Finance", "leverage": "70-80%", "tenor_yr": "10-18",
+         "min_dscr": "1.20-1.35x", "typical_size": "50MW+",
+         "desc": "SPV(특수목적법인)를 통한 비소구 금융. BESS 전용 PF 시장 급성장 중. "
+                 "장기 Offtake(Tolling/PPA) 확보가 대출 승인의 핵심 요건.",
+         "key_lenders": "ING, Natixis, MUFG, Societe Generale, KfW, CEFC(호주)"},
+        {"type": "Corporate Finance (On-balance)", "leverage": "N/A", "tenor_yr": "N/A",
+         "min_dscr": "N/A", "typical_size": "모든 규모",
+         "desc": "개발사/모회사 재무제표 기반 투자. 초기 프로젝트 또는 소규모 BESS에 주로 활용. "
+                 "PF 대비 빠른 의사결정이나 자본 효율성 낮음.",
+         "key_lenders": "자체 자본, 회사채, 일반 대출"},
+        {"type": "Tax Equity (미국)", "leverage": "30-50%", "tenor_yr": "5-10",
+         "min_dscr": "N/A", "typical_size": "50MW+",
+         "desc": "IRA ITC를 활용한 조세 형평성 투자. Tax Equity 투자자가 ITC 30-50%를 활용하고 "
+                 "프로젝트 지분/수익 배분. JP Morgan, Bank of America 등 대형 은행 참여.",
+         "key_lenders": "JP Morgan, BofA, Goldman Sachs, US Bank"},
+        {"type": "Green Bond / 녹색 채권", "leverage": "100% (채권)", "tenor_yr": "5-15",
+         "min_dscr": "N/A", "typical_size": "대규모 포트폴리오",
+         "desc": "ESG/녹색 채권 프레임워크 하에서 BESS 프로젝트 자금 조달. "
+                 "포트폴리오 레벨에서 다수 프로젝트 번들링. 금리 우대 가능.",
+         "key_lenders": "기관투자자, 연기금, 보험사"},
+        {"type": "Infrastructure Fund", "leverage": "50-70%", "tenor_yr": "10-25",
+         "min_dscr": "N/A", "typical_size": "100MW+",
+         "desc": "인프라 펀드를 통한 장기 투자. Blackrock, Brookfield, Macquarie 등 글로벌 인프라 펀드의 "
+                 "BESS 투자 급증. COD 이후 자산 인수(Acquisition) 모델 활발.",
+         "key_lenders": "Blackrock, Brookfield, Macquarie, Copenhagen Infrastructure Partners"},
+    ],
+    "bankability_requirements": [
+        "장기 Offtake 계약: Tolling/PPA 10년+, 또는 용량시장 계약(T-4 등)",
+        "기술 실사: 독립 기술 평가(Independent Engineer Report), Tier 1 셀/PCS 제조사",
+        "보험: Property All Risk, Business Interruption, Third Party Liability, Cyber Risk",
+        "성능 보증: EPC 사업자 Performance Guarantee, 제조사 용량 Warranty (15-20년)",
+        "환경·안전: 환경영향평가 완료, NFPA 855/UL 9540A 등 안전 인증",
+        "운영 계획: O&M 계약(LTSA), EMS/최적화 소프트웨어, 보험 갱신 계획",
+        "시장 분석: 독립 시장 전문가의 수익 전망(P50/P90), 시나리오 분석",
+    ],
+    "insurance_coverage": [
+        {"type": "Property All Risk (PAR)", "desc": "화재, 자연재해, 기계적 고장 등 자산 손해 보상", "rate": "CAPEX의 0.3-0.8%/yr"},
+        {"type": "Business Interruption (BI)", "desc": "사고로 인한 수익 손실 보상. 대기 기간(Deductible) 30-90일", "rate": "예상 수익의 0.5-1.0%/yr"},
+        {"type": "Third Party Liability", "desc": "제3자 인적/물적 피해 배상", "rate": "$5M-50M 한도"},
+        {"type": "Construction All Risk (CAR)", "desc": "건설 기간 중 사고/손해 보상", "rate": "건설비의 0.5-1.5%"},
+        {"type": "Cyber Insurance", "desc": "EMS/SCADA 해킹, 데이터 유출 등 사이버 리스크 보상", "rate": "연간 $50K-200K"},
+    ],
+}
+
+# ---- EPC 계약 구조 데이터 ----
+EPC_CONTRACT_DATA = {
+    "contract_types": [
+        {"type": "Full Turnkey EPC", "risk_owner": "EPC 사업자",
+         "price_structure": "Lump Sum Fixed Price",
+         "pros": "발주자 리스크 최소화, 단일 책임(Single Point of Responsibility), PF에 유리",
+         "cons": "높은 프리미엄(10-15%), EPC 사업자 마진 포함, 유연성 제한",
+         "typical_use": "PF 프로젝트, 첫 진출 시장, 발주자 기술 역량 부족 시",
+         "desc": "설계-조달-시공 일괄 도급. 성능 보증 및 일정 보증 포함. BESS 시장에서 가장 보편적 구조."},
+        {"type": "EPCM (관리형)", "risk_owner": "발주자 (EPCM 자문)",
+         "price_structure": "Cost + Fee / Target Price",
+         "pros": "발주자 통제력 강화, 원가 투명성, 조달 유연성",
+         "cons": "발주자 리스크 증가, 전문 인력 필요, PF 대출 조건 불리",
+         "typical_use": "반복 프로젝트, 발주자 기술 역량 보유 시, 포트폴리오 개발사",
+         "desc": "EPC 관리자가 설계/조달/시공을 관리하되 직접 계약 당사자가 아닌 구조. 발주자가 개별 계약 체결."},
+        {"type": "Split Contract (분리 발주)", "risk_owner": "발주자 (인터페이스 관리)",
+         "price_structure": "각 패키지별 개별 계약",
+         "pros": "패키지별 최적 사업자 선정, 원가 절감 잠재력",
+         "cons": "인터페이스 리스크, 일정 조율 복잡, 성능 보증 분리",
+         "typical_use": "대규모 프로젝트, 전문 셀/PCS 직접 조달 시",
+         "desc": "배터리, PCS, BOP(Balance of Plant), 토목/건축을 분리 발주. "
+                 "인터페이스 관리 역량이 핵심. Owner's Engineer 활용 권장."},
+        {"type": "BOO/BOOT", "risk_owner": "사업자 (BOO) / 이전 (BOOT)",
+         "price_structure": "서비스 요금(Capacity Payment)",
+         "pros": "발주자 CAPEX 불필요, Off-balance Sheet 가능",
+         "cons": "장기 계약 구속, 총 비용 높음, 사업자 수익 마진 포함",
+         "typical_use": "중동 정부 프로젝트, 유틸리티 아웃소싱",
+         "desc": "Build-Own-Operate: 사업자가 건설·소유·운영. 발주자는 용량 비용만 지급. 중동/아프리카 선호."},
+    ],
+    "key_commercial_terms": [
+        {"term": "Performance Guarantee (PG)", "desc": "용량(MW/MWh), RTE(Round Trip Efficiency), 가용률(Availability) 보증. "
+         "미달 시 Liquidated Damages(LD) 적용. 통상 계약 용량 95%+, RTE 85%+, 가용률 97%+."},
+        {"term": "Delay LD (지체상금)", "desc": "공사 지연 시 일일 지체상금 부과. 통상 계약금의 0.1-0.5%/일, 상한 10-15%. "
+         "BESS는 시장 수익 시작 지연이 직접적 손실이므로 중요."},
+        {"term": "Warranty Period", "desc": "EPC Defects Liability Period: 통상 2년. 제조사 셀 Warranty: 10-20년 "
+         "(용량 유지율 보증, 일반적으로 10년 80% SOH). PCS Warranty: 5-10년."},
+        {"term": "Capacity Warranty", "desc": "제조사가 보증하는 배터리 용량 유지 커브. "
+         "Year 10: 80%+ SOH, Year 15: 70%+ SOH가 일반적. Augmentation 비용 부담 주체 명확화 필수."},
+        {"term": "Limitation of Liability", "desc": "EPC 사업자 책임 한도. 통상 계약금의 100% (PG LD + Delay LD 합산). "
+         "간접 손해(Consequential Damages) 배제 일반적."},
+        {"term": "Insurance Requirements", "desc": "CAR(건설 보험), PL(제3자 책임), Professional Indemnity(설계 오류) 필수. "
+         "통상 CAPEX의 110%+ 부보. EPC 사업자 부보 의무."},
+    ],
+    "cost_breakdown": {
+        "battery_cells": {"share_pct": 40, "desc": "LFP/NMC 셀 + 모듈화 + BMS"},
+        "pcs_inverter": {"share_pct": 15, "desc": "PCS(Power Conversion System) + 변압기"},
+        "bop_electrical": {"share_pct": 12, "desc": "케이블, 스위치기어, 접지, SCADA"},
+        "bop_civil": {"share_pct": 8, "desc": "기초, 도로, 배수, 펜스, 소방 설비"},
+        "ems_software": {"share_pct": 5, "desc": "EMS, 최적화 SW, 통신, 모니터링"},
+        "epc_margin_overhead": {"share_pct": 10, "desc": "EPC 마진 + 간접비 + 보험 + 보증"},
+        "dev_permitting": {"share_pct": 5, "desc": "개발비, 인허가, 환경 평가, 법률 비용"},
+        "contingency": {"share_pct": 5, "desc": "예비비(Contingency) 5-10%"},
+    },
+}
+

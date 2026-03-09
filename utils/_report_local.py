@@ -160,7 +160,12 @@ def add_toc(doc):
         (1, "10. BESS 사업 개발 및 투자 분석", "_sec10"),
         (1, "11. 전력시장 및 거래 동향", "_sec11"),
         (1, "12. BESS 운영 및 자산관리", "_sec12"),
-        (1, "13. 전문가 종합 의견 및 전략적 시사점", "_sec13"),
+        (1, "13. 안전·화재 및 규제 기준", "_sec13"),
+        (1, "14. 배터리 기술 동향 및 차세대 기술", "_sec14"),
+        (1, "15. 인허가 및 사업 개발 프로세스", "_sec15"),
+        (1, "16. 프로젝트 파이낸싱", "_sec16"),
+        (1, "17. EPC 계약 구조", "_sec17"),
+        (1, "18. 전문가 종합 의견 및 전략적 시사점", "_sec18"),
     ]
     from docx.shared import Mm as _Mm
     # 문서 전체 폭(A4 기준 약 160mm)
@@ -1211,13 +1216,210 @@ def generate_word_report():
         _r.font.size = Pt(10); _r.font.name = FONT
 
     # ============================================================
-    # 13. 전문가 종합 의견 및 전략적 시사점 (기존 10장 → 13장)
+    # 13. 안전·화재 및 규제 기준
     # ============================================================
-    _h13 = doc.add_heading("13. 전문가 종합 의견 및 전략적 시사점", level=1)
+    _h13 = doc.add_heading("13. 안전·화재 및 규제 기준", level=1)
     _h13.paragraph_format.page_break_before = True
     _add_bookmark(_h13, "_sec13")
+    doc.add_paragraph(
+        "BESS 안전은 프로젝트 인허가, 보험, 금융 조달의 핵심 요건입니다. "
+        "주요국 안전 규격, 화재 사고 사례 및 교훈, 설계 반영 사항을 분석합니다."
+    )
 
-    doc.add_heading("13.1 시장 전망 종합", level=2)
+    doc.add_heading("13.1 글로벌 ESS 안전 규격 비교", level=2)
+    sf_headers = ["규격", "적용 지역", "범위", "핵심 요구사항"]
+    sf_rows = [[s["standard"], s["region"], s["scope"], s["key_req"]] for s in md.SAFETY_STANDARDS]
+    _styled_table(doc, sf_headers, sf_rows, col_widths_mm=[22, 22, 30, 86])
+
+    doc.add_heading("13.2 주요 ESS 화재 사고 사례 및 교훈", level=2)
+    fi_headers = ["연도", "위치", "원인", "피해", "교훈"]
+    fi_rows = [[str(f["year"]), f["location"], f["cause"], f["damage"], f["lesson"]] for f in md.FIRE_INCIDENTS]
+    _styled_table(doc, fi_headers, fi_rows, col_widths_mm=[12, 24, 28, 28, 68])
+    _p_fi = doc.add_paragraph(
+        "ESS 화재 사고는 산업 전체의 안전 규제 강화를 촉발하고 있습니다. "
+        "열폭주 전파 방지 설계(셀 간/모듈 간 방화벽), 가스 감지 및 자동 소화 시스템, "
+        "BMS 이중화, 정기 점검 프로토콜이 필수 설계 요소로 자리잡고 있습니다. "
+        "보험사들도 UL 9540A 시험 결과 및 소방 설계 도면을 대출/보험 심사 필수 서류로 요구하는 추세입니다."
+    )
+    for _r in _p_fi.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
+
+    doc.add_heading("13.3 안전 설계 체크리스트", level=2)
+    _safety_checklist = [
+        "셀 레벨: UL 9540A 열폭주 시험 통과, IEC 62619 인증, 셀 간 방열 패드/에어갭",
+        "모듈/랙 레벨: 모듈 간 방화벽, 열폭주 전파 방지 설계, 가스 벤트 경로 확보",
+        "컨테이너 레벨: 가스 감지(CO, H₂, VOC), 자동 소화 시스템(에어로졸/워터미스트), 폭발 방지 환기팬",
+        "시스템 레벨: BMS 이중화(Main+Backup), PCS 절연 모니터링, 접지 결함 감지(GFD)",
+        "사이트 레벨: 이격거리(NFPA 855 기준), 소방차 접근로, 비상 차단 스위치(E-Stop), 소방서 사전 훈련",
+        "운영 레벨: 24/7 원격 모니터링, 이상 징후 AI 분석, 분기별 안전 점검, 연 1회 종합 안전 감사",
+    ]
+    for _sc in _safety_checklist:
+        _p_sc = doc.add_paragraph(_sc, style="List Bullet")
+        for _r in _p_sc.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT
+
+    # ============================================================
+    # 14. 배터리 기술 동향 및 차세대 기술
+    # ============================================================
+    _h14 = doc.add_heading("14. 배터리 기술 동향 및 차세대 기술", level=1)
+    _h14.paragraph_format.page_break_before = True
+    _add_bookmark(_h14, "_sec14")
+    doc.add_paragraph(
+        "현재 주류 기술(LFP/NMC)과 차세대 기술(Na-ion, 전고체, VRFB, 철-공기)의 "
+        "성능·비용·상용화 전망을 비교 분석합니다. 장기 에너지 저장(LDES) 시장 동향도 포함합니다."
+    )
+
+    doc.add_heading("14.1 배터리 기술 비교표", level=2)
+    bt_headers = ["기술", "에너지밀도\n(Wh/kg)", "사이클수명", "비용\n($/kWh)", "상용화 단계"]
+    bt_rows = [[b["tech"], b["energy_density_wh_kg"], b["cycle_life"], b["cost_per_kwh"], b["status"]] for b in md.BATTERY_TECHNOLOGIES]
+    _styled_table(doc, bt_headers, bt_rows, col_widths_mm=[30, 22, 22, 20, 26])
+
+    doc.add_heading("14.2 기술별 상세 분석", level=2)
+    for bt in md.BATTERY_TECHNOLOGIES:
+        doc.add_heading(f"  ■ {bt['tech']}", level=3)
+        bt_detail = [
+            ["화학식", bt["chemistry"]],
+            ["장점", bt["pros"]],
+            ["단점", bt["cons"]],
+            ["전망", bt["outlook"]],
+        ]
+        _styled_table(doc, ["항목", "내용"], bt_detail, col_widths_mm=[25, 135])
+
+    doc.add_heading("14.3 장기 에너지 저장(LDES) 시장 전망", level=2)
+    _ldes = md.LDES_MARKET
+    _p_ldes = doc.add_paragraph(
+        f"LDES 시장은 {_ldes['market_size_2025_gwh']} GWh(2025) → "
+        f"{_ldes['market_size_2030_gwh']} GWh(2030)로 CAGR {_ldes['cagr_pct']}% 성장 전망. "
+        f"정의: {_ldes['definition']}."
+    )
+    for _r in _p_ldes.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT; _r.bold = True
+    for _d in _ldes["key_drivers"]:
+        _p_ld = doc.add_paragraph(_d, style="List Bullet")
+        for _r in _p_ld.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT
+    ldes_headers = ["기술", "시장 점유율(%)", "핵심 장점"]
+    ldes_rows = [[t["tech"], str(t["share_pct"]), t["advantage"]] for t in _ldes["competing_techs"]]
+    _styled_table(doc, ldes_headers, ldes_rows, col_widths_mm=[35, 25, 100])
+
+    # ============================================================
+    # 15. 인허가 및 사업 개발 프로세스
+    # ============================================================
+    _h15 = doc.add_heading("15. 인허가 및 사업 개발 프로세스", level=1)
+    _h15.paragraph_format.page_break_before = True
+    _add_bookmark(_h15, "_sec15")
+    doc.add_paragraph(
+        "시장별 인허가 절차, 그리드 연결 대기시간, 토지 요건 등 "
+        "BESS 프로젝트 개발 실무에 필수적인 정보를 정리합니다."
+    )
+
+    for pm_idx, (pm_name, pm_data) in enumerate(md.PERMITTING_DATA.items()):
+        doc.add_heading(f"15.{pm_idx+1} {pm_name}", level=2)
+        pm_rows = [
+            ["총 인허가 기간", f"{pm_data['total_timeline_months']}개월"],
+            ["그리드 연결 대기", f"{pm_data['grid_connection_wait_months']}개월"],
+            ["필요 토지", f"{pm_data['land_req_acre_per_mwh']} acre/MWh"],
+            ["필요 인허가", ", ".join(pm_data["key_permits"])],
+        ]
+        _styled_table(doc, ["항목", "내용"], pm_rows, col_widths_mm=[35, 125])
+        _p_gc = doc.add_paragraph(f"[그리드 연결 현황] {pm_data['grid_challenge']}")
+        _p_gc.paragraph_format.space_before = Pt(4)
+        for _r in _p_gc.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT; _r.italic = True
+        _p_tip = doc.add_paragraph(f"[실무 Tip] {pm_data['tips']}")
+        for _r in _p_tip.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT; _r.bold = True
+
+    # ============================================================
+    # 16. 프로젝트 파이낸싱
+    # ============================================================
+    _h16 = doc.add_heading("16. 프로젝트 파이낸싱", level=1)
+    _h16.paragraph_format.page_break_before = True
+    _add_bookmark(_h16, "_sec16")
+    doc.add_paragraph(
+        "BESS 프로젝트의 자금 조달 구조, 금융기관 심사 요건(Bankability), "
+        "보험 요건을 분석합니다. 프로젝트 파이낸스(PF) 시장의 최신 동향을 반영합니다."
+    )
+
+    doc.add_heading("16.1 자금 조달 구조 비교", level=2)
+    pf_headers = ["유형", "레버리지", "기간(년)", "최소 DSCR", "주요 대출기관"]
+    pf_rows = []
+    for pfs in md.PROJECT_FINANCING["structures"]:
+        pf_rows.append([pfs["type"], pfs["leverage"], pfs["tenor_yr"],
+                        pfs["min_dscr"], pfs["key_lenders"][:40] + "…" if len(pfs["key_lenders"]) > 40 else pfs["key_lenders"]])
+    _styled_table(doc, pf_headers, pf_rows, col_widths_mm=[32, 16, 14, 18, 80])
+
+    for pfs in md.PROJECT_FINANCING["structures"]:
+        _p_pfs = doc.add_paragraph(f"■ {pfs['type']}: {pfs['desc']}")
+        _p_pfs.paragraph_format.space_before = Pt(4)
+        for _r in _p_pfs.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT
+
+    doc.add_heading("16.2 Bankability 요건 (금융기관 심사 핵심)", level=2)
+    for _bk in md.PROJECT_FINANCING["bankability_requirements"]:
+        _p_bk = doc.add_paragraph(_bk, style="List Bullet")
+        for _r in _p_bk.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT
+
+    doc.add_heading("16.3 보험 요건", level=2)
+    ins_headers = ["보험 유형", "보장 내용", "요율/한도"]
+    ins_rows = [[i["type"], i["desc"], i["rate"]] for i in md.PROJECT_FINANCING["insurance_coverage"]]
+    _styled_table(doc, ins_headers, ins_rows, col_widths_mm=[32, 80, 48])
+
+    # ============================================================
+    # 17. EPC 계약 구조
+    # ============================================================
+    _h17 = doc.add_heading("17. EPC 계약 구조", level=1)
+    _h17.paragraph_format.page_break_before = True
+    _add_bookmark(_h17, "_sec17")
+    doc.add_paragraph(
+        "BESS 프로젝트의 EPC 계약 유형(Turnkey/EPCM/Split/BOO), "
+        "핵심 상업 조건(Performance Guarantee, LD, Warranty), 비용 구조를 분석합니다."
+    )
+
+    doc.add_heading("17.1 EPC 계약 유형 비교", level=2)
+    epc_headers = ["계약 유형", "리스크 부담", "가격 구조", "장점", "단점"]
+    epc_rows = []
+    for ec in md.EPC_CONTRACT_DATA["contract_types"]:
+        epc_rows.append([ec["type"], ec["risk_owner"], ec["price_structure"],
+                         ec["pros"][:50] + "…" if len(ec["pros"]) > 50 else ec["pros"],
+                         ec["cons"][:50] + "…" if len(ec["cons"]) > 50 else ec["cons"]])
+    _styled_table(doc, epc_headers, epc_rows, col_widths_mm=[28, 22, 24, 43, 43])
+
+    for ec in md.EPC_CONTRACT_DATA["contract_types"]:
+        _p_ec = doc.add_paragraph(f"■ {ec['type']}: {ec['desc']}")
+        _p_ec.paragraph_format.space_before = Pt(4)
+        for _r in _p_ec.runs:
+            _r.font.size = Pt(10); _r.font.name = FONT
+
+    doc.add_heading("17.2 핵심 상업 조건", level=2)
+    ct_headers = ["조건", "상세 내용"]
+    ct_rows = [[ct["term"], ct["desc"]] for ct in md.EPC_CONTRACT_DATA["key_commercial_terms"]]
+    _styled_table(doc, ct_headers, ct_rows, col_widths_mm=[35, 125])
+
+    doc.add_heading("17.3 BESS 프로젝트 비용 구조(Cost Breakdown)", level=2)
+    cb = md.EPC_CONTRACT_DATA["cost_breakdown"]
+    cb_headers = ["항목", "비중(%)", "포함 내용"]
+    cb_rows = sorted(
+        [[k.replace("_", " ").title(), str(v["share_pct"]), v["desc"]] for k, v in cb.items()],
+        key=lambda x: int(x[1]), reverse=True
+    )
+    _styled_table(doc, cb_headers, cb_rows, col_widths_mm=[35, 18, 107])
+    _p_cb = doc.add_paragraph(
+        "배터리 셀이 전체 CAPEX의 40%를 차지하여 셀 조달 전략이 프로젝트 경제성의 핵심입니다. "
+        "EPC 마진 10%는 Full Turnkey 기준이며, EPCM/Split 방식 시 5-8%로 절감 가능합니다."
+    )
+    for _r in _p_cb.runs:
+        _r.font.size = Pt(10); _r.font.name = FONT
+
+    # ============================================================
+    # 18. 전문가 종합 의견 및 전략적 시사점 (기존 13장 → 18장)
+    # ============================================================
+    _h18 = doc.add_heading("18. 전문가 종합 의견 및 전략적 시사점", level=1)
+    _h18.paragraph_format.page_break_before = True
+    _add_bookmark(_h18, "_sec18")
+
+    doc.add_heading("18.1 시장 전망 종합", level=2)
     _p_exp1 = doc.add_paragraph(
         f"글로벌 BESS 시장은 {_yr}년 기준 {md.GLOBAL_CAPACITY_GWH.get(_yr, 0)} GWh 규모로 "
         f"전년 대비 {_yoy_g}% 성장하였으며, {md.YEARS[-1]}년 "
@@ -1230,7 +1432,7 @@ def generate_word_report():
     for _r in _p_exp1.runs:
         _r.font.size = Pt(10); _r.font.name = FONT
 
-    doc.add_heading("13.2 가격 전망 및 경제성 분석", level=2)
+    doc.add_heading("18.2 가격 전망 및 경제성 분석", level=2)
     _p_exp2 = doc.add_paragraph(
         f"LFP 셀 가격은 {md.LFP_CELL_PRICE[_first_yr]}→{md.LFP_CELL_PRICE[_last_yr]} $/kWh "
         f"({abs(_lfp_cagr)}% CAGR 하락)로 빠르게 하락하고 있으며, "
@@ -1242,7 +1444,7 @@ def generate_word_report():
     for _r in _p_exp2.runs:
         _r.font.size = Pt(10); _r.font.name = FONT
 
-    doc.add_heading("13.3 EPC 사업 전략 시사점", level=2)
+    doc.add_heading("18.3 EPC 사업 전략 시사점", level=2)
     _epc_insights = [
         "셀 소싱 전략: LFP 중심의 멀티 공급사 전략으로 리스크 분산 및 원가 경쟁력 확보가 필수입니다. "
         "CATL/BYD/EVE 등 중국 Tier 1과 Samsung SDI/LG 등 한국 제조사의 이중 소싱을 권장합니다.",
@@ -1261,7 +1463,7 @@ def generate_word_report():
         for _r in _p_ins.runs:
             _r.font.size = Pt(10); _r.font.name = FONT
 
-    doc.add_heading("13.4 핵심 리스크 요인", level=2)
+    doc.add_heading("18.4 핵심 리스크 요인", level=2)
     _risks = [
         ("지정학적 리스크", "미·중 기술 갈등, 수출 통제, 관세 부과 → 셀 공급 다변화 필수"),
         ("정책 불확실성", "IRA 지속 여부, EU 보조금 변경 → 시나리오별 수익 모델링 강화"),
