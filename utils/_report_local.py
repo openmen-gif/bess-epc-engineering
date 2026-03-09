@@ -1489,49 +1489,74 @@ def generate_word_report():
     return out_path
 
 def generate_pdf_report():
-    """Generate PDF — Windows: docx2pdf(COM), Linux: raise informative error."""
-    if platform.system() != "Windows":
-        raise RuntimeError(
-            "PDF 변환은 Windows 환경에서만 지원됩니다. "
-            "Word(.docx) 보고서를 다운로드한 후 Google Docs 또는 LibreOffice에서 PDF로 변환하세요."
-        )
-    import threading
+    """Generate PDF — Linux: LibreOffice headless, Windows: docx2pdf(COM)."""
     import shutil
-    import docx2pdf
+    import subprocess
 
     word_path = generate_word_report()
     pdf_path = word_path.replace('.docx', '.pdf')
-
     tmp_dir = tempfile.gettempdir()
-    tmp_docx = os.path.join(tmp_dir, "bess_report_tmp.docx")
-    tmp_pdf  = os.path.join(tmp_dir, "bess_report_tmp.pdf")
-    shutil.copy2(word_path, tmp_docx)
 
-    errors = []
-    def _convert():
+    if platform.system() != "Windows":
+        # Linux / HF Spaces: LibreOffice headless 변환
+        tmp_docx = os.path.join(tmp_dir, "bess_report_tmp.docx")
+        shutil.copy2(word_path, tmp_docx)
         try:
-            import pythoncom
-            pythoncom.CoInitialize()
+            result = subprocess.run(
+                ["libreoffice", "--headless", "--convert-to", "pdf",
+                 "--outdir", tmp_dir, tmp_docx],
+                capture_output=True, text=True, timeout=180,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"LibreOffice 변환 실패: {result.stderr[:300]}")
+            tmp_pdf = os.path.join(tmp_dir, "bess_report_tmp.pdf")
+            if os.path.exists(tmp_pdf):
+                shutil.copy2(tmp_pdf, pdf_path)
+                for p in (tmp_docx, tmp_pdf):
+                    try:
+                        os.unlink(p)
+                    except Exception:
+                        pass
+                return os.path.abspath(pdf_path)
+            raise FileNotFoundError("LibreOffice PDF 파일이 생성되지 않았습니다.")
+        except FileNotFoundError:
+            raise RuntimeError(
+                "LibreOffice가 설치되어 있지 않습니다. "
+                "packages.txt에 'libreoffice-writer'를 추가하고 Space를 재빌드하세요."
+            )
+    else:
+        # Windows: docx2pdf (COM/Microsoft Word)
+        import threading
+        import docx2pdf
+        tmp_docx = os.path.join(tmp_dir, "bess_report_tmp.docx")
+        tmp_pdf = os.path.join(tmp_dir, "bess_report_tmp.pdf")
+        shutil.copy2(word_path, tmp_docx)
+
+        errors = []
+        def _convert():
             try:
-                docx2pdf.convert(tmp_docx, tmp_pdf)
-            finally:
-                pythoncom.CoUninitialize()
-        except Exception as e:
-            errors.append(e)
+                import pythoncom
+                pythoncom.CoInitialize()
+                try:
+                    docx2pdf.convert(tmp_docx, tmp_pdf)
+                finally:
+                    pythoncom.CoUninitialize()
+            except Exception as e:
+                errors.append(e)
 
-    t = threading.Thread(target=_convert, daemon=True)
-    t.start()
-    t.join(timeout=120)
+        t = threading.Thread(target=_convert, daemon=True)
+        t.start()
+        t.join(timeout=120)
 
-    if errors:
-        raise RuntimeError(f"PDF 변환 오류: {errors[0]}")
+        if errors:
+            raise RuntimeError(f"PDF 변환 오류: {errors[0]}")
 
-    if os.path.exists(tmp_pdf):
-        shutil.copy2(tmp_pdf, pdf_path)
-        for p in (tmp_docx, tmp_pdf):
-            try:
-                os.unlink(p)
-            except Exception:
-                pass
-        return os.path.abspath(pdf_path)
-    raise FileNotFoundError(f"PDF가 생성되지 않았습니다: {pdf_path}")
+        if os.path.exists(tmp_pdf):
+            shutil.copy2(tmp_pdf, pdf_path)
+            for p in (tmp_docx, tmp_pdf):
+                try:
+                    os.unlink(p)
+                except Exception:
+                    pass
+            return os.path.abspath(pdf_path)
+        raise FileNotFoundError(f"PDF가 생성되지 않았습니다: {pdf_path}")
