@@ -28,7 +28,10 @@ def _download_report(report_type: str) -> str:
         ext = "docx" if report_type == "word" else "pdf"
         filename = f"BESS_DeepAnalysis_{now_str}.{ext}"
 
-    out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output_reports"))
+    if os.path.isdir("/data"):
+        out_dir = "/data/output_reports"
+    else:
+        out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output_reports"))
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, filename)
 

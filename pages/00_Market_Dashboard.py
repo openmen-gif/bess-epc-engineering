@@ -250,7 +250,10 @@ def download_report():
         with st.spinner("Generating..."):
             import os
             import datetime
-            out_dir = os.path.join(os.path.dirname(__file__), "..", "output_reports")
+            if os.path.isdir("/data"):
+                out_dir = "/data/output_reports"
+            else:
+                out_dir = os.path.join(os.path.dirname(__file__), "..", "output_reports")
             os.makedirs(out_dir, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
             file_path = os.path.join(out_dir, f"BESS_Market_Report_{timestamp}.xlsx")

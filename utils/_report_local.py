@@ -333,7 +333,10 @@ def generate_word_report():
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))  # KST
     now_str = now.strftime("%Y-%m-%d")
     
-    out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output_reports"))
+    if os.path.isdir("/data"):
+        out_dir = "/data/output_reports"
+    else:
+        out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output_reports"))
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"BESS_DeepAnalysis_{now.strftime('%Y%m%d%H%M%S')}.docx")
 
