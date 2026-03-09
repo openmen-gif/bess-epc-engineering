@@ -502,6 +502,22 @@ _TRANSLATIONS = {
     "mk_rep_dl":         {"KO": "⬇️ Excel 보고서 다운로드", "EN": "⬇️ Download Full Excel Report"},
     "mk_rep_done":       {"KO": "✅ 생성 완료", "EN": "✅ Report generated."},
 
+    # Comprehensive market report
+    "mk_crep_title":     {"KO": "📊 복합 시장 정세 보고서", "EN": "📊 Comprehensive Market Intelligence Report"},
+    "mk_crep_desc":      {"KO": "상세 경향 분석, 통계, 그래프 수치화, 전문가 의견을 포함한 종합 BESS 시장 보고서를 생성합니다.",
+                          "EN": "Generates a comprehensive BESS market report with detailed trend analysis, statistics, charts, and expert commentary."},
+    "mk_crep_gen_word":  {"KO": "📝 종합 시장 보고서 생성 (Word)", "EN": "📝 Generate Comprehensive Report (Word)"},
+    "mk_crep_gen_pdf":   {"KO": "📕 종합 시장 보고서 생성 (PDF)", "EN": "📕 Generate Comprehensive Report (PDF)"},
+    "mk_crep_dl_word":   {"KO": "⬇️ Word 보고서 다운로드 (.docx)", "EN": "⬇️ Download Word Report (.docx)"},
+    "mk_crep_dl_pdf":    {"KO": "⬇️ PDF 보고서 다운로드 (.pdf)", "EN": "⬇️ Download PDF Report (.pdf)"},
+    "mk_crep_generating":{"KO": "보고서 생성 중... 실시간 뉴스 수집 및 분석 포함으로 1~2분 소요됩니다.",
+                          "EN": "Generating report... May take 1-2 minutes including live news collection and analysis."},
+    "mk_crep_contents":  {"KO": "**보고서 포함 내용:** Executive Summary | 글로벌 트렌드 통계 | 가격 경향 분석 | 시장별 심층 분석 | 경쟁사 분석 | 파이프라인 현황 | 환율/원자재 영향 | 시나리오 전망 | 전문가 종합 의견",
+                          "EN": "**Report Contents:** Executive Summary | Global Trend Statistics | Price Trend Analysis | Regional Deep Dive | Competitor Analysis | Pipeline Status | FX/Commodity Impact | Scenario Forecast | Expert Commentary"},
+    "mk_crep_err":       {"KO": "보고서 생성 중 오류가 발생했습니다.", "EN": "Error generating report."},
+    "mk_rep_section_excel": {"KO": "📗 데이터 엑셀 내보내기", "EN": "📗 Data Export (Excel)"},
+    "mk_rep_section_word":  {"KO": "📘 종합 시장 분석 보고서", "EN": "📘 Comprehensive Market Analysis Report"},
+
 }
 
 

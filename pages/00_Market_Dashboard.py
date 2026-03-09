@@ -245,45 +245,104 @@ def render_fx_commodities():
 def download_report():
     st.subheader(t("mk_rep_title"))
 
-    st.markdown("**Excel (.xlsx)**")
-    if st.button(t("mk_rep_gen"), use_container_width=True, key="btn_prep_excel"):
-        with st.spinner("Generating..."):
-            import os
-            import datetime
-            if os.path.isdir("/data"):
-                out_dir = "/data/output_reports"
-            else:
-                out_dir = os.path.join(os.path.dirname(__file__), "..", "output_reports")
-            os.makedirs(out_dir, exist_ok=True)
-            timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            file_path = os.path.join(out_dir, f"BESS_Market_Report_{timestamp}.xlsx")
+    # ── Section 1: Comprehensive Word Report ──────────────────────────
+    st.markdown(f"### {t('mk_rep_section_word')}")
+    with st.container(border=True):
+        st.markdown(t("mk_crep_desc"))
+        st.markdown(t("mk_crep_contents"))
 
-            with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
-                pd.DataFrame({
-                    "Year": md.YEARS,
-                    "Capacity (GWh)": [md.GLOBAL_CAPACITY_GWH[y] for y in md.YEARS],
-                    "Market Value (B$)": [md.GLOBAL_MARKET_VALUE_B_USD[y] for y in md.YEARS],
-                    "LFP Price ($/kWh)": [md.LFP_CELL_PRICE[y] for y in md.YEARS],
-                    "CAPEX ($/kWh)": [md.SYSTEM_CAPEX[y] for y in md.YEARS],
-                }).to_excel(writer, sheet_name="Overview", index=False)
+        col_w, col_p = st.columns(2)
+        with col_w:
+            if st.button(t("mk_crep_gen_word"), use_container_width=True, key="btn_gen_word"):
+                with st.spinner(t("mk_crep_generating")):
+                    try:
+                        from utils._report_local import generate_word_report
+                        word_path = generate_word_report()
+                        with open(word_path, "rb") as f:
+                            st.session_state["dl_word_bytes"] = f.read()
+                            st.session_state["dl_word_name"] = word_path.split("\\")[-1] if "\\" in word_path else word_path.split("/")[-1]
+                        st.success(t("mk_rep_done"))
+                    except Exception as e:
+                        st.error(f"{t('mk_crep_err')}: {e}")
 
-                pd.DataFrame(md.PROJECT_PIPELINE).to_excel(writer, sheet_name="Pipeline", index=False)
-                pd.DataFrame(md.COMPETITORS).to_excel(writer, sheet_name="Competitors", index=False)
+        with col_p:
+            if st.button(t("mk_crep_gen_pdf"), use_container_width=True, key="btn_gen_pdf"):
+                with st.spinner(t("mk_crep_generating")):
+                    try:
+                        from utils._report_local import generate_pdf_report
+                        pdf_path = generate_pdf_report()
+                        with open(pdf_path, "rb") as f:
+                            st.session_state["dl_pdf_bytes"] = f.read()
+                            st.session_state["dl_pdf_name"] = pdf_path.split("\\")[-1] if "\\" in pdf_path else pdf_path.split("/")[-1]
+                        st.success(t("mk_rep_done"))
+                    except Exception as e:
+                        st.error(f"{t('mk_crep_err')}: {e}")
 
-            st.session_state["dl_excel_path"] = file_path
-            st.success(t("mk_rep_done"))
+        dl_col1, dl_col2 = st.columns(2)
+        with dl_col1:
+            if st.session_state.get("dl_word_bytes"):
+                st.download_button(
+                    label=t("mk_crep_dl_word"),
+                    data=st.session_state["dl_word_bytes"],
+                    file_name=st.session_state.get("dl_word_name", "BESS_Market_Report.docx"),
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                    key="dl_word_btn"
+                )
+        with dl_col2:
+            if st.session_state.get("dl_pdf_bytes"):
+                st.download_button(
+                    label=t("mk_crep_dl_pdf"),
+                    data=st.session_state["dl_pdf_bytes"],
+                    file_name=st.session_state.get("dl_pdf_name", "BESS_Market_Report.pdf"),
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key="dl_pdf_btn"
+                )
 
-    if "dl_excel_path" in st.session_state and st.session_state["dl_excel_path"]:
-        p = st.session_state["dl_excel_path"]
-        with open(p, "rb") as f:
-            st.download_button(
-                label=t("mk_rep_dl"),
-                data=f.read(),
-                file_name=p.split("\\")[-1] if "\\" in p else p.split("/")[-1],
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-                key="dl_excel_btn"
-            )
+    st.markdown("---")
+
+    # ── Section 2: Excel Data Export ──────────────────────────────────
+    st.markdown(f"### {t('mk_rep_section_excel')}")
+    with st.container(border=True):
+        if st.button(t("mk_rep_gen"), use_container_width=True, key="btn_prep_excel"):
+            with st.spinner("Generating..."):
+                import os
+                import datetime
+                if os.path.isdir("/data"):
+                    out_dir = "/data/output_reports"
+                else:
+                    out_dir = os.path.join(os.path.dirname(__file__), "..", "output_reports")
+                os.makedirs(out_dir, exist_ok=True)
+                timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+                file_path = os.path.join(out_dir, f"BESS_Market_Report_{timestamp}.xlsx")
+
+                with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
+                    pd.DataFrame({
+                        "Year": md.YEARS,
+                        "Capacity (GWh)": [md.GLOBAL_CAPACITY_GWH[y] for y in md.YEARS],
+                        "Market Value (B$)": [md.GLOBAL_MARKET_VALUE_B_USD[y] for y in md.YEARS],
+                        "LFP Price ($/kWh)": [md.LFP_CELL_PRICE[y] for y in md.YEARS],
+                        "CAPEX ($/kWh)": [md.SYSTEM_CAPEX[y] for y in md.YEARS],
+                    }).to_excel(writer, sheet_name="Overview", index=False)
+
+                    pd.DataFrame(md.PROJECT_PIPELINE).to_excel(writer, sheet_name="Pipeline", index=False)
+                    pd.DataFrame(md.COMPETITORS).to_excel(writer, sheet_name="Competitors", index=False)
+
+                st.session_state["dl_excel_path"] = file_path
+                st.success(t("mk_rep_done"))
+
+        if "dl_excel_path" in st.session_state and st.session_state["dl_excel_path"]:
+            p = st.session_state["dl_excel_path"]
+            with open(p, "rb") as f:
+                st.download_button(
+                    label=t("mk_rep_dl"),
+                    data=f.read(),
+                    file_name=p.split("\\")[-1] if "\\" in p else p.split("/")[-1],
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    key="dl_excel_btn"
+                )
 
 st.title(t("mk_title"))
 st.markdown(t("mk_subtitle"))
