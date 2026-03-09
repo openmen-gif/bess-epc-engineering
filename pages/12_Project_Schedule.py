@@ -9,7 +9,6 @@ try:
 except Exception:
     pass
 
-import pandas as pd
 import plotly.graph_objects as go
 from datetime import date, datetime
 from utils.css_loader import apply_custom_css
@@ -315,117 +314,205 @@ with tab_gantt:
     if not projects:
         st.info("등록된 프로젝트가 없습니다." if not is_en else "No projects registered.")
     else:
+        from datetime import timedelta
+
         kpi = get_kpi(projects)
 
-        # ── 상태별 파이 차트 ──────────────────────────────────────────────
+        _PHASE_COLORS = {"설계": "#58a6ff", "조달": "#3fb950", "시공": "#f78166", "시운전": "#e3b341"}
+        _PHASE_NAMES_KO = ["설계", "조달", "시공", "시운전"]
+        _PHASE_NAMES_EN = ["Design", "Procurement", "Construction", "Commissioning"]
+
+        def _safe_date(s_str):
+            try:
+                return date.fromisoformat(s_str) if s_str else date.today()
+            except Exception:
+                return date.today()
+
+        # ── 상태별 파이 + 단계별 진행률 ────────────────────────────────────
         ch1, ch2 = st.columns(2)
         with ch1:
             status_counts = {}
             for p in projects:
                 s = p.get("status", "계획중")
+                if is_en and s in STATUS_OPTIONS:
+                    try:
+                        s = STATUS_OPTIONS_EN[STATUS_OPTIONS.index(s)]
+                    except (ValueError, IndexError):
+                        pass
                 status_counts[s] = status_counts.get(s, 0) + 1
+            _colors_map = {**STATUS_COLORS, **STATUS_COLORS_EN}
             fig_pie = go.Figure(go.Pie(
                 labels=list(status_counts.keys()),
                 values=list(status_counts.values()),
-                marker_colors=[STATUS_COLORS.get(k, "#888") for k in status_counts],
+                marker_colors=[_colors_map.get(k, "#888") for k in status_counts],
                 hole=0.4,
+                textinfo="label+percent",
+                textfont_size=13,
             ))
             fig_pie.update_layout(
                 title="프로젝트 상태 분포" if not is_en else "Project Status Distribution",
-                paper_bgcolor="rgba(0,0,0,0)", font_color="#c9d1d9", height=300,
+                paper_bgcolor="rgba(0,0,0,0)", font_color="#c9d1d9", height=350,
                 margin=dict(l=10, r=10, t=40, b=10),
+                legend=dict(orientation="h", y=-0.1),
             )
             st.plotly_chart(fig_pie, use_container_width=True)
 
         with ch2:
-            # ── 단계별 평균 진행률 막대 ──────────────────────────────────
-            phase_names = ["설계", "조달", "시공", "시운전"]
-            phase_vals  = [kpi["phase_avg"].get(pn, 0) for pn in phase_names]
-            if is_en:
-                phase_names = ["Design", "Procurement", "Construction", "Commissioning"]
+            _ph_display = _PHASE_NAMES_EN if is_en else _PHASE_NAMES_KO
+            phase_vals = [kpi["phase_avg"].get(pn, 0) for pn in _PHASE_NAMES_KO]
             fig_bar = go.Figure(go.Bar(
-                x=phase_names, y=phase_vals,
+                x=_ph_display, y=phase_vals,
                 marker_color=["#58a6ff", "#3fb950", "#f78166", "#e3b341"],
                 text=[f"{v}%" for v in phase_vals], textposition="outside",
             ))
             fig_bar.update_layout(
                 title="단계별 평균 진행률" if not is_en else "Average Phase Progress",
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font_color="#c9d1d9", height=300, yaxis_range=[0, 110],
-                margin=dict(l=10, r=10, t=40, b=10),
+                font_color="#c9d1d9", height=350, yaxis_range=[0, 110],
+                margin=dict(l=40, r=20, t=40, b=40),
             )
             st.plotly_chart(fig_bar, use_container_width=True)
 
         st.markdown("---")
 
-        # ── 간트 차트 ─────────────────────────────────────────────────────
+        # ── 간트 차트 (Shapes 기반 — 바 확실히 표시) ──────────────────────
         st.subheader("📅 " + ("Project Gantt Chart" if is_en else "프로젝트 간트 차트"))
 
-        _PHASE_COLORS = {"설계": "#58a6ff", "조달": "#3fb950", "시공": "#f78166", "시운전": "#e3b341"}
-
-        from datetime import timedelta
-
-        def _safe_dates(s_str, e_str):
-            """Ensure valid date range with minimum 7-day width for visibility."""
-            s = date.fromisoformat(s_str) if s_str else date.today()
-            e = date.fromisoformat(e_str) if e_str else date.today()
-            if e <= s:
-                e = s + timedelta(days=7)
-            return str(s), str(e)
-
-        gantt_rows = []
+        # Build rows for gantt
+        gantt_tasks = []  # list of dicts: task, start, end, color, progress, is_project, is_critical
         for proj in projects:
-            raw_s = proj.get("start_date") or str(date.today())
-            raw_e = proj.get("end_date") or str(date.today())
-            s, e = _safe_dates(raw_s, raw_e)
-            total_prog = round(sum(ph.get('progress',0) for ph in proj.get('phases',[]))/max(len(proj.get('phases',[])),1))
-            gantt_rows.append(dict(
-                Task=proj["name"],
-                Start=s, Finish=e,
-                Phase="전체" if not is_en else "Overall",
-                Progress=f"{total_prog}%",
-                Color=STATUS_COLORS.get(proj.get("status","계획중"), "#888"),
+            p_start = _safe_date(proj.get("start_date"))
+            p_end   = _safe_date(proj.get("end_date"))
+            if p_end <= p_start:
+                p_end = p_start + timedelta(days=30)
+            total_prog = round(sum(ph.get('progress', 0) for ph in proj.get('phases', [])) / max(len(proj.get('phases', [])), 1))
+            gantt_tasks.append(dict(
+                task=f"🔷 {proj['name']}", start=p_start, end=p_end,
+                color=STATUS_COLORS.get(proj.get("status", "계획중"), "#888"),
+                progress=total_prog, is_project=True, is_critical=False,
             ))
-            for ph in proj.get("phases", []):
-                ph_s, ph_e = _safe_dates(ph.get("start_date") or raw_s, ph.get("end_date") or raw_e)
+
+            # Find critical path: the phase with latest end date
+            phases = proj.get("phases", [])
+            phase_ends = []
+            for ph in phases:
+                pe = _safe_date(ph.get("end_date") or str(p_end))
+                phase_ends.append(pe)
+            critical_end = max(phase_ends) if phase_ends else p_end
+
+            for idx, ph in enumerate(phases):
+                ps = _safe_date(ph.get("start_date") or str(p_start))
+                pe = _safe_date(ph.get("end_date") or str(p_end))
+                if pe <= ps:
+                    pe = ps + timedelta(days=14)
                 ph_label = ph.get("name_en", ph["name"]) if is_en else ph["name"]
-                gantt_rows.append(dict(
-                    Task=f"  ↳ {ph_label}",
-                    Start=ph_s, Finish=ph_e,
-                    Phase=ph_label,
-                    Progress=f"{ph.get('progress',0)}%",
-                    Color=_PHASE_COLORS.get(ph["name"], "#888"),
+                # Critical path: phase that determines project end (latest end date)
+                is_crit = (phase_ends[idx] == critical_end) if phase_ends else False
+                gantt_tasks.append(dict(
+                    task=f"    ↳ {ph_label}", start=ps, end=pe,
+                    color=_PHASE_COLORS.get(ph["name"], "#888"),
+                    progress=ph.get("progress", 0), is_project=False, is_critical=is_crit,
                 ))
 
-        if gantt_rows:
-            df_g = pd.DataFrame(gantt_rows)
+        if gantt_tasks:
             fig_g = go.Figure()
-            for _, row in df_g.iterrows():
-                t_start = pd.Timestamp(row["Start"])
-                t_finish = pd.Timestamp(row["Finish"])
-                fig_g.add_trace(go.Bar(
-                    x=[t_finish - t_start],
-                    y=[row["Task"]],
-                    base=[t_start],
-                    orientation="h",
-                    marker_color=row["Color"],
-                    text=row["Progress"],
-                    textposition="inside",
-                    insidetextanchor="middle",
-                    hovertemplate=f"{row['Task']}<br>{row['Start']} ~ {row['Finish']}<br>{row['Progress']}<extra></extra>",
+
+            task_labels = [t["task"] for t in gantt_tasks]
+            n = len(task_labels)
+
+            for i, t in enumerate(gantt_tasks):
+                y_pos = n - 1 - i  # reverse order so first task is on top
+
+                # Main bar (full duration)
+                fig_g.add_shape(
+                    type="rect",
+                    x0=t["start"], x1=t["end"],
+                    y0=y_pos - 0.35, y1=y_pos + 0.35,
+                    fillcolor=t["color"],
+                    opacity=0.35 if t["is_project"] else 0.8,
+                    line=dict(
+                        color="#ff4444" if t["is_critical"] else t["color"],
+                        width=3 if t["is_critical"] else 1,
+                    ),
+                    layer="below",
+                )
+
+                # Progress overlay
+                if t["progress"] > 0:
+                    prog_end = t["start"] + (t["end"] - t["start"]) * t["progress"] / 100
+                    fig_g.add_shape(
+                        type="rect",
+                        x0=t["start"], x1=prog_end,
+                        y0=y_pos - 0.35, y1=y_pos + 0.35,
+                        fillcolor=t["color"],
+                        opacity=0.9,
+                        line=dict(width=0),
+                        layer="below",
+                    )
+
+                # Invisible scatter for hover
+                mid = t["start"] + (t["end"] - t["start"]) / 2
+                crit_txt = (" 🔴 Critical Path" if t["is_critical"] else "")
+                fig_g.add_trace(go.Scatter(
+                    x=[mid], y=[y_pos],
+                    mode="text",
+                    text=[f"{t['progress']}%"],
+                    textfont=dict(color="white", size=11),
+                    hovertext=f"{t['task']}<br>{t['start']} ~ {t['end']}<br>진행률: {t['progress']}%{crit_txt}",
+                    hoverinfo="text",
                     showlegend=False,
                 ))
-            fig_g.update_yaxes(autorange="reversed")
-            fig_g.update_xaxes(type="date", dtick="M1", tickformat="%Y-%m")
+
+            # Today line
+            today_str = date.today()
+            fig_g.add_vline(x=today_str.isoformat(), line_dash="dot", line_color="#ff6b6b",
+                            annotation_text="Today" if is_en else "오늘",
+                            annotation_font_color="#ff6b6b")
+
+            fig_g.update_yaxes(
+                tickvals=list(range(n)),
+                ticktext=list(reversed(task_labels)),
+                showgrid=False,
+            )
+            fig_g.update_xaxes(type="date", showgrid=True, gridcolor="rgba(255,255,255,0.1)")
             fig_g.update_layout(
                 title="프로젝트 일정 현황" if not is_en else "Project Schedule Overview",
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font_color="#c9d1d9", height=max(400, 45 * len(gantt_rows)),
-                margin=dict(l=200, r=20, t=40, b=40),
-                barmode="overlay",
-                bargap=0.3,
+                font_color="#c9d1d9",
+                height=max(400, 50 * n),
+                margin=dict(l=220, r=30, t=50, b=50),
+                xaxis_title="",
+                yaxis_title="",
             )
             st.plotly_chart(fig_g, use_container_width=True)
+
+            # ── 크리티컬 패스 요약 ─────────────────────────────────────────
+            st.markdown("#### 🔴 " + ("Critical Path Summary" if is_en else "크리티컬 패스 요약"))
+            for proj in projects:
+                phases = proj.get("phases", [])
+                if not phases:
+                    continue
+                phase_data = []
+                p_start = _safe_date(proj.get("start_date"))
+                p_end = _safe_date(proj.get("end_date"))
+                for ph in phases:
+                    ps = _safe_date(ph.get("start_date") or str(p_start))
+                    pe = _safe_date(ph.get("end_date") or str(p_end))
+                    dur = (pe - ps).days
+                    phase_data.append((ph, ps, pe, dur))
+                # Critical = phase with latest end date (determines project completion)
+                crit_ph = max(phase_data, key=lambda x: x[2])
+                ph_name = crit_ph[0].get("name_en", crit_ph[0]["name"]) if is_en else crit_ph[0]["name"]
+                remaining = 100 - crit_ph[0].get("progress", 0)
+                st.markdown(
+                    f"**{proj['name']}** → 크리티컬: **{ph_name}** "
+                    f"({crit_ph[1]} ~ {crit_ph[2]}, {crit_ph[3]}일) "
+                    f"| 잔여: **{remaining}%**"
+                    if not is_en else
+                    f"**{proj['name']}** → Critical: **{ph_name}** "
+                    f"({crit_ph[1]} ~ {crit_ph[2]}, {crit_ph[3]} days) "
+                    f"| Remaining: **{remaining}%**"
+                )
 
         # ── 프로젝트별 공정률 히트맵 ──────────────────────────────────────
         st.markdown("---")
