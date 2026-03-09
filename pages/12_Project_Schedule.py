@@ -263,7 +263,7 @@ with tab_detail:
                 new_s = st.date_input("착공일", value=date.fromisoformat(proj["start_date"]) if proj.get("start_date") else date.today())
                 new_e = st.date_input("준공일", value=date.fromisoformat(proj["end_date"]) if proj.get("end_date") else date.today())
 
-            new_notes = st.text_area("비고", value=proj.get("notes",""), height=60)
+            new_notes = st.text_area("비고", value=proj.get("notes",""), height=68)
 
             st.markdown("---")
             st.markdown("**공정 단계별 진행률 업데이트**")
