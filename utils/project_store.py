@@ -2,20 +2,70 @@
 """
 utils/project_store.py
 프로젝트 데이터 저장/로드 (JSON 파일 기반, Docker /tmp 또는 로컬 경로)
+HuggingFace Hub 동기화로 컨테이너 재시작 시에도 데이터 유지
 """
 import json
 import os
+import threading as _threading
 from pathlib import Path
 from datetime import datetime
 
 _STORE_PATH = Path(os.environ.get("PROJECT_STORE_PATH", "/tmp/bess_projects.json"))
 
+# ── HuggingFace Hub sync (persistent project data across container restarts) ──
+_HF_REPO_ID = "openmen-gif/bess-user-data"
+_HF_PROJ_FILENAME = "bess_projects.json"
+_HF_TOKEN = os.environ.get("HF_TOKEN", "")
+
+
+def _hf_download_projects() -> None:
+    """Download bess_projects.json from HF Hub (best-effort)."""
+    if not _HF_TOKEN:
+        return
+    try:
+        from huggingface_hub import hf_hub_download
+        path = hf_hub_download(
+            repo_id=_HF_REPO_ID,
+            filename=_HF_PROJ_FILENAME,
+            repo_type="dataset",
+            token=_HF_TOKEN,
+            local_dir=_STORE_PATH.parent,
+        )
+        downloaded = Path(path)
+        if downloaded.resolve() != _STORE_PATH.resolve():
+            import shutil
+            shutil.copy2(downloaded, _STORE_PATH)
+    except Exception:
+        pass
+
+
+def _hf_upload_projects() -> None:
+    """Upload bess_projects.json to HF Hub (best-effort, non-blocking)."""
+    if not _HF_TOKEN or not _STORE_PATH.exists():
+        return
+    try:
+        from huggingface_hub import HfApi
+        api = HfApi(token=_HF_TOKEN)
+        api.upload_file(
+            path_or_fileobj=str(_STORE_PATH),
+            path_in_repo=_HF_PROJ_FILENAME,
+            repo_id=_HF_REPO_ID,
+            repo_type="dataset",
+        )
+    except Exception:
+        pass
+
+
+# On startup: restore from HF Hub in background
+if _HF_TOKEN:
+    _threading.Thread(target=_hf_download_projects, daemon=True).start()
+
 # ── 기본 공정 단계 템플릿 ──────────────────────────────────────────────────────
 DEFAULT_PHASES = [
-    {"name": "설계",   "name_en": "Design",       "progress": 0, "status": "대기"},
-    {"name": "조달",   "name_en": "Procurement",   "progress": 0, "status": "대기"},
-    {"name": "시공",   "name_en": "Construction",  "progress": 0, "status": "대기"},
-    {"name": "시운전", "name_en": "Commissioning", "progress": 0, "status": "대기"},
+    {"name": "설계",   "name_en": "Design",       "progress": 0, "status": "대기", "start_date": "", "end_date": ""},
+    {"name": "조달",   "name_en": "Procurement",   "progress": 0, "status": "대기", "start_date": "", "end_date": ""},
+    {"name": "시공",   "name_en": "Construction",  "progress": 0, "status": "대기", "start_date": "", "end_date": ""},
+    {"name": "시운전", "name_en": "Commissioning", "progress": 0, "status": "대기", "start_date": "", "end_date": ""},
 ]
 
 STATUS_OPTIONS    = ["계획중", "진행중", "완료", "보류"]
@@ -41,6 +91,8 @@ def _save_raw(data: list) -> None:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
+    # Sync to HF Hub in background thread
+    _threading.Thread(target=_hf_upload_projects, daemon=True).start()
 
 
 def load_projects() -> list:

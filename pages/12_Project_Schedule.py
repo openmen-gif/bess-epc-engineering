@@ -11,7 +11,6 @@ except Exception:
 
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 from datetime import date, datetime
 from utils.css_loader import apply_custom_css
 from utils.auth_helper import require_auth, sidebar_user_info
@@ -186,16 +185,20 @@ with tab_reg:
 
         notes = st.text_area("비고 / Notes", height=80)
 
-        st.markdown("**공정 단계 초기 진행률 설정**")
+        st.markdown("**공정 단계 초기 설정**" if not is_en else "**Phase Initial Settings**")
         ph_cols = st.columns(4)
         init_phases = []
         for i, ph in enumerate(DEFAULT_PHASES):
             with ph_cols[i]:
-                prog = st.slider(ph["name"], 0, 100, 0, key=f"reg_ph_{i}")
-                ph_status = st.selectbox("상태", _phase_status_opts(), key=f"reg_ps_{i}")
+                st.markdown(f"**{ph['name_en'] if is_en else ph['name']}**")
+                prog = st.slider("진행률 %" if not is_en else "Progress %", 0, 100, 0, key=f"reg_ph_{i}")
+                ph_status = st.selectbox("상태" if not is_en else "Status", _phase_status_opts(), key=f"reg_ps_{i}")
+                ph_s = st.date_input("시작일" if not is_en else "Start", value=s_date, key=f"reg_phs_{i}")
+                ph_e = st.date_input("종료일" if not is_en else "End", value=e_date, key=f"reg_phe_{i}")
                 init_phases.append({
                     "name": ph["name"], "name_en": ph["name_en"],
                     "progress": prog, "status": ph_status,
+                    "start_date": str(ph_s), "end_date": str(ph_e),
                 })
 
         submitted = st.form_submit_button("✅ " + ("Register" if is_en else "등록"), type="primary")
@@ -266,19 +269,28 @@ with tab_detail:
             new_notes = st.text_area("비고", value=proj.get("notes",""), height=68)
 
             st.markdown("---")
-            st.markdown("**공정 단계별 진행률 업데이트**")
+            st.markdown("**공정 단계별 진행률 / 일정 업데이트**" if not is_en else "**Phase Progress & Schedule Update**")
             phases = proj.get("phases", [dict(ph) for ph in DEFAULT_PHASES])
             ph_cols2 = st.columns(len(phases))
             new_phases = []
             for i, ph in enumerate(phases):
                 with ph_cols2[i]:
-                    st.markdown(f"**{ph['name']}**")
-                    np_ = st.slider("진행률 %", 0, 100, ph.get("progress", 0), key=f"ep_{proj['id']}_{i}")
+                    st.markdown(f"**{ph.get('name_en', ph['name']) if is_en else ph['name']}**")
+                    np_ = st.slider("진행률 %" if not is_en else "Progress %", 0, 100, ph.get("progress", 0), key=f"ep_{proj['id']}_{i}")
                     _ph_st = ph.get("status", "대기")
                     _ph_idx = PHASE_STATUS.index(_ph_st) if _ph_st in PHASE_STATUS else 0
-                    ns_ = st.selectbox("상태", _phase_status_opts(),
+                    ns_ = st.selectbox("상태" if not is_en else "Status", _phase_status_opts(),
                                        index=_ph_idx, key=f"es_{proj['id']}_{i}")
-                    new_phases.append({**ph, "progress": np_, "status": ns_})
+                    _phs = ph.get("start_date", "")
+                    _phe = ph.get("end_date", "")
+                    phs_ = st.date_input("시작일" if not is_en else "Start",
+                                         value=date.fromisoformat(_phs) if _phs else date.today(),
+                                         key=f"ephs_{proj['id']}_{i}")
+                    phe_ = st.date_input("종료일" if not is_en else "End",
+                                         value=date.fromisoformat(_phe) if _phe else date.today(),
+                                         key=f"ephe_{proj['id']}_{i}")
+                    new_phases.append({**ph, "progress": np_, "status": ns_,
+                                       "start_date": str(phs_), "end_date": str(phe_)})
 
             save_btn = st.form_submit_button("💾 " + ("Save" if is_en else "저장"), type="primary")
 
@@ -349,34 +361,61 @@ with tab_gantt:
         # ── 간트 차트 ─────────────────────────────────────────────────────
         st.subheader("📅 " + ("Project Gantt Chart" if is_en else "프로젝트 간트 차트"))
 
+        _PHASE_COLORS = {"설계": "#58a6ff", "조달": "#3fb950", "시공": "#f78166", "시운전": "#e3b341"}
+
         gantt_rows = []
         for proj in projects:
+            # 프로젝트 전체 바
             s = proj.get("start_date") or str(date.today())
             e = proj.get("end_date")   or str(date.today())
             if s > e:
                 e = s
+            total_prog = round(sum(ph.get('progress',0) for ph in proj.get('phases',[]))/max(len(proj.get('phases',[])),1))
             gantt_rows.append(dict(
                 Task=proj["name"],
                 Start=s, Finish=e,
-                Status=proj.get("status","계획중"),
-                Progress=f"{round(sum(ph.get('progress',0) for ph in proj.get('phases',[]))/max(len(proj.get('phases',[])),1))}%",
+                Phase="전체" if not is_en else "Overall",
+                Progress=f"{total_prog}%",
+                Color=STATUS_COLORS.get(proj.get("status","계획중"), "#888"),
             ))
+            # 공정 단계별 바
+            for ph in proj.get("phases", []):
+                ph_s = ph.get("start_date") or s
+                ph_e = ph.get("end_date") or e
+                if ph_s > ph_e:
+                    ph_e = ph_s
+                ph_label = ph.get("name_en", ph["name"]) if is_en else ph["name"]
+                gantt_rows.append(dict(
+                    Task=f"  ↳ {ph_label}",
+                    Start=ph_s, Finish=ph_e,
+                    Phase=ph_label,
+                    Progress=f"{ph.get('progress',0)}%",
+                    Color=_PHASE_COLORS.get(ph["name"], "#888"),
+                ))
 
         if gantt_rows:
             df_g = pd.DataFrame(gantt_rows)
-            fig_g = px.timeline(
-                df_g, x_start="Start", x_end="Finish", y="Task",
-                color="Status",
-                color_discrete_map=STATUS_COLORS,
-                text="Progress",
-                title="프로젝트 일정 현황" if not is_en else "Project Schedule Overview",
-            )
+            fig_g = go.Figure()
+            for _, row in df_g.iterrows():
+                fig_g.add_trace(go.Bar(
+                    x=[pd.Timestamp(row["Finish"]) - pd.Timestamp(row["Start"])],
+                    y=[row["Task"]],
+                    base=[pd.Timestamp(row["Start"])],
+                    orientation="h",
+                    marker_color=row["Color"],
+                    text=row["Progress"],
+                    textposition="inside",
+                    hovertemplate=f"{row['Task']}<br>{row['Start']} ~ {row['Finish']}<br>{row['Progress']}<extra></extra>",
+                    showlegend=False,
+                ))
             fig_g.update_yaxes(autorange="reversed")
+            fig_g.update_xaxes(type="date")
             fig_g.update_layout(
+                title="프로젝트 일정 현황" if not is_en else "Project Schedule Overview",
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font_color="#c9d1d9", height=max(300, 60 * len(gantt_rows)),
+                font_color="#c9d1d9", height=max(400, 40 * len(gantt_rows)),
                 margin=dict(l=10, r=10, t=40, b=10),
-                legend=dict(bgcolor="rgba(0,0,0,0)"),
+                barmode="overlay",
             )
             st.plotly_chart(fig_g, use_container_width=True)
 
