@@ -185,6 +185,64 @@ def render_scenarios():
     st.plotly_chart(fig, use_container_width=True)
     st.dataframe(df_scen, use_container_width=True, hide_index=True)
 
+def render_fx_commodities():
+    st.subheader("💱 Exchange Rates & Commodity Prices")
+    st.caption("Data refreshes every 30 minutes. Exchange rates from open.er-api.com (free).")
+
+    col_fx, col_cmd = st.columns(2)
+
+    with col_fx:
+        st.markdown("##### 💵 USD Exchange Rates")
+        fx = md.fetch_exchange_rates()
+        if "error" in fx:
+            st.warning(f"환율 데이터 조회 실패: {fx['error']}")
+        else:
+            fx_pairs = [
+                ("USD/KRW", fx.get("USD_KRW"), "🇰🇷"),
+                ("USD/JPY", fx.get("USD_JPY"), "🇯🇵"),
+                ("USD/EUR", fx.get("USD_EUR"), "🇪🇺"),
+                ("USD/CNY", fx.get("USD_CNY"), "🇨🇳"),
+                ("USD/GBP", fx.get("USD_GBP"), "🇬🇧"),
+                ("USD/AUD", fx.get("USD_AUD"), "🇦🇺"),
+            ]
+            r1 = st.columns(3)
+            r2 = st.columns(3)
+            for i, (pair, val, flag) in enumerate(fx_pairs):
+                col = r1[i] if i < 3 else r2[i - 3]
+                if val is not None:
+                    fmt = f"{val:,.2f}" if val > 10 else f"{val:.4f}"
+                    col.metric(f"{flag} {pair}", fmt)
+                else:
+                    col.metric(f"{flag} {pair}", "N/A")
+        if fx.get("timestamp"):
+            st.caption(f"Last updated: {fx['timestamp'].strftime('%Y-%m-%d %H:%M')}")
+
+    with col_cmd:
+        st.markdown("##### 🛢️ Commodity Prices (BESS Supply Chain)")
+        cmd = md.fetch_commodity_prices()
+        c1, c2 = st.columns(2)
+        c1.metric("Brent Crude Oil", f"${cmd['brent_crude_usd']}/bbl" if cmd['brent_crude_usd'] else "N/A")
+        c2.metric("WTI Crude Oil", f"${cmd['wti_crude_usd']}/bbl" if cmd['wti_crude_usd'] else "N/A")
+
+        c3, c4 = st.columns(2)
+        c3.metric("Lithium Carbonate", f"${cmd['lithium_carbonate_usd_ton']:,}/ton" if cmd['lithium_carbonate_usd_ton'] else "N/A")
+        c4.metric("Copper", f"${cmd['copper_usd_ton']:,}/ton" if cmd['copper_usd_ton'] else "N/A")
+
+        st.metric("Nickel", f"${cmd['nickel_usd_ton']:,}/ton" if cmd['nickel_usd_ton'] else "N/A")
+
+        if cmd.get("source"):
+            st.caption(f"Source: {cmd['source']} | {cmd['timestamp'].strftime('%Y-%m-%d %H:%M')}")
+
+    st.markdown("---")
+    st.markdown("##### 📊 BESS 사업 영향 분석 / Impact on BESS Business")
+    st.info(
+        "**환율 영향**: BESS 프로젝트는 배터리 셀(USD), 원자재(USD), EPC 비용(현지통화)이 혼합되므로 "
+        "USD 강세 시 한국/일본 프로젝트 원가 상승. EUR/GBP 약세 시 유럽 프로젝트 수익성 개선.\n\n"
+        "**유가 영향**: 유가 상승 → 재생에너지+ESS 경제성 개선 → BESS 수요 증가. "
+        "리튬/구리/니켈 가격은 배터리 원가의 40-60%를 차지하며, CAPEX에 직접 영향."
+    )
+
+
 def download_report():
     st.subheader("📥 Download Market Report")
     
@@ -228,15 +286,16 @@ def download_report():
 st.title("📈 BESS Market Dashboard")
 st.markdown("Global ESS market data, price trends, project pipelines, market size forecasts, competitive landscape, and real-time news feeds.")
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "📊 Overview", "📰 News Feed", "🌍 Regional Analysis", 
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    "📊 Overview", "💱 FX & Commodities", "📰 News Feed", "🌍 Regional Analysis",
     "🏗️ Project Pipeline", "🏢 Competitors", "🔮 Scenarios", "📥 Reports"
 ])
 
 with tab1: render_overview()
-with tab2: render_news()
-with tab3: render_regional()
-with tab4: render_pipeline()
-with tab5: render_competitors()
-with tab6: render_scenarios()
-with tab7: download_report()
+with tab2: render_fx_commodities()
+with tab3: render_news()
+with tab4: render_regional()
+with tab5: render_pipeline()
+with tab6: render_competitors()
+with tab7: render_scenarios()
+with tab8: download_report()

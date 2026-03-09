@@ -58,9 +58,10 @@ def _hf_upload_projects() -> None:
         pass
 
 
-# On startup: restore from HF Hub in background
-if _HF_TOKEN:
-    _threading.Thread(target=_hf_download_projects, daemon=True).start()
+# On startup: restore from HF Hub **synchronously** (blocking)
+# Must complete before app serves requests, otherwise data appears empty.
+if _HF_TOKEN and not _STORE_PATH.exists():
+    _hf_download_projects()
 
 # ── 기본 공정 단계 템플릿 ──────────────────────────────────────────────────────
 DEFAULT_PHASES = [

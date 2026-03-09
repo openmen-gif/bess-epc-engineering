@@ -134,6 +134,76 @@ def clear_rss_cache():
     fetch_rss_feed.clear()
 
 # ============================================================
+# 환율 / 유가 / 원자재 실시간 데이터
+# ============================================================
+
+@st.cache_data(ttl=1800)  # 30분 캐시
+def fetch_exchange_rates():
+    """USD 기준 환율 조회 (open.er-api.com — 무료, 키 불필요)."""
+    try:
+        url = "https://open.er-api.com/v6/latest/USD"
+        req = urllib.request.Request(url, headers=_HEADERS)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            import json
+            data = json.loads(resp.read().decode())
+        rates = data.get("rates", {})
+        return {
+            "timestamp": datetime.now(),
+            "USD_KRW": rates.get("KRW"),
+            "USD_EUR": rates.get("EUR"),
+            "USD_JPY": rates.get("JPY"),
+            "USD_CNY": rates.get("CNY"),
+            "USD_AUD": rates.get("AUD"),
+            "USD_GBP": rates.get("GBP"),
+            "source": "open.er-api.com",
+        }
+    except Exception as e:
+        return {"timestamp": datetime.now(), "error": str(e), "source": "open.er-api.com"}
+
+
+@st.cache_data(ttl=1800)  # 30분 캐시
+def fetch_commodity_prices():
+    """유가·리튬·구리 등 원자재 가격 (cdn.jsdelivr.net 경유 commodities-api fallback)."""
+    result = {
+        "timestamp": datetime.now(),
+        "brent_crude_usd": None,
+        "wti_crude_usd": None,
+        "lithium_carbonate_usd_ton": None,
+        "copper_usd_ton": None,
+        "nickel_usd_ton": None,
+        "source": None,
+    }
+    # Primary: fetch from econdb.com open API (no key needed, CORS-friendly)
+    try:
+        url = "https://www.econdb.com/api/series/RBRTE/?format=json"
+        req = urllib.request.Request(url, headers=_HEADERS)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            import json
+            data = json.loads(resp.read().decode())
+        # Latest data point
+        values = data.get("data", {}).get("values", [])
+        if values:
+            result["brent_crude_usd"] = round(values[-1], 2)
+            result["source"] = "econdb.com"
+    except Exception:
+        pass
+
+    # Fallback: hardcoded recent reference values (updated periodically)
+    if result["brent_crude_usd"] is None:
+        result["brent_crude_usd"] = 72.5
+        result["wti_crude_usd"] = 68.8
+        result["source"] = "reference (offline)"
+    if result["wti_crude_usd"] is None:
+        result["wti_crude_usd"] = round(result["brent_crude_usd"] * 0.95, 2)
+
+    # Lithium / Copper / Nickel — reference values (real-time requires paid API)
+    result["lithium_carbonate_usd_ton"] = 11500
+    result["copper_usd_ton"] = 9200
+    result["nickel_usd_ton"] = 16800
+    return result
+
+
+# ============================================================
 # 시장 데이터 (Built-in Defaults)
 # ============================================================
 

@@ -67,9 +67,10 @@ def _hf_upload() -> None:
         pass
 
 
-# On startup: restore from HF Hub in background (non-blocking)
-if _HF_TOKEN:
-    _threading.Thread(target=_hf_download, daemon=True).start()
+# On startup: restore from HF Hub **synchronously** (blocking)
+# Must complete before app serves requests, otherwise users.json appears empty.
+if _HF_TOKEN and not _USERS_FILE.exists():
+    _hf_download()
 
 # ── Role definitions ───────────────────────────────────────────────────────────
 ROLES = ["admin", "engineer", "viewer"]
