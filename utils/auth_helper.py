@@ -27,7 +27,7 @@ else:
 # ── HuggingFace Hub sync (persistent user data across container restarts) ─────
 _HF_REPO_ID = "openmen-gif/bess-user-data"   # private dataset repo
 _HF_FILENAME = "users.json"
-_HF_TOKEN = os.environ.get("HF_TOKEN", "")
+_HF_TOKEN = os.environ.get("BESS_HF_TOKEN", "") or os.environ.get("HF_TOKEN", "")
 
 import threading as _threading
 
@@ -87,6 +87,12 @@ _OLD_USERS_FILE = Path(__file__).parent / "users.json"
 if os.path.isdir("/data") and _OLD_USERS_FILE.exists() and not _USERS_FILE.exists():
     import shutil
     shutil.copy2(_OLD_USERS_FILE, _USERS_FILE)
+
+# On startup: log token info for debugging
+_log.info("HF_TOKEN source: BESS_HF_TOKEN=%s, HF_TOKEN=%s, using=%s",
+          "set" if os.environ.get("BESS_HF_TOKEN") else "empty",
+          "set" if os.environ.get("HF_TOKEN") else "empty",
+          f"{_HF_TOKEN[:8]}..." if len(_HF_TOKEN) > 8 else "(none)")
 
 # On startup: restore from HF Hub **synchronously** (blocking)
 # Must complete before app serves requests, otherwise users.json appears empty.

@@ -20,7 +20,7 @@ _STORE_PATH = Path(os.environ.get("PROJECT_STORE_PATH", _DEFAULT_STORE))
 # ── HuggingFace Hub sync (persistent project data across container restarts) ──
 _HF_REPO_ID = "openmen-gif/bess-user-data"
 _HF_PROJ_FILENAME = "bess_projects.json"
-_HF_TOKEN = os.environ.get("HF_TOKEN", "")
+_HF_TOKEN = os.environ.get("BESS_HF_TOKEN", "") or os.environ.get("HF_TOKEN", "")
 
 
 def _hf_download_projects() -> None:
