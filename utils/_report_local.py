@@ -81,42 +81,106 @@ def add_hyperlink(paragraph, url: str, text: str, size_pt: float = 10):
     hl.append(run)
     paragraph._p.append(hl)
 
+def _add_dotted_tab_stop(paragraph, position_mm):
+    """Add a right-aligned tab stop with dot leader to a paragraph."""
+    pPr = paragraph._p.get_or_add_pPr()
+    tabs = pPr.find(qn("w:tabs"))
+    if tabs is None:
+        tabs = OxmlElement("w:tabs")
+        pPr.append(tabs)
+    tab = OxmlElement("w:tab")
+    tab.set(qn("w:val"), "right")
+    tab.set(qn("w:leader"), "dot")
+    tab.set(qn("w:pos"), str(int(position_mm * 56.7)))  # mm to twips
+    tabs.append(tab)
+
+def _add_bookmark(paragraph, bm_name):
+    """Add a bookmark to a paragraph for internal linking."""
+    bm_start = OxmlElement("w:bookmarkStart")
+    bm_start.set(qn("w:id"), str(hash(bm_name) % 100000))
+    bm_start.set(qn("w:name"), bm_name)
+    bm_end = OxmlElement("w:bookmarkEnd")
+    bm_end.set(qn("w:id"), str(hash(bm_name) % 100000))
+    paragraph._p.insert(0, bm_start)
+    paragraph._p.append(bm_end)
+
+def _add_internal_hyperlink(paragraph, bookmark_name, text, font_size, font_name, color, bold=False):
+    """Add an internal hyperlink (to a bookmark) in a paragraph."""
+    hl = OxmlElement("w:hyperlink")
+    hl.set(qn("w:anchor"), bookmark_name)
+    run = OxmlElement("w:r")
+    rPr = OxmlElement("w:rPr")
+    # Font
+    rFonts = OxmlElement("w:rFonts")
+    rFonts.set(qn("w:ascii"), "Calibri")
+    rFonts.set(qn("w:eastAsia"), font_name)
+    rPr.append(rFonts)
+    # Size
+    twips = str(int(font_size * 2))
+    for tag in ("w:sz", "w:szCs"):
+        el = OxmlElement(tag); el.set(qn("w:val"), twips); rPr.append(el)
+    # Color
+    clr = OxmlElement("w:color")
+    clr.set(qn("w:val"), f"{color.red:02X}{color.green:02X}{color.blue:02X}" if hasattr(color, 'red') else str(color))
+    rPr.append(clr)
+    # Bold
+    if bold:
+        b = OxmlElement("w:b"); b.set(qn("w:val"), "true"); rPr.append(b)
+    # Underline: none (clean look)
+    run.append(rPr)
+    t = OxmlElement("w:t")
+    t.set(qn("xml:space"), "preserve")
+    t.text = text
+    run.append(t)
+    hl.append(run)
+    paragraph._p.append(hl)
+
 def add_toc(doc):
-    """정적 목차 생성 — Word 필드 갱신 없이 바로 표시됨."""
+    """정적 목차 생성 — 점선 리더 + 내부 링크 포함."""
     _TOC_ENTRIES = [
-        (1, "1. Executive Summary"),
-        (1, "2. 시장별 심층 분석"),
-        (1, "3. 전문 카테고리 분석"),
-        (1, "4. 시각화 분석"),
-        (1, "5. 글로벌 트렌드 통계 및 YoY 분석"),
-        (1, "6. 경쟁사 심층 분석"),
-        (1, "7. 프로젝트 파이프라인 현황"),
-        (1, "8. 환율 및 원자재 시장 영향 분석"),
-        (1, "9. 시나리오 분석"),
-        (1, "10. BESS 사업 개발 및 투자 분석"),
-        (1, "11. 전력시장 및 거래 동향"),
-        (1, "12. BESS 운영 및 자산관리"),
-        (1, "13. 전문가 종합 의견 및 전략적 시사점"),
+        (1, "1. Executive Summary", "_sec1"),
+        (1, "2. 시장별 심층 분석", "_sec2"),
+        (1, "3. 전문 카테고리 분석", "_sec3"),
+        (1, "4. 시각화 분석", "_sec4"),
+        (1, "5. 글로벌 트렌드 통계 및 YoY 분석", "_sec5"),
+        (1, "6. 경쟁사 심층 분석", "_sec6"),
+        (1, "7. 프로젝트 파이프라인 현황", "_sec7"),
+        (1, "8. 환율 및 원자재 시장 영향 분석", "_sec8"),
+        (1, "9. 시나리오 분석", "_sec9"),
+        (1, "10. BESS 사업 개발 및 투자 분석", "_sec10"),
+        (1, "11. 전력시장 및 거래 동향", "_sec11"),
+        (1, "12. BESS 운영 및 자산관리", "_sec12"),
+        (1, "13. 전문가 종합 의견 및 전략적 시사점", "_sec13"),
     ]
     from docx.shared import Mm as _Mm
-    for entry_level, entry_title in _TOC_ENTRIES:
+    # 문서 전체 폭(A4 기준 약 160mm)
+    _TAB_POS = 155  # mm — 점선 탭 위치 (우측 끝)
+    for idx, (entry_level, entry_title, bm_name) in enumerate(_TOC_ENTRIES):
         p = doc.add_paragraph()
-        p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after = Pt(2)
-        p.paragraph_format.line_spacing = Pt(16)
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
+        p.paragraph_format.line_spacing = Pt(18)
         indent = _Mm(0) if entry_level == 1 else _Mm(8)
         p.paragraph_format.left_indent = indent
-        run = p.add_run(entry_title)
-        run.font.size = Pt(11) if entry_level == 1 else Pt(10)
-        run.font.name = FONT
-        run.font.color.rgb = CLR_H1 if entry_level == 1 else CLR_H2
-        if entry_level == 1:
-            run.bold = True
+        # 점선 탭 스톱 추가
+        _add_dotted_tab_stop(p, _TAB_POS)
+        # 내부 하이퍼링크로 제목 추가
+        _font_size = 11 if entry_level == 1 else 10
+        _color = CLR_H1 if entry_level == 1 else CLR_H2
+        _bold = entry_level == 1
+        _add_internal_hyperlink(p, bm_name, entry_title, _font_size, FONT, _color, _bold)
+        # 탭 + 페이지 번호 (점선 리더)
+        tab_run = p.add_run("\t")
+        tab_run.font.size = Pt(_font_size)
+        page_run = p.add_run(str(idx + 3))  # 표지+목차 = 2페이지, 본문 시작 3페이지~
+        page_run.font.size = Pt(10)
+        page_run.font.name = FONT
+        page_run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     # 목차 끝 구분선
     p_sep = doc.add_paragraph()
     p_sep.paragraph_format.space_before = Pt(6)
     p_sep.paragraph_format.space_after = Pt(6)
-    run_sep = p_sep.add_run("─" * 50)
+    run_sep = p_sep.add_run("─" * 60)
     run_sep.font.size = Pt(8)
     run_sep.font.color.rgb = RGBColor(0xCC, 0xCC, 0xCC)
 
@@ -494,6 +558,7 @@ def generate_word_report():
     # 1. Executive Summary
     _h1 = doc.add_heading("1. Executive Summary", level=1)
     _h1.paragraph_format.page_break_before = True
+    _add_bookmark(_h1, "_sec1")
     doc.add_paragraph(
         "본 보고서는 주요 글로벌 대상 시장의 BESS(Battery Energy Storage System) 산업 동향을 심층적으로 분석합니다. "
         "분석 시점 기준 글로벌 시장의 성장률과 가격 동향, 정책 프레임워크를 조망합니다."
@@ -531,6 +596,7 @@ def generate_word_report():
     # 2. 시장별 심층 분석
     _h2 = doc.add_heading("2. 시장별 심층 분석", level=1)
     _h2.paragraph_format.page_break_before = True
+    _add_bookmark(_h2, "_sec2")
     for idx, r_name in enumerate(md.REGIONS):
         r_data = md.REGIONAL_DATA[r_name]
         doc.add_heading(f"2.{idx+1} {r_name} ({r_data['name_en']})", level=2)
@@ -573,6 +639,7 @@ def generate_word_report():
     # 3. 주요 카테고리별 전문 동향
     _h3 = doc.add_heading("3. 전문 카테고리 분석", level=1)
     _h3.paragraph_format.page_break_before = True
+    _add_bookmark(_h3, "_sec3")
     doc.add_paragraph("BESS 사업에 영향을 미치는 주요 거시적 및 미시적 카테고리 이슈 현황입니다.")
     _yr = md.LATEST_ACTUAL_YEAR
     _CAT_ANALYSIS = {
@@ -616,6 +683,7 @@ def generate_word_report():
     # 4. 시각화
     _h4 = doc.add_heading("4. 시각화 분석", level=1)
     _h4.paragraph_format.page_break_before = True
+    _add_bookmark(_h4, "_sec4")
     _yr4 = md.LATEST_ACTUAL_YEAR
     _bars = [(r, md.REGIONAL_DATA[r]["name_en"],
               md.REGIONAL_DATA[r]["installed_gwh"].get(_yr4, 0),
@@ -660,6 +728,7 @@ def generate_word_report():
     # 5. 글로벌 트렌드 통계 및 YoY 분석
     _h5 = doc.add_heading("5. 글로벌 트렌드 통계 및 YoY 분석", level=1)
     _h5.paragraph_format.page_break_before = True
+    _add_bookmark(_h5, "_sec5")
     doc.add_paragraph(
         "BESS 시장의 핵심 지표에 대한 연도별 추이 및 성장률을 정량적으로 분석합니다. "
         "용량, 시장 가치, 셀 가격, 시스템 CAPEX의 연도별 변화율(YoY)과 "
@@ -745,6 +814,7 @@ def generate_word_report():
     # 6. 경쟁사 심층 분석
     _h6 = doc.add_heading("6. 경쟁사 심층 분석", level=1)
     _h6.paragraph_format.page_break_before = True
+    _add_bookmark(_h6, "_sec6")
     doc.add_paragraph(
         "글로벌 BESS 시장 주요 플레이어의 시장 점유율, 매출, 생산 역량 및 강약점을 비교 분석합니다. "
         "셀 제조사와 시스템 통합업체(SI)의 포지셔닝 차이를 이해하는 것이 EPC 수주 전략 수립의 핵심입니다."
@@ -796,6 +866,7 @@ def generate_word_report():
     # 7. 프로젝트 파이프라인 현황
     _h7 = doc.add_heading("7. 프로젝트 파이프라인 현황", level=1)
     _h7.paragraph_format.page_break_before = True
+    _add_bookmark(_h7, "_sec7")
     doc.add_paragraph(
         "글로벌 주요 BESS 프로젝트의 규모, 상태, 지역 분포를 분석합니다. "
         "대형 프로젝트 트렌드와 주요 개발사의 활동을 통해 시장의 방향성을 파악합니다."
@@ -848,6 +919,7 @@ def generate_word_report():
     # 8. 환율 및 원자재 시장 영향 분석
     _h8 = doc.add_heading("8. 환율 및 원자재 시장 영향 분석", level=1)
     _h8.paragraph_format.page_break_before = True
+    _add_bookmark(_h8, "_sec8")
     doc.add_paragraph(
         "BESS 프로젝트의 수익성과 원가에 직접 영향을 미치는 환율 및 원자재 가격 동향을 분석합니다."
     )
@@ -910,6 +982,7 @@ def generate_word_report():
     # 9. 시나리오 분석
     _h9 = doc.add_heading("9. 시나리오 분석", level=1)
     _h9.paragraph_format.page_break_before = True
+    _add_bookmark(_h9, "_sec9")
     doc.add_paragraph("각국 시장 및 거시경제 상황에 따른 BESS 확산 중장기 시나리오 전망입니다.")
 
     # Scenario comparison chart
@@ -950,6 +1023,7 @@ def generate_word_report():
     # ============================================================
     _h10 = doc.add_heading("10. BESS 사업 개발 및 투자 분석", level=1)
     _h10.paragraph_format.page_break_before = True
+    _add_bookmark(_h10, "_sec10")
     doc.add_paragraph(
         "BESS 프로젝트의 수익 모델(Revenue Stacking), 투자 경제성(IRR/Payback), "
         "Offtake/PPA 계약 구조를 시장별로 분석합니다. 사업 개발 단계에서의 핵심 의사결정 요소를 제시합니다."
@@ -1033,6 +1107,7 @@ def generate_word_report():
     # ============================================================
     _h11 = doc.add_heading("11. 전력시장 및 거래 동향", level=1)
     _h11.paragraph_format.page_break_before = True
+    _add_bookmark(_h11, "_sec11")
     doc.add_paragraph(
         "주요 시장별 전력 거래 구조, BESS 참여 메커니즘, 수익 기회를 분석합니다. "
         "각국 전력시장 설계(Market Design)의 차이가 BESS 사업성에 미치는 영향을 심층 조망합니다."
@@ -1075,6 +1150,7 @@ def generate_word_report():
     # ============================================================
     _h12 = doc.add_heading("12. BESS 운영 및 자산관리", level=1)
     _h12.paragraph_format.page_break_before = True
+    _add_bookmark(_h12, "_sec12")
     doc.add_paragraph(
         "BESS 프로젝트의 장기 운영 성능, O&M 비용 추이, 배터리 열화 관리, "
         "에너지관리시스템(EMS) 플랫폼을 분석합니다. 20년 이상 프로젝트 수명 동안의 "
@@ -1136,6 +1212,7 @@ def generate_word_report():
     # ============================================================
     _h13 = doc.add_heading("13. 전문가 종합 의견 및 전략적 시사점", level=1)
     _h13.paragraph_format.page_break_before = True
+    _add_bookmark(_h13, "_sec13")
 
     doc.add_heading("13.1 시장 전망 종합", level=2)
     _p_exp1 = doc.add_paragraph(
