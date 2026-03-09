@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
+
 import json as _json
 import streamlit as st
 import utils.auth_helper as _auth_mod          # for _sidebar_shown reset

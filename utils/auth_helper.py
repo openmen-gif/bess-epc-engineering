@@ -6,11 +6,14 @@ User authentication and role-based access control
 """
 import hashlib
 import json
+import logging
 import os
 import secrets
 from pathlib import Path
 from filelock import FileLock
 import streamlit as st
+
+_log = logging.getLogger(__name__)
 
 # ── User data file ─────────────────────────────────────────────────────────────
 # Prefer /data (HF Spaces persistent storage), fallback to code directory
@@ -29,29 +32,35 @@ _HF_TOKEN = os.environ.get("HF_TOKEN", "")
 import threading as _threading
 
 def _hf_download() -> None:
-    """Download users.json from HF Hub (best-effort). Runs in background."""
+    """Download users.json from HF Hub (best-effort)."""
     if not _HF_TOKEN:
+        _log.info("HF_TOKEN not set, skipping download")
         return
     try:
         from huggingface_hub import hf_hub_download
+        _log.info("Downloading users.json from HF Hub repo=%s ...", _HF_REPO_ID)
         path = hf_hub_download(
             repo_id=_HF_REPO_ID,
             filename=_HF_FILENAME,
             repo_type="dataset",
             token=_HF_TOKEN,
-            local_dir=_USERS_FILE.parent,
+            local_dir=str(_USERS_FILE.parent),
         )
         downloaded = Path(path)
         if downloaded.resolve() != _USERS_FILE.resolve():
             import shutil
             shutil.copy2(downloaded, _USERS_FILE)
-    except Exception:
-        pass  # first run or network issue — use bundled users.json
+        _log.info("Downloaded users.json → %s", _USERS_FILE)
+    except Exception as e:
+        _log.warning("HF download failed: %s", e)
 
 
 def _hf_upload() -> None:
-    """Upload users.json to HF Hub (best-effort, non-blocking)."""
+    """Upload users.json to HF Hub."""
     if not _HF_TOKEN:
+        return
+    if not _USERS_FILE.exists():
+        _log.warning("users.json not found, skipping upload")
         return
     try:
         from huggingface_hub import HfApi
@@ -68,8 +77,9 @@ def _hf_upload() -> None:
             repo_id=_HF_REPO_ID,
             repo_type="dataset",
         )
-    except Exception:
-        pass
+        _log.info("Uploaded users.json to HF Hub successfully")
+    except Exception as e:
+        _log.error("HF upload failed: %s", e)
 
 
 # On startup: migrate users.json from code directory → /data/ if needed
@@ -175,8 +185,10 @@ def _save_users(users: dict) -> None:
             f.flush()
             os.fsync(f.fileno())
         os.replace(tmp_file, _USERS_FILE)
-    # Sync to HF Hub in background thread
-    _threading.Thread(target=_hf_upload, daemon=True).start()
+    # Sync to HF Hub — use non-daemon thread and wait up to 30s
+    t = _threading.Thread(target=_hf_upload)
+    t.start()
+    t.join(timeout=30)
 
 
 # ── Public auth functions ──────────────────────────────────────────────────────

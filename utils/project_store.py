@@ -5,10 +5,13 @@ utils/project_store.py
 HuggingFace Hub 동기화로 컨테이너 재시작 시에도 데이터 유지
 """
 import json
+import logging
 import os
 import threading as _threading
 from pathlib import Path
 from datetime import datetime
+
+_log = logging.getLogger(__name__)
 
 # Prefer /data (HF Spaces persistent storage), fallback to /tmp
 _DEFAULT_STORE = "/data/bess_projects.json" if os.path.isdir("/data") else "/tmp/bess_projects.json"
@@ -23,39 +26,49 @@ _HF_TOKEN = os.environ.get("HF_TOKEN", "")
 def _hf_download_projects() -> None:
     """Download bess_projects.json from HF Hub (best-effort)."""
     if not _HF_TOKEN:
+        _log.info("HF_TOKEN not set, skipping project download")
         return
     try:
         from huggingface_hub import hf_hub_download
+        _log.info("Downloading bess_projects.json from HF Hub repo=%s ...", _HF_REPO_ID)
         path = hf_hub_download(
             repo_id=_HF_REPO_ID,
             filename=_HF_PROJ_FILENAME,
             repo_type="dataset",
             token=_HF_TOKEN,
-            local_dir=_STORE_PATH.parent,
+            local_dir=str(_STORE_PATH.parent),
         )
         downloaded = Path(path)
         if downloaded.resolve() != _STORE_PATH.resolve():
             import shutil
             shutil.copy2(downloaded, _STORE_PATH)
-    except Exception:
-        pass
+        _log.info("Downloaded bess_projects.json → %s", _STORE_PATH)
+    except Exception as e:
+        _log.warning("HF project download failed: %s", e)
 
 
 def _hf_upload_projects() -> None:
-    """Upload bess_projects.json to HF Hub (best-effort, non-blocking)."""
+    """Upload bess_projects.json to HF Hub."""
     if not _HF_TOKEN or not _STORE_PATH.exists():
         return
     try:
         from huggingface_hub import HfApi
         api = HfApi(token=_HF_TOKEN)
+        api.create_repo(
+            repo_id=_HF_REPO_ID,
+            repo_type="dataset",
+            private=True,
+            exist_ok=True,
+        )
         api.upload_file(
             path_or_fileobj=str(_STORE_PATH),
             path_in_repo=_HF_PROJ_FILENAME,
             repo_id=_HF_REPO_ID,
             repo_type="dataset",
         )
-    except Exception:
-        pass
+        _log.info("Uploaded bess_projects.json to HF Hub successfully")
+    except Exception as e:
+        _log.error("HF project upload failed: %s", e)
 
 
 # On startup: restore from HF Hub **synchronously** (blocking)
@@ -114,8 +127,10 @@ def _save_raw(data: list) -> None:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
-    # Sync to HF Hub in background thread
-    _threading.Thread(target=_hf_upload_projects, daemon=True).start()
+    # Sync to HF Hub — use non-daemon thread and wait up to 30s
+    t = _threading.Thread(target=_hf_upload_projects)
+    t.start()
+    t.join(timeout=30)
 
 
 def load_projects() -> list:
