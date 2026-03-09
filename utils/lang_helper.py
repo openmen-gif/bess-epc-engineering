@@ -365,10 +365,9 @@ _TRANSLATIONS = {
 
     # KPI metric labels
     "hp_m1":             {"KO": "진행 중 프로젝트", "EN": "Active Projects"},
-    "hp_m2":             {"KO": "누적 시뮬레이션",  "EN": "Simulations Ran"},
+    "hp_m2":             {"KO": "전체 프로젝트",    "EN": "Total Projects"},
     "hp_m3":             {"KO": "공정 완료율",      "EN": "Workflow Completion"},
-    "hp_m4":             {"KO": "결재 대기",        "EN": "Pending Approvals"},
-    "hp_m2_delta":       {"KO": "이번 주 12회",     "EN": "12 This Week"},
+    "hp_m4":             {"KO": "완료 프로젝트",    "EN": "Completed Projects"},
 
     # System architecture overview
     "hp_arch_title":     {"KO": "시스템 아키텍처 개요", "EN": "System Architecture Overview"},
