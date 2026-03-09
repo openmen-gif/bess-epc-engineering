@@ -412,9 +412,99 @@ _TRANSLATIONS = {
     "hp_market_refresh_btn":  {"KO": "🔄 실시간 갱신", "EN": "🔄 Real-time Refresh"},
     "hp_market_category":     {"KO": "뉴스 카테고리", "EN": "News Category"},
     "hp_market_last_updated": {"KO": "마지막 통신: {time}", "EN": "Last Sync: {time}"},
-    "hp_market_no_news":      {"KO": "뉴스를 불러오지 못했습니다.", "EN": "Failed to load news."}
+    "hp_market_no_news":      {"KO": "뉴스를 불러오지 못했습니다.", "EN": "Failed to load news."},
+
+    # ─── Market Dashboard (00) ─────────────────────────────────────────
+    "mk_title":          {"KO": "📈 BESS 마켓 대시보드", "EN": "📈 BESS Market Dashboard"},
+    "mk_subtitle":       {"KO": "글로벌 ESS 시장 데이터, 가격 동향, 프로젝트 파이프라인, 시장 규모 전망, 경쟁 환경 및 실시간 뉴스 피드.",
+                          "EN": "Global ESS market data, price trends, project pipelines, market size forecasts, competitive landscape, and real-time news feeds."},
+    "mk_tab_overview":   {"KO": "📊 개요", "EN": "📊 Overview"},
+    "mk_tab_fx":         {"KO": "💱 환율 & 원자재", "EN": "💱 FX & Commodities"},
+    "mk_tab_news":       {"KO": "📰 뉴스 피드", "EN": "📰 News Feed"},
+    "mk_tab_regional":   {"KO": "🌍 지역 분석", "EN": "🌍 Regional Analysis"},
+    "mk_tab_pipeline":   {"KO": "🏗️ 프로젝트 파이프라인", "EN": "🏗️ Project Pipeline"},
+    "mk_tab_competitor": {"KO": "🏢 경쟁사 분석", "EN": "🏢 Competitors"},
+    "mk_tab_scenario":   {"KO": "🔮 시나리오 전망", "EN": "🔮 Scenarios"},
+    "mk_tab_report":     {"KO": "📥 보고서", "EN": "📥 Reports"},
+
+    # Overview tab
+    "mk_ov_title":       {"KO": "📈 글로벌 BESS 시장 개요", "EN": "📈 Global BESS Market Overview"},
+    "mk_ov_cap":         {"KO": "글로벌 설치 용량 (GWh)", "EN": "Global Installed Capacity (GWh)"},
+    "mk_ov_val":         {"KO": "시장 규모 (억 달러)", "EN": "Market Value (Billion USD)"},
+    "mk_ov_lfp":         {"KO": "LFP 셀 가격 ($/kWh)", "EN": "LFP Cell Price ($/kWh)"},
+    "mk_ov_capex":       {"KO": "시스템 CAPEX ($/kWh)", "EN": "System CAPEX ($/kWh)"},
+    "mk_ov_growth":      {"KO": "글로벌 BESS 시장 성장", "EN": "Global BESS Market Growth"},
+    "mk_ov_price_trend": {"KO": "배터리 가격 & 시스템 CAPEX 추이", "EN": "Battery Price & System CAPEX Trends"},
+    "mk_ov_cap_gwh":     {"KO": "설치 용량 (GWh)", "EN": "Capacity (GWh)"},
+    "mk_ov_lfp_kwh":     {"KO": "LFP 셀 ($/kWh)", "EN": "LFP Cell ($/kWh)"},
+    "mk_ov_nmc_kwh":     {"KO": "NMC 셀 ($/kWh)", "EN": "NMC Cell ($/kWh)"},
+    "mk_ov_capex_kwh":   {"KO": "시스템 CAPEX ($/kWh)", "EN": "System CAPEX ($/kWh)"},
+
+    # FX & Commodities tab
+    "mk_fx_title":       {"KO": "💱 환율 & 원자재 가격", "EN": "💱 Exchange Rates & Commodity Prices"},
+    "mk_fx_caption":     {"KO": "30분마다 데이터 갱신. 환율 출처: open.er-api.com (무료).", "EN": "Data refreshes every 30 minutes. Exchange rates from open.er-api.com (free)."},
+    "mk_fx_rates":       {"KO": "##### 💵 USD 환율", "EN": "##### 💵 USD Exchange Rates"},
+    "mk_fx_err":         {"KO": "환율 데이터 조회 실패", "EN": "Failed to fetch exchange rate data"},
+    "mk_fx_updated":     {"KO": "마지막 갱신", "EN": "Last updated"},
+    "mk_cmd_title":      {"KO": "##### 🛢️ 원자재 가격 (BESS 공급망)", "EN": "##### 🛢️ Commodity Prices (BESS Supply Chain)"},
+    "mk_cmd_brent":      {"KO": "브렌트 원유", "EN": "Brent Crude Oil"},
+    "mk_cmd_wti":        {"KO": "WTI 원유", "EN": "WTI Crude Oil"},
+    "mk_cmd_lithium":    {"KO": "탄산리튬", "EN": "Lithium Carbonate"},
+    "mk_cmd_copper":     {"KO": "구리", "EN": "Copper"},
+    "mk_cmd_nickel":     {"KO": "니켈", "EN": "Nickel"},
+    "mk_impact_title":   {"KO": "##### 📊 BESS 사업 영향 분석", "EN": "##### 📊 Impact on BESS Business"},
+    "mk_impact_body":    {"KO": "**환율 영향**: BESS 프로젝트는 배터리 셀(USD), 원자재(USD), EPC 비용(현지통화)이 혼합되므로 "
+                                "USD 강세 시 한국/일본 프로젝트 원가 상승. EUR/GBP 약세 시 유럽 프로젝트 수익성 개선.\n\n"
+                                "**유가 영향**: 유가 상승 → 재생에너지+ESS 경제성 개선 → BESS 수요 증가. "
+                                "리튬/구리/니켈 가격은 배터리 원가의 40-60%를 차지하며, CAPEX에 직접 영향.",
+                          "EN": "**FX Impact**: BESS projects mix battery cells (USD), raw materials (USD), and EPC costs (local currency). "
+                                "Strong USD raises costs for Korea/Japan projects. Weak EUR/GBP improves European project margins.\n\n"
+                                "**Oil Price Impact**: Rising oil prices → improved RE+ESS economics → higher BESS demand. "
+                                "Lithium/copper/nickel account for 40-60% of battery cost and directly affect CAPEX."},
+
+    # News tab
+    "mk_news_title":     {"KO": "📰 실시간 마켓 뉴스", "EN": "📰 Real-time Market News"},
+    "mk_news_cat":       {"KO": "뉴스 카테고리 선택", "EN": "Select News Category"},
+    "mk_news_refresh":   {"KO": "🔄 데이터 갱신", "EN": "🔄 Refresh Data"},
+    "mk_news_sync":      {"KO": "마지막 동기화", "EN": "Last Sync"},
+    "mk_news_empty":     {"KO": "해당 카테고리에 뉴스가 없습니다.", "EN": "No news available for this category."},
+
+    # Regional tab
+    "mk_reg_title":      {"KO": "🌍 지역별 분석", "EN": "🌍 Regional Analysis"},
+    "mk_reg_select":     {"KO": "지역 선택", "EN": "Select Region"},
+    "mk_reg_share":      {"KO": "시장 점유율", "EN": "Market Share"},
+    "mk_reg_pipeline":   {"KO": "파이프라인 용량", "EN": "Pipeline Capacity"},
+    "mk_reg_avg_size":   {"KO": "평균 프로젝트 규모", "EN": "Avg. Project Size"},
+    "mk_reg_drivers":    {"KO": "##### 핵심 성장 동력", "EN": "##### Key Drivers"},
+    "mk_reg_revenue":    {"KO": "**수익 모델:**", "EN": "**Revenue Model:**"},
+    "mk_reg_policy":     {"KO": "##### 주요 정책", "EN": "##### Key Policies"},
+    "mk_reg_players":    {"KO": "**주요 기업:**", "EN": "**Key Players:**"},
+    "mk_reg_chart":      {"KO": "설치 용량 추이", "EN": "Installed Capacity Trend"},
+    "mk_reg_installed":  {"KO": "설치 용량 (GWh)", "EN": "Installed (GWh)"},
+
+    # Pipeline tab
+    "mk_pipe_title":     {"KO": "🏗️ 주요 프로젝트 파이프라인", "EN": "🏗️ Major Project Pipeline"},
+    "mk_pipe_region":    {"KO": "지역 필터", "EN": "Filter by Region"},
+    "mk_pipe_status":    {"KO": "상태 필터", "EN": "Filter by Status"},
+    "mk_pipe_all":       {"KO": "전체", "EN": "All"},
+
+    # Competitors tab
+    "mk_comp_title":     {"KO": "🏢 경쟁사 분석", "EN": "🏢 Competitor Analysis"},
+    "mk_comp_chart":     {"KO": "경쟁사 포지셔닝", "EN": "Competitor Landscape"},
+
+    # Scenarios tab
+    "mk_scen_title":     {"KO": "🔮 시나리오 전망 (2024-2030)", "EN": "🔮 Scenario Forecast (2024-2030)"},
+    "mk_scen_select":    {"KO": "시나리오 선택", "EN": "Select Scenario"},
+    "mk_scen_proj":      {"KO": "용량 전망", "EN": "Capacity Projection"},
+
+    # Reports tab
+    "mk_rep_title":      {"KO": "📥 마켓 보고서 다운로드", "EN": "📥 Download Market Report"},
+    "mk_rep_gen":        {"KO": "📄 Excel 보고서 생성", "EN": "📄 Generate Excel Report"},
+    "mk_rep_dl":         {"KO": "⬇️ Excel 보고서 다운로드", "EN": "⬇️ Download Full Excel Report"},
+    "mk_rep_done":       {"KO": "✅ 생성 완료", "EN": "✅ Report generated."},
 
 }
+
 
 
 def t(key: str, **kwargs) -> str:
