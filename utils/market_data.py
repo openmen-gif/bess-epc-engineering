@@ -97,6 +97,61 @@ _HEADERS = {
     )
 }
 
+def _strip_html(text: str) -> str:
+    """Remove HTML tags and decode entities."""
+    text = unescape(text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _extract_summary(title: str, desc_raw: str, content_raw: str) -> str:
+    """Build a meaningful summary that differs from the title.
+
+    Priority: content:encoded (longer body) > description.
+    Strips HTML, removes leading title duplication, and truncates.
+    """
+    # Prefer content:encoded (full article body) for richer summary
+    body = _strip_html(content_raw) if content_raw else _strip_html(desc_raw)
+
+    if not body:
+        return ""
+
+    # Remove leading text that duplicates the title
+    title_clean = title.strip().rstrip(".")
+    if body.startswith(title_clean):
+        body = body[len(title_clean):].lstrip(" :;–—-.,\n")
+
+    # If body is still too similar to title (>80% overlap), try harder
+    if len(body) < 20 or _similarity(title_clean, body) > 0.8:
+        # Use content if we haven't already, or desc as last resort
+        alt = _strip_html(content_raw) if content_raw and body == _strip_html(desc_raw) else _strip_html(desc_raw)
+        if alt and len(alt) > len(body):
+            body = alt
+            if body.startswith(title_clean):
+                body = body[len(title_clean):].lstrip(" :;–—-.,\n")
+
+    # Truncate to ~250 chars at a word boundary
+    if len(body) > 250:
+        cut = body[:250].rfind(" ")
+        body = body[:cut if cut > 100 else 250] + "…"
+
+    return body if body else ""
+
+
+def _similarity(a: str, b: str) -> float:
+    """Quick Jaccard-like similarity between two strings (word-level)."""
+    sa = set(a.lower().split())
+    sb = set(b.lower().split())
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+
+# Namespace for content:encoded
+_NS = {"content": "http://purl.org/rss/1.0/modules/content/"}
+
+
 def _fetch_one_rss(url: str, max_items: int, timeout: int) -> list:
     """Try to fetch a single RSS URL. Returns list of items or empty list."""
     try:
@@ -108,10 +163,11 @@ def _fetch_one_rss(url: str, max_items: int, timeout: int) -> list:
             title = item.findtext("title", "")
             link  = item.findtext("link", "")
             pub   = item.findtext("pubDate", "")
-            desc  = unescape(item.findtext("description", ""))
-            desc  = re.sub(r"<[^>]+>", "", desc).strip()
+            desc_raw = item.findtext("description", "")
+            content_raw = item.findtext("content:encoded", "", _NS)
+            summary = _extract_summary(title, desc_raw, content_raw)
             if title:
-                items.append({"title": title, "link": link, "pubDate": pub, "description": desc[:150] + "..."})
+                items.append({"title": title, "link": link, "pubDate": pub, "description": summary})
         return items
     except Exception as e:
         print(f"RSS fetch failed [{url}]: {e}")
