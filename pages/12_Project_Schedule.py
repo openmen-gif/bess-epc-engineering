@@ -363,13 +363,21 @@ with tab_gantt:
 
         _PHASE_COLORS = {"설계": "#58a6ff", "조달": "#3fb950", "시공": "#f78166", "시운전": "#e3b341"}
 
+        from datetime import timedelta
+
+        def _safe_dates(s_str, e_str):
+            """Ensure valid date range with minimum 7-day width for visibility."""
+            s = date.fromisoformat(s_str) if s_str else date.today()
+            e = date.fromisoformat(e_str) if e_str else date.today()
+            if e <= s:
+                e = s + timedelta(days=7)
+            return str(s), str(e)
+
         gantt_rows = []
         for proj in projects:
-            # 프로젝트 전체 바
-            s = proj.get("start_date") or str(date.today())
-            e = proj.get("end_date")   or str(date.today())
-            if s > e:
-                e = s
+            raw_s = proj.get("start_date") or str(date.today())
+            raw_e = proj.get("end_date") or str(date.today())
+            s, e = _safe_dates(raw_s, raw_e)
             total_prog = round(sum(ph.get('progress',0) for ph in proj.get('phases',[]))/max(len(proj.get('phases',[])),1))
             gantt_rows.append(dict(
                 Task=proj["name"],
@@ -378,12 +386,8 @@ with tab_gantt:
                 Progress=f"{total_prog}%",
                 Color=STATUS_COLORS.get(proj.get("status","계획중"), "#888"),
             ))
-            # 공정 단계별 바
             for ph in proj.get("phases", []):
-                ph_s = ph.get("start_date") or s
-                ph_e = ph.get("end_date") or e
-                if ph_s > ph_e:
-                    ph_e = ph_s
+                ph_s, ph_e = _safe_dates(ph.get("start_date") or raw_s, ph.get("end_date") or raw_e)
                 ph_label = ph.get("name_en", ph["name"]) if is_en else ph["name"]
                 gantt_rows.append(dict(
                     Task=f"  ↳ {ph_label}",
@@ -397,25 +401,29 @@ with tab_gantt:
             df_g = pd.DataFrame(gantt_rows)
             fig_g = go.Figure()
             for _, row in df_g.iterrows():
+                t_start = pd.Timestamp(row["Start"])
+                t_finish = pd.Timestamp(row["Finish"])
                 fig_g.add_trace(go.Bar(
-                    x=[pd.Timestamp(row["Finish"]) - pd.Timestamp(row["Start"])],
+                    x=[t_finish - t_start],
                     y=[row["Task"]],
-                    base=[pd.Timestamp(row["Start"])],
+                    base=[t_start],
                     orientation="h",
                     marker_color=row["Color"],
                     text=row["Progress"],
                     textposition="inside",
+                    insidetextanchor="middle",
                     hovertemplate=f"{row['Task']}<br>{row['Start']} ~ {row['Finish']}<br>{row['Progress']}<extra></extra>",
                     showlegend=False,
                 ))
             fig_g.update_yaxes(autorange="reversed")
-            fig_g.update_xaxes(type="date")
+            fig_g.update_xaxes(type="date", dtick="M1", tickformat="%Y-%m")
             fig_g.update_layout(
                 title="프로젝트 일정 현황" if not is_en else "Project Schedule Overview",
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font_color="#c9d1d9", height=max(400, 40 * len(gantt_rows)),
-                margin=dict(l=10, r=10, t=40, b=10),
+                font_color="#c9d1d9", height=max(400, 45 * len(gantt_rows)),
+                margin=dict(l=200, r=20, t=40, b=40),
                 barmode="overlay",
+                bargap=0.3,
             )
             st.plotly_chart(fig_g, use_container_width=True)
 
