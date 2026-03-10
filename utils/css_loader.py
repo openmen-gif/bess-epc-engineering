@@ -122,8 +122,9 @@ def apply_custom_css():
             [data-testid="stSidebar"] {
                 min-width: 0 !important;
             }
-            /* 좌우 패딩만 축소, 상단은 Streamlit 기본값 유지 */
+            /* 패딩 조정 — 상단은 네비 바 높이만큼 확보 */
             .block-container {
+                padding-top: 2.5rem !important;
                 padding-left: 0.8rem !important;
                 padding-right: 0.8rem !important;
                 padding-bottom: 3rem !important;
