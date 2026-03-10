@@ -24,63 +24,38 @@ st.set_page_config(
 )
 apply_custom_css()
 
-# ── Session restore: query_params token + cookie fallback ────────────────────
-from utils.auth_helper import _load_token_store, _save_token_store
-import secrets as _secrets
+# ── Cookie-based session restore ─────────────────────────────────────────────
+_COOKIE_KEY = "bess_auth_v1"
+_cc = None
+try:
+    from streamlit_cookies_controller import CookieController as _CC
+    _cc = _CC()
+except Exception:
+    pass
 
-def _restore_session():
-    """Restore auth from URL token (?tk=...) or cookie."""
-    if is_authenticated():
-        return
-    # 1) query_params token
-    tk = st.query_params.get("tk", "")
-    if tk:
-        store = _load_token_store()
-        if tk in store:
-            sd = store[tk]
-            st.session_state["auth_user"] = sd["u"]
-            st.session_state["auth_role"] = sd["r"]
-            st.session_state["auth_name"] = sd["n"]
-            return
-    # 2) cookie fallback
+# Restore session from cookie on page load
+if _cc and not is_authenticated():
     try:
-        from streamlit_cookies_controller import CookieController as _CC
-        _cc = _CC()
-        _raw = _cc.get("bess_auth_v1")
-        if _raw:
+        _raw = _cc.get(_COOKIE_KEY)
+        if _raw and isinstance(_raw, str):
             _sd = _json.loads(_raw)
-            st.session_state["auth_user"] = _sd["u"]
-            st.session_state["auth_role"] = _sd["r"]
-            st.session_state["auth_name"] = _sd["n"]
+            if "u" in _sd and "r" in _sd:
+                st.session_state["auth_user"] = _sd["u"]
+                st.session_state["auth_role"] = _sd["r"]
+                st.session_state["auth_name"] = _sd.get("n", _sd["u"])
     except Exception:
         pass
 
-def _persist_session():
-    """Save auth to URL token and cookie."""
-    if not is_authenticated():
-        return
-    # Generate token if not present
-    tk = st.query_params.get("tk", "")
-    if not tk:
-        tk = _secrets.token_urlsafe(24)
-        st.query_params["tk"] = tk
-    # Save token → user mapping (server-side)
-    store = _load_token_store()
-    store[tk] = {
-        "u": st.session_state["auth_user"],
-        "r": st.session_state["auth_role"],
-        "n": st.session_state["auth_name"],
-    }
-    _save_token_store(store)
-    # Cookie fallback
+# Save session to cookie when authenticated
+if _cc and is_authenticated():
     try:
-        from streamlit_cookies_controller import CookieController as _CC
-        _CC().set("bess_auth_v1", _json.dumps(store[tk]), max_age=86400 * 7)
+        _cc.set(_COOKIE_KEY, _json.dumps({
+            "u": st.session_state["auth_user"],
+            "r": st.session_state["auth_role"],
+            "n": st.session_state.get("auth_name", ""),
+        }), max_age=86400 * 7)
     except Exception:
         pass
-
-_restore_session()
-_persist_session()
 
 # ── Reset per-run sidebar dedup flag ─────────────────────────────────────────
 _auth_mod._sidebar_shown = False

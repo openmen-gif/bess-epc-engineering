@@ -247,19 +247,9 @@ def login(username: str, password: str) -> bool:
 
 
 def logout() -> None:
-    # Remove token from store
-    try:
-        tk = st.query_params.get("tk", "")
-        if tk:
-            store = _load_token_store()
-            store.pop(tk, None)
-            _save_token_store(store)
-            del st.query_params["tk"]
-    except Exception:
-        pass
     for k in ["auth_user", "auth_role", "auth_name"]:
         st.session_state.pop(k, None)
-    # Clear persistent cookie if available
+    # Clear persistent cookie
     try:
         from streamlit_cookies_controller import CookieController as _CC
         _CC().remove("bess_auth_v1")
