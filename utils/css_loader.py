@@ -113,6 +113,125 @@ def apply_custom_css():
         footer {visibility: hidden;}
         
         /* =========================================
+           MOBILE RESPONSIVE (max-width: 768px)
+           ========================================= */
+        @media (max-width: 768px) {
+            /* 사이드바 축소 — 햄버거 메뉴로 접근 */
+            [data-testid="stSidebar"] {
+                min-width: 0 !important;
+            }
+            /* 전체 패딩 축소 */
+            .block-container {
+                padding: 0.5rem 0.8rem !important;
+                max-width: 100% !important;
+            }
+            /* 제목 크기 축소 */
+            h1 { font-size: 1.4rem !important; }
+            h2 { font-size: 1.2rem !important; }
+            h3 { font-size: 1.05rem !important; }
+            h4 { font-size: 0.95rem !important; }
+            /* 본문 텍스트 축소 */
+            .stMarkdown p { font-size: 13px !important; }
+            .stAlert p { font-size: 13px !important; }
+            /* 메트릭 카드 축소 */
+            [data-testid="stMetricValue"] {
+                font-size: 1.2rem !important;
+            }
+            [data-testid="stMetricLabel"] {
+                font-size: 0.75rem !important;
+            }
+            [data-testid="stMetricDelta"] {
+                font-size: 0.7rem !important;
+            }
+            /* Columns → 세로 스택 */
+            [data-testid="stHorizontalBlock"] {
+                flex-wrap: wrap !important;
+                gap: 0.3rem !important;
+            }
+            [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+                min-width: 100% !important;
+                flex: 1 1 100% !important;
+            }
+            /* 탭 글씨 축소 */
+            .stTabs [data-baseweb="tab-list"] button {
+                font-size: 0.8rem !important;
+                padding: 6px 10px !important;
+            }
+            /* 버튼 크기 */
+            .stButton > button {
+                font-size: 0.8rem !important;
+                padding: 6px 12px !important;
+            }
+            /* iframe 반응형 */
+            iframe {
+                max-width: 100% !important;
+                width: 100% !important;
+                height: 350px !important;
+            }
+            /* 테이블/데이터프레임 가로 스크롤 */
+            [data-testid="stDataFrame"] {
+                overflow-x: auto !important;
+            }
+            /* 슬라이더 */
+            .stSlider { padding: 0 !important; }
+            /* 체크박스 */
+            .stCheckbox label p, .stCheckbox label span {
+                font-size: 13px !important;
+            }
+            /* selectbox/input 라벨 */
+            .stSelectbox label p, .stTextInput label p,
+            .stNumberInput label p, .stSlider label p {
+                font-size: 13px !important;
+            }
+            /* 캡션 / 작은 텍스트 */
+            .stCaption, small { font-size: 0.7rem !important; }
+            /* expander */
+            .streamlit-expanderHeader { font-size: 14px !important; }
+        }
+
+        /* =========================================
+           SMALL MOBILE (max-width: 480px)
+           ========================================= */
+        @media (max-width: 480px) {
+            .block-container {
+                padding: 0.3rem 0.5rem !important;
+            }
+            h1 { font-size: 1.2rem !important; }
+            h2 { font-size: 1.05rem !important; }
+            h3 { font-size: 0.95rem !important; }
+            h4 { font-size: 0.85rem !important; }
+            .stMarkdown p { font-size: 12px !important; }
+            iframe { height: 280px !important; }
+            /* 탭 다수 시 가로 스크롤 */
+            .stTabs [data-baseweb="tab-list"] {
+                overflow-x: auto !important;
+                flex-wrap: nowrap !important;
+            }
+            .stTabs [data-baseweb="tab-list"] button {
+                font-size: 0.7rem !important;
+                padding: 4px 8px !important;
+                white-space: nowrap !important;
+            }
+        }
+
+        /* =========================================
+           TABLET (769px ~ 1024px)
+           ========================================= */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            /* 3열 이상 → 2열로 축소 */
+            [data-testid="stHorizontalBlock"] {
+                flex-wrap: wrap !important;
+            }
+            [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+                min-width: 48% !important;
+                flex: 1 1 48% !important;
+            }
+            h1 { font-size: 1.8rem !important; }
+            h2 { font-size: 1.5rem !important; }
+            h3 { font-size: 1.3rem !important; }
+        }
+
+        /* =========================================
            PRINT LAYOUT SPECIFIC CSS
            ========================================= */
         @media print {
