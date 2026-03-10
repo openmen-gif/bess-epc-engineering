@@ -120,31 +120,48 @@ def apply_custom_css():
             [data-testid="stSidebar"] {
                 min-width: 0 !important;
             }
-            /* 상단 헤더 영역 높이 축소 */
+            /* 상단 헤더 — 높이 최소화 */
             header[data-testid="stHeader"] {
                 height: 2.5rem !important;
                 min-height: 2.5rem !important;
             }
-            /* 전체 패딩 축소 — 상단 빈 공간 제거 */
+            /* 모든 상단 여백 강제 제거 */
+            .block-container,
+            [data-testid="stAppViewBlockContainer"],
+            .stMainBlockContainer,
+            [class*="block-container"] {
+                padding-top: 0.5rem !important;
+                margin-top: 0 !important;
+                max-width: 100% !important;
+            }
             .block-container {
                 padding: 0.5rem 0.8rem 3rem 0.8rem !important;
-                padding-top: 1rem !important;
-                max-width: 100% !important;
+                padding-top: 0.5rem !important;
                 min-height: 100vh !important;
+            }
+            .stMainBlockContainer {
+                padding-top: 0.5rem !important;
+                padding-bottom: 3rem !important;
+            }
+            /* stApp 뷰 컨테이너 상단 여백 제거 */
+            [data-testid="stAppViewContainer"] {
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
+            [data-testid="stAppViewContainer"] > section:first-child {
+                padding-top: 0 !important;
             }
             /* stApp 전체 높이 확보 — 하단 잘림 방지 */
             .stApp {
                 min-height: 100vh !important;
                 overflow-y: auto !important;
             }
-            /* main 영역 하단 여백 확보 */
-            .main {
+            /* main 영역 상단/하단 */
+            .main, [data-testid="stMain"] {
+                padding-top: 0 !important;
+                margin-top: 0 !important;
                 padding-bottom: 2rem !important;
                 min-height: 100vh !important;
-            }
-            .stMainBlockContainer {
-                padding-top: 1rem !important;
-                padding-bottom: 3rem !important;
             }
             /* 제목 크기 축소 */
             h1 { font-size: 1.4rem !important; }
@@ -214,12 +231,19 @@ def apply_custom_css():
            SMALL MOBILE (max-width: 480px)
            ========================================= */
         @media (max-width: 480px) {
+            .block-container,
+            [data-testid="stAppViewBlockContainer"],
+            .stMainBlockContainer,
+            [class*="block-container"] {
+                padding-top: 0.3rem !important;
+                margin-top: 0 !important;
+            }
             .block-container {
                 padding: 0.3rem 0.5rem 3rem 0.5rem !important;
-                padding-top: 0.8rem !important;
+                padding-top: 0.3rem !important;
             }
             .stMainBlockContainer {
-                padding-top: 0.8rem !important;
+                padding-top: 0.3rem !important;
                 padding-bottom: 3rem !important;
             }
             header[data-testid="stHeader"] {
