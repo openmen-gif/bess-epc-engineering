@@ -120,38 +120,12 @@ def apply_custom_css():
             [data-testid="stSidebar"] {
                 min-width: 0 !important;
             }
-            /* 헤더 높이 최소화 + 투명 */
-            header[data-testid="stHeader"] {
-                height: 0 !important;
-                min-height: 0 !important;
-                overflow: visible !important;
-                background: transparent !important;
-                border: none !important;
-            }
-            /* 콘텐츠를 위로 끌어올림 (transform은 Streamlit JS가 건드리지 않음) */
-            [data-testid="stAppViewContainer"] > section {
-                transform: translateY(-3.5rem) !important;
-                margin-bottom: -3.5rem !important;
-            }
+            /* 좌우 패딩만 축소, 상단은 Streamlit 기본값 유지 */
             .block-container {
                 padding-left: 0.8rem !important;
                 padding-right: 0.8rem !important;
                 padding-bottom: 3rem !important;
                 max-width: 100% !important;
-                min-height: 100vh !important;
-            }
-            .stMainBlockContainer {
-                padding-bottom: 3rem !important;
-                max-width: 100% !important;
-            }
-            /* stApp 전체 높이 확보 */
-            .stApp {
-                min-height: 100vh !important;
-                overflow-y: auto !important;
-            }
-            /* main 영역 */
-            .main, [data-testid="stMain"] {
-                padding-bottom: 2rem !important;
             }
             /* 제목 크기 축소 */
             h1 { font-size: 1.4rem !important; }
@@ -221,17 +195,9 @@ def apply_custom_css():
            SMALL MOBILE (max-width: 480px)
            ========================================= */
         @media (max-width: 480px) {
-            /* 소형폰: 더 크게 올림 */
-            [data-testid="stAppViewContainer"] > section {
-                transform: translateY(-4rem) !important;
-                margin-bottom: -4rem !important;
-            }
             .block-container {
                 padding-left: 0.5rem !important;
                 padding-right: 0.5rem !important;
-                padding-bottom: 3rem !important;
-            }
-            .stMainBlockContainer {
                 padding-bottom: 3rem !important;
             }
             h1 { font-size: 1.2rem !important; }
