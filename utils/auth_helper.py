@@ -99,35 +99,89 @@ _log.info("HF_TOKEN source: BESS_HF_TOKEN=%s, HF_TOKEN=%s, using=%s",
 if _HF_TOKEN and not _USERS_FILE.exists():
     _hf_download()
 
-# ── Token store for session persistence across refreshes ─────────────────────
-_TOKEN_FILE = _USERS_FILE.parent / "tokens.json"
-_TOKEN_LOCK = _USERS_FILE.parent / "tokens.json.lock"
+# ── Fingerprint-based session persistence (no external components) ────────────
+_SESSION_FILE = _USERS_FILE.parent / "sessions.json"
+_SESSION_LOCK = _USERS_FILE.parent / "sessions.json.lock"
+import time as _time
 
-def _load_token_store() -> dict:
-    """Load server-side token→user mapping."""
+
+def _client_fingerprint() -> str:
+    """Create a fingerprint from request headers (IP + User-Agent)."""
     try:
-        with FileLock(_TOKEN_LOCK, timeout=3):
-            if _TOKEN_FILE.exists():
-                with open(_TOKEN_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                # Prune old tokens (keep max 100)
-                if len(data) > 100:
-                    keys = list(data.keys())
-                    for k in keys[:-50]:
-                        del data[k]
-                return data
+        headers = st.context.headers
+        ip = headers.get("X-Forwarded-For", headers.get("X-Real-Ip", "unknown"))
+        ua = headers.get("User-Agent", "unknown")
+        raw = f"{ip}|{ua}"
+        return hashlib.sha256(raw.encode()).hexdigest()[:32]
+    except Exception:
+        return ""
+
+
+def _load_sessions() -> dict:
+    try:
+        with FileLock(_SESSION_LOCK, timeout=3):
+            if _SESSION_FILE.exists():
+                with open(_SESSION_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
     except Exception:
         pass
     return {}
 
-def _save_token_store(store: dict) -> None:
-    """Save server-side token→user mapping."""
+
+def _save_sessions(store: dict) -> None:
     try:
-        with FileLock(_TOKEN_LOCK, timeout=3):
-            with open(_TOKEN_FILE, "w", encoding="utf-8") as f:
+        with FileLock(_SESSION_LOCK, timeout=3):
+            with open(_SESSION_FILE, "w", encoding="utf-8") as f:
                 json.dump(store, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        _log.warning("Token store save failed: %s", e)
+        _log.warning("Session store save failed: %s", e)
+
+
+def restore_session_by_fingerprint() -> bool:
+    """Restore session from server-side fingerprint store."""
+    fp = _client_fingerprint()
+    if not fp:
+        return False
+    store = _load_sessions()
+    session = store.get(fp)
+    if not session:
+        return False
+    # Expire after 24 hours
+    if _time.time() - session.get("ts", 0) > 86400:
+        store.pop(fp, None)
+        _save_sessions(store)
+        return False
+    # Verify user still exists
+    users = _load_users()
+    if session["u"] not in users:
+        store.pop(fp, None)
+        _save_sessions(store)
+        return False
+    st.session_state["auth_user"] = session["u"]
+    st.session_state["auth_role"] = session["r"]
+    st.session_state["auth_name"] = session["n"]
+    _log.info("Session restored for user=%s via fingerprint", session["u"])
+    return True
+
+
+def save_session_fingerprint() -> None:
+    """Save current session to server-side fingerprint store."""
+    fp = _client_fingerprint()
+    if not fp:
+        return
+    store = _load_sessions()
+    store[fp] = {
+        "u": st.session_state.get("auth_user", ""),
+        "r": st.session_state.get("auth_role", ""),
+        "n": st.session_state.get("auth_name", ""),
+        "ts": _time.time(),
+    }
+    # Prune old sessions (keep max 50)
+    if len(store) > 50:
+        sorted_keys = sorted(store, key=lambda k: store[k].get("ts", 0))
+        for k in sorted_keys[:-30]:
+            del store[k]
+    _save_sessions(store)
 
 
 # ── Role definitions ───────────────────────────────────────────────────────────
@@ -247,14 +301,14 @@ def login(username: str, password: str) -> bool:
 
 
 def logout() -> None:
+    # Remove server-side fingerprint session
+    fp = _client_fingerprint()
+    if fp:
+        store = _load_sessions()
+        store.pop(fp, None)
+        _save_sessions(store)
     for k in ["auth_user", "auth_role", "auth_name"]:
         st.session_state.pop(k, None)
-    # Clear persistent cookie
-    try:
-        from streamlit_cookies_controller import CookieController as _CC
-        _CC().remove("bess_auth_v1")
-    except Exception:
-        pass
 
 
 def register(username: str, password: str, role: str, name: str) -> tuple[bool, str]:

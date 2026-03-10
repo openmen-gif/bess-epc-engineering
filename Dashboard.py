@@ -2,7 +2,6 @@
 import logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
-import json as _json
 import streamlit as st
 import utils.auth_helper as _auth_mod          # for _sidebar_shown reset
 from utils.css_loader import apply_custom_css
@@ -24,38 +23,14 @@ st.set_page_config(
 )
 apply_custom_css()
 
-# ── Cookie-based session restore ─────────────────────────────────────────────
-_COOKIE_KEY = "bess_auth_v1"
-_cc = None
-try:
-    from streamlit_cookies_controller import CookieController as _CC
-    _cc = _CC()
-except Exception:
-    pass
+# ── Server-side session restore (fingerprint-based, no external components) ──
+from utils.auth_helper import restore_session_by_fingerprint, save_session_fingerprint
 
-# Restore session from cookie on page load
-if _cc and not is_authenticated():
-    try:
-        _raw = _cc.get(_COOKIE_KEY)
-        if _raw and isinstance(_raw, str):
-            _sd = _json.loads(_raw)
-            if "u" in _sd and "r" in _sd:
-                st.session_state["auth_user"] = _sd["u"]
-                st.session_state["auth_role"] = _sd["r"]
-                st.session_state["auth_name"] = _sd.get("n", _sd["u"])
-    except Exception:
-        pass
+if not is_authenticated():
+    restore_session_by_fingerprint()
 
-# Save session to cookie when authenticated
-if _cc and is_authenticated():
-    try:
-        _cc.set(_COOKIE_KEY, _json.dumps({
-            "u": st.session_state["auth_user"],
-            "r": st.session_state["auth_role"],
-            "n": st.session_state.get("auth_name", ""),
-        }), max_age=86400 * 7)
-    except Exception:
-        pass
+if is_authenticated():
+    save_session_fingerprint()
 
 # ── Reset per-run sidebar dedup flag ─────────────────────────────────────────
 _auth_mod._sidebar_shown = False
