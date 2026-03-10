@@ -120,29 +120,31 @@ def apply_custom_css():
             [data-testid="stSidebar"] {
                 min-width: 0 !important;
             }
-            /* 헤더 완전히 숨김 — 공간 0 */
+            /* 헤더 높이 최소화 + 투명 */
             header[data-testid="stHeader"] {
-                display: none !important;
+                height: 0 !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                background: transparent !important;
+                border: none !important;
             }
-            /* Streamlit이 header 높이만큼 넣는 padding-top 무력화 */
-            .block-container,
-            [data-testid="stAppViewBlockContainer"],
-            .stMainBlockContainer,
-            [class*="block-container"] {
-                padding-top: 0.5rem !important;
-                margin-top: 0 !important;
-                max-width: 100% !important;
+            /* 콘텐츠를 위로 끌어올림 (transform은 Streamlit JS가 건드리지 않음) */
+            [data-testid="stAppViewContainer"] > section {
+                transform: translateY(-3.5rem) !important;
+                margin-bottom: -3.5rem !important;
             }
             .block-container {
                 padding-left: 0.8rem !important;
                 padding-right: 0.8rem !important;
                 padding-bottom: 3rem !important;
+                max-width: 100% !important;
                 min-height: 100vh !important;
             }
             .stMainBlockContainer {
                 padding-bottom: 3rem !important;
+                max-width: 100% !important;
             }
-            /* stApp 전체 높이 확보 — 하단 잘림 방지 */
+            /* stApp 전체 높이 확보 */
             .stApp {
                 min-height: 100vh !important;
                 overflow-y: auto !important;
@@ -150,7 +152,6 @@ def apply_custom_css():
             /* main 영역 */
             .main, [data-testid="stMain"] {
                 padding-bottom: 2rem !important;
-                min-height: 100vh !important;
             }
             /* 제목 크기 축소 */
             h1 { font-size: 1.4rem !important; }
@@ -220,12 +221,10 @@ def apply_custom_css():
            SMALL MOBILE (max-width: 480px)
            ========================================= */
         @media (max-width: 480px) {
-            .block-container,
-            [data-testid="stAppViewBlockContainer"],
-            .stMainBlockContainer,
-            [class*="block-container"] {
-                padding-top: 0.3rem !important;
-                margin-top: 0 !important;
+            /* 소형폰: 더 크게 올림 */
+            [data-testid="stAppViewContainer"] > section {
+                transform: translateY(-4rem) !important;
+                margin-bottom: -4rem !important;
             }
             .block-container {
                 padding-left: 0.5rem !important;
@@ -433,28 +432,3 @@ def apply_custom_css():
         unsafe_allow_html=True
     )
 
-    # JS: Streamlit이 동적으로 설정하는 inline padding-top 강제 제거
-    # st.markdown의 <script>는 실행 안 됨 → components.html 사용
-    import streamlit.components.v1 as _comp
-    _comp.html("""
-    <script>
-    (function() {
-        var doc = window.parent.document;
-        if (doc.documentElement.clientWidth > 768) return;
-        function fix() {
-            doc.querySelectorAll(
-                '.block-container, .stMainBlockContainer, [class*="block-container"]'
-            ).forEach(function(el) {
-                el.style.setProperty('padding-top', '0.5rem', 'important');
-            });
-        }
-        fix();
-        new MutationObserver(fix).observe(doc.body, {
-            subtree: true, attributes: true, attributeFilter: ['style']
-        });
-        setTimeout(fix, 300);
-        setTimeout(fix, 1000);
-        setTimeout(fix, 2500);
-    })();
-    </script>
-    """, height=0)
