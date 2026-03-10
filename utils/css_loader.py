@@ -120,10 +120,31 @@ def apply_custom_css():
             [data-testid="stSidebar"] {
                 min-width: 0 !important;
             }
-            /* 전체 패딩 축소 */
+            /* 상단 헤더 영역 높이 축소 */
+            header[data-testid="stHeader"] {
+                height: 2.5rem !important;
+                min-height: 2.5rem !important;
+            }
+            /* 전체 패딩 축소 — 상단 빈 공간 제거 */
             .block-container {
-                padding: 0.5rem 0.8rem !important;
+                padding: 0.5rem 0.8rem 3rem 0.8rem !important;
+                padding-top: 1rem !important;
                 max-width: 100% !important;
+                min-height: 100vh !important;
+            }
+            /* stApp 전체 높이 확보 — 하단 잘림 방지 */
+            .stApp {
+                min-height: 100vh !important;
+                overflow-y: auto !important;
+            }
+            /* main 영역 하단 여백 확보 */
+            .main {
+                padding-bottom: 2rem !important;
+                min-height: 100vh !important;
+            }
+            .stMainBlockContainer {
+                padding-top: 1rem !important;
+                padding-bottom: 3rem !important;
             }
             /* 제목 크기 축소 */
             h1 { font-size: 1.4rem !important; }
@@ -194,7 +215,16 @@ def apply_custom_css():
            ========================================= */
         @media (max-width: 480px) {
             .block-container {
-                padding: 0.3rem 0.5rem !important;
+                padding: 0.3rem 0.5rem 3rem 0.5rem !important;
+                padding-top: 0.8rem !important;
+            }
+            .stMainBlockContainer {
+                padding-top: 0.8rem !important;
+                padding-bottom: 3rem !important;
+            }
+            header[data-testid="stHeader"] {
+                height: 2rem !important;
+                min-height: 2rem !important;
             }
             h1 { font-size: 1.2rem !important; }
             h2 { font-size: 1.05rem !important; }
