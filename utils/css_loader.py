@@ -116,50 +116,46 @@ def apply_custom_css():
            MOBILE RESPONSIVE (max-width: 768px)
            ========================================= */
         @media (max-width: 768px) {
-            /* 사이드바 축소 — 햄버거 메뉴로 접근 */
+            /* 사이드바 축소 */
             [data-testid="stSidebar"] {
                 min-width: 0 !important;
             }
-            /* 상단 헤더 — 높이 최소화 */
+            /* 헤더: 투명 오버레이로 전환, 공간 차지 안 함 */
             header[data-testid="stHeader"] {
+                background: transparent !important;
                 height: 2.5rem !important;
-                min-height: 2.5rem !important;
+                min-height: 0 !important;
+                position: fixed !important;
+                top: 0; left: 0; right: 0;
+                z-index: 999;
+                border: none !important;
+                pointer-events: auto;
             }
-            /* 모든 상단 여백 강제 제거 */
+            /* Streamlit JS가 설정하는 동적 padding-top을 무력화:
+               margin-top 음수로 올림 + padding-top 고정 */
             .block-container,
             [data-testid="stAppViewBlockContainer"],
             .stMainBlockContainer,
             [class*="block-container"] {
-                padding-top: 0.5rem !important;
-                margin-top: 0 !important;
+                margin-top: -3rem !important;
                 max-width: 100% !important;
             }
             .block-container {
-                padding: 0.5rem 0.8rem 3rem 0.8rem !important;
-                padding-top: 0.5rem !important;
+                padding-left: 0.8rem !important;
+                padding-right: 0.8rem !important;
+                padding-bottom: 3rem !important;
                 min-height: 100vh !important;
             }
             .stMainBlockContainer {
-                padding-top: 0.5rem !important;
                 padding-bottom: 3rem !important;
-            }
-            /* stApp 뷰 컨테이너 상단 여백 제거 */
-            [data-testid="stAppViewContainer"] {
-                padding-top: 0 !important;
-                margin-top: 0 !important;
-            }
-            [data-testid="stAppViewContainer"] > section:first-child {
-                padding-top: 0 !important;
             }
             /* stApp 전체 높이 확보 — 하단 잘림 방지 */
             .stApp {
                 min-height: 100vh !important;
                 overflow-y: auto !important;
             }
-            /* main 영역 상단/하단 */
+            /* main 영역 */
             .main, [data-testid="stMain"] {
-                padding-top: 0 !important;
-                margin-top: 0 !important;
                 padding-bottom: 2rem !important;
                 min-height: 100vh !important;
             }
@@ -231,24 +227,23 @@ def apply_custom_css():
            SMALL MOBILE (max-width: 480px)
            ========================================= */
         @media (max-width: 480px) {
+            /* 소형폰: 더 강하게 올림 */
             .block-container,
             [data-testid="stAppViewBlockContainer"],
             .stMainBlockContainer,
             [class*="block-container"] {
-                padding-top: 0.3rem !important;
-                margin-top: 0 !important;
+                margin-top: -3.5rem !important;
             }
             .block-container {
-                padding: 0.3rem 0.5rem 3rem 0.5rem !important;
-                padding-top: 0.3rem !important;
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+                padding-bottom: 3rem !important;
             }
             .stMainBlockContainer {
-                padding-top: 0.3rem !important;
                 padding-bottom: 3rem !important;
             }
             header[data-testid="stHeader"] {
                 height: 2rem !important;
-                min-height: 2rem !important;
             }
             h1 { font-size: 1.2rem !important; }
             h2 { font-size: 1.05rem !important; }
