@@ -120,24 +120,17 @@ def apply_custom_css():
             [data-testid="stSidebar"] {
                 min-width: 0 !important;
             }
-            /* 헤더: 투명 오버레이로 전환, 공간 차지 안 함 */
+            /* 헤더 완전히 숨김 — 공간 0 */
             header[data-testid="stHeader"] {
-                background: transparent !important;
-                height: 2.5rem !important;
-                min-height: 0 !important;
-                position: fixed !important;
-                top: 0; left: 0; right: 0;
-                z-index: 999;
-                border: none !important;
-                pointer-events: auto;
+                display: none !important;
             }
-            /* Streamlit JS가 설정하는 동적 padding-top을 무력화:
-               margin-top 음수로 올림 + padding-top 고정 */
+            /* Streamlit이 header 높이만큼 넣는 padding-top 무력화 */
             .block-container,
             [data-testid="stAppViewBlockContainer"],
             .stMainBlockContainer,
             [class*="block-container"] {
-                margin-top: -3rem !important;
+                padding-top: 0.5rem !important;
+                margin-top: 0 !important;
                 max-width: 100% !important;
             }
             .block-container {
@@ -227,12 +220,12 @@ def apply_custom_css():
            SMALL MOBILE (max-width: 480px)
            ========================================= */
         @media (max-width: 480px) {
-            /* 소형폰: 더 강하게 올림 */
             .block-container,
             [data-testid="stAppViewBlockContainer"],
             .stMainBlockContainer,
             [class*="block-container"] {
-                margin-top: -3.5rem !important;
+                padding-top: 0.3rem !important;
+                margin-top: 0 !important;
             }
             .block-container {
                 padding-left: 0.5rem !important;
@@ -241,9 +234,6 @@ def apply_custom_css():
             }
             .stMainBlockContainer {
                 padding-bottom: 3rem !important;
-            }
-            header[data-testid="stHeader"] {
-                height: 2rem !important;
             }
             h1 { font-size: 1.2rem !important; }
             h2 { font-size: 1.05rem !important; }
@@ -439,6 +429,28 @@ def apply_custom_css():
             }
         }
         </style>
+        <script>
+        // 모바일: Streamlit JS가 설정하는 inline padding-top 강제 제거
+        (function() {
+            if (window.innerWidth > 768) return;
+            function fixPadding() {
+                document.querySelectorAll(
+                    '.block-container, .stMainBlockContainer, [class*="block-container"]'
+                ).forEach(function(el) {
+                    if (el.style.paddingTop) {
+                        el.style.setProperty('padding-top', '0.5rem', 'important');
+                    }
+                });
+            }
+            fixPadding();
+            var obs = new MutationObserver(fixPadding);
+            obs.observe(document.body, {subtree: true, attributes: true, attributeFilter: ['style']});
+            // 초기 로드 후 추가 보정
+            setTimeout(fixPadding, 500);
+            setTimeout(fixPadding, 1500);
+            setTimeout(fixPadding, 3000);
+        })();
+        </script>
         """,
         unsafe_allow_html=True
     )
