@@ -5,15 +5,7 @@
 User login, registration, and account management page
 """
 import streamlit as st
-try:
-    st.set_page_config(
-        page_title="BESS EPC Platform — Login",
-        page_icon="🔑",
-        layout="centered",
-        initial_sidebar_state="collapsed",
-    )
-except Exception:
-    pass
+# page_config is set in Dashboard.py (layout="wide")
 
 from utils.css_loader import apply_custom_css
 from utils.auth_helper import (

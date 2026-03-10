@@ -99,6 +99,37 @@ _log.info("HF_TOKEN source: BESS_HF_TOKEN=%s, HF_TOKEN=%s, using=%s",
 if _HF_TOKEN and not _USERS_FILE.exists():
     _hf_download()
 
+# ── Token store for session persistence across refreshes ─────────────────────
+_TOKEN_FILE = _USERS_FILE.parent / "tokens.json"
+_TOKEN_LOCK = _USERS_FILE.parent / "tokens.json.lock"
+
+def _load_token_store() -> dict:
+    """Load server-side token→user mapping."""
+    try:
+        with FileLock(_TOKEN_LOCK, timeout=3):
+            if _TOKEN_FILE.exists():
+                with open(_TOKEN_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                # Prune old tokens (keep max 100)
+                if len(data) > 100:
+                    keys = list(data.keys())
+                    for k in keys[:-50]:
+                        del data[k]
+                return data
+    except Exception:
+        pass
+    return {}
+
+def _save_token_store(store: dict) -> None:
+    """Save server-side token→user mapping."""
+    try:
+        with FileLock(_TOKEN_LOCK, timeout=3):
+            with open(_TOKEN_FILE, "w", encoding="utf-8") as f:
+                json.dump(store, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        _log.warning("Token store save failed: %s", e)
+
+
 # ── Role definitions ───────────────────────────────────────────────────────────
 ROLES = ["admin", "engineer", "viewer"]
 ROLE_RANK = {"admin": 3, "engineer": 2, "viewer": 1}
@@ -216,6 +247,16 @@ def login(username: str, password: str) -> bool:
 
 
 def logout() -> None:
+    # Remove token from store
+    try:
+        tk = st.query_params.get("tk", "")
+        if tk:
+            store = _load_token_store()
+            store.pop(tk, None)
+            _save_token_store(store)
+            del st.query_params["tk"]
+    except Exception:
+        pass
     for k in ["auth_user", "auth_role", "auth_name"]:
         st.session_state.pop(k, None)
     # Clear persistent cookie if available
