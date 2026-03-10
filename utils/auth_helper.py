@@ -284,7 +284,22 @@ def _save_users(users: dict) -> None:
 
 # ── Public auth functions ──────────────────────────────────────────────────────
 
+_LOGIN_ATTEMPTS: dict[str, list[float]] = {}  # username → list of failed timestamps
+_LOGIN_MAX_ATTEMPTS = 5
+_LOGIN_LOCKOUT_SECONDS = 300   # 5 minutes
+
+
 def login(username: str, password: str) -> bool:
+    username_key = username.strip().lower()
+    now = _time.time()
+    # Check lockout
+    attempts = _LOGIN_ATTEMPTS.get(username_key, [])
+    attempts = [t for t in attempts if now - t < _LOGIN_LOCKOUT_SECONDS]
+    _LOGIN_ATTEMPTS[username_key] = attempts
+    if len(attempts) >= _LOGIN_MAX_ATTEMPTS:
+        _log.warning("Login locked out for user=%s (%d attempts)", username_key, len(attempts))
+        return False
+
     users = _load_users()
     user = users.get(username.strip())
     if user and _verify_password(password, user["password"]):
@@ -296,7 +311,10 @@ def login(username: str, password: str) -> bool:
         st.session_state["auth_user"] = username.strip()
         st.session_state["auth_role"] = user["role"]
         st.session_state["auth_name"] = user.get("name", username.strip())
+        _LOGIN_ATTEMPTS.pop(username_key, None)  # Clear on success
         return True
+    # Record failed attempt
+    _LOGIN_ATTEMPTS.setdefault(username_key, []).append(now)
     return False
 
 
@@ -311,15 +329,66 @@ def logout() -> None:
         st.session_state.pop(k, None)
 
 
+import re as _re
+
+_REGISTER_ATTEMPTS: dict[str, list[float]] = {}  # IP → list of timestamps
+_REGISTER_RATE_LIMIT = 5       # max registrations
+_REGISTER_RATE_WINDOW = 3600   # per hour (seconds)
+
+
+def _check_register_rate() -> bool:
+    """Rate limit registration attempts per client fingerprint."""
+    fp = _client_fingerprint() or "unknown"
+    now = _time.time()
+    attempts = _REGISTER_ATTEMPTS.get(fp, [])
+    attempts = [t for t in attempts if now - t < _REGISTER_RATE_WINDOW]
+    _REGISTER_ATTEMPTS[fp] = attempts
+    return len(attempts) < _REGISTER_RATE_LIMIT
+
+
+def _validate_password_strength(password: str) -> tuple[bool, str]:
+    """Enforce minimum password policy: 8+ chars, at least 1 letter + 1 digit."""
+    if len(password) < 8:
+        return False, "비밀번호는 8자 이상이어야 합니다. / Password must be ≥ 8 characters."
+    if not _re.search(r'[A-Za-z]', password):
+        return False, "비밀번호에 영문자가 포함되어야 합니다. / Password must contain a letter."
+    if not _re.search(r'[0-9]', password):
+        return False, "비밀번호에 숫자가 포함되어야 합니다. / Password must contain a digit."
+    return True, ""
+
+
+def _validate_username(username: str) -> tuple[bool, str]:
+    """Validate username format: 2-30 chars, alphanumeric + underscore/hyphen only."""
+    if len(username) < 2 or len(username) > 30:
+        return False, "아이디는 2~30자여야 합니다. / Username must be 2-30 characters."
+    if not _re.match(r'^[A-Za-z0-9_-]+$', username):
+        return False, "아이디는 영문, 숫자, _, - 만 사용 가능합니다. / Username: letters, digits, _, - only."
+    return True, ""
+
+
 def register(username: str, password: str, role: str, name: str) -> tuple[bool, str]:
     username = username.strip()
     if not username or not password:
         return False, "아이디와 비밀번호를 입력해주세요. / Username and password required."
+    # Rate limit check
+    if not _check_register_rate():
+        return False, "등록 요청이 너무 많습니다. 잠시 후 다시 시도해주세요. / Too many registrations. Try again later."
+    # Username validation
+    ok, msg = _validate_username(username)
+    if not ok:
+        return False, msg
+    # Password strength check
+    ok, msg = _validate_password_strength(password)
+    if not ok:
+        return False, msg
     if role not in ROLES:
         return False, "유효하지 않은 역할입니다. / Invalid role."
     users = _load_users()
     if username in users:
         return False, f"'{username}' 계정이 이미 존재합니다. / Account already exists."
+    # Record registration attempt
+    fp = _client_fingerprint() or "unknown"
+    _REGISTER_ATTEMPTS.setdefault(fp, []).append(_time.time())
     users[username] = {
         "password": _hash_password(password),
         "role": role,
@@ -367,8 +436,9 @@ def update_user(username: str, new_role: str = None, new_name: str = None,
 
 def change_password(username: str, old_pw: str, new_pw: str) -> tuple[bool, str]:
     """Self-service password change — verifies old password first."""
-    if not new_pw or len(new_pw) < 4:
-        return False, "새 비밀번호는 4자 이상이어야 합니다. / New password must be ≥ 4 characters."
+    ok, msg = _validate_password_strength(new_pw)
+    if not ok:
+        return False, msg
     users = _load_users()
     user = users.get(username)
     if not user:

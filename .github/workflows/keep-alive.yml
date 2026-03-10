@@ -2,7 +2,7 @@ name: Keep HF Space Alive
 
 on:
   schedule:
-    - cron: '*/30 * * * *'   # 30분마다 실행
+    - cron: '0 */6 * * *'   # 6시간마다 실행 (하루 4회)
   workflow_dispatch:
 
 jobs:

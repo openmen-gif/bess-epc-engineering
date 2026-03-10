@@ -1,0 +1,15 @@
+.git/
+.github/
+__pycache__/
+*.pyc
+*.pyo
+*.bat
+*.log
+*.err
+*.lock
+test.*
+output_reports/
+=0.20.0
+.dockerignore
+.gitignore
+skill_md/

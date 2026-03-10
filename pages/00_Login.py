@@ -62,17 +62,17 @@ def run_login_page():
     with tab_register:
         _register_form(is_en)
 
-    # ── Default account hint ───────────────────────────────────────────────
+    # ── Default account hint (password NOT shown for security) ──────────────
     with st.expander("ℹ️ " + ("기본 계정 정보" if not is_en else "Default Account"), expanded=False):
         st.markdown(
-            "처음 실행 시 기본 관리자 계정이 생성됩니다:\n\n"
+            "처음 실행 시 기본 관리자 계정이 생성됩니다.\n\n"
             "- **아이디**: `admin`\n"
-            "- **비밀번호**: `djflsdk79`\n\n"
+            "- **비밀번호**: 관리자에게 문의하세요.\n\n"
             "보안을 위해 로그인 후 비밀번호를 변경하거나 새 계정을 만들어주세요."
             if not is_en else
-            "A default admin account is created on first run:\n\n"
+            "A default admin account is created on first run.\n\n"
             "- **Username**: `admin`\n"
-            "- **Password**: `djflsdk79`\n\n"
+            "- **Password**: Contact your administrator.\n\n"
             "For security, please change the password or create a new account after login."
         )
 

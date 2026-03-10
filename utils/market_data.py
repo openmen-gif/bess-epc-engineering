@@ -1,9 +1,12 @@
+import logging
 import urllib.request
 import xml.etree.ElementTree as ET
 from html import unescape
 import re
 from datetime import datetime
 import streamlit as st
+
+_log = logging.getLogger(__name__)
 
 # ============================================================
 # RSS 피드 URL — 직접 뉴스 사이트 (클라우드 서버 접근 가능)
@@ -170,7 +173,7 @@ def _fetch_one_rss(url: str, max_items: int, timeout: int) -> list:
                 items.append({"title": title, "link": link, "pubDate": pub, "description": summary})
         return items
     except Exception as e:
-        print(f"RSS fetch failed [{url}]: {e}")
+        _log.warning("RSS fetch failed [%s]: %s", url, e)
         return []
 
 @st.cache_data(ttl=1800)
