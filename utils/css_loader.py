@@ -429,28 +429,32 @@ def apply_custom_css():
             }
         }
         </style>
-        <script>
-        // 모바일: Streamlit JS가 설정하는 inline padding-top 강제 제거
-        (function() {
-            if (window.innerWidth > 768) return;
-            function fixPadding() {
-                document.querySelectorAll(
-                    '.block-container, .stMainBlockContainer, [class*="block-container"]'
-                ).forEach(function(el) {
-                    if (el.style.paddingTop) {
-                        el.style.setProperty('padding-top', '0.5rem', 'important');
-                    }
-                });
-            }
-            fixPadding();
-            var obs = new MutationObserver(fixPadding);
-            obs.observe(document.body, {subtree: true, attributes: true, attributeFilter: ['style']});
-            // 초기 로드 후 추가 보정
-            setTimeout(fixPadding, 500);
-            setTimeout(fixPadding, 1500);
-            setTimeout(fixPadding, 3000);
-        })();
-        </script>
         """,
         unsafe_allow_html=True
     )
+
+    # JS: Streamlit이 동적으로 설정하는 inline padding-top 강제 제거
+    # st.markdown의 <script>는 실행 안 됨 → components.html 사용
+    import streamlit.components.v1 as _comp
+    _comp.html("""
+    <script>
+    (function() {
+        var doc = window.parent.document;
+        if (doc.documentElement.clientWidth > 768) return;
+        function fix() {
+            doc.querySelectorAll(
+                '.block-container, .stMainBlockContainer, [class*="block-container"]'
+            ).forEach(function(el) {
+                el.style.setProperty('padding-top', '0.5rem', 'important');
+            });
+        }
+        fix();
+        new MutationObserver(fix).observe(doc.body, {
+            subtree: true, attributes: true, attributeFilter: ['style']
+        });
+        setTimeout(fix, 300);
+        setTimeout(fix, 1000);
+        setTimeout(fix, 2500);
+    })();
+    </script>
+    """, height=0)
