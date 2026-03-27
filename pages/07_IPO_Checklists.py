@@ -16,6 +16,61 @@ from utils.auth_helper import require_auth, sidebar_user_info
 SKILL_MD_DIR = str(Path(__file__).parent.parent / "skill_md")
 
 
+def extract_skill_profile(file_path: str) -> dict:
+    """Extract role description, one-line definition, key principles, and role boundaries from skill MD."""
+    profile = {"description": "", "definition": "", "principles": [], "boundaries": [], "outputs": []}
+    if not os.path.exists(file_path):
+        return profile
+
+    for enc in ('utf-8', 'utf-8-sig', 'cp949'):
+        try:
+            with open(file_path, 'r', encoding=enc) as f:
+                content = f.read()
+            break
+        except (UnicodeDecodeError, LookupError):
+            content = ""
+
+    # Frontmatter description
+    fm_match = re.search(r'^description:\s*"?(.+?)"?\s*$', content, re.MULTILINE)
+    if fm_match:
+        profile["description"] = fm_match.group(1).strip()
+
+    # Section extractor helper
+    def _extract_section(header_pattern, max_lines=10):
+        lines_out = []
+        match = re.search(header_pattern, content, re.MULTILINE)
+        if not match:
+            return lines_out
+        start = match.end()
+        remaining = content[start:].split('\n')
+        for line in remaining:
+            stripped = line.strip()
+            if stripped.startswith('## '):
+                break
+            if stripped.startswith('---'):
+                break
+            if stripped and not stripped.startswith('```'):
+                clean = re.sub(r'^[-\*]\s*', '', stripped).replace('**', '').strip()
+                if len(clean) > 2 and len(lines_out) < max_lines:
+                    lines_out.append(clean)
+        return lines_out
+
+    # One-line definition
+    def_lines = _extract_section(r'^## 한 줄 정의', max_lines=3)
+    profile["definition"] = ' '.join(def_lines) if def_lines else ""
+
+    # Key principles
+    profile["principles"] = _extract_section(r'^## 핵심 원칙', max_lines=8)
+
+    # Role boundaries
+    profile["boundaries"] = _extract_section(r'^## 역할 경계', max_lines=8)
+
+    # Outputs
+    profile["outputs"] = _extract_section(r'^## 산출물', max_lines=8)
+
+    return profile
+
+
 def _skill_key(filename: str) -> str:
     """Convert 'bess-project-manager.md' → 'bess-project-manager'"""
     return filename.replace('.md', '')
@@ -177,6 +232,32 @@ def run_ipo_checklists_module():
 
     skill_label = selected_file.replace('.md', '').replace('bess-', '').replace('-', ' ').title()
     st.markdown(f"{t('p7_loaded')} `{skill_label}`")
+
+    # ── Expert Profile Card ──
+    profile = extract_skill_profile(os.path.join(SKILL_MD_DIR, selected_file))
+    if profile["definition"] or profile["description"]:
+        with st.container(border=True):
+            pcol1, pcol2 = st.columns([1, 1])
+            with pcol1:
+                st.markdown(f"##### 🧑‍💼 {skill_label}")
+                if profile["description"]:
+                    st.caption(profile["description"])
+                if profile["definition"]:
+                    st.markdown(f"> {profile['definition']}")
+                if profile["principles"]:
+                    st.markdown("**핵심 원칙**")
+                    for p in profile["principles"]:
+                        st.markdown(f"- {p}")
+            with pcol2:
+                if profile["boundaries"]:
+                    st.markdown("**역할 경계**")
+                    for b in profile["boundaries"]:
+                        st.markdown(f"- {b}")
+                if profile["outputs"]:
+                    st.markdown("**주요 산출물**")
+                    for o in profile["outputs"]:
+                        st.markdown(f"- {o}")
+        st.markdown("---")
 
     if 'ipo_states' not in st.session_state:
         st.session_state.ipo_states = {}
