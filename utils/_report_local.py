@@ -126,8 +126,65 @@ def _make_hl_run(font_size, font_name, color, bold, text):
     run.append(t)
     return run
 
+def _make_pageref_field(bookmark_name, font_size, font_name):
+    """Create a PAGEREF field that resolves to the actual page number of a bookmark."""
+    # fldChar BEGIN
+    fc_begin = OxmlElement("w:r")
+    fc_begin_rPr = OxmlElement("w:rPr")
+    for tag in ("w:sz", "w:szCs"):
+        el = OxmlElement(tag); el.set(qn("w:val"), str(int(font_size * 2))); fc_begin_rPr.append(el)
+    clr = OxmlElement("w:color"); clr.set(qn("w:val"), "808080"); fc_begin_rPr.append(clr)
+    rFonts = OxmlElement("w:rFonts")
+    rFonts.set(qn("w:ascii"), "Calibri"); rFonts.set(qn("w:eastAsia"), font_name)
+    fc_begin_rPr.append(rFonts)
+    fc_begin.append(fc_begin_rPr)
+    fld_begin = OxmlElement("w:fldChar"); fld_begin.set(qn("w:fldCharType"), "begin")
+    fc_begin.append(fld_begin)
+
+    # instrText
+    fc_instr = OxmlElement("w:r")
+    fc_instr_rPr = OxmlElement("w:rPr")
+    for tag in ("w:sz", "w:szCs"):
+        el = OxmlElement(tag); el.set(qn("w:val"), str(int(font_size * 2))); fc_instr_rPr.append(el)
+    clr2 = OxmlElement("w:color"); clr2.set(qn("w:val"), "808080"); fc_instr_rPr.append(clr2)
+    fc_instr.append(fc_instr_rPr)
+    instr = OxmlElement("w:instrText"); instr.set(qn("xml:space"), "preserve")
+    instr.text = f' PAGEREF {bookmark_name} \\h '
+    fc_instr.append(instr)
+
+    # fldChar SEPARATE
+    fc_sep = OxmlElement("w:r")
+    fc_sep_rPr = OxmlElement("w:rPr")
+    for tag in ("w:sz", "w:szCs"):
+        el = OxmlElement(tag); el.set(qn("w:val"), str(int(font_size * 2))); fc_sep_rPr.append(el)
+    fc_sep.append(fc_sep_rPr)
+    fld_sep = OxmlElement("w:fldChar"); fld_sep.set(qn("w:fldCharType"), "separate")
+    fc_sep.append(fld_sep)
+
+    # Placeholder text (shown before field update)
+    fc_text = OxmlElement("w:r")
+    fc_text_rPr = OxmlElement("w:rPr")
+    for tag in ("w:sz", "w:szCs"):
+        el = OxmlElement(tag); el.set(qn("w:val"), str(int(font_size * 2))); fc_text_rPr.append(el)
+    clr3 = OxmlElement("w:color"); clr3.set(qn("w:val"), "808080"); fc_text_rPr.append(clr3)
+    fc_text.append(fc_text_rPr)
+    t_el = OxmlElement("w:t"); t_el.text = "…"
+    fc_text.append(t_el)
+
+    # fldChar END
+    fc_end = OxmlElement("w:r")
+    fc_end_rPr = OxmlElement("w:rPr")
+    for tag in ("w:sz", "w:szCs"):
+        el = OxmlElement(tag); el.set(qn("w:val"), str(int(font_size * 2))); fc_end_rPr.append(el)
+    fc_end.append(fc_end_rPr)
+    fld_end = OxmlElement("w:fldChar"); fld_end.set(qn("w:fldCharType"), "end")
+    fc_end.append(fld_end)
+
+    return [fc_begin, fc_instr, fc_sep, fc_text, fc_end]
+
+
 def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_size, font_name, color, bold=False):
-    """Add a TOC entry as a single internal hyperlink: title + tab + page number."""
+    """Add a TOC entry as a single internal hyperlink: title + tab + dynamic PAGEREF page number."""
     hl = OxmlElement("w:hyperlink")
     hl.set(qn("w:anchor"), bookmark_name)
     # Run 1: title text
@@ -140,9 +197,9 @@ def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_siz
     tab_el = OxmlElement("w:tab")
     tab_run.append(tab_el)
     hl.append(tab_run)
-    # Run 3: page number (gray)
-    pg_color = RGBColor(0x80, 0x80, 0x80)
-    hl.append(_make_hl_run(10, font_name, pg_color, False, page_text))
+    # Run 3+: PAGEREF field (dynamic page number)
+    for field_el in _make_pageref_field(bookmark_name, 10, font_name):
+        hl.append(field_el)
     paragraph._p.append(hl)
 
 def add_toc(doc):
@@ -223,6 +280,11 @@ def add_page_number(section):
 
 def _setup_doc(title=None):
     doc = Document()
+    # Force field update on open (PAGEREF page numbers)
+    settings = doc.settings.element
+    update_fields = OxmlElement("w:updateFields")
+    update_fields.set(qn("w:val"), "true")
+    settings.append(update_fields)
     style = doc.styles["Normal"]
     style.font.name = FONT
     style.font.size = Pt(12)
