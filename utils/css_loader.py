@@ -13,7 +13,9 @@ def apply_custom_css():
         /* Streamlit 헤더 완전 숨김 — 콘텐츠 가림 방지 */
         header[data-testid="stHeader"] { display: none !important; }
         [data-testid="stDecoration"] { display: none !important; }
-        .block-container { padding-top: 1rem; }
+        /* stMainBlockContainer inline style 강제 오버라이드 (headerHeight 패딩 제거) */
+        [data-testid="stMainBlockContainer"] { padding-top: 1rem !important; }
+        .block-container { padding-top: 1rem !important; }
         
         /* Make all basic markdown text larger */
         .stMarkdown p {
@@ -121,8 +123,9 @@ def apply_custom_css():
                 min-width: 0 !important;
             }
             /* 패딩 조정 — 상단은 네비 바 높이만큼 확보 */
+            [data-testid="stMainBlockContainer"],
             .block-container {
-                padding-top: 2.5rem !important;
+                padding-top: 1rem !important;
                 padding-left: 0.8rem !important;
                 padding-right: 0.8rem !important;
                 padding-bottom: 3rem !important;
