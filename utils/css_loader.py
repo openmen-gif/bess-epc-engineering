@@ -10,8 +10,8 @@ def apply_custom_css():
             color: #e6edf3;
             font-size: 16px;
         }
-        /* 상단 여백 축소 (Streamlit 기본 ~6rem → 1rem) */
-        .block-container { padding-top: 1rem; }
+        /* 상단 여백 — 네비 바 높이 확보 */
+        .block-container { padding-top: 3rem; }
         
         /* Make all basic markdown text larger */
         .stMarkdown p {
