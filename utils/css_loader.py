@@ -10,8 +10,19 @@ def apply_custom_css():
             color: #e6edf3;
             font-size: 16px;
         }
-        /* 상단 여백 — Streamlit 네비 바 + 워크플로우 바 높이 확보 */
-        .block-container { padding-top: 5rem; }
+        /* Streamlit 헤더(toolbar) 아래로 콘텐츠 밀어내기 */
+        .block-container { padding-top: 2rem; }
+        /* Streamlit 기본 헤더 숨김 — 콘텐츠 가림 방지 */
+        header[data-testid="stHeader"] {
+            height: 2.5rem !important;
+        }
+        /* stDecoration (상단 컬러 바) 높이 제거 */
+        [data-testid="stDecoration"] { display: none !important; }
+        /* stToolbar (우측 상단 메뉴) 위치 고정 */
+        [data-testid="stToolbar"] {
+            top: 0 !important;
+            height: 2.5rem !important;
+        }
         
         /* Make all basic markdown text larger */
         .stMarkdown p {
