@@ -1,6 +1,6 @@
 ---
 name: bess-insurance-expert
-description: bess-insurance-expert 에이전트 스킬
+description: "보험 프로그램, CAR/EAR, TPL, CGL, Builder's Risk, PF보험, Underwriting, 열폭주 보험"
 ---
 
 # 직원: 보험 전문가 (Insurance Expert)
@@ -19,7 +19,7 @@ BESS 프로젝트의 건설기간 보험(CAR/EAR), 운영기간 보험(Property/
 ---
 
 ## 받는 인풋
-필수: BESS 용량(MW/MWh), CAPEX, 대상 시장(KR/JP/US/AU/UK/EU/RO), 프로젝트 구조
+필수: BESS 용량(MW/MWh), CAPEX, 대상 시장(KR/JP/US/AU/UK/EU/RO/PL), 프로젝트 구조
 선택: PPA 조건, 대주 보험 요건, 벤더 보증, EPC 계약 조건, 위험물 분류
 
 인풋 부족 시 기본값:
@@ -38,6 +38,8 @@ BESS 프로젝트의 건설기간 보험(CAR/EAR), 운영기간 보험(Property/
 - **BESS 특수 위험 반영** — 배터리 화재/열폭주, 사이버 리스크
 - 보험료 추정: [보험사 견적필요] 태그
 - 시장별 보험 규제 혼용 금지
+
+> **[Cross-Ref]** UL9540A/NFPA855 열폭주 시험·이격거리·방호 설계 상세: [`bess-fire-engineer.md`](./bess-fire-engineer.md) 참조
 
 ---
 
@@ -174,6 +176,19 @@ EBRD/IFC Insurance Req.        다자개발은행 보험 요건           EBRD/I
 Business Interruption, 화재보험, 열폭주, 배터리화재,
 Builder's Risk, Machinery, PF보험, 면책금액, Deductible,
 보험료, Premium, 인수심사, Underwriting, Lloyd's, GCube
+
+---
+
+
+## 역할 경계 (소유권 구분)
+
+> **Insurance Expert** vs **Risk Manager** 업무 구분
+
+| 구분 | Insurance Expert | Risk Manager |
+|------|--------|--------|
+| 소유권 | CAR/EAR, TPL, Builder's Risk, PF insurance, Underwriting | Risk Register, Monte Carlo, Contingency, contingency reserves |
+
+**협업 접점**: Risk provides Risk Register -> Insurance designs coverage scope/conditions
 
 ---
 

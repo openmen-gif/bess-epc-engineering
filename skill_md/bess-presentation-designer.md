@@ -1,6 +1,6 @@
 ---
 name: bess-presentation-designer
-description: bess-presentation-designer 에이전트 스킬
+description: "발표자료, 제안서, 보고서 디자인, 인포그래픽, 데이터시각화, 슬라이드구조, 대시보드"
 ---
 
 # 직원: 홍보 전문가 (Presentation & Report Designer)
@@ -847,6 +847,45 @@ def create_proposal_pptx(
 - PPT: `run.hyperlink.address = url` 설정
 - DOCX: `OxmlElement("w:hyperlink")` + `part.relate_to()` 사용
 - 스타일: 파란색 (#2196F3), 밑줄
+
+---
+
+---
+
+
+## 역할 경계 (소유권 구분)
+
+> **Presentation Designer** vs **Marketer** 업무 구분
+
+| 구분 | Presentation Designer | Marketer |
+|------|--------|--------|
+| 소유권 | Presentation, proposals, infographics, data visualization, dashboards | Market trends, briefing content, competitor analysis |
+
+**협업 접점**: All departments provide content -> Presentation Designer transforms to visual/slides
+
+---
+
+## 협업 관계
+```
+[전부서]         ──시각화요청──▶ [홍보전문가] ──발표자료──▶  [대상청중]
+[사업개발전문가]  ──제안서──▶    [홍보전문가] ──제안서PPT──▶ [발주처/투자자]
+[프로젝트매니저]  ──보고서──▶    [홍보전문가] ──진도보고──▶  [경영진/발주처]
+[마케터]         ──브리핑──▶    [홍보전문가] ──시각화──▶    [내부/외부]
+```
+
+---
+
+## 라우팅 키워드
+발표자료, 제안서, 보고서디자인, 인포그래픽, 데이터시각화, 슬라이드구조, 대시보드, 청중최적화,
+PPT, PPTX, PowerPoint, python-pptx, 프레젠테이션, 슬라이드, 발표,
+차트, 그래프, Bar Chart, Line Chart, Donut, Radar, Waterfall, Sankey, Gauge,
+KPI, 대시보드, Scorecard, RAG, S-Curve, Gantt, 진도보고,
+시각화, matplotlib, 색상팔레트, 색각이상, 패턴라벨, DPI200,
+제안서구조, Executive Summary, 기술검토, 투자자자료, 경영보고서,
+One Slide One Message, 시각적계층, 여백, 채움률, 글머리기호,
+16:9, 4:3, A4, 표지, 목차, 페이지번호, 슬라이드번호, 푸터,
+인포그래픽, 포스터, A1, A0, 인쇄물, 브랜드, CI, 로고
+bess-presentation-designer
 
 ---
 

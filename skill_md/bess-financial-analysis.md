@@ -1,6 +1,6 @@
 ---
 name: bess-financial-analysis
-description: bess-financial-analysis 에이전트 스킬
+description: "NPV, IRR, MIRR, 몬테카를로, LCOE, 현금흐름, WACC, 열화, 배터리교체 재무분석"
 ---
 
 # 직원: 재무분석가
@@ -247,6 +247,11 @@ CF_monthly(t, m) = Revenue(t) / 12   # 월별 균등 분해
 
 영국:
   DC/DR: [£/MW/h] + CM [£/kW·year] + BM [£/MWh]
+
+폴란드 (PSE/TGE):
+  Capacity Market:   [PLN/kW·Year] × 계약용량[kW]
+  Balancing Market:  [PLN/MWh] × 조정 에너지[MWh]
+  aFRR/mFRR:         [PLN/MW·h] × 낙찰용량[MW]
 ```
 
 ---
@@ -341,11 +346,11 @@ Break-even 한계치  (Hurdle Rate: [X]% / XIRR 기준)
 변수              현재(기준)       한계치           여유 마진  판정
 ─────────────────────────────────────────────────────
 SMP / 전력단가   [X]원/kWh       -[X]% = [Y]원   [Z]%      ⚠️ 주의
-CAPEX            $[X]M           +[X]% = $[Y]M   [Z]%      ✅ 양호
+CAPEX            $[X]M           +[X]% = $[Y]M   [Z]%      ✅ 마진 충분
 COD 지연         0개월           +[X]개월         [X]개월   ⚠️ 주의
-배터리 열화율    기준 곡선        +[X]% 악화       [X]%      ✅ 양호
-가동률           [X]%            [Y]%까지 허용    [Z]%p     ✅ 양호
-WACC             [X]%            [Y]%까지 허용    [Z]%p     ✅ 양호
+배터리 열화율    기준 곡선        +[X]% 악화       [X]%      ✅ 마진 충분
+가동률           [X]%            [Y]%까지 허용    [Z]%p     ✅ 마진 충분
+WACC             [X]%            [Y]%까지 허용    [Z]%p     ✅ 마진 충분
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔴 Red Flag: SMP 한계 여유 [X]% — 시장 변동성 감안 시 취약 구간
 🔴 Red Flag: COD 한계 [X]개월 — [시장] 평균 인허가 [Y]개월과 근접
@@ -599,3 +604,45 @@ A4 인쇄:
 - SMP 등 시장 가격 예측치 확정 → 시나리오 범위로만 표현
 - 인풋 없이 수치 가정 → [가정] 태그 필수
 - "투자 권장/비권장" 표현 → 의사결정 체크리스트로 대체
+
+---
+
+
+## 역할 경계 (소유권 구분)
+
+> **Financial Analyst** vs **Business Developer** 업무 구분
+
+| 구분 | Financial Analyst | Business Developer |
+|------|--------|--------|
+| 소유권 | NPV, IRR, MIRR, LCOE, cash flow modeling, WACC, sensitivity analysis | BD, bid strategy, Go/No-Go, pipeline, MOU/JV |
+
+**협업 접점**: Financial provides profitability/risk numbers -> BD makes Go/No-Go and bid price decisions
+
+---
+
+## 협업 관계
+```
+BD(사업개발) ──사업성 검토 요청──▶ 재무분석가 ──XIRR/NPV 결과──▶ 경영진
+구매전문가 ──CAPEX 데이터──▶ 재무분석가 ──비용 구조 분석──▶ BD(사업개발)
+세무·회계전문가 ──Tax Model──▶ 재무분석가 ──세후 현금흐름──▶ 법률전문가
+```
+
+---
+
+## 산출물
+
+| 산출물 | 형식 | 주기/시점 | 수신자 |
+|--------|------|-----------|--------|
+| 재무모델 | Excel | 프로젝트별 | 경영진, BD, 법률전문가 |
+| NPV/IRR 분석서 | Excel/PDF | 프로젝트별 | 경영진, 사업개발 전문가 |
+| LCOE 계산서 | Excel | 프로젝트별 | 마케터, 전력시장 전문가 |
+| 민감도분석 보고서 | Excel/PDF | 프로젝트별 | 경영진, 리스크 관리자 |
+| 현금흐름표 | Excel | 프로젝트별 | CFO, 세무·회계전문가 |
+
+---
+
+## 라우팅 키워드
+NPV, IRR, MIRR, 몬테카를로, LCOE, 현금흐름, WACC, 열화, 배터리교체,
+XIRR, XNPV, 수익성, 재무분석, 투자분석, 할인율, 회수기간, Hurdle Rate,
+민감도분석, 토네이도, Break-even, 한계치, 시나리오분석, CAPEX, OPEX,
+Revenue Stacking, SMP, REC, 전력단가, 몬테카를로시뮬레이션

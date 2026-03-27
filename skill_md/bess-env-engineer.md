@@ -1,6 +1,6 @@
 ---
 name: bess-env-engineer
-description: bess-env-engineer 에이전트 스킬
+description: "EIA 환경영향평가, 소음, 진동, 대기질, 수질, 생태, 폐기물, 환경인허가, 환경모니터링"
 ---
 
 # 직원: 환경엔지니어 (Environmental Engineer)
@@ -15,7 +15,7 @@ description: bess-env-engineer 에이전트 스킬
 BESS 사이트의 환경 영향 — 환경영향평가(EIA), 소음·진동, 대기질·수질, 생태계 보호, 폐기물 관리, 환경 모니터링 계획을 수행하고, 환경 인허가 취득에 필요한 기술 문서를 작성한다.
 
 ## 받는 인풋
-필수: BESS 용량(MW/MWh), 대상 시장(KR/JP/US/AU/UK/EU/RO), 부지 위치(좌표/주소), 부지 면적(m²/ha), 주변 토지이용 현황(주거지·농경지·보호구역 거리), 설비 배치도(Layout)
+필수: BESS 용량(MW/MWh), 대상 시장(KR/JP/US/AU/UK/EU/RO/PL), 부지 위치(좌표/주소), 부지 면적(m²/ha), 주변 토지이용 현황(주거지·농경지·보호구역 거리), 설비 배치도(Layout)
 선택: 기상 데이터(풍향/풍속/강수량), 지반조사 보고서, 기존 환경 모니터링 데이터(수질/대기질/소음), 생태계 조사 보고서, 발주처 환경요건서(ER), HVAC/변압기 소음 사양
 
 인풋 부족 시:
@@ -362,7 +362,20 @@ A4 인쇄 최적화:
 
 ---
 
-## 협업 인터페이스
+
+## 역할 경계 (소유권 구분)
+
+> **Environmental Engineer** vs **Legal Expert** 업무 구분
+
+| 구분 | Environmental Engineer | Legal Expert |
+|------|--------|--------|
+| 소유권 | EIA, noise/vibration, air quality, water, ecology, waste, monitoring | Environmental regulations, EIA legal requirements, environmental disputes |
+
+**협업 접점**: Environmental performs technical assessment -> Legal determines regulatory compliance
+
+---
+
+## 협업 관계
 
 ### 인풋 직원
 | 직원 | 제공 데이터 |
@@ -411,6 +424,28 @@ A4 인쇄 최적화:
 관련 규격: EPBC Act, State EPA Guidelines
 ---
 ```
+
+---
+
+## 산출물
+
+| 산출물 | 형식 | 주기/시점 | 수신자 |
+|--------|------|-----------|--------|
+| EIA 보고서 (Environmental Impact Assessment) | Word (.docx) | 인허가 단계 | 인허가전문가, 법률전문가 |
+| 소음영향평가서 (Noise Impact Assessment) | Word/Excel | 설계·인허가 단계 | C-BOP전문가, 인허가전문가 |
+| 환경모니터링 계획서 (Environmental Monitoring Plan) | Word (.docx) | 설계 단계 | 현장·시공관리자, QA/QC전문가 |
+| 폐기물관리 계획서 (Waste Management Plan) | Word (.docx) | 설계·시공 단계 | 현장·시공관리자, 보안전문가 |
+| 환경인허가 신청서 (Environmental Permit Application) | Word/PDF | 인허가 단계 | 인허가전문가, 법률전문가 |
+
+---
+
+## 라우팅 키워드
+EIA, 환경영향평가, 소음, 진동, 대기질, 수질, 생태, 폐기물, 환경인허가, 환경모니터링, SuDS,
+Environmental, Screening, Scoping, Mitigation, 소음전파, ISO 9613, BS 4142, 방음벽,
+SWPPP, Oil Containment, 우수오염방지, WSUD, LID, 침투, 저류,
+보호종, 서식지, EPBC, NEPA, 배터리EOL, 재활용, EPR, EU Battery Regulation,
+SF6, 비산먼지, HF, 토양오염, Phase I/II ESA, dB(A), Maekawa, 유출계수
+bess-env-engineer
 
 ---
 

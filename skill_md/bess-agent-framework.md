@@ -1,6 +1,6 @@
 ---
 name: bess-agent-framework
-description: bess-agent-framework 에이전트 스킬
+description: "BESS EPC AI 에이전트 설계 프레임워크. 조직 구조, 직원 역할, 라우팅, CLAUDE.md 작성"
 ---
 
 # BESS EPC AI Agent Design Framework (v4)
@@ -11,7 +11,7 @@ description: bess-agent-framework 에이전트 스킬
 > - **Antigravity (Agent) 인식용:** 이 문서를 도메인 지식(Skill)으로 로드하세요. 계산, 파일 생성 또는 시스템 연동이 필요한 경우, 직접 Python 코드를 작성하고 터미널 도구(`run_command`)를 실행하여 워크플로우를 완수하세요.
 
 > "일인 기업 CEO가 전문 직원에게 위임한다" - AI 에이전트를 직원처럼 설계한다
-> 조직 규모: CEO + 50명 | 6개 본부 | 7개 시장(KR/JP/US/AU/UK/EU/RO)
+> 조직 규모: CEO + 67명 | 3라인 구조(CTO/CFO/COO) | 8개 시장(KR/JP/US/AU/UK/EU/RO/PL)
 
 ## 핵심 원칙 (전 단계 공통)
 
@@ -157,7 +157,7 @@ AI 위임 가능:
 1순위: [작업명]
   절감: 주 ___시간
   담당: [직원명]
-  시장: [KR/JP/US/AU/UK/EU/RO]
+  시장: [KR/JP/US/AU/UK/EU/RO/PL]
   규격: [IEC/IEEE/JIS/KEC ___]
 ==================================================
 ```
@@ -170,7 +170,7 @@ AI 위임 가능:
 ```
 작업명:
 담당 직원: [50명 중 매핑]
-대상 시장: [KR / JP / US / AU / UK / EU / RO]
+대상 시장: [KR / JP / US / AU / UK / EU / RO / PL]
 트리거:
 인풋: 시스템[MW/MWh, kV] + 시장[수익모델, 그리드코드] + 재무[CAPEX, WACC]
 프로세스:
@@ -191,7 +191,7 @@ Q1: 어떤 설비를 설계하나요?
     --> 시스템 전체(시스템엔지니어) / 전기(E-BOP) / 토건(C-BOP)
         / PCS / 배터리 / 통신네트워크
 Q2: 어떤 시장의 규격을 적용하나요?
-    --> KR(KEC) / JP(JEAC) / US(IEEE) / AU(AS) / UK(G99) / EU(RfG) / RO(CTR)
+    --> KR(KEC) / JP(JEAC) / US(IEEE) / AU(AS) / UK(G99) / EU(RfG) / RO(CTR) / PL(IRiESP)
     --> 규격.표준 전문가 교차 검증 필수
 Q3: 해석/시뮬레이션 검증이 필요한가요?
     --> 구조(FEM) / 열유동(CFD) / 계통(조류/단락/EMT)
@@ -292,7 +292,7 @@ CEO (1명):
   규격·표준 전문가          bess-standards-analyst     규격매핑/인증/인허가/표준동향
   인허가(아시아)            bess-permit-asia           KR/JP/KEPCO/METI/건축허가
   인허가(영어권)            bess-permit-english        US/AU/UK/FERC/AEMO/Ofgem/G99
-  인허가(유럽)              bess-permit-europe         EU/RO/ENTSO-E/RfG/ANRE/Transelectrica
+  인허가(유럽)              bess-permit-europe         EU/RO/PL/ENTSO-E/RfG/ANRE/URE/PSE/Transelectrica
 ======================================================================
 
 지원 본부 (7명):
@@ -387,7 +387,7 @@ CEO 게이트 (최종):
 나는 [도메인] 프로젝트의 총괄 오케스트레이터다.
 작업을 직접 수행하지 않는다. 분류하고, 위임하고, 통합하고, 승인한다.
 
-프로젝트: ___MW/___MWh | ___kV | 시장:[KR/JP/US/AU/UK/EU/RO] | 유형:[Type 1~5]
+프로젝트: ___MW/___MWh | ___kV | 시장:[KR/JP/US/AU/UK/EU/RO/PL] | 유형:[Type 1~5]
 
 ## 조직 관계도
 [6개 본부 ASCII 조직도]
@@ -522,6 +522,7 @@ AU(AEMO): FCAS 6개, NEM 5분 정산
 UK(NGESO): DC/DR/DM, Capacity Market, BM
 EU(ENTSO-E): FCR, aFRR, mFRR, Balancing Market
 RO(Transelectrica): aFRR/mFRR, DAM/IDM, Capacity Market
+PL(PSE): aFRR/mFRR, DAM/IDM, Capacity Market (T-4/T-1), TGE
 
 적용 규격:
 배터리: IEC 62619, IEC 63056, UL 9540, UL 9540A, UL 1973
@@ -532,4 +533,8 @@ PCS: IEC 62477, IEEE 1547-2018, UL 1741/1741SA
 일본: 電気事業法, JEAC 9701-2020, JIS C 8715-2
 영국: G99, Energy Act 2023, CDM 2015
 유럽: RfG 2016/631, NIS2 Directive, EU Battery Regulation 2023/1542
+폴란드: IRiESP, PN-EN 50549-2, Prawo Energetyczne, Ustawa o rynku mocy
 호주: AS 4777-2020, AS/NZS 5139, WHS Act 2011
+
+## 라우팅 키워드
+에이전트설계, 직원구성, CLAUDE.md작성, 조직설계, 역할정의, 스킬설계, 라우팅, 위임체계, 협업매트릭스, bess-agent-framework

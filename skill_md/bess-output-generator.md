@@ -1,6 +1,6 @@
 ---
 name: bess-output-generator
-description: bess-output-generator 에이전트 스킬
+description: "전사 문서 표준화, 출력 형식 선택, A4/A3 인쇄, Excel/Word/PDF/Python 파일 생성"
 ---
 
 # SCV: output-generator (출력 관리자)
@@ -911,6 +911,50 @@ TOC 검증
 □ 문서 열 때 자동 갱신 확인 (최초 저장 후 재열기로 확인)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+---
+
+
+## 역할 경계 (소유권 구분)
+
+> **Output Generator** vs **All Departments** 업무 구분
+
+| 구분 | Output Generator | All Departments |
+|------|--------|--------|
+| 소유권 | Document standardization, A4/A3 print optimization, format review, naming rules | Content creation, domain-specific deliverables |
+
+**협업 접점**: All departments create content -> Output Generator reviews format/standard before final output
+
+---
+
+## 협업 관계
+```
+[전부서]         ──형식검토──▶   [출력관리자] ──표준화문서──▶ [최종수신자]
+[프로젝트매니저]  ──보고서──▶    [출력관리자] ──형식적용──▶  [발주처/경영진]
+[홍보전문가]     ──발표자료──▶   [출력관리자] ──인쇄최적화──▶ [대상청중]
+```
+
+---
+
+## 산출물
+
+| 산출물 | 형식 | 주기·시점 | 수신자 |
+|--------|------|----------|--------|
+| 문서 형식 검토 보고서 | Excel | 매 산출물 제출 시 | 전 부서 담당자 |
+| 인쇄 패키지 (A4/A3) | PDF/인쇄 | 최종 제출 시 | 프로젝트 매니저, 고객 |
+| 템플릿 라이브러리 | Word/Excel/PPT | 분기 1회 갱신 | 전사 |
+| 파일명·버전 관리 대장 | Excel | 상시 | 전 부서 |
+| 출력 품질 체크리스트 | Excel | 매 산출물 | QA/QC |
+
+---
+
+## 라우팅 키워드
+Excel, Word, PDF, Python코드, A4인쇄,
+출력, 문서형식, 인쇄, xlsx, docx, pptx, reportlab, fpdf2, python-docx, openpyxl,
+서식, 템플릿, 파일생성, 출력관리, 인쇄패키지, 현장지참용, 체크리스트인쇄,
+차트, 그래프, matplotlib, 시각화, TOC, 목차, 페이지번호, 하이퍼링크, Sources,
+A4여백, 헤더푸터, 폰트, 12pt, 맑은고딕, Calibri, 파일네이밍
+bess-output-generator
 
 ---
 

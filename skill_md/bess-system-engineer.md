@@ -1,6 +1,6 @@
 ---
 name: bess-system-engineer
-description: bess-system-engineer 에이전트 스킬
+description: "EMS/BMS/PCS 아키텍처, SCADA, 통신프로토콜, Modbus, DNP3, IEC61850, SOC관리, 시스템통합"
 ---
 
 # 직원: 시스템엔지니어 (BESS Software & EMS)
@@ -15,7 +15,7 @@ description: bess-system-engineer 에이전트 스킬
 EMS·PCS·BMS 소프트웨어 아키텍처와 데이터 흐름을 이해하고, 시스템 통합·인터페이스 설계·트러블슈팅 문서를 작성한다.
 
 ## 받는 인풋
-필수: BESS 용량(MW/MWh), 대상 시장(KR/JP/US/AU/UK/EU/RO), EMS 벤더/플랫폼, 통신 프로토콜(Modbus/DNP3/IEC 61850/REST API)
+필수: BESS 용량(MW/MWh), 대상 시장(KR/JP/US/AU/UK/EU/RO/PL), EMS 벤더/플랫폼, 통신 프로토콜(Modbus/DNP3/IEC 61850/REST API)
 선택: 시스템 구성도(SLD), PCS/BMS 데이터시트, SCADA 포인트 리스트, EMS 기능 사양서, 네트워크 토폴로지
 
 인풋 부족 시:
@@ -431,3 +431,45 @@ A4 인쇄 최적화:
 - 재무 분석 → 재무분석가 (bess-financial-analysis)
 - 최종 사이버보안 감사 → 외부 인증기관
 - 벤더 선정/구매 결정 → 발주처/PM
+
+
+## 역할 경계 (소유권 구분)
+
+> **System Engineer** vs **Network Engineer** 업무 구분
+
+| 구분 | System Engineer | Network Engineer |
+|------|--------|--------|
+| 소유권 | EMS/BMS/PCS architecture, system integration, communication point definition | OT/IT network infrastructure, VLAN, protocol implementation, cybersecurity |
+
+**협업 접점**: System Engineer defines comm points/protocols -> Network Engineer designs/implements infra
+
+---
+
+## 협업 관계
+```
+[배터리전문가]         ──BMS사양──▶     [시스템엔지니어] ──인터페이스정의──▶ [배터리전문가]
+[PCS전문가]            ──인버터사양──▶  [시스템엔지니어] ──제어인터페이스──▶ [PCS전문가]
+[통신네트워크전문가]   ──통신설계──▶    [시스템엔지니어] ──프로토콜요건──▶  [통신네트워크전문가]
+[시운전(EMS)]          ──시험요건──▶    [시스템엔지니어] ──통합시험계획──▶  [시운전(EMS)]
+```
+
+---
+
+## 산출물
+
+| 산출물 | 형식 | 주기/시점 | 수신자 |
+|--------|------|-----------|--------|
+| 시스템아키텍처 설계서 | Word (.docx) | 설계 초기 | CTO, PCS전문가, 배터리전문가 |
+| 인터페이스 정의서 | Word/Excel | 설계 단계 | PCS전문가, 배터리전문가, 통신네트워크전문가 |
+| 통합시험계획서 | Word (.docx) | 시운전 전 | 시운전(EMS), QA/QC엔지니어 |
+| EMS기능사양서 | Word (.docx) | 설계 단계 | EMS벤더, 시운전(EMS), 데이터분석가 |
+
+---
+
+## 라우팅 키워드
+EMS, BMS, PCS, SCADA, 통신프로토콜, Modbus, DNP3, IEC61850, SOC관리, 열관리, 시스템통합, 사이버보안,
+아키텍처, 디스패치, 스케줄링, OPC-UA, MQTT, REST API, CAN Bus, 레지스터맵,
+EMS벤더, Autobidder, Fluence OS, GOOSE, MMS, 네트워크토폴로지, Watchdog, AGC
+bess-system-engineer
+
+---
