@@ -261,8 +261,10 @@ if role == T["roles"][0]:
 
         x_vals = np.linspace(0, 15, 20)
         y_vals = np.linspace(0, 15, 20)
-        z = np.random.normal(loc=ambient_temp + 10, scale=3, size=(20, 20))
-        z = np.clip(z, ambient_temp, ambient_temp + 25)
+        _peak_t = ambient_temp + (heat_loss / (hvac_capacity + 1)) * 10
+        np.random.seed(42)  # deterministic mock
+        z = np.random.normal(loc=(_peak_t + ambient_temp) / 2, scale=(_peak_t - ambient_temp) / 4, size=(20, 20))
+        z = np.clip(z, ambient_temp, _peak_t)
 
         fig = go.Figure(data=[go.Surface(
             x=x_vals, y=y_vals, z=z,
