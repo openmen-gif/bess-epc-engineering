@@ -3,7 +3,8 @@ title: BESS EPC Engineering
 emoji: ⚡
 colorFrom: blue
 colorTo: indigo
-sdk: static
+sdk: docker
+app_port: 7860
 pinned: false
 ---
 
