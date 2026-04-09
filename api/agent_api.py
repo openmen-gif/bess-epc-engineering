@@ -290,7 +290,16 @@ if STATIC_DIR.exists():
     async def icons():
         return FileResponse(str(STATIC_DIR / "icons.svg"))
 
-    # SPA fallback: 모든 비-API 경로를 index.html로
+    # SPA fallback: 비-API 경로를 index.html로 (api/ 경로 제외)
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
+        # API 경로는 FastAPI 라우터가 처리 (여기 도달 시 404)
+        if full_path.startswith("api/"):
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"error": "Not found"}, status_code=404)
+        # 정적 파일이 존재하면 직접 서빙
+        static_file = STATIC_DIR / full_path
+        if static_file.is_file():
+            return FileResponse(str(static_file))
+        # 그 외 모든 경로 → SPA index.html
         return FileResponse(str(STATIC_DIR / "index.html"))
