@@ -55,6 +55,8 @@ sidebar_user_info()  # rendered once; pages' calls are deduped
 
 st.sidebar.title(t("hp_sidebar_title"))
 st.sidebar.markdown("---")
+st.sidebar.link_button("⚡ BESS AI Control Center", "https://bess-ai-control.work", use_container_width=True)
+st.sidebar.markdown("---")
 st.sidebar.markdown(t("hp_sidebar_ver"))
 st.sidebar.info(t("hp_sidebar_hint"))
 

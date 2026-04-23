@@ -111,6 +111,29 @@ def apply_custom_css():
             font-size: 16px !important;
         }
         
+        /* 워크플로우 카드 내 텍스트 overflow 방지 */
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            overflow: hidden !important;
+        }
+        [data-testid="stVerticalBlockBorderWrapper"] p,
+        [data-testid="stVerticalBlockBorderWrapper"] a,
+        [data-testid="stVerticalBlockBorderWrapper"] span {
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+            max-width: 100% !important;
+        }
+        /* page_link 버튼 overflow 방지 */
+        [data-testid="stPageLink"] {
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+        [data-testid="stPageLink"] a {
+            white-space: normal !important;
+            word-break: break-all !important;
+            font-size: 14px !important;
+        }
+
         /* Hide unnecessary branding */
         footer {visibility: hidden;}
         
