@@ -9,7 +9,5 @@ __pycache__/
 *.lock
 test.*
 output_reports/
-=0.20.0
 .dockerignore
 .gitignore
-skill_md/
