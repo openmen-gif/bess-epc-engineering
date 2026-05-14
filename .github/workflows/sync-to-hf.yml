@@ -3,6 +3,7 @@ name: Sync to Hugging Face Spaces
 on:
   push:
     branches: [master]
+  workflow_dispatch:  # 수동 실행도 가능
 
 jobs:
   sync:
@@ -11,7 +12,37 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          lfs: true
 
+      # 1단계: Secret 등록 상태 자동 진단 (값은 노출 안 함, 길이만 출력)
+      - name: Diagnose secrets
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret이 비어있거나 등록 안 됨"
+            exit 1
+          fi
+          if [ -z "$HF_USERNAME" ]; then
+            echo "::error::HF_USERNAME secret이 비어있거나 등록 안 됨"
+            exit 1
+          fi
+          # 토큰 형식 검증 (hf_ 로 시작해야 함)
+          if [[ ! "$HF_TOKEN" =~ ^hf_ ]]; then
+            echo "::error::HF_TOKEN이 'hf_'로 시작하지 않음 — 토큰 값이 잘못 입력됨 (앞에 공백/따옴표 있을 수 있음)"
+            exit 1
+          fi
+          # 길이 정상성 확인
+          TOKEN_LEN=${#HF_TOKEN}
+          if [ "$TOKEN_LEN" -lt 30 ] || [ "$TOKEN_LEN" -gt 80 ]; then
+            echo "::error::HF_TOKEN 길이가 비정상 ($TOKEN_LEN자) — 일반적으로 37자 내외"
+            exit 1
+          fi
+          echo "✅ HF_TOKEN: ${TOKEN_LEN}자 (값은 마스킹됨)"
+          echo "✅ HF_USERNAME: $HF_USERNAME"
+
+      # 2단계: HF Space로 push (실패 시 정확한 에러 표시)
       - name: Push to Hugging Face Spaces
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -19,4 +50,17 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git push https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/bess-epc-engineering master:main --force
+
+          # credential을 URL에 직접 임베드 (간단 + 명시적)
+          REMOTE_URL="https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/bess-epc-engineering"
+
+          echo "Pushing master to HF Space main branch..."
+          git push "$REMOTE_URL" master:main --force 2>&1 | \
+            sed "s/${HF_TOKEN}/***MASKED***/g"
+
+          PUSH_EXIT=${PIPESTATUS[0]}
+          if [ "$PUSH_EXIT" -ne 0 ]; then
+            echo "::error::Push failed with exit code $PUSH_EXIT"
+            exit $PUSH_EXIT
+          fi
+          echo "✅ Sync complete"
