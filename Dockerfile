@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Cache bust: 2026-03-08T18:30
+# Cache bust: 2026-05-15T03:30 (TOC standard field migration)
 WORKDIR /app
 
 COPY packages.txt .
