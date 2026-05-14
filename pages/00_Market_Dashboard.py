@@ -21,8 +21,9 @@ def render_overview():
     st.subheader(t("mk_ov_title"))
 
     # KPIs
-    curr_yr = 2024
-    prev_yr = 2023
+    curr_yr = md.LATEST_ACTUAL_YEAR
+    prev_yr = curr_yr - 1
+    st.caption(f"📅 {t('mk_ov_basis')}: {curr_yr}년 실적 (vs {prev_yr})")
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -140,7 +141,7 @@ def render_regional():
 
 def render_pipeline():
     st.subheader(t("mk_pipe_title"))
-    df_pipe = pd.DataFrame(md.PROJECT_PIPELINE)
+    df_pipe = pd.DataFrame(md.project_pipeline_with_status())
 
     # Filters
     c1, c2 = st.columns(2)
@@ -169,7 +170,9 @@ def render_competitors():
     st.plotly_chart(fig, use_container_width=True)
 
 def render_scenarios():
-    st.subheader(t("mk_scen_title"))
+    _scen_keys = sorted(next(iter(md.SCENARIOS.values()))["capacity_gwh"].keys())
+    _scen_range = f"({_scen_keys[0]}-{_scen_keys[-1]})" if _scen_keys else ""
+    st.subheader(f"{t('mk_scen_title')} {_scen_range}".strip())
 
     sel_scenario = st.radio(t("mk_scen_select"), options=list(md.SCENARIOS.keys()), horizontal=True)
     s_data = md.SCENARIOS[sel_scenario]
@@ -326,7 +329,7 @@ def download_report():
                         "CAPEX ($/kWh)": [md.SYSTEM_CAPEX[y] for y in md.YEARS],
                     }).to_excel(writer, sheet_name="Overview", index=False)
 
-                    pd.DataFrame(md.PROJECT_PIPELINE).to_excel(writer, sheet_name="Pipeline", index=False)
+                    pd.DataFrame(md.project_pipeline_with_status()).to_excel(writer, sheet_name="Pipeline", index=False)
                     pd.DataFrame(md.COMPETITORS).to_excel(writer, sheet_name="Competitors", index=False)
 
                 st.session_state["dl_excel_path"] = file_path

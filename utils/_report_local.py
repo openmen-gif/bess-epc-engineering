@@ -600,7 +600,7 @@ def _chart_scenario_comparison():
                         xytext=(5, 5), fontsize=8, color=clr)
     ax.set_xlabel("Year")
     ax.set_ylabel("Capacity (GWh)")
-    ax.set_title("BESS Capacity Scenario Comparison (2024-2030)", fontsize=13, fontweight="bold")
+    ax.set_title(f"BESS Capacity Scenario Comparison ({years[0]}-{years[-1]})", fontsize=13, fontweight="bold")
     ax.legend(fontsize=9)
     ax.grid(alpha=0.3)
     fig.tight_layout()
@@ -645,6 +645,16 @@ def generate_word_report():
     date_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     date_p.add_run(now_str).font.size = Pt(12)
 
+    basis_p = doc.add_paragraph()
+    basis_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    basis_r = basis_p.add_run(
+        f"데이터 기준 — 최신 실적 연도: {md.LATEST_ACTUAL_YEAR}년 / "
+        f"전망 범위: {md.YEARS[0]}~{md.YEARS[-1]}년"
+    )
+    basis_r.font.size = Pt(10)
+    basis_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+    basis_r.font.name = FONT
+
     for _ in range(3): doc.add_paragraph()
     org_p = doc.add_paragraph()
     org_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -661,8 +671,10 @@ def generate_word_report():
     _h1.paragraph_format.page_break_before = True
     _add_bookmark(_h1, "_sec1")
     doc.add_paragraph(
-        "본 보고서는 주요 글로벌 대상 시장의 BESS(Battery Energy Storage System) 산업 동향을 심층적으로 분석합니다. "
-        "분석 시점 기준 글로벌 시장의 성장률과 가격 동향, 정책 프레임워크를 조망합니다."
+        f"본 보고서는 {now_str} 기준 데이터로 작성되었으며, "
+        f"최신 실적 연도는 {md.LATEST_ACTUAL_YEAR}년입니다. "
+        "주요 글로벌 대상 시장의 BESS(Battery Energy Storage System) 산업 동향을 심층적으로 분석하며, "
+        "글로벌 시장의 성장률·가격 동향·정책 프레임워크를 조망합니다."
     )
     doc.add_heading("핵심 지표 요약", level=2)
     _yr = md.LATEST_ACTUAL_YEAR
@@ -676,19 +688,22 @@ def generate_word_report():
     _styled_table(doc, ["항목", "값"], summary_rows, col_widths_mm=[70, 90])
 
     # Section 1 interpretation
-    _lfp_2022 = md.LFP_CELL_PRICE.get(2022, 80)
-    _lfp_cur  = md.LFP_CELL_PRICE.get(_yr, _lfp_2022)
-    _lfp_drop = round((1 - _lfp_cur / _lfp_2022) * 100)
+    _base_yr = md.YEARS[0]
+    _final_yr = md.YEARS[-1]
+    _lfp_base = md.LFP_CELL_PRICE.get(_base_yr, 80)
+    _lfp_cur  = md.LFP_CELL_PRICE.get(_yr, _lfp_base)
+    _lfp_drop = round((1 - _lfp_cur / _lfp_base) * 100)
     _cap_cur  = md.GLOBAL_CAPACITY_GWH.get(_yr, 0)
     _cap_prev = md.GLOBAL_CAPACITY_GWH.get(_yr - 1, 0)
     _yoy_g    = round((_cap_cur - _cap_prev) / _cap_prev * 100) if _cap_prev else 0
     _mkt_val  = md.GLOBAL_MARKET_VALUE_B_USD.get(_yr, 0)
+    _cap_final = md.GLOBAL_CAPACITY_GWH.get(_final_yr, 0)
     _p_interp = doc.add_paragraph(
         f"글로벌 BESS 시장은 {_yr}년 {_cap_cur} GWh를 기록하며 전년 대비 {_yoy_g}% 성장하였습니다. "
-        f"시장 규모는 약 ${_mkt_val}B USD로, LFP 셀 단가는 2022년($80/kWh) 대비 {_lfp_drop}% 하락한 "
+        f"시장 규모는 약 ${_mkt_val}B USD로, LFP 셀 단가는 {_base_yr}년(${_lfp_base}/kWh) 대비 {_lfp_drop}% 하락한 "
         f"${_lfp_cur}/kWh까지 내려왔습니다. "
         "가격 하락·정책 지원 확대·재생에너지 연계 수요 증가가 복합적으로 시장 성장을 견인하고 있으며, "
-        "2027년 370 GWh 돌파가 전망됩니다."
+        f"{_final_yr}년 {_cap_final} GWh 도달이 전망됩니다."
     )
     _p_interp.paragraph_format.space_before = Pt(4)
     for _r in _p_interp.runs:
@@ -743,6 +758,22 @@ def generate_word_report():
     _add_bookmark(_h3, "_sec3")
     doc.add_paragraph("BESS 사업에 영향을 미치는 주요 거시적 및 미시적 카테고리 이슈 현황입니다.")
     _yr = md.LATEST_ACTUAL_YEAR
+    # CAPEX $150/kWh 진입 연도 동적 추출
+    _capex_cross_for_cat = next(
+        (y for y in md.YEARS if md.SYSTEM_CAPEX.get(y, 999) <= 150), None
+    )
+    if _capex_cross_for_cat:
+        _yrs_to_threshold = max(0, _capex_cross_for_cat - _yr)
+        _capex_cat_outlook = (
+            f"{_capex_cross_for_cat}년경(약 {_yrs_to_threshold}년 후) $150/kWh 이하 진입이 전망됩니다."
+            if _yrs_to_threshold > 0
+            else f"{_yr}년 기준 이미 $150/kWh 이하에 도달하였습니다."
+        )
+    else:
+        _capex_cat_outlook = (
+            f"{md.YEARS[-1]}년 ${md.SYSTEM_CAPEX[md.YEARS[-1]]}/kWh 수준으로, "
+            "$150/kWh 도달은 데이터 범위 외에서 전망됩니다."
+        )
     _CAT_ANALYSIS = {
         "배터리 가격": (
             f"LFP 셀 단가는 공급 과잉과 기술 혁신으로 지속 하락하여 {_yr}년 기준 "
@@ -750,7 +781,7 @@ def generate_word_report():
             f"${md.NMC_CELL_PRICE.get(_yr, 'N/A')}/kWh입니다. "
             "중국 제조사의 규모의 경제가 가격 하락을 주도하고 있으며, "
             f"시스템 CAPEX({_yr}: ${md.SYSTEM_CAPEX.get(_yr, 'N/A')}/kWh)는 "
-            "향후 2~3년 내 $150/kWh 이하 진입이 전망됩니다."
+            f"{_capex_cat_outlook}"
         ),
         "프로젝트": (
             "글로벌 BESS 프로젝트는 대형화·장시간화 추세로 4시간 이상 장기저장 비중이 확대되고 있습니다. "
@@ -886,13 +917,23 @@ def generate_word_report():
     # 5.2 가격 트렌드 차트
     doc.add_heading("5.2 배터리 셀 가격 및 시스템 CAPEX 추이", level=2)
     _add_chart_to_doc(doc, _chart_price_trend())
+    _capex_threshold = 150
+    _capex_cross_yr = next(
+        (y for y in md.YEARS if md.SYSTEM_CAPEX.get(y, 999) <= _capex_threshold), None
+    )
+    _capex_outlook = (
+        f"{_capex_cross_yr}년경 시스템 CAPEX ${_capex_threshold}/kWh 이하 진입이 전망됩니다."
+        if _capex_cross_yr
+        else f"시스템 CAPEX는 {_last_yr}년 ${md.SYSTEM_CAPEX[_last_yr]}/kWh 수준으로, "
+             f"향후 ${_capex_threshold}/kWh 이하 진입은 데이터 범위 외에서 전망됩니다."
+    )
     _p_price = doc.add_paragraph(
         f"[그림 분석] LFP 셀 가격은 {md.LFP_CELL_PRICE[_first_yr]}→{md.LFP_CELL_PRICE[_last_yr]} $/kWh로 "
         f"{round((1 - md.LFP_CELL_PRICE[_last_yr] / md.LFP_CELL_PRICE[_first_yr]) * 100)}% 하락하였으며, "
         f"NMC 셀도 {md.NMC_CELL_PRICE[_first_yr]}→{md.NMC_CELL_PRICE[_last_yr]} $/kWh로 동반 하락했습니다. "
         f"시스템 CAPEX(BOS 포함)는 {md.SYSTEM_CAPEX[_first_yr]}→{md.SYSTEM_CAPEX[_last_yr]} $/kWh로 "
         "LFP 대비 완만한 하락세를 보이는데, 이는 인버터·EMS·토목 비용이 셀 가격보다 "
-        "경직적이기 때문입니다. 2027년 이후 시스템 CAPEX $150/kWh 이하 진입이 전망됩니다."
+        f"경직적이기 때문입니다. {_capex_outlook}"
     )
     _p_price.paragraph_format.space_before = Pt(4)
     for _r in _p_price.runs:
@@ -975,9 +1016,10 @@ def generate_word_report():
 
     # 7.1 파이프라인 테이블
     doc.add_heading("7.1 주요 프로젝트 목록", level=2)
+    _pipeline = md.project_pipeline_with_status()
     pipe_headers = ["프로젝트명", "지역", "MW", "MWh", "상태", "개발사", "연도"]
     pipe_rows = []
-    for p in md.PROJECT_PIPELINE:
+    for p in _pipeline:
         pipe_rows.append([
             p["name"], p["region"], str(p["capacity_mw"]),
             str(p["capacity_mwh"]), p["status"], p["developer"], str(p["year"])
@@ -987,18 +1029,18 @@ def generate_word_report():
 
     # 7.2 파이프라인 통계
     doc.add_heading("7.2 파이프라인 통계 분석", level=2)
-    _total_mw = sum(p["capacity_mw"] for p in md.PROJECT_PIPELINE)
-    _total_mwh = sum(p["capacity_mwh"] for p in md.PROJECT_PIPELINE)
-    _avg_mwh = round(_total_mwh / len(md.PROJECT_PIPELINE))
+    _total_mw = sum(p["capacity_mw"] for p in _pipeline)
+    _total_mwh = sum(p["capacity_mwh"] for p in _pipeline)
+    _avg_mwh = round(_total_mwh / len(_pipeline))
     _by_status = {}
     _by_region = {}
-    for p in md.PROJECT_PIPELINE:
+    for p in _pipeline:
         _by_status[p["status"]] = _by_status.get(p["status"], 0) + 1
         _by_region[p["region"]] = _by_region.get(p["region"], 0) + p["capacity_mwh"]
     _top_region = max(_by_region, key=_by_region.get)
 
     pipe_stat_rows = [
-        ["총 프로젝트 수", f"{len(md.PROJECT_PIPELINE)}개"],
+        ["총 프로젝트 수", f"{len(_pipeline)}개"],
         ["총 용량 (MW / MWh)", f"{_total_mw:,} MW / {_total_mwh:,} MWh"],
         ["평균 프로젝트 규모", f"{_avg_mwh:,} MWh"],
         ["상태별 분포", ", ".join(f"{k}: {v}건" for k, v in _by_status.items())],
@@ -1026,15 +1068,19 @@ def generate_word_report():
     )
 
     # Try to fetch live data
+    _FX_FALLBACK_DATE = "2026-Q1"
     try:
         _fx = md.fetch_exchange_rates()
         _cmd = md.fetch_commodity_prices()
     except Exception:
         _fx = {"USD_KRW": 1350, "USD_JPY": 150, "USD_EUR": 0.92, "USD_CNY": 7.25,
-               "USD_AUD": 1.55, "USD_GBP": 0.79, "error": "offline"}
+               "USD_AUD": 1.55, "USD_GBP": 0.79,
+               "error": "offline",
+               "source": f"reference (as of {_FX_FALLBACK_DATE}, offline)"}
         _cmd = {"brent_crude_usd": 72.5, "wti_crude_usd": 68.8,
                 "lithium_carbonate_usd_ton": 11500, "copper_usd_ton": 9200,
-                "nickel_usd_ton": 16800, "source": "reference"}
+                "nickel_usd_ton": 16800,
+                "source": f"reference (as of {_FX_FALLBACK_DATE}, offline)"}
 
     doc.add_heading("8.1 주요 환율 현황", level=2)
     fx_rows = [
@@ -1071,7 +1117,7 @@ def generate_word_report():
     _p_fx = doc.add_paragraph(
         "[영향 분석] 원/달러 환율 상승(원화 약세)은 한국 EPC 기업의 해외 수주 가격 경쟁력을 높이나, "
         "셀·원자재 수입 비용을 증가시키는 양면적 효과가 있습니다. "
-        "리튬 카보네이트 가격은 2022년 최고점($80,000/톤) 대비 대폭 하락하여 현재 안정권이며, "
+        "리튬 카보네이트 가격은 역대 최고점(2022년 11월 약 $80,000/톤) 대비 대폭 하락하여 현재 안정권이며, "
         "이는 LFP 셀 가격 하락의 핵심 동인입니다. "
         "다만 리튬 가격의 바닥 도달 시 하락 속도가 둔화될 수 있어, "
         "중기적으로 셀 가격 하락 폭이 축소될 가능성에 유의해야 합니다."
@@ -1105,12 +1151,16 @@ def generate_word_report():
     _sb = md.SCENARIOS["기본 (Base)"]
     _sc = md.SCENARIOS["보수적 (Conservative)"]
     _so = md.SCENARIOS["낙관적 (Optimistic)"]
+    _scen_years = sorted(_sb["capacity_gwh"].keys())
+    _scen_start, _scen_end = _scen_years[0], _scen_years[-1]
     _p_scen = doc.add_paragraph(
-        f"기본 시나리오({_sb['description']}) 기준 2024~2030년 CAGR {_sb['cagr_pct']}%로 "
-        f"2030년 {_sb['capacity_gwh'].get(2030, 0)} GWh(시장 가치 ${_sb['market_value_b'].get(2030, 0)}B)가 전망됩니다. "
+        f"기본 시나리오({_sb['description']}) 기준 {_scen_start}~{_scen_end}년 CAGR {_sb['cagr_pct']}%로 "
+        f"{_scen_end}년 {_sb['capacity_gwh'].get(_scen_end, 0)} GWh"
+        f"(시장 가치 ${_sb['market_value_b'].get(_scen_end, 0)}B)가 전망됩니다. "
         f"낙관 시나리오({_so['description']}) 실현 시 CAGR {_so['cagr_pct']}%로 "
-        f"2030년 {_so['capacity_gwh'].get(2030, 0)} GWh까지 확대 가능하며, "
-        f"보수 시나리오({_sc['description']}) 하에서도 {_sc['capacity_gwh'].get(2030, 0)} GWh(CAGR {_sc['cagr_pct']}%)로 "
+        f"{_scen_end}년 {_so['capacity_gwh'].get(_scen_end, 0)} GWh까지 확대 가능하며, "
+        f"보수 시나리오({_sc['description']}) 하에서도 "
+        f"{_sc['capacity_gwh'].get(_scen_end, 0)} GWh(CAGR {_sc['cagr_pct']}%)로 "
         "견조한 성장이 예상됩니다. "
         "시나리오 편차의 핵심 변수는 IRA·RE정책 지속성, 배터리 가격 하락 속도, "
         "전력시장 설계 개혁의 실행 속도입니다."
@@ -1363,12 +1413,13 @@ def generate_word_report():
     )
 
     doc.add_heading("14.1 배터리 기술 비교표", level=2)
+    _battery_techs = md.get_battery_technologies()
     bt_headers = ["기술", "에너지밀도\n(Wh/kg)", "사이클수명", "비용\n($/kWh)", "상용화 단계"]
-    bt_rows = [[b["tech"], b["energy_density_wh_kg"], b["cycle_life"], b["cost_per_kwh"], b["status"]] for b in md.BATTERY_TECHNOLOGIES]
+    bt_rows = [[b["tech"], b["energy_density_wh_kg"], b["cycle_life"], b["cost_per_kwh"], b["status"]] for b in _battery_techs]
     _styled_table(doc, bt_headers, bt_rows, col_widths_mm=[24, 20, 20, 18, 78])
 
     doc.add_heading("14.2 기술별 상세 분석", level=2)
-    for bt in md.BATTERY_TECHNOLOGIES:
+    for bt in _battery_techs:
         doc.add_heading(f"  ■ {bt['tech']}", level=3)
         bt_detail = [
             ["화학식", bt["chemistry"]],
@@ -1381,8 +1432,9 @@ def generate_word_report():
     doc.add_heading("14.3 장기 에너지 저장(LDES) 시장 전망", level=2)
     _ldes = md.LDES_MARKET
     _p_ldes = doc.add_paragraph(
-        f"LDES 시장은 {_ldes['market_size_2025_gwh']} GWh(2025) → "
-        f"{_ldes['market_size_2030_gwh']} GWh(2030)로 CAGR {_ldes['cagr_pct']}% 성장 전망. "
+        f"LDES 시장은 {_ldes['base_size_gwh']} GWh({_ldes['base_year']}) → "
+        f"{_ldes['target_size_gwh']} GWh({_ldes['target_year']})로 "
+        f"CAGR {_ldes['cagr_pct']}% 성장 전망. "
         f"정의: {_ldes['definition']}."
     )
     for _r in _p_ldes.runs:
@@ -1515,7 +1567,7 @@ def generate_word_report():
     doc.add_heading("18.1 시장 전망 종합", level=2)
     _p_exp1 = doc.add_paragraph(
         f"글로벌 BESS 시장은 {_yr}년 기준 {md.GLOBAL_CAPACITY_GWH.get(_yr, 0)} GWh 규모로 "
-        f"전년 대비 {_yoy_g}% 성장하였으며, {md.YEARS[-1]}년 "
+        f"{_yr - 1}년 대비 {_yoy_g}% 성장하였으며, {md.YEARS[-1]}년 "
         f"{md.GLOBAL_CAPACITY_GWH[md.YEARS[-1]]} GWh까지 확대될 전망입니다. "
         "이는 재생에너지 확대에 따른 계통 유연성 확보 수요, 배터리 셀 가격의 지속적 하락, "
         "주요국의 에너지 전환 정책이 복합적으로 작용한 구조적 성장입니다. "
@@ -1526,10 +1578,23 @@ def generate_word_report():
         _r.font.size = Pt(10); _r.font.name = FONT
 
     doc.add_heading("18.2 가격 전망 및 경제성 분석", level=2)
+    # LFP $30 이하 진입 연도 동적 추출
+    _lfp_30_yr = next((y for y in md.YEARS if md.LFP_CELL_PRICE.get(y, 999) <= 30), None)
+    _lfp_final_price = md.LFP_CELL_PRICE[_last_yr]
+    if _lfp_30_yr:
+        _price_outlook = (
+            f"{_lfp_30_yr}년경 $30/kWh 수준에 도달할 것으로 전망되며, "
+            f"{_last_yr}년에는 ${_lfp_final_price}/kWh 수준이 예상됩니다."
+        )
+    else:
+        _price_outlook = (
+            f"{_last_yr}년 ${_lfp_final_price}/kWh 수준이 전망되며, "
+            "$30/kWh 도달은 데이터 범위 외에서 예상됩니다."
+        )
     _p_exp2 = doc.add_paragraph(
         f"LFP 셀 가격은 {md.LFP_CELL_PRICE[_first_yr]}→{md.LFP_CELL_PRICE[_last_yr]} $/kWh "
         f"({abs(_lfp_cagr)}% CAGR 하락)로 빠르게 하락하고 있으며, "
-        "2028~2029년 $25~30/kWh 수준에 도달할 것으로 전망됩니다. "
+        f"{_price_outlook} "
         "이 가격대에서 BESS는 가스 피커(Gas Peaker) 대비 완전한 경제적 우위를 확보하게 되며, "
         "보조금 없이도 자립적 사업성이 확보되는 '그리드 패리티' 달성이 예상됩니다. "
         "다만 리튬 가격 바닥 도달, 공급망 재편 비용, 인플레이션 등 하방 리스크에도 주의해야 합니다."

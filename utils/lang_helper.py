@@ -435,6 +435,7 @@ _TRANSLATIONS = {
     "mk_ov_growth":      {"KO": "글로벌 BESS 시장 성장", "EN": "Global BESS Market Growth"},
     "mk_ov_price_trend": {"KO": "배터리 가격 & 시스템 CAPEX 추이", "EN": "Battery Price & System CAPEX Trends"},
     "mk_ov_cap_gwh":     {"KO": "설치 용량 (GWh)", "EN": "Capacity (GWh)"},
+    "mk_ov_basis":       {"KO": "데이터 기준", "EN": "Data basis"},
     "mk_ov_lfp_kwh":     {"KO": "LFP 셀 ($/kWh)", "EN": "LFP Cell ($/kWh)"},
     "mk_ov_nmc_kwh":     {"KO": "NMC 셀 ($/kWh)", "EN": "NMC Cell ($/kWh)"},
     "mk_ov_capex_kwh":   {"KO": "시스템 CAPEX ($/kWh)", "EN": "System CAPEX ($/kWh)"},
@@ -492,7 +493,7 @@ _TRANSLATIONS = {
     "mk_comp_chart":     {"KO": "경쟁사 포지셔닝", "EN": "Competitor Landscape"},
 
     # Scenarios tab
-    "mk_scen_title":     {"KO": "🔮 시나리오 전망 (2024-2030)", "EN": "🔮 Scenario Forecast (2024-2030)"},
+    "mk_scen_title":     {"KO": "🔮 시나리오 전망", "EN": "🔮 Scenario Forecast"},
     "mk_scen_select":    {"KO": "시나리오 선택", "EN": "Select Scenario"},
     "mk_scen_proj":      {"KO": "용량 전망", "EN": "Capacity Projection"},
 

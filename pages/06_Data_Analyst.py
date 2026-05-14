@@ -44,7 +44,8 @@ def run_data_analyst_module():
 
         st.markdown(t("p6_monthly"))
 
-        dates = pd.date_range(start='2026-02-01', periods=30, freq='D')
+        # 직전 30일 = 오늘로부터 과거 30일까지 — 항상 "최근" 데이터로 보이도록 동적 생성
+        dates = pd.date_range(end=pd.Timestamp.today().normalize(), periods=30, freq='D')
         _power = max(power_mw, 50.0)
         _dur   = max(st.session_state.get('duration_h', 2.0), 1.0)
         daily_energy = _power * _dur

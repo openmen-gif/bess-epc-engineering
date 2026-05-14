@@ -100,6 +100,85 @@ _HEADERS = {
     )
 }
 
+# 카테고리별 관련도 키워드 — 영문 RSS 본문에서 매칭. 대소문자 무시.
+# 매칭되는 키워드가 1개라도 포함된 기사를 우선 노출하고, 부족하면 원본 순서로 보충.
+RSS_CATEGORY_KEYWORDS = {
+    "한국 시장": [
+        "korea", "korean", "samsung sdi", "lg energy", "lg energy solution",
+        "sk on", "sk innovation", "kepco", "hanwha", "doosan", "kpx",
+    ],
+    "일본 시장": [
+        "japan", "japanese", "tokyo", "kansai", "sumitomo", "ngk insulators",
+        "panasonic", "hokkaido", "feed-in premium", "jepx",
+    ],
+    "미국 시장": [
+        "united states", "u.s.", " us ", "us-", "american", "california",
+        "texas", "ercot", "caiso", "pjm", "miso", "nyiso", "iso-ne", "spp",
+        "ira ", "inflation reduction act", "ferc", "doe ", "biden", "trump",
+    ],
+    "호주 시장": [
+        "australia", "australian", "aemo", "nem ", "fcas", "neoen",
+        "agl ", "origin energy", "akaysha", "victorian", "queensland", "nsw",
+    ],
+    "영국 시장": [
+        "uk ", "u.k.", "united kingdom", "british", "britain", "england",
+        "national grid", "ofgem", "national grid eso", "balancing mechanism",
+        "dynamic containment", "capacity market", "rema",
+    ],
+    "EU 시장": [
+        "eu ", "european", "europe", "germany", "france", "spain", "italy",
+        "netherlands", "poland", "ireland", "denmark", "sweden", "repowereu",
+        "fit for 55", "epex", "nord pool",
+    ],
+    "중동 시장": [
+        "middle east", "uae", "saudi", "saudi arabia", "qatar", "oman",
+        "egypt", "acwa power", "masdar", "neom", "vision 2030", "dubai",
+    ],
+    "배터리 가격": [
+        "battery price", "cell price", "lfp", "nmc", "$/kwh", "/kwh",
+        "lithium price", "lithium carbonate", "battery cost",
+    ],
+    "프로젝트": [
+        "project", "groundbreaking", "commissioning", "operational",
+        "online", "mwh", "gwh", "energization", "completion", "milestone",
+    ],
+    "경쟁사": [
+        "catl", "byd", "tesla", "megapack", "fluence", "sungrow", "eve energy",
+        "wärtsilä", "wartsila", "samsung sdi", "lg energy", "powin",
+    ],
+    "공급망": [
+        "supply chain", "lithium", "cobalt", "nickel", "manufacturing",
+        "factory", "gigafactory", "production", "raw material", "mining",
+    ],
+    "안전·화재": [
+        "fire", "safety", "thermal runaway", "incident", "nfpa", "ul 9540",
+        "explosion", "blaze", "burning", "extinguish",
+    ],
+    "정책·규제": [
+        "policy", "regulation", "ira ", "ferc", "doe ", "capacity market",
+        "subsidy", "incentive", "battery regulation", "legislation",
+        "tax credit", "itc ", "ptc ",
+    ],
+}
+
+
+def _item_matches_category(item: dict, keywords: list) -> bool:
+    """RSS 아이템(title+description)이 카테고리 키워드 중 하나라도 포함하면 True."""
+    if not keywords:
+        return True
+    haystack = f"{item.get('title', '')} {item.get('description', '')}".lower()
+    return any(kw.lower() in haystack for kw in keywords)
+
+
+def _filter_by_category(items: list, category: str, max_items: int) -> list:
+    """카테고리 키워드로 필터링. 관련 기사를 앞에, 나머지를 뒤에 배치하여 max_items 채움."""
+    keywords = RSS_CATEGORY_KEYWORDS.get(category, [])
+    if not keywords:
+        return items[:max_items]
+    matched = [it for it in items if _item_matches_category(it, keywords)]
+    others = [it for it in items if it not in matched]
+    return (matched + others)[:max_items]
+
 def _strip_html(text: str) -> str:
     """Remove HTML tags and decode entities."""
     text = unescape(text)
@@ -178,14 +257,18 @@ def _fetch_one_rss(url: str, max_items: int, timeout: int) -> list:
 
 @st.cache_data(ttl=1800)
 def fetch_rss_feed(category, max_items=6, timeout=12):
-    """Try each RSS source in order until we get results."""
+    """Try each RSS source in order until we get results.
+    각 RSS에서 max_items * 4 만큼 미리 가져와 카테고리 키워드 필터링 후 max_items 선택.
+    """
     urls = RSS_FEEDS.get(category, [])
     if isinstance(urls, str):
         urls = [urls]
+    pool_size = max(max_items * 4, 20)
     for url in urls:
-        items = _fetch_one_rss(url, max_items, timeout)
+        items = _fetch_one_rss(url, pool_size, timeout)
         if items:
-            return {"items": items, "timestamp": datetime.now(), "source": url}
+            filtered = _filter_by_category(items, category, max_items)
+            return {"items": filtered, "timestamp": datetime.now(), "source": url}
     return {"items": [], "timestamp": datetime.now(), "source": None}
 
 def clear_rss_cache():
@@ -247,18 +330,28 @@ def fetch_commodity_prices():
     except Exception:
         pass
 
-    # Fallback: hardcoded recent reference values (updated periodically)
+    # ── Fallback reference values ────────────────────────────────────
+    # 정기 갱신 필요. 갱신 시 _COMMODITY_REF_DATE도 같이 업데이트.
+    _COMMODITY_REF_DATE = "2026-Q1"
+    _FALLBACK = {
+        "brent_crude_usd": 72.5,
+        "wti_crude_usd": 68.8,
+        "lithium_carbonate_usd_ton": 11500,
+        "copper_usd_ton": 9200,
+        "nickel_usd_ton": 16800,
+    }
     if result["brent_crude_usd"] is None:
-        result["brent_crude_usd"] = 72.5
-        result["wti_crude_usd"] = 68.8
-        result["source"] = "reference (offline)"
+        result["brent_crude_usd"] = _FALLBACK["brent_crude_usd"]
+        result["wti_crude_usd"] = _FALLBACK["wti_crude_usd"]
+        result["source"] = f"reference (as of {_COMMODITY_REF_DATE}, offline)"
     if result["wti_crude_usd"] is None:
         result["wti_crude_usd"] = round(result["brent_crude_usd"] * 0.95, 2)
 
-    # Lithium / Copper / Nickel — reference values (real-time requires paid API)
-    result["lithium_carbonate_usd_ton"] = 11500
-    result["copper_usd_ton"] = 9200
-    result["nickel_usd_ton"] = 16800
+    # Lithium / Copper / Nickel — 실시간 API 미지원, 참조값 사용
+    result["lithium_carbonate_usd_ton"] = _FALLBACK["lithium_carbonate_usd_ton"]
+    result["copper_usd_ton"] = _FALLBACK["copper_usd_ton"]
+    result["nickel_usd_ton"] = _FALLBACK["nickel_usd_ton"]
+    result["metals_source"] = f"reference (as of {_COMMODITY_REF_DATE})"
     return result
 
 
@@ -266,8 +359,25 @@ def fetch_commodity_prices():
 # 시장 데이터 (Built-in Defaults)
 # ============================================================
 
-YEARS = [2022, 2023, 2024, 2025, 2026, 2027]
-YEAR_LABELS = ["2022", "2023", "2024", "2025", "2026E", "2027F"]
+YEARS = [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030]
+_CURRENT_YEAR_DYNAMIC = datetime.now().year
+
+
+def _build_year_labels(years):
+    """실적/추정/전망 라벨을 동적 부여 — 작년까지는 실적, 올해는 추정(E), 미래는 전망(F)."""
+    cy = _CURRENT_YEAR_DYNAMIC
+    labels = []
+    for y in years:
+        if y < cy:
+            labels.append(str(y))
+        elif y == cy:
+            labels.append(f"{y}E")
+        else:
+            labels.append(f"{y}F")
+    return labels
+
+
+YEAR_LABELS = _build_year_labels(YEARS)
 
 # ---- 글로벌 시장 규모 (GWh) ----
 GLOBAL_CAPACITY_GWH = {
@@ -277,6 +387,9 @@ GLOBAL_CAPACITY_GWH = {
     2025: 200,
     2026: 280,
     2027: 370,
+    2028: 470,
+    2029: 580,
+    2030: 700,
 }
 
 # ---- 글로벌 시장 규모 (억 달러) ----
@@ -287,6 +400,9 @@ GLOBAL_MARKET_VALUE_B_USD = {
     2025: 65.0,
     2026: 88.0,
     2027: 115.0,
+    2028: 142.0,
+    2029: 170.0,
+    2030: 200.0,
 }
 
 # ---- 배터리 셀 가격 $/kWh (LFP 기준) ----
@@ -297,6 +413,9 @@ LFP_CELL_PRICE = {
     2025: 43,
     2026: 37,
     2027: 32,
+    2028: 28,
+    2029: 25,
+    2030: 23,
 }
 
 # ---- 시스템 CAPEX $/kWh ----
@@ -307,6 +426,9 @@ SYSTEM_CAPEX = {
     2025: 235,
     2026: 205,
     2027: 180,
+    2028: 160,
+    2029: 145,
+    2030: 135,
 }
 
 # ---- NMC 셀 가격 $/kWh (참고) ----
@@ -317,13 +439,16 @@ NMC_CELL_PRICE = {
     2025: 70,
     2026: 60,
     2027: 52,
+    2028: 46,
+    2029: 41,
+    2030: 37,
 }
 
 # ---- 지역별 데이터 ----
 REGIONAL_DATA = {
     "한국": {
         "name_en": "South Korea",
-        "installed_gwh": {2022: 1.5, 2023: 2.5, 2024: 4.0, 2025: 6.5, 2026: 9.5, 2027: 13.0},
+        "installed_gwh": {2022: 1.5, 2023: 2.5, 2024: 4.0, 2025: 6.5, 2026: 9.5, 2027: 13.0, 2028: 17.0, 2029: 21.5, 2030: 27.0},
         "pipeline_gwh": 25.0,
         "market_share_pct": 4.5,
         "key_drivers": [
@@ -347,7 +472,7 @@ REGIONAL_DATA = {
     },
     "일본": {
         "name_en": "Japan",
-        "installed_gwh": {2022: 2.0, 2023: 3.0, 2024: 4.5, 2025: 7.0, 2026: 10.5, 2027: 14.5},
+        "installed_gwh": {2022: 2.0, 2023: 3.0, 2024: 4.5, 2025: 7.0, 2026: 10.5, 2027: 14.5, 2028: 19.0, 2029: 24.0, 2030: 30.0},
         "pipeline_gwh": 30.0,
         "market_share_pct": 5.0,
         "key_drivers": [
@@ -371,7 +496,7 @@ REGIONAL_DATA = {
     },
     "미국": {
         "name_en": "United States",
-        "installed_gwh": {2022: 12.0, 2023: 20.0, 2024: 32.0, 2025: 50.0, 2026: 72.0, 2027: 100.0},
+        "installed_gwh": {2022: 12.0, 2023: 20.0, 2024: 32.0, 2025: 50.0, 2026: 72.0, 2027: 100.0, 2028: 132.0, 2029: 168.0, 2030: 210.0},
         "pipeline_gwh": 180.0,
         "market_share_pct": 31.0,
         "key_drivers": [
@@ -395,7 +520,7 @@ REGIONAL_DATA = {
     },
     "호주": {
         "name_en": "Australia",
-        "installed_gwh": {2022: 3.0, 2023: 5.0, 2024: 8.0, 2025: 13.0, 2026: 18.5, 2027: 25.0},
+        "installed_gwh": {2022: 3.0, 2023: 5.0, 2024: 8.0, 2025: 13.0, 2026: 18.5, 2027: 25.0, 2028: 32.5, 2029: 41.0, 2030: 51.0},
         "pipeline_gwh": 50.0,
         "market_share_pct": 7.5,
         "key_drivers": [
@@ -419,7 +544,7 @@ REGIONAL_DATA = {
     },
     "영국": {
         "name_en": "United Kingdom",
-        "installed_gwh": {2022: 2.5, 2023: 4.0, 2024: 6.5, 2025: 10.0, 2026: 14.5, 2027: 20.0},
+        "installed_gwh": {2022: 2.5, 2023: 4.0, 2024: 6.5, 2025: 10.0, 2026: 14.5, 2027: 20.0, 2028: 26.0, 2029: 33.0, 2030: 41.0},
         "pipeline_gwh": 40.0,
         "market_share_pct": 6.0,
         "key_drivers": [
@@ -443,7 +568,7 @@ REGIONAL_DATA = {
     },
     "EU": {
         "name_en": "European Union",
-        "installed_gwh": {2022: 5.0, 2023: 8.0, 2024: 13.0, 2025: 20.0, 2026: 30.0, 2027: 42.0},
+        "installed_gwh": {2022: 5.0, 2023: 8.0, 2024: 13.0, 2025: 20.0, 2026: 30.0, 2027: 42.0, 2028: 56.0, 2029: 71.0, 2030: 88.0},
         "pipeline_gwh": 80.0,
         "market_share_pct": 13.0,
         "key_drivers": [
@@ -467,7 +592,7 @@ REGIONAL_DATA = {
     },
     "중동": {
         "name_en": "Middle East",
-        "installed_gwh": {2022: 0.5, 2023: 1.0, 2024: 2.5, 2025: 5.0, 2026: 9.0, 2027: 14.0},
+        "installed_gwh": {2022: 0.5, 2023: 1.0, 2024: 2.5, 2025: 5.0, 2026: 9.0, 2027: 14.0, 2028: 20.0, 2029: 27.0, 2030: 35.0},
         "pipeline_gwh": 35.0,
         "market_share_pct": 3.5,
         "key_drivers": [
@@ -501,6 +626,34 @@ def _latest_actual_year() -> int:
     return candidate
 
 LATEST_ACTUAL_YEAR = _latest_actual_year()
+
+
+def derive_project_status(project_year: int, reference_year: int = None) -> str:
+    """프로젝트 COD 연도 vs 기준 연도로 상태를 동적 도출.
+    reference_year ≥ project_year → '운영중'
+    reference_year + 1 == project_year → '건설중'
+    그 외(미래) → '계획중'
+    """
+    if reference_year is None:
+        reference_year = LATEST_ACTUAL_YEAR
+    if project_year <= reference_year:
+        return "운영중"
+    if project_year == reference_year + 1:
+        return "건설중"
+    return "계획중"
+
+
+def project_pipeline_with_status(reference_year: int = None):
+    """PROJECT_PIPELINE을 현재 기준 연도에 맞춰 status가 동적 계산된 사본으로 반환."""
+    if reference_year is None:
+        reference_year = LATEST_ACTUAL_YEAR
+    out = []
+    for p in PROJECT_PIPELINE:
+        q = dict(p)
+        q["status"] = derive_project_status(p["year"], reference_year)
+        out.append(q)
+    return out
+
 
 # ---- 주요 프로젝트 파이프라인 ----
 PROJECT_PIPELINE = [
@@ -741,6 +894,9 @@ OPERATIONS_DATA = {
         2025: {"fixed_per_kw_yr": 9.5, "variable_per_mwh": 1.8, "total_per_kwh_yr": 6.5},
         2026: {"fixed_per_kw_yr": 9.0, "variable_per_mwh": 1.6, "total_per_kwh_yr": 6.0},
         2027: {"fixed_per_kw_yr": 8.5, "variable_per_mwh": 1.5, "total_per_kwh_yr": 5.5},
+        2028: {"fixed_per_kw_yr": 8.0, "variable_per_mwh": 1.4, "total_per_kwh_yr": 5.1},
+        2029: {"fixed_per_kw_yr": 7.6, "variable_per_mwh": 1.3, "total_per_kwh_yr": 4.8},
+        2030: {"fixed_per_kw_yr": 7.2, "variable_per_mwh": 1.2, "total_per_kwh_yr": 4.5},
     },
     "ems_platforms": [
         {"name": "Tesla Autobidder", "vendor": "Tesla", "feature": "AI 기반 실시간 입찰 최적화, Megapack 전용", "market": "미국, 호주, 영국"},
@@ -787,17 +943,33 @@ FIRE_INCIDENTS = [
     {"year": 2021, "location": "호주 (Victorian Big Battery)", "cause": "냉각 시스템 오작동", "damage": "Tesla Megapack 2대 소손", "lesson": "냉각 시스템 이중화, BMS 알람 즉시 대응 프로토콜"},
     {"year": 2022, "location": "미국 CA (Moss Landing)", "cause": "과열 → 열폭주", "damage": "시스템 정지, 주민 대피", "lesson": "대규모 BESS 열관리 설계 강화, 모듈 간 이격 확대"},
     {"year": 2023, "location": "한국 (나주)", "cause": "BMS 오류/셀 불량 추정", "damage": "컨테이너 전소", "lesson": "BMS 이중화 의무, 셀 수입 검사 강화"},
+    {"year": 2024, "location": "미국 CA (Otay Mesa)", "cause": "셀 단락 → 열폭주 전파", "damage": "250MWh급 시설 부분 소손, 11일간 진화", "lesson": "장시간 잔불 대응 프로토콜 정비, 워터미스트 무용성 재평가"},
+    {"year": 2025, "location": "미국 CA (Moss Landing 재발)", "cause": "배터리실 화재 (원인 조사중)", "damage": "Vistra 300MW 시설 대규모 소손, 주민 대피", "lesson": "대형 BESS의 배터리실 구획화·격벽 표준화, 보험사 인수 심사 강화"},
+    {"year": 2025, "location": "한국 (충북 음성)", "cause": "PCS 절연 열화", "damage": "ESS 컨테이너 1동 전소", "lesson": "PCS 정기 절연저항 모니터링 의무화, KS C 8564 개정 추진"},
+    {"year": 2026, "location": "호주 NSW (Bouldercombe)", "cause": "셀 결함 추정 (3건째)", "damage": "Tesla Megapack 1대 소손, 인접 모듈 보호 성공", "lesson": "Megapack 격벽 설계의 화재 격리 효과 입증 — 신규 설계 표준화 가속"},
 ]
 
 # ---- 배터리 기술 동향 데이터 ----
+def _price_range_str(price_dict: dict, ref_year: int) -> str:
+    """기준 연도와 이전 연도 가격으로 '$low-high' 문자열 동적 생성."""
+    prev = price_dict.get(ref_year - 1)
+    curr = price_dict.get(ref_year)
+    if prev is None or curr is None:
+        return "N/A"
+    low, high = sorted([prev, curr])
+    return f"${low}-{high}"
+
+
 BATTERY_TECHNOLOGIES = [
     {"tech": "LFP (리튬인산철)", "chemistry": "LiFePO₄", "status": "주류 상용화",
-     "energy_density_wh_kg": "140-170", "cycle_life": "6,000-10,000", "cost_per_kwh": "$43-55",
+     "energy_density_wh_kg": "140-170", "cycle_life": "6,000-10,000",
+     "cost_per_kwh": "(dynamic — see get_battery_technologies())",
      "pros": "높은 안전성, 긴 수명, 원가 경쟁력, 코발트 무함유",
      "cons": "낮은 에너지 밀도, 저온 성능 저하",
      "outlook": "BESS 시장 지배적 지위 유지. 280Ah+ 대형셀 표준화. LMFP(망간 첨가) 변형으로 에너지 밀도 개선 추진."},
     {"tech": "NMC (니켈망간코발트)", "chemistry": "LiNiMnCoO₂", "status": "상용화 (EV 중심)",
-     "energy_density_wh_kg": "200-280", "cycle_life": "3,000-5,000", "cost_per_kwh": "$60-82",
+     "energy_density_wh_kg": "200-280", "cycle_life": "3,000-5,000",
+     "cost_per_kwh": "(dynamic — see get_battery_technologies())",
      "pros": "높은 에너지 밀도, 높은 출력",
      "cons": "코발트 의존, 열 안정성 LFP 대비 낮음, 높은 원가",
      "outlook": "ESS 시장에서 LFP에 점유율 양보 중. 고에너지 밀도 필요한 공간 제약 프로젝트에서 틈새 활용."},
@@ -825,8 +997,10 @@ BATTERY_TECHNOLOGIES = [
 
 LDES_MARKET = {
     "definition": "4시간 이상 장기 에너지 저장(Long Duration Energy Storage)",
-    "market_size_2025_gwh": 15,
-    "market_size_2030_gwh": 120,
+    "base_year": 2025,
+    "target_year": 2030,
+    "base_size_gwh": 15,
+    "target_size_gwh": 120,
     "cagr_pct": 52,
     "key_drivers": [
         "재생에너지 간헐성 증가 → 다일(multi-day) 저장 필요성",
@@ -998,4 +1172,23 @@ EPC_CONTRACT_DATA = {
         "contingency": {"share_pct": 5, "desc": "예비비(Contingency) 5-10%"},
     },
 }
+
+
+def get_battery_technologies(ref_year: int = None) -> list:
+    """BATTERY_TECHNOLOGIES 사본을 반환하되, LFP/NMC의 cost_per_kwh를 현재 가격 데이터로 동적 치환.
+
+    LFP/NMC는 LFP_CELL_PRICE / NMC_CELL_PRICE 시계열의 (ref_year-1) ~ ref_year 범위로 표시.
+    다른 기술(Na-ion, 전고체, VRFB 등)은 정적 값을 유지.
+    """
+    if ref_year is None:
+        ref_year = LATEST_ACTUAL_YEAR
+    out = []
+    for tech in BATTERY_TECHNOLOGIES:
+        item = dict(tech)
+        if tech["tech"].startswith("LFP"):
+            item["cost_per_kwh"] = _price_range_str(LFP_CELL_PRICE, ref_year)
+        elif tech["tech"].startswith("NMC"):
+            item["cost_per_kwh"] = _price_range_str(NMC_CELL_PRICE, ref_year)
+        out.append(item)
+    return out
 
