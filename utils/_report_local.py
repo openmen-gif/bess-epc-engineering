@@ -333,9 +333,10 @@ def _setup_doc(title=None):
     from docx.enum.style import WD_STYLE_TYPE as _WST
     _TOC_STYLE_SPEC = [
         # (style_id, name_lower, font_size_pt, indent_mm, bold, color, line_pt)
-        ("TOC1", "toc 1", 10, 0,  True,  CLR_H1, 13),
-        ("TOC2", "toc 2", 9,  6,  False, CLR_H2, 12),
-        ("TOC3", "toc 3", 9,  12, False, None,   12),
+        # line_pt를 폰트 크기와 거의 동일하게 — Word가 lineRule=exact로 강제 적용
+        ("TOC1", "toc 1", 10, 0,  True,  CLR_H1, 11),
+        ("TOC2", "toc 2", 9,  6,  False, CLR_H2, 10),
+        ("TOC3", "toc 3", 9,  12, False, None,   10),
     ]
     for _sid, _name_lower, _size, _indent_mm, _bold, _color, _line_pt in _TOC_STYLE_SPEC:
         # python-docx의 styles는 display name으로 접근 — built-in이 있으면 그것을 가져옴
