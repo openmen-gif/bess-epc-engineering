@@ -207,45 +207,53 @@ def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_siz
         hl.append(field_el)
     paragraph._p.append(hl)
 
-def add_toc(doc):
-    """정적 목차 생성 — 점선 리더 + 내부 링크 포함."""
-    _TOC_ENTRIES = [
-        (1, "1. Executive Summary", "_sec1"),
-        (1, "2. 시장별 심층 분석", "_sec2"),
-        (1, "3. 전문 카테고리 분석", "_sec3"),
-        (1, "4. 시각화 분석", "_sec4"),
-        (1, "5. 글로벌 트렌드 통계 및 YoY 분석", "_sec5"),
-        (1, "6. 경쟁사 심층 분석", "_sec6"),
-        (1, "7. 프로젝트 파이프라인 현황", "_sec7"),
-        (1, "8. 환율 및 원자재 시장 영향 분석", "_sec8"),
-        (1, "9. 시나리오 분석", "_sec9"),
-        (1, "10. BESS 사업 개발 및 투자 분석", "_sec10"),
-        (1, "11. 전력시장 및 거래 동향", "_sec11"),
-        (1, "12. BESS 운영 및 자산관리", "_sec12"),
-        (1, "13. 안전·화재 및 규제 기준", "_sec13"),
-        (1, "14. 배터리 기술 동향 및 차세대 기술", "_sec14"),
-        (1, "15. 인허가 및 사업 개발 프로세스", "_sec15"),
-        (1, "16. 프로젝트 파이낸싱", "_sec16"),
-        (1, "17. EPC 계약 구조", "_sec17"),
-        (1, "18. 전문가 종합 의견 및 전략적 시사점", "_sec18"),
-    ]
-    from docx.shared import Mm as _Mm
-    # 문서 전체 폭(A4 기준 약 160mm)
-    _TAB_POS = 155  # mm — 점선 탭 위치 (우측 끝)
-    for idx, (entry_level, entry_title, bm_name) in enumerate(_TOC_ENTRIES):
-        p = doc.add_paragraph()
-        p.paragraph_format.space_before = Pt(1)
-        p.paragraph_format.space_after = Pt(1)
-        p.paragraph_format.line_spacing = Pt(18)
-        indent = _Mm(0) if entry_level == 1 else _Mm(8)
-        p.paragraph_format.left_indent = indent
-        # 점선 탭 스톱 추가
-        _add_dotted_tab_stop(p, _TAB_POS)
-        # 내부 하이퍼링크 (제목 + 탭 + 페이지번호 모두 링크)
-        _font_size = 11 if entry_level == 1 else 10
-        _color = CLR_H1 if entry_level == 1 else CLR_H2
-        _bold = entry_level == 1
-        _add_toc_hyperlink(p, bm_name, entry_title, str(idx + 3), _font_size, FONT, _color, _bold)
+def add_toc(doc, levels: str = "1-3"):
+    """표준 Word TOC 필드 삽입.
+
+    Word/LibreOffice가 Heading 스타일에서 자동으로 항목·페이지번호를 채워주는
+    표준 형식. 사용자는 목차 위 우클릭 → '필드 업데이트' / 'Update Field' 로
+    실제 페이지 번호를 갱신한다(전체 표 vs 페이지번호만 옵션 제공).
+
+    levels: "1-3" → Heading 1·2·3 모두 포함. "1-2"면 H1·H2만.
+    """
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(2)
+    p.paragraph_format.space_after = Pt(2)
+    run = p.add_run()
+    r = run._r
+
+    # 1) fldChar BEGIN — dirty=true로 표시하여 Word가 열 때 갱신 권유
+    fld_begin = OxmlElement("w:fldChar")
+    fld_begin.set(qn("w:fldCharType"), "begin")
+    fld_begin.set(qn("w:dirty"), "true")
+    r.append(fld_begin)
+
+    # 2) instrText — 표준 TOC 스위치
+    #    \o "1-3" : Heading 1~3 포함
+    #    \h        : 하이퍼링크
+    #    \z        : 웹 뷰에서 페이지번호 숨김
+    #    \u        : 아웃라인 수준 사용
+    instr = OxmlElement("w:instrText")
+    instr.set(qn("xml:space"), "preserve")
+    instr.text = f' TOC \\o "{levels}" \\h \\z \\u '
+    r.append(instr)
+
+    # 3) fldChar SEPARATE
+    fld_sep = OxmlElement("w:fldChar")
+    fld_sep.set(qn("w:fldCharType"), "separate")
+    r.append(fld_sep)
+
+    # 4) Placeholder (필드 갱신 전 표시 문구) — 한·영 안내
+    placeholder = OxmlElement("w:t")
+    placeholder.set(qn("xml:space"), "preserve")
+    placeholder.text = "[목차] 우클릭 → '필드 업데이트' / Right-click → 'Update Field' 로 갱신하세요."
+    r.append(placeholder)
+
+    # 5) fldChar END
+    fld_end = OxmlElement("w:fldChar")
+    fld_end.set(qn("w:fldCharType"), "end")
+    r.append(fld_end)
+
     # 목차 끝 구분선
     p_sep = doc.add_paragraph()
     p_sep.paragraph_format.space_before = Pt(6)
