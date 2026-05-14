@@ -324,6 +324,35 @@ def _setup_doc(title=None):
     h3.font.bold = True
     h3.font.color.rgb = CLR_H2
     h3.font.name = FONT
+
+    # TOC 1/2/3 스타일을 컴팩트하게 미리 정의 — Word 기본값(여유 큰 줄간격) 덮어쓰기
+    from docx.enum.style import WD_STYLE_TYPE as _WST
+    _TOC_STYLE_SPEC = {
+        "TOC 1": {"size": 10, "indent_mm": 0,  "bold": True,  "color": CLR_H1},
+        "TOC 2": {"size": 9,  "indent_mm": 6,  "bold": False, "color": CLR_H2},
+        "TOC 3": {"size": 9,  "indent_mm": 12, "bold": False, "color": None},
+    }
+    for _sn, _spec in _TOC_STYLE_SPEC.items():
+        try:
+            _ts = doc.styles[_sn]
+        except KeyError:
+            _ts = doc.styles.add_style(_sn, _WST.PARAGRAPH)
+        _ts.font.name = FONT
+        _ts.font.size = Pt(_spec["size"])
+        _ts.font.bold = _spec["bold"]
+        if _spec["color"] is not None:
+            _ts.font.color.rgb = _spec["color"]
+        if _ts.element.rPr is None:
+            from docx.oxml.ns import qn as _qn
+            _rPr = OxmlElement("w:rPr"); _ts.element.insert(0, _rPr)
+        _ts.element.rPr.rFonts.set(qn("w:eastAsia"), FONT) if _ts.element.rPr is not None else None
+        _pf = _ts.paragraph_format
+        _pf.line_spacing = 1.0           # 줄 간격 최소
+        _pf.space_before = Pt(0)
+        _pf.space_after = Pt(2)          # 항목 사이 여백 최소
+        if _spec["indent_mm"]:
+            _pf.left_indent = Mm(_spec["indent_mm"])
+
     sec = doc.sections[0]
     sec.page_width = Mm(210)
     sec.page_height = Mm(297)
@@ -673,8 +702,16 @@ def generate_word_report():
     org_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     org_p.add_run("BESS EPC AI Agent System").font.size = Pt(12)
 
-    # TOC
-    _toc_h = doc.add_heading("목차", level=1)
+    # TOC — "목차" 제목은 일반 paragraph로 만들어 TOC \o "1-3" 수집에서 제외
+    # (Heading 1 사용 시 TOC 안에 "목차" 항목 자체가 들어가는 문제 회피)
+    _toc_h = doc.add_paragraph()
+    _toc_h.paragraph_format.page_break_before = True
+    _toc_h.paragraph_format.space_after = Pt(8)
+    _toc_run = _toc_h.add_run("목차")
+    _toc_run.font.size = Pt(18)
+    _toc_run.font.bold = True
+    _toc_run.font.color.rgb = CLR_H1
+    _toc_run.font.name = FONT
     _toc_h.paragraph_format.page_break_before = True
     add_toc(doc)
     add_page_number(sec0)
