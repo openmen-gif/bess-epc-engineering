@@ -326,32 +326,66 @@ def _setup_doc(title=None):
     h3.font.name = FONT
 
     # TOC 1/2/3 스타일을 컴팩트하게 미리 정의 — Word 기본값(여유 큰 줄간격) 덮어쓰기
+    # Word built-in 스타일과 매핑되려면:
+    #  - styleId: "TOC1" / "TOC2" / "TOC3" (공백 없이)
+    #  - name (w:name val): "toc 1" / "toc 2" / "toc 3" (소문자 + 공백)
+    #  - w:customStyle 속성 제거 (built-in으로 표시)
     from docx.enum.style import WD_STYLE_TYPE as _WST
-    _TOC_STYLE_SPEC = {
-        "TOC 1": {"size": 10, "indent_mm": 0,  "bold": True,  "color": CLR_H1},
-        "TOC 2": {"size": 9,  "indent_mm": 6,  "bold": False, "color": CLR_H2},
-        "TOC 3": {"size": 9,  "indent_mm": 12, "bold": False, "color": None},
-    }
-    for _sn, _spec in _TOC_STYLE_SPEC.items():
+    _TOC_STYLE_SPEC = [
+        # (style_id, name_lower, font_size_pt, indent_mm, bold, color, line_pt)
+        ("TOC1", "toc 1", 10, 0,  True,  CLR_H1, 13),
+        ("TOC2", "toc 2", 9,  6,  False, CLR_H2, 12),
+        ("TOC3", "toc 3", 9,  12, False, None,   12),
+    ]
+    for _sid, _name_lower, _size, _indent_mm, _bold, _color, _line_pt in _TOC_STYLE_SPEC:
+        # python-docx의 styles는 display name으로 접근 — built-in이 있으면 그것을 가져옴
         try:
-            _ts = doc.styles[_sn]
+            _ts = doc.styles[_name_lower]      # "toc 1" 형태로 시도
         except KeyError:
-            _ts = doc.styles.add_style(_sn, _WST.PARAGRAPH)
+            try:
+                _ts = doc.styles[f"TOC {_sid[3]}"]  # 옛 대문자 이름 시도
+            except KeyError:
+                _ts = doc.styles.add_style(_name_lower, _WST.PARAGRAPH)
+
+        # XML 레벨에서 customStyle 속성 제거 + styleId/name 정규화 (built-in 매핑)
+        _el = _ts.element
+        _el.attrib.pop(qn("w:customStyle"), None)
+        _el.set(qn("w:styleId"), _sid)
+        _name_el = _el.find(qn("w:name"))
+        if _name_el is None:
+            _name_el = OxmlElement("w:name"); _el.insert(0, _name_el)
+        _name_el.set(qn("w:val"), _name_lower)
+
+        # 폰트/색
         _ts.font.name = FONT
-        _ts.font.size = Pt(_spec["size"])
-        _ts.font.bold = _spec["bold"]
-        if _spec["color"] is not None:
-            _ts.font.color.rgb = _spec["color"]
-        if _ts.element.rPr is None:
-            from docx.oxml.ns import qn as _qn
-            _rPr = OxmlElement("w:rPr"); _ts.element.insert(0, _rPr)
-        _ts.element.rPr.rFonts.set(qn("w:eastAsia"), FONT) if _ts.element.rPr is not None else None
-        _pf = _ts.paragraph_format
-        _pf.line_spacing = 1.0           # 줄 간격 최소
-        _pf.space_before = Pt(0)
-        _pf.space_after = Pt(2)          # 항목 사이 여백 최소
-        if _spec["indent_mm"]:
-            _pf.left_indent = Mm(_spec["indent_mm"])
+        _ts.font.size = Pt(_size)
+        _ts.font.bold = _bold
+        if _color is not None:
+            _ts.font.color.rgb = _color
+        if _ts.element.rPr is not None:
+            _ts.element.rPr.rFonts.set(qn("w:eastAsia"), FONT)
+
+        # 줄간격 — exact 모드로 절대값 지정 (auto + 1.0은 Word가 자체 default 사용 가능)
+        _pPr = _el.find(qn("w:pPr"))
+        if _pPr is None:
+            _pPr = OxmlElement("w:pPr"); _el.insert(1, _pPr)
+        # 기존 spacing 노드 제거 후 새로 삽입
+        for _sp_old in _pPr.findall(qn("w:spacing")):
+            _pPr.remove(_sp_old)
+        _sp = OxmlElement("w:spacing")
+        _sp.set(qn("w:line"), str(int(_line_pt * 20)))    # twips
+        _sp.set(qn("w:lineRule"), "exact")                  # 절대값 강제
+        _sp.set(qn("w:before"), "0")
+        _sp.set(qn("w:after"), "0")
+        _pPr.append(_sp)
+
+        # 들여쓰기
+        if _indent_mm:
+            for _in_old in _pPr.findall(qn("w:ind")):
+                _pPr.remove(_in_old)
+            _ind = OxmlElement("w:ind")
+            _ind.set(qn("w:left"), str(int(_indent_mm / 25.4 * 1440)))  # mm → twips
+            _pPr.append(_ind)
 
     sec = doc.sections[0]
     sec.page_width = Mm(210)
