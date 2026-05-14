@@ -126,8 +126,11 @@ def _make_hl_run(font_size, font_name, color, bold, text):
     run.append(t)
     return run
 
-def _make_pageref_field(bookmark_name, font_size, font_name):
-    """Create a PAGEREF field that resolves to the actual page number of a bookmark."""
+def _make_pageref_field(bookmark_name, font_size, font_name, placeholder="…"):
+    """Create a PAGEREF field that resolves to the actual page number of a bookmark.
+    placeholder: 필드 업데이트 전(F9 누르기 전)에 표시될 값. 예상 페이지 번호를 넣어두면
+    Word의 자동 필드 업데이트가 비활성화된 환경에서도 가독성 있게 표시됨.
+    """
     # fldChar BEGIN
     fc_begin = OxmlElement("w:r")
     fc_begin_rPr = OxmlElement("w:rPr")
@@ -168,7 +171,7 @@ def _make_pageref_field(bookmark_name, font_size, font_name):
         el = OxmlElement(tag); el.set(qn("w:val"), str(int(font_size * 2))); fc_text_rPr.append(el)
     clr3 = OxmlElement("w:color"); clr3.set(qn("w:val"), "808080"); fc_text_rPr.append(clr3)
     fc_text.append(fc_text_rPr)
-    t_el = OxmlElement("w:t"); t_el.text = "…"
+    t_el = OxmlElement("w:t"); t_el.text = str(placeholder)
     fc_text.append(t_el)
 
     # fldChar END
@@ -184,7 +187,9 @@ def _make_pageref_field(bookmark_name, font_size, font_name):
 
 
 def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_size, font_name, color, bold=False):
-    """Add a TOC entry as a single internal hyperlink: title + tab + dynamic PAGEREF page number."""
+    """Add a TOC entry as a single internal hyperlink: title + tab + dynamic PAGEREF page number.
+    page_text: 예상 페이지 번호 — PAGEREF 필드의 placeholder로 사용 (필드 업데이트 전 표시값).
+    """
     hl = OxmlElement("w:hyperlink")
     hl.set(qn("w:anchor"), bookmark_name)
     # Run 1: title text
@@ -197,8 +202,8 @@ def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_siz
     tab_el = OxmlElement("w:tab")
     tab_run.append(tab_el)
     hl.append(tab_run)
-    # Run 3+: PAGEREF field (dynamic page number)
-    for field_el in _make_pageref_field(bookmark_name, 10, font_name):
+    # Run 3+: PAGEREF field (dynamic page number), placeholder = 예상 페이지 번호
+    for field_el in _make_pageref_field(bookmark_name, 10, font_name, placeholder=page_text):
         hl.append(field_el)
     paragraph._p.append(hl)
 
