@@ -181,10 +181,32 @@ def apply_custom_css():
                 min-width: 100% !important;
                 flex: 1 1 100% !important;
             }
-            /* 탭 글씨 축소 */
+            /* 탭 — 가로 스크롤 허용 + 글자 잘림 방지 */
+            .stTabs [data-baseweb="tab-list"] {
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                flex-wrap: nowrap !important;
+                scrollbar-width: thin !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
+                height: 4px;
+            }
+            .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb {
+                background: #30363d;
+                border-radius: 2px;
+            }
             .stTabs [data-baseweb="tab-list"] button {
                 font-size: 0.8rem !important;
                 padding: 6px 10px !important;
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+                min-width: max-content !important;
+            }
+            .stTabs [data-baseweb="tab-list"] button > div,
+            .stTabs [data-baseweb="tab-list"] button p {
+                white-space: nowrap !important;
+                overflow: visible !important;
             }
             /* 버튼 크기 */
             .stButton > button {
