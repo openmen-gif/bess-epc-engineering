@@ -6,6 +6,7 @@ from utils.lang_helper import t
 from utils.auth_helper import require_auth
 from utils.css_loader import apply_custom_css
 import utils.market_data as md
+from utils.data_fetchers import get_live_us_capacity_or_fallback
 
 apply_custom_css()
 require_auth()
@@ -103,12 +104,43 @@ def render_news():
                     st.caption(item['pubDate'])
                     st.markdown(f"<div style='font-size:0.85em; color:gray;'>{item['description']}</div>", unsafe_allow_html=True)
 
+    # ── Recent Market Commentary (RSS 자동 추출) ─────────────────────
+    st.markdown("---")
+    st.markdown(f"### {t('mk_commentary_title')}")
+    try:
+        _commentary = md.extract_market_commentary(max_items=8)
+    except Exception as _ce:
+        _commentary = []
+        st.warning(f"인용 추출 오류: {_ce}")
+    if not _commentary:
+        st.info(t("mk_commentary_empty"))
+    else:
+        for _c in _commentary:
+            _figs = " · ".join(f"`{f}`" for f in _c["figures"])
+            with st.container(border=True):
+                st.markdown(f"{_figs}")
+                st.markdown(f"**[{_c['title']}]({_c['url']})**")
+                st.caption(f"{_c.get('source', '')} · {_c.get('pub_date', '')}")
+
 def render_regional():
     st.subheader(t("mk_reg_title"))
     region_names = list(md.REGIONAL_DATA.keys())
     sel_region = st.selectbox(t("mk_reg_select"), options=region_names)
 
     r_data = md.REGIONAL_DATA[sel_region]
+
+    # 미국 선택 시 EIA 라이브 데이터 시도 → 성공하면 배너 표시 + installed 값 오버레이
+    _live_us = None
+    if sel_region == "미국":
+        _snapshot_gwh = r_data["installed_gwh"].get(md.LATEST_ACTUAL_YEAR, 0)
+        _live_us = get_live_us_capacity_or_fallback(_snapshot_gwh)
+        if _live_us["is_live"]:
+            st.success(
+                f"{t('mk_live_us_capacity')}: **{_live_us['value_gwh']:.1f} GWh** "
+                f"(EIA {_live_us['as_of_str']} 기준 · 출처: {_live_us['source']})"
+            )
+        elif _live_us["error"]:
+            st.info(f"{t('mk_live_fallback')} _{_live_us['error']}_")
 
     c1, c2, c3 = st.columns(3)
     c1.metric(t("mk_reg_share"), f"{r_data['market_share_pct']}%")
@@ -349,6 +381,33 @@ def download_report():
 
 st.title(t("mk_title"))
 st.markdown(t("mk_subtitle"))
+
+# ── 데이터 신선도 배너 ─────────────────────────────────────────────
+_fresh = md.get_data_freshness_summary()
+_live_count = len(_fresh["live_sections"])
+_static_count = len(_fresh["all_sections"]) - _live_count
+_oldest = _fresh["oldest_section"]
+_oldest_str = f"{_oldest[1]} ({_oldest[0]})" if _oldest else "—"
+
+with st.container(border=True):
+    c1, c2, c3 = st.columns([2, 2, 3])
+    c1.markdown(f"**{t('mk_freshness_snapshot')}**: `{_fresh['snapshot_as_of']}`")
+    c2.markdown(f"**{t('mk_freshness_live')}**: {_live_count}건 · **{t('mk_freshness_static')}**: {_static_count}건")
+    c3.markdown(f"**{t('mk_freshness_oldest')}**: `{_oldest_str}`")
+    st.caption(t("mk_freshness_disclaimer"))
+
+    with st.expander(t("mk_freshness_expand"), expanded=False):
+        _df_fresh = pd.DataFrame([
+            {
+                t("mk_freshness_section"): s["label"],
+                t("mk_freshness_as_of"): s["as_of"],
+                t("mk_freshness_source"): s["source"],
+                t("mk_freshness_type"): s["type"],
+                t("mk_freshness_note"): s.get("note", ""),
+            }
+            for s in _fresh["all_sections"]
+        ])
+        st.dataframe(_df_fresh, use_container_width=True, hide_index=True)
 
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     t("mk_tab_overview"), t("mk_tab_fx"), t("mk_tab_news"), t("mk_tab_regional"),

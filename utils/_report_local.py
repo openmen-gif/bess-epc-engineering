@@ -726,11 +726,24 @@ def generate_word_report():
     basis_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     basis_r = basis_p.add_run(
         f"데이터 기준 — 최신 실적 연도: {md.LATEST_ACTUAL_YEAR}년 / "
-        f"전망 범위: {md.YEARS[0]}~{md.YEARS[-1]}년"
+        f"전망 범위: {md.YEARS[0]}~{md.YEARS[-1]}년 / "
+        f"스냅샷 시점: {md.DATA_SNAPSHOT_AS_OF}"
     )
     basis_r.font.size = Pt(10)
     basis_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     basis_r.font.name = FONT
+
+    fresh_p = doc.add_paragraph()
+    fresh_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _fresh_summary = md.get_data_freshness_summary()
+    _live_n = len(_fresh_summary["live_sections"])
+    _snap_n = len(_fresh_summary["all_sections"]) - _live_n
+    fresh_r = fresh_p.add_run(
+        f"실시간 갱신: {_live_n}개 섹션 · 스냅샷: {_snap_n}개 섹션 (분기별 큐레이션)"
+    )
+    fresh_r.font.size = Pt(9)
+    fresh_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+    fresh_r.font.name = FONT
 
     for _ in range(3): doc.add_paragraph()
     org_p = doc.add_paragraph()
@@ -769,8 +782,31 @@ def generate_word_report():
         [f"NMC 셀 가격 ({_yr})", f"${md.NMC_CELL_PRICE.get(_yr, 'N/A')}/kWh"],
         [f"시스템 CAPEX ({_yr})", f"${md.SYSTEM_CAPEX.get(_yr, 'N/A')}/kWh"],
         ["분석 시점", now_str],
+        ["데이터 스냅샷 기준", md.DATA_SNAPSHOT_AS_OF],
     ]
     _styled_table(doc, ["항목", "값"], summary_rows, col_widths_mm=[70, 90])
+
+    # 데이터 출처 및 신선도
+    doc.add_heading("데이터 출처 및 갱신 시점", level=2)
+    doc.add_paragraph(
+        "본 보고서의 각 섹션별 데이터 출처와 마지막 큐레이션 시점은 아래와 같습니다. "
+        "환율·원자재·뉴스는 보고서 생성 시점에 실시간 fetch되며, 그 외 시장 규모·가격·지역·경쟁사 데이터는 "
+        "분기별로 갱신되는 스냅샷입니다."
+    )
+    _freshness_rows = []
+    for s in md.get_data_freshness_summary()["all_sections"]:
+        _freshness_rows.append([
+            s["label"],
+            s["as_of"],
+            s["type"],
+            s["source"],
+        ])
+    _styled_table(
+        doc,
+        ["섹션", "기준일", "유형", "출처"],
+        _freshness_rows,
+        col_widths_mm=[55, 22, 22, 71],
+    )
 
     # Section 1 interpretation
     _base_yr = md.YEARS[0]
@@ -896,6 +932,42 @@ def generate_word_report():
     }
     for c in ["배터리 가격", "프로젝트", "경쟁사", "공급망", "정책·규제"]:
         _add_news_section(doc, c, 5, analysis=_CAT_ANALYSIS.get(c, ""))
+
+    # 3.X Recent Market Commentary (RSS에서 자동 추출된 시장 인용 수치)
+    doc.add_heading("📊 최근 시장 인용 수치 (RSS 자동 추출)", level=2)
+    doc.add_paragraph(
+        "보고서 생성 시점에 fetch된 RSS 피드에서 BESS 시장 관련 수치 인용 "
+        "(예: $/kWh 가격, GWh 용량, MW 출력, % 성장률) 을 자동으로 추출한 결과입니다. "
+        "정량 데이터의 최신 시장 발언을 보완 자료로 활용하십시오."
+    )
+    try:
+        _commentary = md.extract_market_commentary(max_items=10)
+    except Exception as _ce:
+        _commentary = []
+        doc.add_paragraph(f"⚠️ 인용 추출 중 오류: {_ce}")
+    if not _commentary:
+        doc.add_paragraph("최근 fetch한 RSS에서 추출 가능한 수치 인용이 없습니다.")
+    else:
+        for _c in _commentary:
+            _fig_str = ", ".join(_c["figures"]) if _c["figures"] else ""
+            _p_h = doc.add_paragraph(style="List Bullet")
+            _h_run = _p_h.add_run(f"[{_fig_str}] ")
+            _h_run.font.bold = True
+            _h_run.font.size = Pt(10)
+            _h_run.font.name = FONT
+            if _c.get("url"):
+                add_hyperlink(_p_h, _c["url"], _c["title"])
+            else:
+                _t_run = _p_h.add_run(_c["title"])
+                _t_run.font.size = Pt(10)
+                _t_run.font.name = FONT
+            _p_meta = doc.add_paragraph()
+            _m_run = _p_meta.add_run(
+                f"  └ {_c.get('source', '')} · {_c.get('pub_date', '')}"
+            )
+            _m_run.font.size = Pt(9)
+            _m_run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+            _m_run.font.name = FONT
 
     # 4. 시각화
     _h4 = doc.add_heading("4. 시각화 분석", level=1)

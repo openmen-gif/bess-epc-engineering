@@ -275,6 +275,120 @@ def clear_rss_cache():
     """Clear the Streamlit cache for RSS feeds to force a refresh."""
     fetch_rss_feed.clear()
 
+
+# ============================================================
+# RSS 시장 인용 수치 자동 추출 (Phase C)
+# 보고서 'Recent Market Commentary' 섹션을 채우는 헬퍼.
+# ============================================================
+
+# 숫자 + 단위 패턴 — BESS 시장에서 자주 인용되는 수치 형태
+# 예: "$115/kWh", "12.5 GWh", "550 MW", "$5 billion", "30%"
+_QUOTE_PATTERNS = [
+    re.compile(r"\$\s?\d{1,4}(?:,\d{3})*(?:\.\d+)?\s?/\s?(?:kWh|MWh|Wh)", re.I),
+    re.compile(r"\$\s?\d{1,4}(?:,\d{3})*(?:\.\d+)?\s?(?:million|billion|trillion|M|B)\b", re.I),
+    re.compile(r"\b\d{1,4}(?:,\d{3})*(?:\.\d+)?\s?(?:GWh|MWh|GW|MW|kWh)\b", re.I),
+    re.compile(r"\b\d{1,3}(?:\.\d+)?\s?%\s?(?:CAGR|YoY|year-over-year|growth|increase|decline)?", re.I),
+]
+
+# 흥미로운 BESS 시장 키워드 — 헤드라인이 BESS 관련인지 1차 필터
+_MARKET_KEYWORDS = re.compile(
+    r"\b(BESS|battery storage|energy storage|grid storage|lithium[- ]ion|"
+    r"LFP|NMC|cell price|battery price|battery cost|gigafactory|GWh|"
+    r"capacity|deploy|installed|pipeline|CAPEX|LCOS|LCOE)\b",
+    re.I,
+)
+
+
+def _split_sentences(text: str) -> list[str]:
+    """간단한 문장 분리기 (영문 기준)."""
+    if not text:
+        return []
+    # 마침표/물음표/느낌표 뒤 공백 기준 분리
+    parts = re.split(r"(?<=[.!?])\s+", text)
+    return [p.strip() for p in parts if p and p.strip()]
+
+
+def _extract_quoted_figures(text: str) -> list[str]:
+    """텍스트에서 시장 수치 패턴(예: $115/kWh, 12 GWh)을 매치한 substring 리스트 반환."""
+    if not text:
+        return []
+    matches = []
+    for pat in _QUOTE_PATTERNS:
+        for m in pat.finditer(text):
+            matches.append(m.group(0))
+    return matches
+
+
+def extract_market_commentary(categories: list = None, max_items: int = 8) -> list[dict]:
+    """이미 fetch된 RSS feeds에서 시장 인용 수치를 자동 추출.
+
+    Args:
+        categories: 검색할 RSS 카테고리 (None이면 RSS_FEEDS 모든 키)
+        max_items: 반환할 최대 인용 개수
+
+    Returns:
+        [{"quote": "...", "figures": ["$115/kWh", "12 GWh"], "title": "...",
+          "url": "...", "pub_date": "...", "source": "..."}]
+    """
+    if categories is None:
+        categories = list(RSS_FEEDS.keys())
+
+    seen_titles = set()
+    commentary = []
+
+    for cat in categories:
+        try:
+            feed = fetch_rss_feed(cat, max_items=10)
+        except Exception as e:
+            _log.warning("commentary fetch failed for %s: %s", cat, e)
+            continue
+        for item in feed.get("items", []):
+            title = item.get("title") or ""
+            if title in seen_titles:
+                continue
+
+            haystack = f"{title}. {item.get('description', '')}"
+            # BESS 관련 키워드 필터
+            if not _MARKET_KEYWORDS.search(haystack):
+                continue
+
+            # 수치 패턴 추출
+            figures = []
+            best_sentence = ""
+            for sent in _split_sentences(haystack):
+                figs = _extract_quoted_figures(sent)
+                if figs:
+                    figures.extend(figs)
+                    if not best_sentence or len(sent) < len(best_sentence):
+                        best_sentence = sent
+
+            if not figures:
+                continue
+
+            # 중복 제거 (대소문자/공백 normalize)
+            uniq_figs = []
+            seen_norm = set()
+            for f in figures:
+                norm = re.sub(r"\s+", "", f).lower()
+                if norm not in seen_norm:
+                    seen_norm.add(norm)
+                    uniq_figs.append(f.strip())
+
+            seen_titles.add(title)
+            commentary.append({
+                "quote": best_sentence[:300] if best_sentence else title,
+                "figures": uniq_figs[:5],
+                "title": title,
+                "url": item.get("link", ""),
+                "pub_date": item.get("pubDate", ""),
+                "source": cat,
+            })
+
+            if len(commentary) >= max_items:
+                return commentary
+
+    return commentary
+
 # ============================================================
 # 환율 / 유가 / 원자재 실시간 데이터
 # ============================================================
@@ -378,6 +492,151 @@ def _build_year_labels(years):
 
 
 YEAR_LABELS = _build_year_labels(YEARS)
+
+# ============================================================
+# 데이터 신선도 메타 — 보고서/대시보드에 자동 표시
+# 각 카테고리의 마지막 큐레이션 시점과 1차 출처를 명시.
+# 갱신 시 이 dict와 해당 상수를 함께 수정.
+# ============================================================
+DATA_SNAPSHOT_AS_OF = "2026-05-15"
+
+DATA_FRESHNESS = {
+    "global_market": {
+        "label": "글로벌 시장 규모 (capacity/value/price/CAPEX)",
+        "as_of": "2026-05-15",
+        "source": "BloombergNEF Energy Storage Outlook + Lithium-ion Battery Price Survey + Wood Mackenzie ESS Service",
+        "type": "snapshot",
+        "note": "분기별 큐레이션. 실제 라이브 갱신은 Phase B의 EIA/IEA 어댑터에서 일부 지표만 가능.",
+    },
+    "regional": {
+        "label": "지역별 설치 용량·파이프라인·점유율",
+        "as_of": "2026-05-15",
+        "source": "BNEF Regional Outlook, IEA Energy Storage Tracker, 각국 정부 통계(EIA·KPX·METI·AEMO·NESO·ENTSO-E)",
+        "type": "snapshot",
+        "note": "Phase B에서 US 데이터는 EIA API로 라이브 갱신 시도.",
+    },
+    "competitors": {
+        "label": "경쟁사 매출·점유율·생산능력",
+        "as_of": "2026-04",
+        "source": "SNE Research Global ESS Tracker, 각사 IR/연차 보고서, S&P Global Market Intelligence",
+        "type": "snapshot",
+    },
+    "scenarios": {
+        "label": "시나리오 분석 (Base/Bull/Bear)",
+        "as_of": "2026-05-15",
+        "source": "내부 시나리오 모델 (BNEF·IEA·McKinsey 자료 종합)",
+        "type": "model",
+    },
+    "revenue_stacking": {
+        "label": "지역별 수익 스태킹 구조",
+        "as_of": "2026-04",
+        "source": "Modo Energy, Aurora Research, Wood Mac Energy Storage Service, 각국 ISO 공시",
+        "type": "snapshot",
+    },
+    "investment": {
+        "label": "프로젝트 투자 경제성 (IRR/Payback/LCOE)",
+        "as_of": "2026-04",
+        "source": "Lazard LCOS, NREL ATB, BNEF Cost Survey",
+        "type": "snapshot",
+    },
+    "operations": {
+        "label": "운영·O&M·EMS",
+        "as_of": "2026-03",
+        "source": "EPRI ESIC, DNV Storage Services, 제조사 공개 자료",
+        "type": "snapshot",
+    },
+    "safety": {
+        "label": "안전·화재·표준 (NFPA 855, UL 9540, KS C 8564 등)",
+        "as_of": "2026-05",
+        "source": "NFPA, UL, IEC, KS, AS/NZS 공식 발행본 (최신 개정 추적)",
+        "type": "regulatory",
+        "note": "표준은 발행본이 최신본 그대로 인용 — 개정 시점만 갱신.",
+    },
+    "fire_incidents": {
+        "label": "BESS 화재 사고 사례",
+        "as_of": "2026-05-15",
+        "source": "EPRI BESS Failure Incident Database, 보도자료, 사고조사 보고서",
+        "type": "case_log",
+    },
+    "battery_tech": {
+        "label": "배터리 기술 동향 (LFP/NMC/Na-ion/SSB/VRFB/Fe-Air)",
+        "as_of": "2026-04",
+        "source": "BNEF Battery Technology Outlook, IEA Battery Storage Roadmap, 각사 R&D 발표",
+        "type": "snapshot",
+    },
+    "ldes": {
+        "label": "장기 저장(LDES) 시장",
+        "as_of": "2026-04",
+        "source": "DOE LDES Initiative, LDES Council (McKinsey), Form Energy/ESS Inc. 등 IR",
+        "type": "snapshot",
+    },
+    "permitting": {
+        "label": "지역별 인허가·계통연계 데이터",
+        "as_of": "2026-03",
+        "source": "LBNL Queued Up 보고서(미국), Ofgem/NESO(영국), AEMO ISP(호주), 각국 TSO 공시",
+        "type": "snapshot",
+    },
+    "financing": {
+        "label": "프로젝트 파이낸싱·보험",
+        "as_of": "2026-03",
+        "source": "Inframation, IJ Global, 주요 인프라 펀드 IR (Blackrock·Brookfield·Macquarie)",
+        "type": "snapshot",
+    },
+    "epc_contracts": {
+        "label": "EPC 계약 구조·원가 분해",
+        "as_of": "2026-03",
+        "source": "BNEF Cost Survey, Wood Mac Project Cost Service, 시장 통설 종합",
+        "type": "snapshot",
+    },
+    "fx_commodity": {
+        "label": "환율·원자재 (USD/KRW·Brent·WTI·리튬·구리·니켈)",
+        "as_of": "live",
+        "source": "ExchangeRate API, Yahoo Finance, 광물 거래소 공개 시세",
+        "type": "live_api",
+        "note": "보고서 생성 시점에 실시간 fetch.",
+    },
+    "news_rss": {
+        "label": "산업 뉴스 헤드라인",
+        "as_of": "live",
+        "source": "Energy-Storage.News, Electrek, PV-Tech, CleanTechnica, Recharge News, Utility Dive, RenewEconomy",
+        "type": "live_rss",
+        "note": "각 카테고리 fetch 시 실시간 갱신.",
+    },
+}
+
+
+def get_data_freshness_summary() -> dict:
+    """대시보드/보고서에 표시할 요약 dict를 반환.
+
+    Returns:
+        {
+            "snapshot_as_of": "2026-05-15",
+            "oldest_section": ("operations", "2026-03"),
+            "newest_section": ("global_market", "2026-05-15"),
+            "live_sections": ["fx_commodity", "news_rss"],
+            "all_sections": [{...}, ...],
+        }
+    """
+    static_items = [
+        (k, v) for k, v in DATA_FRESHNESS.items()
+        if v.get("type") not in ("live_api", "live_rss")
+    ]
+    static_dates = [(k, v["as_of"]) for k, v in static_items]
+    static_dates.sort(key=lambda x: x[1])
+
+    live_sections = [
+        k for k, v in DATA_FRESHNESS.items()
+        if v.get("type") in ("live_api", "live_rss")
+    ]
+
+    return {
+        "snapshot_as_of": DATA_SNAPSHOT_AS_OF,
+        "oldest_section": static_dates[0] if static_dates else None,
+        "newest_section": static_dates[-1] if static_dates else None,
+        "live_sections": live_sections,
+        "all_sections": [{"key": k, **v} for k, v in DATA_FRESHNESS.items()],
+    }
+
 
 # ---- 글로벌 시장 규모 (GWh) ----
 GLOBAL_CAPACITY_GWH = {
