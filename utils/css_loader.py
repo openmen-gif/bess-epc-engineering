@@ -181,31 +181,53 @@ def apply_custom_css():
                 min-width: 100% !important;
                 flex: 1 1 100% !important;
             }
-            /* 탭 — 가로 스크롤 허용 + 글자 잘림 방지 */
-            .stTabs [data-baseweb="tab-list"] {
+            /* 탭 — 가로 스크롤 허용 + 글자 잘림 방지 (강한 우선순위) */
+            .stApp .stTabs [data-baseweb="tab-list"],
+            .stApp [role="tablist"] {
+                display: flex !important;
                 overflow-x: auto !important;
                 overflow-y: hidden !important;
                 flex-wrap: nowrap !important;
                 scrollbar-width: thin !important;
                 -webkit-overflow-scrolling: touch !important;
+                width: 100% !important;
+                max-width: 100% !important;
             }
-            .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
+            .stApp .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar,
+            .stApp [role="tablist"]::-webkit-scrollbar {
                 height: 4px;
             }
-            .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb {
+            .stApp .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb,
+            .stApp [role="tablist"]::-webkit-scrollbar-thumb {
                 background: #30363d;
                 border-radius: 2px;
             }
-            .stTabs [data-baseweb="tab-list"] button {
+            .stApp .stTabs [data-baseweb="tab-list"] button,
+            .stApp [role="tablist"] [role="tab"],
+            .stApp [role="tablist"] button {
                 font-size: 0.8rem !important;
                 padding: 6px 10px !important;
                 white-space: nowrap !important;
+                word-break: keep-all !important;
+                flex: 0 0 auto !important;
                 flex-shrink: 0 !important;
+                width: auto !important;
                 min-width: max-content !important;
+                max-width: none !important;
             }
-            .stTabs [data-baseweb="tab-list"] button > div,
-            .stTabs [data-baseweb="tab-list"] button p {
+            .stApp .stTabs [data-baseweb="tab-list"] button *,
+            .stApp [role="tablist"] [role="tab"] *,
+            .stApp [role="tablist"] button * {
                 white-space: nowrap !important;
+                word-break: keep-all !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+            }
+            /* 탭 컨테이너가 stHorizontalBlock의 flex-wrap 영향 받지 않도록 */
+            .stApp .stTabs,
+            .stApp .stTabs > div {
+                width: 100% !important;
+                max-width: 100% !important;
                 overflow: visible !important;
             }
             /* 버튼 크기 */
@@ -255,15 +277,28 @@ def apply_custom_css():
             h4 { font-size: 0.85rem !important; }
             .stMarkdown p { font-size: 12px !important; }
             iframe { height: 280px !important; }
-            /* 탭 다수 시 가로 스크롤 */
-            .stTabs [data-baseweb="tab-list"] {
+            /* 탭 다수 시 가로 스크롤 (강한 우선순위) */
+            .stApp .stTabs [data-baseweb="tab-list"],
+            .stApp [role="tablist"] {
                 overflow-x: auto !important;
                 flex-wrap: nowrap !important;
+                width: 100% !important;
             }
-            .stTabs [data-baseweb="tab-list"] button {
+            .stApp .stTabs [data-baseweb="tab-list"] button,
+            .stApp [role="tablist"] [role="tab"],
+            .stApp [role="tablist"] button {
                 font-size: 0.7rem !important;
                 padding: 4px 8px !important;
                 white-space: nowrap !important;
+                word-break: keep-all !important;
+                flex: 0 0 auto !important;
+                min-width: max-content !important;
+            }
+            .stApp .stTabs [data-baseweb="tab-list"] button *,
+            .stApp [role="tablist"] [role="tab"] *,
+            .stApp [role="tablist"] button * {
+                white-space: nowrap !important;
+                word-break: keep-all !important;
             }
         }
 
