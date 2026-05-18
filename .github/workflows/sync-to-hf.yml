@@ -52,7 +52,8 @@ jobs:
           git config user.name "GitHub Action"
 
           # credential을 URL에 직접 임베드 (간단 + 명시적)
-          REMOTE_URL="https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/bess-epc-engineering"
+          # 경로의 owner는 'openmen-gif' 로 하드코딩 — HF_USERNAME secret 값과 무관하게 작동
+          REMOTE_URL="https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/openmen-gif/bess-epc-engineering"
 
           echo "Pushing master to HF Space main branch..."
           git push "$REMOTE_URL" master:main --force 2>&1 | \
