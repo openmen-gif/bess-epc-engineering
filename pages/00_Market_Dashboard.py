@@ -410,11 +410,13 @@ with st.container(border=True):
         st.dataframe(_df_fresh, use_container_width=True, hide_index=True)
 
 def render_infra_map():
-    """🗺️ OpenInfraMap embed — 세계 전력 인프라 맵.
+    """🗺️ OpenInfraMap 안내 카드 + 지역 바로가기.
+
+    OpenInfraMap이 X-Frame-Options/CSP frame-ancestors 헤더로 iframe 임베드를 차단하므로
+    페이지 내 직접 렌더링은 불가. 대신 안내 카드 + 대형 새 탭 버튼 + 자주 보는 지역 바로가기 제공.
 
     Source: https://openinframap.org/ (Russ Garrett, MIT License)
     Data:   OpenStreetMap contributors (ODbL)
-    Default view: world overview at zoom 2, centered around lat=26, lon=12 per user spec
     """
     st.subheader(t("mk_infra_title"))
     st.caption(t("mk_infra_caption"))
@@ -426,30 +428,49 @@ def render_infra_map():
     with col_r:
         st.success(t("mk_infra_tip"))
 
-    # Initial map URL — user-specified default: zoom=2, lat=26, lon=12 (world overview)
+    # World-overview default URL (user-specified: zoom=2, lat=26, lon=12)
     INFRA_MAP_URL = "https://openinframap.org/#2/26/12"
 
-    # External link button (opens in new tab)
+    # Hero card — embed-blocked notice + large open-in-new-tab button
     st.markdown(
-        f'<a href="{INFRA_MAP_URL}" target="_blank" '
-        f'style="display:inline-block; padding:8px 16px; background:#2E75B6; color:#fff; '
-        f'border-radius:6px; text-decoration:none; font-weight:600; margin-bottom:12px;">'
-        f'{t("mk_infra_open")}</a>',
+        f'<div style="text-align:center; padding:28px 16px; margin:14px 0; '
+        f'background:linear-gradient(135deg,#1E3A5F 0%,#2E75B6 100%); '
+        f'border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">'
+        f'<div style="color:#FFFFFF; font-size:14px; margin-bottom:16px; opacity:0.92; line-height:1.5;">'
+        f'{t("mk_infra_blocked")}</div>'
+        f'<a href="{INFRA_MAP_URL}" target="_blank" rel="noopener" '
+        f'style="display:inline-block; padding:14px 36px; background:#FFFFFF; color:#1E3A5F; '
+        f'border-radius:8px; text-decoration:none; font-weight:800; font-size:16px; '
+        f'box-shadow:0 2px 8px rgba(0,0,0,0.20);">'
+        f'{t("mk_infra_open")}</a>'
+        f'</div>',
         unsafe_allow_html=True,
     )
 
-    # Iframe embed — Streamlit components.v1.iframe (preferred) with fallback to HTML
-    try:
-        import streamlit.components.v1 as components
-        components.iframe(INFRA_MAP_URL, height=720, scrolling=True)
-    except Exception:
-        # Fallback: raw HTML iframe (some HF Space CSP may block — show link if so)
-        st.markdown(
-            f'<iframe src="{INFRA_MAP_URL}" width="100%" height="720" '
-            f'style="border:1px solid #ccc; border-radius:8px;" '
-            f'allowfullscreen></iframe>',
-            unsafe_allow_html=True,
-        )
+    # Region quick-links (BESS 사업 관심 지역 8건)
+    st.markdown(f"#### {t('mk_infra_regions')}")
+    REGIONS = [
+        ("🇰🇷 한국 / Korea",          "https://openinframap.org/#7/36.5/127.8"),
+        ("🇯🇵 일본 / Japan",          "https://openinframap.org/#5/36.0/138.0"),
+        ("🇨🇳 중국 / China",          "https://openinframap.org/#4/35.0/105.0"),
+        ("🇮🇳 인도 / India",          "https://openinframap.org/#5/22.0/79.0"),
+        ("🇦🇪 UAE",                   "https://openinframap.org/#7/24.0/54.0"),
+        ("🇪🇺 EU 중부 / Central EU",  "https://openinframap.org/#5/50.0/10.0"),
+        ("🇺🇸 미국 텍사스 / Texas",   "https://openinframap.org/#6/31.5/-99.0"),
+        ("🇦🇺 호주 / Australia",      "https://openinframap.org/#4/-25.0/134.0"),
+    ]
+    cols = st.columns(4)
+    for i, (label, url) in enumerate(REGIONS):
+        with cols[i % 4]:
+            st.markdown(
+                f'<a href="{url}" target="_blank" rel="noopener" '
+                f'style="display:block; padding:14px 10px; margin:6px 0; '
+                f'background:rgba(46,117,182,0.10); border:1px solid rgba(46,117,182,0.35); '
+                f'border-radius:8px; text-decoration:none; color:inherit; '
+                f'text-align:center; font-weight:600; font-size:13px; line-height:1.4;">'
+                f'{label}</a>',
+                unsafe_allow_html=True,
+            )
 
     st.markdown("---")
     st.caption(t("mk_infra_source"))

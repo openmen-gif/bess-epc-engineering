@@ -440,6 +440,10 @@ _TRANSLATIONS = {
                           "EN": "🔗 Open in new tab (OpenInfraMap.org)"},
     "mk_infra_source":   {"KO": "출처: OpenInfraMap (Russ Garrett, MIT License) · 데이터: OpenStreetMap (ODbL)",
                           "EN": "Source: OpenInfraMap (Russ Garrett, MIT License) · Data: OpenStreetMap (ODbL)"},
+    "mk_infra_blocked":  {"KO": "⚠ OpenInfraMap 외부 임베드 정책(X-Frame-Options)으로 이 페이지 안에서는 지도 표시가 차단됩니다. 아래 버튼으로 새 탭에서 풀버전을 여세요.",
+                          "EN": "⚠ OpenInfraMap blocks iframe embedding (X-Frame-Options). Open the full map in a new tab via the button below."},
+    "mk_infra_regions":  {"KO": "자주 보는 지역 바로가기",
+                          "EN": "Quick links to frequent regions"},
 
     # Data freshness banner (cross-cutting)
     "mk_freshness_snapshot":  {"KO": "📅 데이터 기준",
