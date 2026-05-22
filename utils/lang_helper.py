@@ -424,7 +424,22 @@ _TRANSLATIONS = {
     "mk_tab_pipeline":   {"KO": "🏗️ 프로젝트 파이프라인", "EN": "🏗️ Project Pipeline"},
     "mk_tab_competitor": {"KO": "🏢 경쟁사 분석", "EN": "🏢 Competitors"},
     "mk_tab_scenario":   {"KO": "🔮 시나리오 전망", "EN": "🔮 Scenarios"},
+    "mk_tab_infra":      {"KO": "🗺️ 인프라 맵", "EN": "🗺️ Infra Map"},
     "mk_tab_report":     {"KO": "📥 보고서", "EN": "📥 Reports"},
+
+    # Infra Map Tab (mk_tab_infra) — OpenInfraMap embed (added 2026-05-22)
+    "mk_infra_title":    {"KO": "🗺️ 세계 전력 인프라 맵 (OpenInfraMap)",
+                          "EN": "🗺️ World Power Infrastructure Map (OpenInfraMap)"},
+    "mk_infra_caption":  {"KO": "전 세계 송전망·발전소·변전소·BESS·태양광·풍력 인프라를 시각화. OpenStreetMap 기반 오픈데이터로, 사업 부지·계통 인접성 검토에 활용.",
+                          "EN": "Worldwide transmission, generation, substation, BESS, solar, wind infrastructure. Built on OpenStreetMap open data — useful for site selection and grid proximity review."},
+    "mk_infra_legend":   {"KO": "범례: 전선 색상=전압 등급(저압→고압), 발전소=원형(연료별 색상), 변전소=사각형",
+                          "EN": "Legend: Line color = voltage level (LV→HV), Power plants = circles (color by fuel), Substations = squares"},
+    "mk_infra_tip":      {"KO": "💡 Tip: 줌인하면 송전선 정격 전압(예: 154kV, 345kV, 765kV)·발전소 출력(MW)·운영사 정보가 표시됩니다. POI(연계점) 후보 부지 인접 송전선 식별에 직접 활용 가능.",
+                          "EN": "💡 Tip: Zoom in to see line voltage ratings (e.g. 154kV, 345kV, 765kV), plant output (MW), and operator info. Useful for identifying POI candidate sites near transmission lines."},
+    "mk_infra_open":     {"KO": "🔗 새 탭에서 열기 (OpenInfraMap.org)",
+                          "EN": "🔗 Open in new tab (OpenInfraMap.org)"},
+    "mk_infra_source":   {"KO": "출처: OpenInfraMap (Russ Garrett, MIT License) · 데이터: OpenStreetMap (ODbL)",
+                          "EN": "Source: OpenInfraMap (Russ Garrett, MIT License) · Data: OpenStreetMap (ODbL)"},
 
     # Data freshness banner (cross-cutting)
     "mk_freshness_snapshot":  {"KO": "📅 데이터 기준",

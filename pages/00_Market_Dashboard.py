@@ -409,9 +409,56 @@ with st.container(border=True):
         ])
         st.dataframe(_df_fresh, use_container_width=True, hide_index=True)
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+def render_infra_map():
+    """🗺️ OpenInfraMap embed — 세계 전력 인프라 맵.
+
+    Source: https://openinframap.org/ (Russ Garrett, MIT License)
+    Data:   OpenStreetMap contributors (ODbL)
+    Default view: world overview at zoom 2, centered around lat=26, lon=12 per user spec
+    """
+    st.subheader(t("mk_infra_title"))
+    st.caption(t("mk_infra_caption"))
+
+    # Legend + tip cards
+    col_l, col_r = st.columns([1, 1])
+    with col_l:
+        st.info(t("mk_infra_legend"))
+    with col_r:
+        st.success(t("mk_infra_tip"))
+
+    # Initial map URL — user-specified default: zoom=2, lat=26, lon=12 (world overview)
+    INFRA_MAP_URL = "https://openinframap.org/#2/26/12"
+
+    # External link button (opens in new tab)
+    st.markdown(
+        f'<a href="{INFRA_MAP_URL}" target="_blank" '
+        f'style="display:inline-block; padding:8px 16px; background:#2E75B6; color:#fff; '
+        f'border-radius:6px; text-decoration:none; font-weight:600; margin-bottom:12px;">'
+        f'{t("mk_infra_open")}</a>',
+        unsafe_allow_html=True,
+    )
+
+    # Iframe embed — Streamlit components.v1.iframe (preferred) with fallback to HTML
+    try:
+        import streamlit.components.v1 as components
+        components.iframe(INFRA_MAP_URL, height=720, scrolling=True)
+    except Exception:
+        # Fallback: raw HTML iframe (some HF Space CSP may block — show link if so)
+        st.markdown(
+            f'<iframe src="{INFRA_MAP_URL}" width="100%" height="720" '
+            f'style="border:1px solid #ccc; border-radius:8px;" '
+            f'allowfullscreen></iframe>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+    st.caption(t("mk_infra_source"))
+
+
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
     t("mk_tab_overview"), t("mk_tab_fx"), t("mk_tab_news"), t("mk_tab_regional"),
-    t("mk_tab_pipeline"), t("mk_tab_competitor"), t("mk_tab_scenario"), t("mk_tab_report")
+    t("mk_tab_pipeline"), t("mk_tab_competitor"), t("mk_tab_scenario"),
+    t("mk_tab_infra"), t("mk_tab_report")
 ])
 
 with tab1: render_overview()
@@ -421,4 +468,5 @@ with tab4: render_regional()
 with tab5: render_pipeline()
 with tab6: render_competitors()
 with tab7: render_scenarios()
-with tab8: download_report()
+with tab8: render_infra_map()
+with tab9: download_report()
