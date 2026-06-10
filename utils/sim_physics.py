@@ -403,14 +403,20 @@ def fmt_time(sec):
 def add_play_controls(fig, frame_names, time_labels, duration_ms=250,
                       prefix="t = ", play_label="▶ Play", pause_label="⏸ Pause",
                       font_color="#c9d1d9"):
-    """Attach Play/Pause buttons and a time slider driving fig.frames."""
+    """Attach Play/Pause buttons + time slider at the BOTTOM, clear of the title.
+
+    이전 버전은 버튼을 y=1.15(플롯 상단 위)에 둬 타이틀 텍스트와 겹쳤다.
+    버튼·슬라이더를 모두 하단 여백으로 내리고 하단 마진을 확보해 충돌을 제거한다.
+    """
     fig.update_layout(
+        margin_b=96,  # 하단 컨트롤 공간 확보 (l/r/t 는 보존 — magic underscore)
         updatemenus=[dict(
             type="buttons", direction="left",
-            x=0.0, y=1.15, xanchor="left", yanchor="top",
-            pad=dict(r=8, t=0),
-            bgcolor="rgba(40,44,52,0.8)", bordercolor="#30363d",
-            font=dict(color=font_color),
+            x=0.0, y=-0.08, xanchor="left", yanchor="top",
+            pad=dict(r=8, t=6, b=6),
+            bgcolor="rgba(40,44,52,0.85)", bordercolor="#30363d",
+            font=dict(color=font_color, size=12),
+            showactive=False,
             buttons=[
                 dict(label=play_label, method="animate",
                      args=[None, dict(frame=dict(duration=duration_ms, redraw=True),
@@ -423,12 +429,12 @@ def add_play_controls(fig, frame_names, time_labels, duration_ms=250,
             ],
         )],
         sliders=[dict(
-            active=0, x=0.06, len=0.92, y=-0.02,
-            currentvalue=dict(prefix=prefix, font=dict(color=font_color, size=13),
+            active=0, x=0.26, len=0.72, y=-0.06, yanchor="top",
+            currentvalue=dict(prefix=prefix, font=dict(color=font_color, size=12),
                               visible=True, xanchor="left"),
             font=dict(color=font_color, size=10),
             bgcolor="rgba(255,255,255,0.08)", bordercolor="#30363d",
-            tickcolor=font_color,
+            tickcolor=font_color, pad=dict(t=0, b=0),
             steps=[dict(method="animate", label=str(lbl),
                         args=[[str(nm)], dict(mode="immediate",
                                               frame=dict(duration=0, redraw=True),

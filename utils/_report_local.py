@@ -41,6 +41,22 @@ except ImportError:
     FPDF_AVAILABLE = False
 
 
+def _report_year_label(y):
+    """연도에 실적/추정(E)/전망(F) 성격을 붙여 하드코딩 스냅샷을 정직하게 표기.
+    값은 회계 실적이 아니라 분기 스냅샷 추정·전망치이므로, 과거 연도도 '추정'으로 표기한다."""
+    cy = datetime.datetime.now().year
+    if y < cy:
+        return f"{y}년(추정)"
+    if y == cy:
+        return f"{y}년(E)"
+    return f"{y}년(F)"
+
+
+def _snap_basis():
+    """스냅샷 출처·기준일 표기 문자열 (확정 실적이 아님을 명시)."""
+    return f"스냅샷 {md.DATA_SNAPSHOT_AS_OF} 기준 · 출처 BNEF/IEA 등 · 회계 실적 아님"
+
+
 FONT = "맑은 고딕"
 CLR_H1 = RGBColor(0x1F, 0x4E, 0x79)       # Navy #1F4E79
 CLR_H2 = RGBColor(0x2E, 0x75, 0xB6)       # Blue #2E75B6
@@ -884,11 +900,12 @@ def generate_word_report():
     _mkt_val  = md.GLOBAL_MARKET_VALUE_B_USD.get(_yr, 0)
     _cap_final = md.GLOBAL_CAPACITY_GWH.get(_final_yr, 0)
     _p_interp = doc.add_paragraph(
-        f"글로벌 BESS 시장은 {_yr}년 {_cap_cur} GWh를 기록하며 전년 대비 {_yoy_g}% 성장하였습니다. "
-        f"시장 규모는 약 ${_mkt_val}B USD로, LFP 셀 단가는 {_base_yr}년(${_lfp_base}/kWh) 대비 {_lfp_drop}% 하락한 "
-        f"${_lfp_cur}/kWh까지 내려왔습니다. "
+        f"글로벌 BESS 시장은 {_report_year_label(_yr)} 약 {_cap_cur} GWh로 추정되며, 전년 대비 약 {_yoy_g}% 성장한 것으로 분석됩니다. "
+        f"시장 규모는 약 ${_mkt_val}B USD로 추정되고, LFP 셀 단가는 {_base_yr}년 대비 약 {_lfp_drop}% 하락한 "
+        f"약 ${_lfp_cur}/kWh 수준으로 추정됩니다. "
         "가격 하락·정책 지원 확대·재생에너지 연계 수요 증가가 복합적으로 시장 성장을 견인하고 있으며, "
-        f"{_final_yr}년 {_cap_final} GWh 도달이 전망됩니다."
+        f"{_report_year_label(_final_yr)} {_cap_final} GWh 도달이 전망됩니다. "
+        f"※ 위 수치는 {_snap_basis()}로, 확정 실적이 아닌 추정·전망치입니다."
     )
     _p_interp.paragraph_format.space_before = Pt(4)
     for _r in _p_interp.runs:
@@ -937,6 +954,14 @@ def generate_word_report():
     _h2 = doc.add_heading("2. 시장별 심층 분석", level=1)
     _h2.paragraph_format.page_break_before = True
     _add_bookmark(_h2, "_sec2")
+    _p_sec2note = doc.add_paragraph(
+        f"⚠️ 본 장의 용량·성장률·파이프라인 수치는 {_snap_basis()}입니다. "
+        "연도 표기: (추정)=스냅샷 추정, (E)=당해연도 추정, (F)=전망. "
+        "환율·미국(EIA) 운영용량 등 실시간 갱신 항목은 1장 '실시간 지표 스냅샷'과 8장을 참조하십시오."
+    )
+    for _r in _p_sec2note.runs:
+        _r.font.size = Pt(9); _r.font.name = FONT
+        _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     for idx, r_name in enumerate(md.REGIONS):
         r_data = md.REGIONAL_DATA[r_name]
         doc.add_heading(f"2.{idx+1} {r_name} ({r_data['name_en']})", level=2)
@@ -948,21 +973,22 @@ def generate_word_report():
         _avg_sz = r_data.get("avg_project_size_mwh", "N/A")
         _scale  = "대형 그리드 스케일" if isinstance(_avg_sz, (int, float)) and _avg_sz >= 200 else "중소형"
         _p_ov = doc.add_paragraph(
-            f"{r_name} 시장은 {_yr}년 {_cur_r} GWh를 기록하여 전년 대비 {_yoy_r}% 성장하였습니다. "
+            f"{r_name} 시장은 {_report_year_label(_yr)} 약 {_cur_r} GWh로 추정되며, 전년 대비 약 {_yoy_r}% 성장한 것으로 분석됩니다. "
             f"파이프라인 {r_data['pipeline_gwh']} GWh로 향후 성장 잠재력이 크며, "
             f"평균 프로젝트 규모 {_avg_sz} MWh의 {_scale} 시장이 주도합니다. "
-            f"주요 참여 기업: {_kp}."
+            f"주요 참여 기업: {_kp}. (수치: {_snap_basis()})"
         )
         _p_ov.paragraph_format.space_after = Pt(4)
         for _r in _p_ov.runs:
             _r.font.size = Pt(10); _r.font.name = FONT
 
         detail_rows = [
-            [f"설치 용량 ({_yr})", f"{_cur_r} GWh"],
-            [f"YoY 성장률 ({_yr - 1}→{_yr})", f"+{_yoy_r}%"],
+            [f"설치 용량 ({_yr}, 추정)", f"~{_cur_r} GWh"],
+            [f"YoY 성장률 ({_yr - 1}→{_yr}, 추정)", f"+{_yoy_r}%"],
             ["중기 연간 성장률", f"{r_data['growth_rate_pct']}%"],
             ["파이프라인 (허가/계획)", f"{r_data['pipeline_gwh']} GWh"],
             ["주요 수익 모델", r_data['revenue_model']],
+            ["데이터 성격 · 기준일", f"분기 스냅샷 추정 · {md.DATA_SNAPSHOT_AS_OF}"],
         ]
         _styled_table(doc, ["항목", "데이터"], detail_rows, col_widths_mm=[55, 105])
 
