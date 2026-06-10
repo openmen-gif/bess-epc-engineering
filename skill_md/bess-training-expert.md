@@ -121,7 +121,7 @@ SSM (RO 산업안전)               RO 산업안전 교육 의무           ITM
 > **Training Expert** vs **O&M Expert** 업무 구분
 
 | 구분 | Training Expert | O&M Expert |
-||--|--|
+|------|------|------|
 | 소유권 | SOP writing, competency assessment, O&M training, certification management | LTSA, preventive maintenance plan, remote monitoring, KPI tracking |
 
 **협업 접점**: O&M provides operational procedures/maintenance requirements -> Training develops SOP/curriculum

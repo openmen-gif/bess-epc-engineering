@@ -695,7 +695,7 @@ def create_proposal_pptx(
 > **Presentation Designer** vs **Marketer** 업무 구분
 
 | 구분 | Presentation Designer | Marketer |
-||--|--|
+|------|------|------|
 | 소유권 | Presentation, proposals, infographics, data visualization, dashboards | Market trends, briefing content, competitor analysis |
 
 **협업 접점**: All departments provide content -> Presentation Designer transforms to visual/slides
