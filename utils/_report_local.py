@@ -882,8 +882,10 @@ def generate_word_report():
     )
     doc.add_heading("핵심 지표 요약", level=2)
     _yr = md.LATEST_ACTUAL_YEAR
+    _cy2 = datetime.datetime.now().year
     summary_rows = [
-        [f"글로벌 {_yr}년 설치 용량", f"{md.GLOBAL_CAPACITY_GWH.get(_yr, 'N/A')} GWh"],
+        [f"글로벌 {_yr}년 도입 (최신 실적)", f"{md.GLOBAL_CAPACITY_GWH.get(_yr, 'N/A')} GWh"],
+        [f"글로벌 {_cy2}년 도입 (E·전망)", f"{md.GLOBAL_CAPACITY_GWH.get(_cy2, 'N/A')} GWh"],
         [f"LFP 셀 가격 ({_yr})", f"${md.LFP_CELL_PRICE.get(_yr, 'N/A')}/kWh"],
         [f"NMC 셀 가격 ({_yr})", f"${md.NMC_CELL_PRICE.get(_yr, 'N/A')}/kWh"],
         [f"시스템 CAPEX ({_yr})", f"${md.SYSTEM_CAPEX.get(_yr, 'N/A')}/kWh"],
@@ -925,8 +927,14 @@ def generate_word_report():
     _yoy_g    = round((_cap_cur - _cap_prev) / _cap_prev * 100) if _cap_prev else 0
     _mkt_val  = md.GLOBAL_MARKET_VALUE_B_USD.get(_yr, 0)
     _cap_final = md.GLOBAL_CAPACITY_GWH.get(_final_yr, 0)
+    _cy       = datetime.datetime.now().year
+    _cap_cy   = md.GLOBAL_CAPACITY_GWH.get(_cy, 0)
+    _cy_clause = (f"보고서 작성 시점인 올해({_cy}년·E)는 약 {_cap_cy} GWh 도입이 전망됩니다(BNEF). "
+                  if (_cap_cy and _cy != _yr) else "")
     _p_interp = doc.add_paragraph(
-        f"글로벌 BESS 시장은 {_report_year_label(_yr)} 약 {_cap_cur} GWh로 추정되며, 전년 대비 약 {_yoy_g}% 성장한 것으로 분석됩니다. "
+        f"글로벌 BESS 시장은 {_report_year_label(_yr)} 약 {_cap_cur} GWh로 추정되며, 전년 대비 약 {_yoy_g}% 성장한 것으로 분석됩니다 "
+        f"(최신 '완료 실적' 연도 기준 — {_cy}년은 진행 중이라 연간 실적이 미확정이므로 직전 연도를 기준으로 함). "
+        f"{_cy_clause}"
         f"시장 규모는 약 ${_mkt_val}B USD로 추정되고, LFP 셀 단가는 {_base_yr}년 대비 약 {_lfp_drop}% 하락한 "
         f"약 ${_lfp_cur}/kWh 수준으로 추정됩니다. "
         "가격 하락·정책 지원 확대·재생에너지 연계 수요 증가가 복합적으로 시장 성장을 견인하고 있으며, "
