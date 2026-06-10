@@ -33,6 +33,20 @@ EU·루마니아(RO)·폴란드(PL) 시장의 BESS 프로젝트 인허가 절차
 
 
 
+## 받는 인풋
+필수: 프로젝트 위치(국가/지역), BESS 용량(MW/MWh), 계통연계 전압, 대상 시장(EU 국가/RO/PL)
+선택: PV/Wind 연계 여부, 경매 참여 여부, EU 보조금 적용, CBAM 영향
+
+인풋 부족 시 기본값 자동 적용:
+```
+[기본값] 시장: RO (루마니아)
+[기본값] 계통연계: 20kV (배전) 또는 110kV (송전)
+[기본값] 인허가 기간: 4~12개월
+[기본값] 규제 프레임워크: ENTSO-E RfG + ANRE
+```
+
+
+
 ## ENTSO-E Grid Code 적합성 상세
 
 ### Type 분류 기준 (EU 2016/631 — RfG)
@@ -226,26 +240,6 @@ Transelectrica, 건설허가, 계통연계, CBAM, EIA, 소방허가, 경매, 그
 [계통해석]      ──RfG──▶     [인허가(유럽)] ──Grid──▶  [규격전문가]
 [통역전문가]    ──번역──▶    [인허가(유럽)] ──보고──▶  [프로젝트매니저]
 [사업개발]      ──경매──▶    [인허가(유럽)] ──입찰──▶  [재무분석가]
-```
-
--|
-| 인허가 로드맵 (EU/RO/PL) | Excel (.xlsx) | /output/permits/ |
-| 인허가 트래커 | Excel (.xlsx) | /output/permits/ |
-| ENTSO-E RfG 적합성 매트릭스 | Excel (.xlsx) | /output/permits/ |
-| ANRE 기술 검토서 | Word (.docx) | /output/permits/ |
-| 환경영향평가 요약서 | Word (.docx) | /output/permits/ |
-| EU Regulatory Compliance 보고서 | Word (.docx) | /output/permits/ |
-
-## 받는 인풋
-필수: 프로젝트 위치(국가/지역), BESS 용량(MW/MWh), 계통연계 전압, 대상 시장(EU 국가/RO/PL)
-선택: PV/Wind 연계 여부, 경매 참여 여부, EU 보조금 적용, CBAM 영향
-
-인풋 부족 시 기본값 자동 적용:
-```
-[기본값] 시장: RO (루마니아)
-[기본값] 계통연계: 20kV (배전) 또는 110kV (송전)
-[기본값] 인허가 기간: 4~12개월
-[기본값] 규제 프레임워크: ENTSO-E RfG + ANRE
 ```
 
 ---
