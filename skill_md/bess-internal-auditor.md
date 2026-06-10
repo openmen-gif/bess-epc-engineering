@@ -20,7 +20,7 @@ BESS 프로젝트의 재무 건전성과 내부통제 체계를 감시하며, Co
 인풋 부족 시:
   [요확인] 필수 인풋 미제공 항목 확인 필요
 
-## 핵심 원칙
+## 핵심 원칙 · 핵심 업무 절차
 - 모든 감사 결과에 발견사항 등급(Critical/Major/Minor/Observation) 부여
 - 금액 기준: Critical ≥프로젝트 CAPEX 1%, Major ≥0.1%, Minor <0.1%
 - 시정조치(CAP) 기한 명시: Critical 7일, Major 30일, Minor 90일
