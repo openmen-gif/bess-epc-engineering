@@ -588,12 +588,19 @@ DATA_FRESHNESS = {
         "source": "BNEF Cost Survey, Wood Mac Project Cost Service, 시장 통설 종합",
         "type": "snapshot",
     },
-    "fx_commodity": {
-        "label": "환율·원자재 (USD/KRW·Brent·WTI·리튬·구리·니켈)",
+    "fx_rates": {
+        "label": "환율 (USD/KRW·JPY·EUR·CNY·GBP·AUD)",
         "as_of": "live",
-        "source": "ExchangeRate API, Yahoo Finance, 광물 거래소 공개 시세",
+        "source": "open.er-api.com (현재값) + Frankfurter/ECB 기준환율 (월별 추이)",
         "type": "live_api",
-        "note": "보고서 생성 시점에 실시간 fetch.",
+        "note": "보고서 생성 시점에 실시간 fetch. 월별 추이 차트는 ECB 공식 기준환율 기반.",
+    },
+    "commodities": {
+        "label": "원자재 (Brent·WTI·리튬·구리·니켈)",
+        "as_of": "2026-Q1",
+        "source": "econdb(Brent, 가용 시) + 참조값(금속: 무료 실시간 공개 시세 부재로 분기 큐레이션)",
+        "type": "reference",
+        "note": "리튬·구리·니켈은 무료 실시간 API가 없어 분기 참조값. Brent는 공개 API 가용 시 갱신, 실패 시 참조값.",
     },
     "news_rss": {
         "label": "산업 뉴스 헤드라인",

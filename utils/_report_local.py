@@ -684,6 +684,70 @@ def _chart_scenario_comparison():
     return fig
 
 
+def _chart_fx_trend():
+    """라이브 환율 월별 추이 (USD/KRW·JPY). 보고서 생성 시점에 ECB 기준환율에서 fetch.
+
+    이 차트는 매월 실제로 변하는 '진짜 라이브' 시계열이다(스냅샷 상수가 아님).
+    Returns: (fig, error_str). 데이터 없으면 (None, error).
+    """
+    from utils.data_fetchers import fetch_fx_timeseries
+    ts = fetch_fx_timeseries(symbols=("KRW", "JPY"), months=12)
+    if ts.get("error") or not ts.get("dates"):
+        return None, ts.get("error") or "데이터 없음"
+    dates = ts["dates"]
+    krw = ts["series"].get("KRW", [])
+    jpy = ts["series"].get("JPY", [])
+    x = list(range(len(dates)))
+    fig, ax1 = plt.subplots(figsize=(8, 4.2))
+    ax1.plot(x, krw, "o-", color="#1F4E79", linewidth=2, markersize=5, label="USD/KRW")
+    ax1.set_ylabel("USD/KRW", color="#1F4E79")
+    ax1.tick_params(axis="y", labelcolor="#1F4E79")
+    ax2 = ax1.twinx()
+    ax2.plot(x, jpy, "s--", color="#E8856C", linewidth=1.8, markersize=4, label="USD/JPY")
+    ax2.set_ylabel("USD/JPY", color="#E8856C")
+    ax2.tick_params(axis="y", labelcolor="#E8856C")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([d[:7] for d in dates], rotation=45, ha="right", fontsize=7)
+    if krw:
+        ax1.annotate(f"{krw[-1]:,.0f}", (x[-1], krw[-1]), textcoords="offset points",
+                     xytext=(0, 9), ha="center", fontsize=8, color="#1F4E79", fontweight="bold")
+    ax1.set_title(f"USD/KRW·JPY Monthly Trend — ECB (as of {ts['as_of']})", fontsize=12, fontweight="bold")
+    ax1.grid(axis="y", alpha=0.3)
+    l1, lab1 = ax1.get_legend_handles_labels()
+    l2, lab2 = ax2.get_legend_handles_labels()
+    ax1.legend(l1 + l2, lab1 + lab2, loc="upper left", fontsize=8)
+    fig.tight_layout()
+    return fig, None
+
+
+def _chart_eia_us_monthly():
+    """라이브 미국 BESS 운영용량 월별 추이 (EIA-860M). EIA_API_KEY 있을 때만 동작.
+
+    Returns: (fig, error_str). 키 없거나 실패 시 (None, error).
+    """
+    from utils.data_fetchers import fetch_eia_us_battery_timeseries
+    ts = fetch_eia_us_battery_timeseries(months=18)
+    if ts.get("error") or not ts.get("periods"):
+        return None, ts.get("error") or "데이터 없음"
+    periods = ts["periods"]
+    gwh = ts["gwh_est"]
+    x = list(range(len(periods)))
+    fig, ax = plt.subplots(figsize=(8, 4.2))
+    ax.plot(x, gwh, "o-", color="#2E75B6", linewidth=2, markersize=5)
+    ax.fill_between(x, gwh, alpha=0.12, color="#2E75B6")
+    step = max(1, len(x) // 12)
+    ax.set_xticks(x[::step])
+    ax.set_xticklabels([periods[i] for i in x[::step]], rotation=45, ha="right", fontsize=7)
+    ax.set_ylabel("US Operating BESS (GWh, est. @4h)")
+    ax.set_title(f"US BESS Operating Capacity — EIA Monthly (as of {ts['as_of']})", fontsize=12, fontweight="bold")
+    ax.grid(axis="y", alpha=0.3)
+    if gwh:
+        ax.annotate(f"{gwh[-1]:,.1f} GWh", (x[-1], gwh[-1]), textcoords="offset points",
+                    xytext=(0, 9), ha="center", fontsize=8, color="#2E75B6", fontweight="bold")
+    fig.tight_layout()
+    return fig, None
+
+
 # ================= Main Generator =================
 
 def generate_word_report():
@@ -829,6 +893,45 @@ def generate_word_report():
     _p_interp.paragraph_format.space_before = Pt(4)
     for _r in _p_interp.runs:
         _r.font.size = Pt(10); _r.font.name = FONT
+
+    # 라이브 지표 스냅샷 — 보고서 생성 시각 기준 실시간 수집값 (매 생성마다 갱신)
+    doc.add_heading("실시간 지표 스냅샷 (생성 시각 기준)", level=2)
+    doc.add_paragraph(
+        "아래 값은 보고서 생성 시점에 외부 공개 소스에서 실시간 수집되어, 위 스냅샷 전망치와 달리 "
+        "보고서를 생성할 때마다 변합니다. 스냅샷(분기 큐레이션) 대비 현재값을 대조하여 표시합니다."
+    )
+    try:
+        _live_fx = md.fetch_exchange_rates()
+    except Exception as _e:
+        _live_fx = {"error": str(_e)}
+    _live_rows = [["지표", "현재 라이브 값", "수집 시각 / 출처", "스냅샷 대비"]]
+    _fx_krw = _live_fx.get("USD_KRW")
+    _fx_ts = _live_fx.get("timestamp")
+    _fx_ts_str = _fx_ts.strftime("%Y-%m-%d %H:%M") if hasattr(_fx_ts, "strftime") else "—"
+    if isinstance(_fx_krw, (int, float)):
+        _live_rows.append(["USD/KRW 환율", f"{_fx_krw:,.1f} 원",
+                           f"{_fx_ts_str} / {_live_fx.get('source', 'er-api')}",
+                           "실시간 (스냅샷 아님)"])
+    else:
+        _live_rows.append(["USD/KRW 환율", "수집 실패",
+                           f"{_live_fx.get('error', 'N/A')}", "—"])
+    # EIA 미국 라이브 용량 vs 스냅샷
+    try:
+        from utils.data_fetchers import get_live_us_capacity_or_fallback
+        _us_snap = md.REGIONAL_DATA.get("미국", {}).get("installed_gwh", {}).get(_yr, 0)
+        _us_live = get_live_us_capacity_or_fallback(_us_snap)
+        if _us_live["is_live"]:
+            _delta = _us_live["value_gwh"] - _us_snap
+            _delta_pct = (_delta / _us_snap * 100) if _us_snap else 0
+            _live_rows.append(["미국 운영용량 (EIA)", f"{_us_live['value_gwh']:,.1f} GWh",
+                               f"{_us_live['as_of_str']} / EIA-860M",
+                               f"스냅샷 {_us_snap} GWh 대비 {_delta_pct:+.1f}%"])
+        else:
+            _live_rows.append(["미국 운영용량 (EIA)", f"{_us_snap} GWh (스냅샷)",
+                               f"라이브 미가용: {_us_live.get('error', 'N/A')}", "—"])
+    except Exception as _e:
+        _live_rows.append(["미국 운영용량 (EIA)", "—", f"오류: {_e}", "—"])
+    _styled_table(doc, _live_rows[0], _live_rows[1:], col_widths_mm=[38, 36, 56, 30])
 
     # 2. 시장별 심층 분석
     _h2 = doc.add_heading("2. 시장별 심층 분석", level=1)
@@ -1254,6 +1357,25 @@ def generate_word_report():
     ]
     _styled_table(doc, ["통화쌍", "환율", "BESS 영향"], fx_rows, col_widths_mm=[30, 30, 100])
 
+    # 라이브 환율 추이 차트 (매월 변하는 실시간 시계열)
+    _fig_fx, _err_fx = _chart_fx_trend()
+    if _fig_fx is not None:
+        _add_chart_to_doc(doc, _fig_fx)
+        _p_fxnote = doc.add_paragraph(
+            "※ 위 환율 추이는 보고서 생성 시점에 ECB(유럽중앙은행) 기준환율에서 실시간 수집한 "
+            "월별 시계열입니다. 스냅샷 상수가 아니므로 매월 보고서를 생성할 때마다 갱신됩니다."
+        )
+        for _r in _p_fxnote.runs:
+            _r.font.size = Pt(8); _r.font.name = FONT
+            _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+    else:
+        _p_fxerr = doc.add_paragraph(
+            f"⚠️ 실시간 환율 추이 차트를 가져오지 못했습니다 ({_err_fx}). "
+            "네트워크 제한 또는 일시적 오류일 수 있으며, 위 표의 현재값을 참고하십시오."
+        )
+        for _r in _p_fxerr.runs:
+            _r.font.size = Pt(9); _r.font.name = FONT
+
     doc.add_heading("8.2 원자재 가격 현황", level=2)
     cmd_rows = [
         ["브렌트유 (Brent)",
@@ -1282,6 +1404,37 @@ def generate_word_report():
     _p_fx.paragraph_format.space_before = Pt(4)
     for _r in _p_fx.runs:
         _r.font.size = Pt(10); _r.font.name = FONT
+
+    _cmd_src = _cmd.get("metals_source") or _cmd.get("source") or "reference"
+    _p_cmdsrc = doc.add_paragraph(
+        f"※ 환율은 실시간(open.er-api.com) 수집값입니다. 원자재 중 리튬·구리·니켈은 무료 실시간 "
+        f"공개 시세가 없어 분기 참조값({_cmd_src})이며, 브렌트유는 공개 API 가용 시 갱신됩니다. "
+        "따라서 금속 가격은 월별로 변하지 않을 수 있습니다(데이터 신선도 표 참조)."
+    )
+    for _r in _p_cmdsrc.runs:
+        _r.font.size = Pt(8); _r.font.name = FONT
+        _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+
+    # 8.3 미국 BESS 운영용량 — EIA 라이브 월별 추이
+    doc.add_heading("8.3 미국 BESS 운영용량 (EIA 라이브 추이)", level=2)
+    _fig_eia, _err_eia = _chart_eia_us_monthly()
+    if _fig_eia is not None:
+        _add_chart_to_doc(doc, _fig_eia)
+        _p_eianote = doc.add_paragraph(
+            "※ 미국 EIA Form EIA-860M(월별 운영 배터리 저장 설문)에서 실시간 수집한 월별 운영용량 "
+            "추이입니다. GWh는 평균 4시간 duration 가정의 추정치이며, 매월 신규 데이터로 갱신됩니다."
+        )
+        for _r in _p_eianote.runs:
+            _r.font.size = Pt(8); _r.font.name = FONT
+            _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+    else:
+        _p_eiaerr = doc.add_paragraph(
+            f"ℹ️ 미국 EIA 라이브 용량 추이는 현재 표시할 수 없습니다 ({_err_eia}). "
+            "EIA_API_KEY 환경변수가 설정된 배포 환경에서 자동 활성화되며, 그 전까지는 "
+            "본 보고서 2장(시장별 심층 분석)의 스냅샷 용량 수치를 참고하십시오."
+        )
+        for _r in _p_eiaerr.runs:
+            _r.font.size = Pt(9); _r.font.name = FONT
 
     # 9. 시나리오 분석
     _h9 = doc.add_heading("9. 시나리오 분석", level=1)

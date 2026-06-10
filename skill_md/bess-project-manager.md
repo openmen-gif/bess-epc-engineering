@@ -16,21 +16,7 @@ description: "PM, WBS, RACI, EVM, SPI, CPI, S-Curve, 변경관리, MOC, Claim, P
 ## 한 줄 정의
 BESS EPC 프로젝트의 기획부터 준공까지 전체 생애주기를 총괄 관리하며, 범위·일정·비용·품질·리스크를 통합 관리하고 이해관계자를 조율한다.
 
----
 
-## 받는 인풋
-필수: 프로젝트 사양(MW/MWh), 계약 구조(EPC/EPCM), 공기, 예산, 발주처 요구사항
-선택: 계약서(FIDIC 조건), WBS, 이해관계자 목록, 기존 프로젝트 실적
-
-인풋 부족 시 기본값 자동 적용:
-```
-[기본값] 계약 구조: EPC (Full Turnkey), FIDIC Silver Book
-[기본값] 프로젝트 단계: FEED → Detail Design → Procurement → Construction → Commissioning
-[기본값] 보고 주기: 주간 진행보고 + 월간 경영보고
-[기본값] 변경관리: FIDIC Clause 13 기반
-```
-
----
 
 ## 핵심 원칙
 - **수치 기반 관리** — SPI/CPI, EVM, S-Curve, Earned Value 정량 보고
@@ -40,65 +26,7 @@ BESS EPC 프로젝트의 기획부터 준공까지 전체 생애주기를 총괄
 - 변경 관리(MOC) 절차 필수 — 무승인 변경 금지
 - 이해관계자 기대치 관리 — 정기 보고 + Stakeholder Register
 
----
 
-## 핵심 역량 및 업무 범위
-
-### 1. 프로젝트 기획
-```
-구분                 내용
-──────────────────────────────────────────────
-Project Charter      프로젝트 정의, 목적, 범위, 주요 마일스톤
-WBS 수립             Work Breakdown Structure, 패키지 정의
-조직 구성            RACI Matrix, 전문가 투입 계획
-킥오프               Kick-off Meeting, 프로젝트 절차서(PEP) 수립
-```
-
-### 2. 실행 관리
-```
-구분                 내용
-──────────────────────────────────────────────
-일정 관리            CPM, Baseline, Look-Ahead, 지연 분석
-비용 관리            Budget Tracking, EVM(SPI/CPI), Forecast
-품질 관리            PQP 승인, ITP 감독, NCR/CAR 추적
-조달 관리            기자재 납기 추적, Vendor 기성 관리
-```
-
-### 3. 이해관계자 관리
-```
-이해관계자           관리 방법
-──────────────────────────────────────────────
-발주처(Owner)        주간 보고, 월간 경영보고, 변경 승인
-Sub-EPC(Fondamenta)  일일 현장회의, 주간 공정회의, 기성 검토
-기자재 공급사        납기 추적, 검사(FAT) 참여, 품질 이슈 조율
-규제 기관            인허가 진행 모니터링, 기술 협의 지원
-내부 경영진          경영 보고, Escalation, Go/No-Go 의사결정
-```
-
-### 4. 프로젝트 통제
-```
-구분                 내용
-──────────────────────────────────────────────
-변경관리(MOC)        Variation Order, Change Request, 영향 분석
-리스크 관리          Risk Register 운영, 리스크 대응 실행
-Claim 관리           Extension of Time, Additional Cost, 분쟁 예방
-Lessons Learned      프로젝트 완료 후 교훈 정리, 지식 이전
-```
-
-> 리스크 정량 분석(Monte Carlo, P50/P80/P90), 리스크 등록부 구조, 조기경보지표(EWI) 상세는 리스크 관리자(bess-risk-manager) 참조.
-> PM은 Critical/High 리스크 에스컬레이션 및 의사결정을 담당한다.
-
-### 5. 준공·인수
-```
-구분                 내용
-──────────────────────────────────────────────
-Pre-PAC 검토         Punch List 정리, 잔여 작업 확인
-PAC (Provisional)    준공 인수 증서, DLP 시작
-FAC (Final)          하자 보증 기간 종료, 최종 인수
-Project Close-out    문서 인계, As-Built, Lessons Learned
-```
-
----
 
 ## EVM (Earned Value Management)
 
@@ -106,7 +34,7 @@ Project Close-out    문서 인계, As-Built, Lessons Learned
 > PM은 아래 핵심 지표만 모니터링하고 임계값 초과 시 에스컬레이션한다.
 
 | 지표 | PM 관리 기준 | 에스컬레이션 |
-|------|------------|------------|
+||||
 | SPI | < 0.95 → 주의, < 0.90 → 경보 | Scheduler에 만회 계획 요청 |
 | CPI | < 0.95 → 주의, < 0.90 → 경보 | CFO에 예비비 사용 승인 요청 |
 
@@ -358,6 +286,439 @@ FAC (Final Acceptance)                 10%       100%       DLP 종료 + FAC Cer
 
 > Clause 20 상세는 아래 "Claim 관리" 섹션에서 별도로 다룸
 
+
+
+## 변경관리(MOC) 프로세스 상세
+
+### 개요
+변경관리(Management of Change, MOC)는 프로젝트 범위·일정·비용·품질·안전에 영향을 미치는 모든 변경을 체계적으로 관리하는 절차이다. BESS EPC 프로젝트에서는 설계 변경, 기자재 변경, 시공 방법 변경, 계약 조건 변경 등이 빈번하게 발생한다.
+
+### 1. Change Request (변경 요청) 개시
+
+#### 변경 요청 주체
+```
+주체                   변경 유형 예시
+──────────────────────────────────────────────────────────
+발주처 (Owner)         용량 변경, Grid Code 변경, 부지 변경
+시공자 (Contractor)    Value Engineering, 대체 자재, 시공 방법 변경
+설계팀 (Engineering)   설계 오류 수정, 최적화 설계 변경
+조달팀 (Procurement)   공급사 변경, 사양 대체(Alternative), 납기 조정
+현장팀 (Construction)  현장 여건 변경, 시공 순서 변경
+규제 기관              법규 변경, 인허가 조건 변경
+```
+
+#### 변경 요청 절차
+```
+1. Change Request Form(CR Form) 작성
+   - 변경 내용 기술
+   - 변경 사유
+   - 요청자 및 요청일
+   - 긴급도 표시
+
+2. 변경 번호 부여 (예: CR-2026-001)
+
+3. 변경관리 담당자(Document Controller)에게 제출
+
+4. 변경관리 로그(Change Log)에 등록
+```
+
+### 2. Impact Analysis (영향 분석)
+
+#### 분석 항목
+```
+영향 항목      분석 내용                              담당
+──────────────────────────────────────────────────────────────────
+시간 (Time)    공기 연장 일수, Critical Path 영향      공정관리자
+비용 (Cost)    직접비, 간접비, Contingency 영향        비용관리자
+품질 (Quality) 성능 사양 변경, 시험 계획 영향          QA/QC
+안전 (Safety)  안전 리스크 변경, 추가 조치 필요성      HSE 담당
+계약 (Contract) FIDIC 조항 해당 여부, Variation 해당    계약관리자
+설계 (Design)  도면/사양 변경 범위, 승인 재필요 여부    설계팀
+조달 (Procure) 기자재 변경, 추가 발주, 납기 영향        조달팀
+```
+
+#### 영향 분석 보고서 구조
+```
+1. 변경 요약 (Change Summary)
+2. 기술적 영향 (Technical Impact)
+3. 일정 영향 (Schedule Impact) — 일수 환산
+4. 비용 영향 (Cost Impact) — 금액 환산
+5. 리스크 영향 (Risk Impact)
+6. 계약 영향 (Contractual Impact) — FIDIC 조항 참조
+7. 추천 조치 (Recommendation)
+8. 첨부: 수정 도면, 견적서, 공정표 비교
+```
+
+### 3. 변경 분류 (Change Classification)
+
+```
+분류       기준                                    승인 권한         소요 기간
+──────────────────────────────────────────────────────────────────────────────
+Minor      비용 영향 < $50K                        PM 승인           3일 이내
+           공기 영향 없음                          (팀 내 결정)
+           성능 영향 없음
+
+Major      비용 영향 $50K ~ $500K                  PM + 본사 승인     7~14일
+           공기 영향 1~4주                         (경영진 검토)
+           성능 사양 변경 포함
+
+Critical   비용 영향 > $500K                       경영진 승인        14~28일
+           공기 영향 > 4주                         (이사회/투자위 검토)
+           핵심 성능 보증 변경
+           계약 구조 변경
+```
+
+### 4. 승인 권한 매트릭스 (Approval Authority Matrix)
+
+```
+변경 유형              PM    Engineering  본사 기술    본사 경영    발주처
+                             Manager      Director    (VP/CEO)    승인
+─────────────────────────────────────────────────────────────────────────
+설계 Minor             ✓     ✓            -            -           -
+설계 Major             ✓     ✓            ✓            -           ✓
+기자재 대체 (동등)     ✓     ✓            -            -           ○
+기자재 대체 (상이)     ✓     ✓            ✓            -           ✓
+시공 방법 변경         ✓     ✓            -            -           ○
+비용 < $50K            ✓     -            -            -           -
+비용 $50K~$500K        ✓     -            ✓            -           ○
+비용 > $500K           ✓     -            ✓            ✓           ✓
+공기 연장 < 2주        ✓     -            -            -           -
+공기 연장 2~4주        ✓     -            ✓            -           ○
+공기 연장 > 4주        ✓     -            ✓            ✓           ✓
+
+✓ = 필수 승인, ○ = 통보(Notification), - = 불필요
+```
+
+### 5. Variation Order (VO) 프로세스 — FIDIC 기반
+
+```
+단계                   내용                              기한
+──────────────────────────────────────────────────────────────────
+1. Instruction         발주처 또는 Engineer의 변경 지시    -
+                       (FIDIC 13.3)
+2. Notice              시공자의 비용/공기 영향 통보        변경 지시 후 28일 이내
+                       (FIDIC 20.1)
+3. Proposal            시공자의 상세 Variation Proposal    통보 후 42일 이내
+                       (비용 산출, 공기 영향, 방법론)
+4. Evaluation          발주처/Engineer의 Proposal 검토     Proposal 접수 후 42일
+                       합의 또는 협상
+5. Agreement           Variation Order 합의 및 서명        협상 완료 시
+6. Implementation      변경 작업 실행                      합의 후 즉시
+7. Payment             Variation 금액 기성 청구            다음 IPA에 포함
+```
+
+### 6. Change Log (변경 추적 관리)
+
+```
+Change Log 필수 항목:
+┌─────┬──────────┬───────┬──────┬───────┬──────┬───────┬────────┬───────┐
+│ No. │ 변경 제목 │ 요청자 │ 일자 │ 분류  │ 상태 │ 비용   │ 공기   │ 승인자│
+│     │          │       │      │       │      │ 영향   │ 영향   │      │
+├─────┼──────────┼───────┼──────┼───────┼──────┼───────┼────────┼───────┤
+│ 001 │ PCS 용량 │ Owner │ 3/15 │ Major │ 승인 │ +$200K│ +2주   │ VP   │
+│ 002 │ 케이블   │ Eng.  │ 3/20 │ Minor │ 검토 │ -$30K │ 없음   │ PM   │
+│ 003 │ 소방시스 │ Reg.  │ 3/22 │ Crit. │ 분석 │ TBD   │ TBD    │ TBD  │
+└─────┴──────────┴───────┴──────┴───────┴──────┴───────┴────────┴───────┘
+
+상태: 요청(Requested) → 분석(Analyzing) → 검토(Under Review) →
+      승인(Approved) / 반려(Rejected) → 실행(Implementing) → 완료(Closed)
+```
+
+### 7. Lessons Learned from Changes (변경 교훈)
+
+```
+주요 교훈 카테고리:
+──────────────────────────────────────────────────────────────────
+1. 사전 예방 가능했던 변경
+   - 초기 설계 검토(Design Review)에서 발견 가능했던 이슈
+   - ER(Employer's Requirements) 불명확으로 인한 변경
+   → 교훈: FEED 단계에서 ER 명확화, 발주처 질의(TQ) 적극 활용
+
+2. 외부 요인에 의한 변경
+   - 법규 변경, Grid Code 변경 등
+   → 교훈: 규제 동향 모니터링 체계 구축, 계약에 Change in Law 조항 확보
+
+3. 공급망 이슈로 인한 변경
+   - 배터리 셀 단종, 공급사 파산 등
+   → 교훈: 대체 공급사 사전 확보, Long-Lead Item 조기 발주
+
+4. 변경 관리 프로세스 개선
+   - 승인 지연으로 인한 공기 영향
+   → 교훈: 승인 기한 명시, Escalation 절차 강화
+
+5. 비용 관리
+   - 변경 누적 비용이 Contingency 초과
+   → 교훈: 변경 비용 실시간 추적, Threshold 경고 시스템 운영
+```
+
+
+
+## Claim 관리
+
+### Claim 유형
+```
+유형                        내용                              FIDIC 근거
+──────────────────────────────────────────────────────────────────────────
+EOT                         공기 연장 (Extension of Time)     Clause 8.5
+(Extension of Time)         시공자 귀책 아닌 지연 사유 발생   Clause 20.1
+
+Additional Cost             추가 비용 청구                    Clause 20.1
+                            발주처 귀책 또는 계약 변경으로
+                            발생한 추가 비용
+
+Acceleration                공기 단축(Acceleration) 비용      Clause 8.6
+                            발주처 지시에 의한 공기 단축       (Constructive
+                            또는 묵시적 가속(Constructive)     Acceleration)
+
+Prolongation Cost           공기 연장에 따른 간접비 증가      Clause 20.1
+                            현장 유지비, 장비 임대료 등
+
+Disruption                  작업 방해/비효율에 따른 비용      Clause 20.1
+                            생산성 저하 비용 청구
+
+Loss of Profit              이익 상실                        Clause 20.1
+                            (Silver Book에서는 제한적)
+```
+
+### FIDIC Clause 20 요건 (2017 Edition)
+
+#### 통보 및 제출 기한
+```
+단계               기한                      내용
+──────────────────────────────────────────────────────────────────
+1. Notice          사유 인지 후 28일 이내     클레임 사유 및 계약 근거 통보
+   (통보)           ※ 미통보 시 권리 상실     서면(Letter) 제출 필수
+                    (Time-bar)
+
+2. Fully Detailed  통보 후 84일 이내          상세 클레임 제출:
+   Claim            (또는 Engineer가 정한     - 사실 관계 기술
+   (상세 제출)       합리적 기한)             - 계약 근거 (조항 명시)
+                                              - 비용 산출 근거
+                                              - 일정 영향 분석
+                                              - 입증 자료 첨부
+
+3. Interim Claim   상세 제출 후 월별          진행 중인 사안의 경우
+   (중간 제출)      업데이트 제출             월별 업데이트 보고서
+
+4. Final Claim     사유 종료 후 28일 이내     최종 클레임:
+   (최종 제출)                                - 최종 금액 확정
+                                              - 최종 공기 영향 확정
+                                              - 모든 입증 자료 완비
+```
+
+#### 통보문(Notice) 필수 기재 사항
+```
+1. 수신인 (Engineer 또는 Employer)
+2. 계약명 및 계약 번호
+3. "Notice of Claim under Sub-Clause 20.1" 명시
+4. 클레임 사유 기술
+5. 근거 조항 (예: Sub-Clause 8.5, 13.3 등)
+6. 예상 영향 (시간, 비용) — 개략적
+7. 발신일, 서명
+8. 레퍼런스 번호 (서신 관리)
+```
+
+### Claim 문서화 요건
+
+#### 상세 클레임 보고서 구조
+```
+1. Executive Summary
+   - 클레임 개요, 청구 금액, 청구 공기
+
+2. Factual Narrative
+   - 사건 경위 (시간순 기술)
+   - 당사자 간 서신(Correspondence) 인용
+   - 현장 기록 인용
+
+3. Contractual Basis
+   - 적용 계약 조항 명시
+   - 조항별 해석 및 적용 논리
+   - 판례/선례 참조 (해당 시)
+
+4. Entitlement
+   - 시간 연장(EOT) 근거
+   - 비용 보상 근거
+
+5. Time Impact Analysis
+   - As-Planned vs As-Built 비교
+   - Delay 원인 분석 (Critical Path 영향)
+   - 공기 연장 일수 산정
+
+6. Cost Substantiation
+   - 직접비: 노무, 기자재, 장비, 하도급
+   - 간접비: 현장 관리비, 본사 경비(Hudson/Emden Formula)
+   - 금융 비용: 자금 비용 (해당 시)
+   - 합계 + Margin
+
+7. Supporting Documents
+   - 서신(Correspondence)
+   - 회의록(MOM)
+   - 현장 일지(Daily Report)
+   - 사진/영상
+   - 공정표(As-Planned, As-Built, Impacted)
+   - 견적서, 인보이스, 지급 기록
+```
+
+### Contemporaneous Records (동시 기록) 관리
+
+#### 필수 기록 항목
+```
+기록 유형                  빈도           담당            보관
+──────────────────────────────────────────────────────────────────
+Daily Site Report          매일           현장 관리자     프로젝트 서버
+진행 사진/영상             매일           QC 담당         사진 폴더
+기상 기록                  매일           HSE 담당        Daily Report 첨부
+인력/장비 투입 기록         매일           현장 관리자     Daily Report
+서신(Letter/Email)          발생 시        Document Ctrl   문서 관리 시스템
+회의록(MOM)                회의 시         PM/담당자       문서 관리 시스템
+Inspection Record          검사 시         QC 담당         QC 기록
+변경 지시(Instruction)      발생 시        PM              Change Log
+지연 통보(Delay Notice)     발생 시        PM              Claim 파일
+비용 기록(Cost Record)      월별           비용 관리자     ERP/회계 시스템
+```
+
+#### 기록 관리 원칙
+```
+1. 실시간 기록 (Real-time Recording)
+   - 사건 발생 당일 기록 원칙
+   - 사후 기록은 증거력 약화
+
+2. 객관적 기술 (Objective Description)
+   - 사실만 기재, 의견/판단 배제
+   - "발주처가 늦었다" (×) → "발주처 승인이 2026-03-15에 수령됨. 계약 기한 2026-03-01 대비 14일 지연" (○)
+
+3. 교차 참조 (Cross-referencing)
+   - 서신 번호, 도면 번호, WBS 코드 기재
+   - 관련 문서 간 상호 참조 가능하도록
+
+4. 보관 체계 (Filing System)
+   - 날짜별 + 유형별 이중 분류
+   - 원본 보관 + 디지털 백업
+   - 접근 권한 관리
+```
+
+### 분쟁 해결 단계 (Dispute Resolution Ladder)
+
+```
+단계     방법                    기한/절차                    구속력
+──────────────────────────────────────────────────────────────────────────
+1단계    협상 (Negotiation)      PM ↔ PM 수준 협의           없음
+         당사자 간 직접 해결      통상 30일 내 시도
+
+2단계    경영진 협상              양측 경영진 참여             없음
+         (Senior Management)     통상 60일 내 시도
+
+3단계    DAAB                    Dispute Adjudication/        잠정 구속력
+         (분쟁 판정/회피 위원회)   Avoidance Board              (Binding until
+                                 28일 내 결정 (FIDIC 21.4)    revised)
+                                 DAAB 결정 불복 시 28일 내
+                                 Notice of Dissatisfaction
+
+4단계    중재 (Arbitration)      ICC Rules 기반               최종 구속력
+                                 Notice of Dissatisfaction
+                                 발행 후 제기 가능
+                                 중재지: 계약에 명시
+                                 (통상 싱가포르, 런던, 파리)
+```
+
+
+
+## 라우팅 키워드
+PM, 프로젝트관리, 프로젝트매니저, 킥오프, WBS, RACI, EVM,
+SPI, CPI, S-Curve, 변경관리, MOC, Claim, PAC, FAC, Punch List,
+이해관계자, 주간보고, 월간보고, Escalation, Project Charter
+
+
+
+## 협업 관계
+```
+[공정관리]      ──일정──▶  [프로젝트매니저] ──보고──▶  [발주처]
+[재무분석가]    ──비용──▶  [프로젝트매니저] ──예산──▶  [경영진]
+[QA/QC전문가]   ──품질──▶  [프로젝트매니저] ──승인──▶  [계약전문가]
+[리스크관리자]  ──리스크──▶ [프로젝트매니저] ──대응──▶  [전 부서]
+[사업개발]      ──수주──▶  [프로젝트매니저] ──실행──▶  [전 부서]
+[현장관리자]    ──현장──▶  [프로젝트매니저] ──조율──▶  [Sub-EPC]
+```
+
+-|
+| Project Execution Plan (PEP) | Word (.docx) | /output/project-management/ |
+| 주간 진행 보고서 | Word (.docx) / PPT (.pptx) | /output/project-management/ |
+| 월간 경영 보고서 | PPT (.pptx) | /output/project-management/ |
+| RACI Matrix | Excel (.xlsx) | /output/project-management/ |
+| 변경관리 로그 (MOC Log) | Excel (.xlsx) | /output/project-management/ |
+| Lessons Learned 보고서 | Word (.docx) | /output/project-management/ |
+| Project Close-out Report | Word (.docx) | /output/project-management/ |
+
+## 받는 인풋
+필수: 프로젝트 사양(MW/MWh), 계약 구조(EPC/EPCM), 공기, 예산, 발주처 요구사항
+선택: 계약서(FIDIC 조건), WBS, 이해관계자 목록, 기존 프로젝트 실적
+
+인풋 부족 시 기본값 자동 적용:
+```
+[기본값] 계약 구조: EPC (Full Turnkey), FIDIC Silver Book
+[기본값] 프로젝트 단계: FEED → Detail Design → Procurement → Construction → Commissioning
+[기본값] 보고 주기: 주간 진행보고 + 월간 경영보고
+[기본값] 변경관리: FIDIC Clause 13 기반
+```
+
+---
+
+## 핵심 역량 및 업무 범위
+
+### 1. 프로젝트 기획
+```
+구분                 내용
+──────────────────────────────────────────────
+Project Charter      프로젝트 정의, 목적, 범위, 주요 마일스톤
+WBS 수립             Work Breakdown Structure, 패키지 정의
+조직 구성            RACI Matrix, 전문가 투입 계획
+킥오프               Kick-off Meeting, 프로젝트 절차서(PEP) 수립
+```
+
+### 2. 실행 관리
+```
+구분                 내용
+──────────────────────────────────────────────
+일정 관리            CPM, Baseline, Look-Ahead, 지연 분석
+비용 관리            Budget Tracking, EVM(SPI/CPI), Forecast
+품질 관리            PQP 승인, ITP 감독, NCR/CAR 추적
+조달 관리            기자재 납기 추적, Vendor 기성 관리
+```
+
+### 3. 이해관계자 관리
+```
+이해관계자           관리 방법
+──────────────────────────────────────────────
+발주처(Owner)        주간 보고, 월간 경영보고, 변경 승인
+Sub-EPC(Fondamenta)  일일 현장회의, 주간 공정회의, 기성 검토
+기자재 공급사        납기 추적, 검사(FAT) 참여, 품질 이슈 조율
+규제 기관            인허가 진행 모니터링, 기술 협의 지원
+내부 경영진          경영 보고, Escalation, Go/No-Go 의사결정
+```
+
+### 4. 프로젝트 통제
+```
+구분                 내용
+──────────────────────────────────────────────
+변경관리(MOC)        Variation Order, Change Request, 영향 분석
+리스크 관리          Risk Register 운영, 리스크 대응 실행
+Claim 관리           Extension of Time, Additional Cost, 분쟁 예방
+Lessons Learned      프로젝트 완료 후 교훈 정리, 지식 이전
+```
+
+> 리스크 정량 분석(Monte Carlo, P50/P80/P90), 리스크 등록부 구조, 조기경보지표(EWI) 상세는 리스크 관리자(bess-risk-manager) 참조.
+> PM은 Critical/High 리스크 에스컬레이션 및 의사결정을 담당한다.
+
+### 5. 준공·인수
+```
+구분                 내용
+──────────────────────────────────────────────
+Pre-PAC 검토         Punch List 정리, 잔여 작업 확인
+PAC (Provisional)    준공 인수 증서, DLP 시작
+FAC (Final)          하자 보증 기간 종료, 최종 인수
+Project Close-out    문서 인계, As-Built, Lessons Learned
+```
+
 ---
 
 ## 프로젝트 보고 체계
@@ -543,171 +904,6 @@ Claim 관련          우리측 Claim만 간략 언급           Claim 전략, �
              Open Issue 해소 기한 준수율  ≥ 85%         주간
 계약         Claim 통보 기한 준수율       100%          건별
              Variation 승인 소요 기간     ≤ 30일        건별
-```
-
----
-
-## 변경관리(MOC) 프로세스 상세
-
-### 개요
-변경관리(Management of Change, MOC)는 프로젝트 범위·일정·비용·품질·안전에 영향을 미치는 모든 변경을 체계적으로 관리하는 절차이다. BESS EPC 프로젝트에서는 설계 변경, 기자재 변경, 시공 방법 변경, 계약 조건 변경 등이 빈번하게 발생한다.
-
-### 1. Change Request (변경 요청) 개시
-
-#### 변경 요청 주체
-```
-주체                   변경 유형 예시
-──────────────────────────────────────────────────────────
-발주처 (Owner)         용량 변경, Grid Code 변경, 부지 변경
-시공자 (Contractor)    Value Engineering, 대체 자재, 시공 방법 변경
-설계팀 (Engineering)   설계 오류 수정, 최적화 설계 변경
-조달팀 (Procurement)   공급사 변경, 사양 대체(Alternative), 납기 조정
-현장팀 (Construction)  현장 여건 변경, 시공 순서 변경
-규제 기관              법규 변경, 인허가 조건 변경
-```
-
-#### 변경 요청 절차
-```
-1. Change Request Form(CR Form) 작성
-   - 변경 내용 기술
-   - 변경 사유
-   - 요청자 및 요청일
-   - 긴급도 표시
-
-2. 변경 번호 부여 (예: CR-2026-001)
-
-3. 변경관리 담당자(Document Controller)에게 제출
-
-4. 변경관리 로그(Change Log)에 등록
-```
-
-### 2. Impact Analysis (영향 분석)
-
-#### 분석 항목
-```
-영향 항목      분석 내용                              담당
-──────────────────────────────────────────────────────────────────
-시간 (Time)    공기 연장 일수, Critical Path 영향      공정관리자
-비용 (Cost)    직접비, 간접비, Contingency 영향        비용관리자
-품질 (Quality) 성능 사양 변경, 시험 계획 영향          QA/QC
-안전 (Safety)  안전 리스크 변경, 추가 조치 필요성      HSE 담당
-계약 (Contract) FIDIC 조항 해당 여부, Variation 해당    계약관리자
-설계 (Design)  도면/사양 변경 범위, 승인 재필요 여부    설계팀
-조달 (Procure) 기자재 변경, 추가 발주, 납기 영향        조달팀
-```
-
-#### 영향 분석 보고서 구조
-```
-1. 변경 요약 (Change Summary)
-2. 기술적 영향 (Technical Impact)
-3. 일정 영향 (Schedule Impact) — 일수 환산
-4. 비용 영향 (Cost Impact) — 금액 환산
-5. 리스크 영향 (Risk Impact)
-6. 계약 영향 (Contractual Impact) — FIDIC 조항 참조
-7. 추천 조치 (Recommendation)
-8. 첨부: 수정 도면, 견적서, 공정표 비교
-```
-
-### 3. 변경 분류 (Change Classification)
-
-```
-분류       기준                                    승인 권한         소요 기간
-──────────────────────────────────────────────────────────────────────────────
-Minor      비용 영향 < $50K                        PM 승인           3일 이내
-           공기 영향 없음                          (팀 내 결정)
-           성능 영향 없음
-
-Major      비용 영향 $50K ~ $500K                  PM + 본사 승인     7~14일
-           공기 영향 1~4주                         (경영진 검토)
-           성능 사양 변경 포함
-
-Critical   비용 영향 > $500K                       경영진 승인        14~28일
-           공기 영향 > 4주                         (이사회/투자위 검토)
-           핵심 성능 보증 변경
-           계약 구조 변경
-```
-
-### 4. 승인 권한 매트릭스 (Approval Authority Matrix)
-
-```
-변경 유형              PM    Engineering  본사 기술    본사 경영    발주처
-                             Manager      Director    (VP/CEO)    승인
-─────────────────────────────────────────────────────────────────────────
-설계 Minor             ✓     ✓            -            -           -
-설계 Major             ✓     ✓            ✓            -           ✓
-기자재 대체 (동등)     ✓     ✓            -            -           ○
-기자재 대체 (상이)     ✓     ✓            ✓            -           ✓
-시공 방법 변경         ✓     ✓            -            -           ○
-비용 < $50K            ✓     -            -            -           -
-비용 $50K~$500K        ✓     -            ✓            -           ○
-비용 > $500K           ✓     -            ✓            ✓           ✓
-공기 연장 < 2주        ✓     -            -            -           -
-공기 연장 2~4주        ✓     -            ✓            -           ○
-공기 연장 > 4주        ✓     -            ✓            ✓           ✓
-
-✓ = 필수 승인, ○ = 통보(Notification), - = 불필요
-```
-
-### 5. Variation Order (VO) 프로세스 — FIDIC 기반
-
-```
-단계                   내용                              기한
-──────────────────────────────────────────────────────────────────
-1. Instruction         발주처 또는 Engineer의 변경 지시    -
-                       (FIDIC 13.3)
-2. Notice              시공자의 비용/공기 영향 통보        변경 지시 후 28일 이내
-                       (FIDIC 20.1)
-3. Proposal            시공자의 상세 Variation Proposal    통보 후 42일 이내
-                       (비용 산출, 공기 영향, 방법론)
-4. Evaluation          발주처/Engineer의 Proposal 검토     Proposal 접수 후 42일
-                       합의 또는 협상
-5. Agreement           Variation Order 합의 및 서명        협상 완료 시
-6. Implementation      변경 작업 실행                      합의 후 즉시
-7. Payment             Variation 금액 기성 청구            다음 IPA에 포함
-```
-
-### 6. Change Log (변경 추적 관리)
-
-```
-Change Log 필수 항목:
-┌─────┬──────────┬───────┬──────┬───────┬──────┬───────┬────────┬───────┐
-│ No. │ 변경 제목 │ 요청자 │ 일자 │ 분류  │ 상태 │ 비용   │ 공기   │ 승인자│
-│     │          │       │      │       │      │ 영향   │ 영향   │      │
-├─────┼──────────┼───────┼──────┼───────┼──────┼───────┼────────┼───────┤
-│ 001 │ PCS 용량 │ Owner │ 3/15 │ Major │ 승인 │ +$200K│ +2주   │ VP   │
-│ 002 │ 케이블   │ Eng.  │ 3/20 │ Minor │ 검토 │ -$30K │ 없음   │ PM   │
-│ 003 │ 소방시스 │ Reg.  │ 3/22 │ Crit. │ 분석 │ TBD   │ TBD    │ TBD  │
-└─────┴──────────┴───────┴──────┴───────┴──────┴───────┴────────┴───────┘
-
-상태: 요청(Requested) → 분석(Analyzing) → 검토(Under Review) →
-      승인(Approved) / 반려(Rejected) → 실행(Implementing) → 완료(Closed)
-```
-
-### 7. Lessons Learned from Changes (변경 교훈)
-
-```
-주요 교훈 카테고리:
-──────────────────────────────────────────────────────────────────
-1. 사전 예방 가능했던 변경
-   - 초기 설계 검토(Design Review)에서 발견 가능했던 이슈
-   - ER(Employer's Requirements) 불명확으로 인한 변경
-   → 교훈: FEED 단계에서 ER 명확화, 발주처 질의(TQ) 적극 활용
-
-2. 외부 요인에 의한 변경
-   - 법규 변경, Grid Code 변경 등
-   → 교훈: 규제 동향 모니터링 체계 구축, 계약에 Change in Law 조항 확보
-
-3. 공급망 이슈로 인한 변경
-   - 배터리 셀 단종, 공급사 파산 등
-   → 교훈: 대체 공급사 사전 확보, Long-Lead Item 조기 발주
-
-4. 변경 관리 프로세스 개선
-   - 승인 지연으로 인한 공기 영향
-   → 교훈: 승인 기한 명시, Escalation 절차 강화
-
-5. 비용 관리
-   - 변경 누적 비용이 Contingency 초과
-   → 교훈: 변경 비용 실시간 추적, Threshold 경고 시스템 운영
 ```
 
 ---
@@ -923,176 +1119,6 @@ FAC 발급             DLP 종료 시            모든 하자 보수 완료 확
 
 ---
 
-## Claim 관리
-
-### Claim 유형
-```
-유형                        내용                              FIDIC 근거
-──────────────────────────────────────────────────────────────────────────
-EOT                         공기 연장 (Extension of Time)     Clause 8.5
-(Extension of Time)         시공자 귀책 아닌 지연 사유 발생   Clause 20.1
-
-Additional Cost             추가 비용 청구                    Clause 20.1
-                            발주처 귀책 또는 계약 변경으로
-                            발생한 추가 비용
-
-Acceleration                공기 단축(Acceleration) 비용      Clause 8.6
-                            발주처 지시에 의한 공기 단축       (Constructive
-                            또는 묵시적 가속(Constructive)     Acceleration)
-
-Prolongation Cost           공기 연장에 따른 간접비 증가      Clause 20.1
-                            현장 유지비, 장비 임대료 등
-
-Disruption                  작업 방해/비효율에 따른 비용      Clause 20.1
-                            생산성 저하 비용 청구
-
-Loss of Profit              이익 상실                        Clause 20.1
-                            (Silver Book에서는 제한적)
-```
-
-### FIDIC Clause 20 요건 (2017 Edition)
-
-#### 통보 및 제출 기한
-```
-단계               기한                      내용
-──────────────────────────────────────────────────────────────────
-1. Notice          사유 인지 후 28일 이내     클레임 사유 및 계약 근거 통보
-   (통보)           ※ 미통보 시 권리 상실     서면(Letter) 제출 필수
-                    (Time-bar)
-
-2. Fully Detailed  통보 후 84일 이내          상세 클레임 제출:
-   Claim            (또는 Engineer가 정한     - 사실 관계 기술
-   (상세 제출)       합리적 기한)             - 계약 근거 (조항 명시)
-                                              - 비용 산출 근거
-                                              - 일정 영향 분석
-                                              - 입증 자료 첨부
-
-3. Interim Claim   상세 제출 후 월별          진행 중인 사안의 경우
-   (중간 제출)      업데이트 제출             월별 업데이트 보고서
-
-4. Final Claim     사유 종료 후 28일 이내     최종 클레임:
-   (최종 제출)                                - 최종 금액 확정
-                                              - 최종 공기 영향 확정
-                                              - 모든 입증 자료 완비
-```
-
-#### 통보문(Notice) 필수 기재 사항
-```
-1. 수신인 (Engineer 또는 Employer)
-2. 계약명 및 계약 번호
-3. "Notice of Claim under Sub-Clause 20.1" 명시
-4. 클레임 사유 기술
-5. 근거 조항 (예: Sub-Clause 8.5, 13.3 등)
-6. 예상 영향 (시간, 비용) — 개략적
-7. 발신일, 서명
-8. 레퍼런스 번호 (서신 관리)
-```
-
-### Claim 문서화 요건
-
-#### 상세 클레임 보고서 구조
-```
-1. Executive Summary
-   - 클레임 개요, 청구 금액, 청구 공기
-
-2. Factual Narrative
-   - 사건 경위 (시간순 기술)
-   - 당사자 간 서신(Correspondence) 인용
-   - 현장 기록 인용
-
-3. Contractual Basis
-   - 적용 계약 조항 명시
-   - 조항별 해석 및 적용 논리
-   - 판례/선례 참조 (해당 시)
-
-4. Entitlement
-   - 시간 연장(EOT) 근거
-   - 비용 보상 근거
-
-5. Time Impact Analysis
-   - As-Planned vs As-Built 비교
-   - Delay 원인 분석 (Critical Path 영향)
-   - 공기 연장 일수 산정
-
-6. Cost Substantiation
-   - 직접비: 노무, 기자재, 장비, 하도급
-   - 간접비: 현장 관리비, 본사 경비(Hudson/Emden Formula)
-   - 금융 비용: 자금 비용 (해당 시)
-   - 합계 + Margin
-
-7. Supporting Documents
-   - 서신(Correspondence)
-   - 회의록(MOM)
-   - 현장 일지(Daily Report)
-   - 사진/영상
-   - 공정표(As-Planned, As-Built, Impacted)
-   - 견적서, 인보이스, 지급 기록
-```
-
-### Contemporaneous Records (동시 기록) 관리
-
-#### 필수 기록 항목
-```
-기록 유형                  빈도           담당            보관
-──────────────────────────────────────────────────────────────────
-Daily Site Report          매일           현장 관리자     프로젝트 서버
-진행 사진/영상             매일           QC 담당         사진 폴더
-기상 기록                  매일           HSE 담당        Daily Report 첨부
-인력/장비 투입 기록         매일           현장 관리자     Daily Report
-서신(Letter/Email)          발생 시        Document Ctrl   문서 관리 시스템
-회의록(MOM)                회의 시         PM/담당자       문서 관리 시스템
-Inspection Record          검사 시         QC 담당         QC 기록
-변경 지시(Instruction)      발생 시        PM              Change Log
-지연 통보(Delay Notice)     발생 시        PM              Claim 파일
-비용 기록(Cost Record)      월별           비용 관리자     ERP/회계 시스템
-```
-
-#### 기록 관리 원칙
-```
-1. 실시간 기록 (Real-time Recording)
-   - 사건 발생 당일 기록 원칙
-   - 사후 기록은 증거력 약화
-
-2. 객관적 기술 (Objective Description)
-   - 사실만 기재, 의견/판단 배제
-   - "발주처가 늦었다" (×) → "발주처 승인이 2026-03-15에 수령됨. 계약 기한 2026-03-01 대비 14일 지연" (○)
-
-3. 교차 참조 (Cross-referencing)
-   - 서신 번호, 도면 번호, WBS 코드 기재
-   - 관련 문서 간 상호 참조 가능하도록
-
-4. 보관 체계 (Filing System)
-   - 날짜별 + 유형별 이중 분류
-   - 원본 보관 + 디지털 백업
-   - 접근 권한 관리
-```
-
-### 분쟁 해결 단계 (Dispute Resolution Ladder)
-
-```
-단계     방법                    기한/절차                    구속력
-──────────────────────────────────────────────────────────────────────────
-1단계    협상 (Negotiation)      PM ↔ PM 수준 협의           없음
-         당사자 간 직접 해결      통상 30일 내 시도
-
-2단계    경영진 협상              양측 경영진 참여             없음
-         (Senior Management)     통상 60일 내 시도
-
-3단계    DAAB                    Dispute Adjudication/        잠정 구속력
-         (분쟁 판정/회피 위원회)   Avoidance Board              (Binding until
-                                 28일 내 결정 (FIDIC 21.4)    revised)
-                                 DAAB 결정 불복 시 28일 내
-                                 Notice of Dissatisfaction
-
-4단계    중재 (Arbitration)      ICC Rules 기반               최종 구속력
-                                 Notice of Dissatisfaction
-                                 발행 후 제기 가능
-                                 중재지: 계약에 명시
-                                 (통상 싱가포르, 런던, 파리)
-```
-
----
-
 ## RACI Matrix 예시
 
 > BESS EPC 프로젝트 주요 활동별 RACI (100MW/200MWh 기준)
@@ -1205,14 +1231,6 @@ Project Close-out Report       A/R  C    C    C    C    C    C    C    C    I   
 
 ---
 
-## 라우팅 키워드
-PM, 프로젝트관리, 프로젝트매니저, 킥오프, WBS, RACI, EVM,
-SPI, CPI, S-Curve, 변경관리, MOC, Claim, PAC, FAC, Punch List,
-이해관계자, 주간보고, 월간보고, Escalation, Project Charter
-
----
-
-
 ## 역할 경계 (소유권 구분)
 
 > **Project Manager** vs **Scheduler** 업무 구분
@@ -1222,18 +1240,6 @@ SPI, CPI, S-Curve, 변경관리, MOC, Claim, PAC, FAC, Punch List,
 | 소유권 | PM, RACI, change management (MOC), Escalation, PAC/FAC coordination | WBS detail, schedule tracking, S-Curve, CPM, EVM |
 
 **협업 접점**: PM coordinates project/change management -> Scheduler tracks WBS/schedule details
-
----
-
-## 협업 관계
-```
-[공정관리]      ──일정──▶  [프로젝트매니저] ──보고──▶  [발주처]
-[재무분석가]    ──비용──▶  [프로젝트매니저] ──예산──▶  [경영진]
-[QA/QC전문가]   ──품질──▶  [프로젝트매니저] ──승인──▶  [계약전문가]
-[리스크관리자]  ──리스크──▶ [프로젝트매니저] ──대응──▶  [전 부서]
-[사업개발]      ──수주──▶  [프로젝트매니저] ──실행──▶  [전 부서]
-[현장관리자]    ──현장──▶  [프로젝트매니저] ──조율──▶  [Sub-EPC]
-```
 
 ---
 
@@ -1247,3 +1253,18 @@ SPI, CPI, S-Curve, 변경관리, MOC, Claim, PAC, FAC, Punch List,
 | 변경관리 로그 (MOC Log) | Excel (.xlsx) | /output/project-management/ |
 | Lessons Learned 보고서 | Word (.docx) | /output/project-management/ |
 | Project Close-out Report | Word (.docx) | /output/project-management/ |
+
+## 운영 학습 (Operational Learnings)
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+
+### 재사용 지식 (세션 누적)
+- 변경(Change) 영향 평가는 4분류(범위·일정·비용·품질) + MOC 절차 + Primavera P6 반영 + EVM 모니터링이 반복 패턴 — 근거: `sessions/2026-06-01T16-40-33/bess-project-manager.md`
+- EVM 에스컬레이션 임계: SPI<0.90 → Scheduler 만회계획, CPI<0.90 → CFO 예비비 승인 — 근거: `sessions/2026-06-01T16-40-33/bess-project-manager.md`
+- 변경 비용 예시(배터리 모듈 추가): +$3M, 총예산 $45M→$48M(+6.7%), 공정 +2개월 — 근거: `sessions/2026-06-01T16-40-33/bess-project-manager.md`
+- 신규 팀(수소 하이브리드) 단계 구분 0~3 / 4~9 / 10~12개월(팀구성→상세설계→시범운영) — 근거: `sessions/2026-06-05T11-19-54/bess-project-manager.md`
+
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ EVM 주의 임계를 "<0.90 경보" 1단계로만 적용 → ✅ 스킬 기준 2단계(<0.95 주의 / <0.90 경보) 채택 — 근거: `sessions/2026-06-01T16-40-33/bess-project-manager.md`
+- ❌ 중규모(50~200MWh) 공기를 9~14개월로 표기 → ✅ 스킬 표준 18~30개월로 통일(9~14개월은 단일 블록·축약 시나리오만 인정) — 근거: `sessions/2026-06-01T16-40-33/bess-scheduler.md`
+- ❌ 산출물 날짜에 2023년 예시 사용 → ✅ 산출물 날짜는 현재 연도(2026) 기준으로 생성 — 근거: `sessions/2026-06-01T16-40-33/bess-project-manager.md`

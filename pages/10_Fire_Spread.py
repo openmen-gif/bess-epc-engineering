@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 10_Fire_Spread.py
-배터리 화재 확산 시뮬레이션 — 셀룰러 오토마타 + 3D 시각화
-Battery Fire Spread Simulation — Cellular Automata + 3D Visualisation
+배터리 화재 확산 시뮬레이션 — 결정론적 셀간 열폭주 전파 모델 + 3D 애니메이션
+Battery Fire Spread Simulation — Deterministic cell-to-cell thermal-runaway
+propagation (SFPE point-source radiation + lumped rack heating) + go.Frames
+3D animation.
+
+⚠ Reduced-order analytical model — NOT a substitute for FDS / UL 9540A
+   large-scale fire testing.
 """
 import streamlit as st
 try:
@@ -17,13 +22,14 @@ import plotly.express as px
 from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
+from utils.sim_physics import simulate_runaway, build_animation, fmt_time
 
 # ── Cell states ────────────────────────────────────────────────────────────────
 NORMAL          = 0
 HEATING         = 1
 THERMAL_RUNAWAY = 2
 FIRE            = 3
-SUPPRESSED      = 4
+SUPPRESSED      = 4   # extinguished by agent OR burned out (energy exhausted)
 
 STATE_COLORS = {
     NORMAL:          "#1f4e79",
@@ -33,159 +39,48 @@ STATE_COLORS = {
     SUPPRESSED:      "#2ecc71",
 }
 
+# Representative physics parameters per chemistry.
+# HRR per rack & TR onset temperature: REPRESENTATIVE values for screening —
+# project designs must use rack-specific UL 9540A test data.
 CHEM_PARAMS = {
-    "LFP": {"spread_prob": 0.30, "runaway_time": 8,  "label": "LFP (Lithium Iron Phosphate)"},
-    "NMC": {"spread_prob": 0.55, "runaway_time": 5,  "label": "NMC (Nickel Manganese Cobalt)"},
-    "NCA": {"spread_prob": 0.65, "runaway_time": 4,  "label": "NCA (Nickel Cobalt Aluminum)"},
-    "LTO": {"spread_prob": 0.15, "runaway_time": 12, "label": "LTO (Lithium Titanate)"},
+    "LFP": {"hrr_MW": 1.2, "onset_C": 230.0, "energy_MJ": 1200.0,
+            "label": "LFP (Lithium Iron Phosphate)"},
+    "NMC": {"hrr_MW": 2.5, "onset_C": 170.0, "energy_MJ": 2700.0,
+            "label": "NMC (Nickel Manganese Cobalt)"},
+    "NCA": {"hrr_MW": 3.0, "onset_C": 150.0, "energy_MJ": 2700.0,
+            "label": "NCA (Nickel Cobalt Aluminum)"},
+    "LTO": {"hrr_MW": 0.6, "onset_C": 280.0, "energy_MJ": 1500.0,
+            "label": "LTO (Lithium Titanate)"},
 }
 
+# eta = open-flame HRR knockdown fraction; q_cool_W = direct cooling applied
+# to exposed (non-burning) racks — only water-based agents cool surfaces.
 AGENT_PARAMS = {
-    "None":       {"suppression_rate": 0.0,  "label_ko": "없음 (소화 없음)", "label_en": "None (No Suppression)"},
-    "FM-200":     {"suppression_rate": 0.70, "label_ko": "FM-200 (HFC-227ea)", "label_en": "FM-200 (HFC-227ea)"},
-    "Novec 1230": {"suppression_rate": 0.80, "label_ko": "Novec 1230 (FK-5-1-12)", "label_en": "Novec 1230 (FK-5-1-12)"},
-    "Water Mist": {"suppression_rate": 0.50, "label_ko": "워터 미스트", "label_en": "Water Mist"},
+    "None":       {"eta": 0.0,  "q_cool_W": 0.0,
+                   "label_ko": "없음 (소화 없음)", "label_en": "None (No Suppression)"},
+    "FM-200":     {"eta": 0.70, "q_cool_W": 0.0,
+                   "label_ko": "FM-200 (HFC-227ea)", "label_en": "FM-200 (HFC-227ea)"},
+    "Novec 1230": {"eta": 0.80, "q_cool_W": 0.0,
+                   "label_ko": "Novec 1230 (FK-5-1-12)", "label_en": "Novec 1230 (FK-5-1-12)"},
+    "Water Mist": {"eta": 0.50, "q_cool_W": 20000.0,
+                   "label_ko": "워터 미스트", "label_en": "Water Mist"},
 }
 
+NFPA855_SPACING_M = 0.914   # 3 ft separation per NFPA 855
 
-# ── Simulation engine ─────────────────────────────────────────────────────────
+
+# ── Simulation engine (deterministic — see utils/sim_physics.py) ─────────────
 @st.cache_data(show_spinner=False)
 def simulate_fire_spread(rows, cols, origin_r, origin_c,
-                          chem, agent, response_sec, max_steps=60):
-    params       = CHEM_PARAMS.get(chem, CHEM_PARAMS["LFP"])
-    spread_prob  = params["spread_prob"]
-    runaway_time = params["runaway_time"]
-    supp_rate    = AGENT_PARAMS.get(agent, AGENT_PARAMS["None"])["suppression_rate"]
-
-    grid   = np.zeros((rows, cols), dtype=int)
-    heat_t = np.zeros((rows, cols), dtype=int)
-    grid[origin_r, origin_c]   = FIRE
-    heat_t[origin_r, origin_c] = runaway_time
-
-    frames, fire_counts, supp_counts = [grid.copy()], [1], [0]
-
-    for step in range(1, max_steps + 1):
-        new_grid = grid.copy()
-        supp_active = (step >= response_sec) and (supp_rate > 0)
-
-        for r in range(rows):
-            for c in range(cols):
-                state = grid[r, c]
-                if state == FIRE:
-                    if supp_active and np.random.random() < supp_rate * 0.15:
-                        new_grid[r, c] = SUPPRESSED
-                        continue
-                    for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
-                        nr, nc = r+dr, c+dc
-                        if 0 <= nr < rows and 0 <= nc < cols:
-                            if grid[nr, nc] == NORMAL and np.random.random() < spread_prob:
-                                new_grid[nr, nc] = HEATING
-                            elif grid[nr, nc] == HEATING:
-                                heat_t[nr, nc] += 1
-                                if heat_t[nr, nc] >= runaway_time:
-                                    new_grid[nr, nc] = THERMAL_RUNAWAY
-                elif state == THERMAL_RUNAWAY:
-                    new_grid[r, c] = FIRE
-                elif state == HEATING:
-                    heat_t[r, c] += 1
-                    if heat_t[r, c] >= runaway_time:
-                        new_grid[r, c] = THERMAL_RUNAWAY
-
-        grid = new_grid
-        fire_cnt = int(np.sum(grid == FIRE))
-        supp_cnt = int(np.sum(grid == SUPPRESSED))
-        frames.append(grid.copy())
-        fire_counts.append(fire_cnt)
-        supp_counts.append(supp_cnt)
-        if fire_cnt == 0 and int(np.sum(grid == HEATING)) == 0 and int(np.sum(grid == THERMAL_RUNAWAY)) == 0:
-            break
-
-    return frames, fire_counts, supp_counts
-
-
-# ── Build Plotly 3D rack grid figure ─────────────────────────────────────────
-def _rack_height(state):
-    """Map cell state to visual height for 3D bar."""
-    return {NORMAL: 0.2, HEATING: 0.5, THERMAL_RUNAWAY: 0.8, FIRE: 1.0, SUPPRESSED: 0.3}.get(state, 0.2)
-
-
-def build_3d_frame(grid, origin_r, origin_c, is_en):
-    """Return a 3D bar-chart figure for one simulation timestep."""
-    rows, cols = grid.shape
-    x_pos, y_pos, z_base, heights, colors, labels = [], [], [], [], [], []
-    state_names = {
-        NORMAL:          "정상" if not is_en else "Normal",
-        HEATING:         "가열 중" if not is_en else "Heating",
-        THERMAL_RUNAWAY: "열폭주" if not is_en else "Thermal Runaway",
-        FIRE:            "화재" if not is_en else "Fire",
-        SUPPRESSED:      "소화됨" if not is_en else "Suppressed",
-    }
-    for r in range(rows):
-        for c in range(cols):
-            state = int(grid[r, c])
-            x_pos.append(c)
-            y_pos.append(r)
-            z_base.append(0.0)
-            heights.append(_rack_height(state))
-            colors.append(STATE_COLORS[state])
-            labels.append(state_names[state])
-
-    fig = go.Figure()
-
-    # One trace per state for legend
-    for state_id, state_name in state_names.items():
-        mask = [i for i, s in enumerate(labels) if s == state_name]
-        if not mask:
-            continue
-        fig.add_trace(go.Scatter3d(
-            x=[x_pos[i] for i in mask],
-            y=[y_pos[i] for i in mask],
-            z=[heights[i] for i in mask],
-            mode='markers',
-            marker=dict(
-                size=14,
-                color=STATE_COLORS[state_id],
-                symbol='square',
-                opacity=0.9,
-            ),
-            name=state_name,
-            hovertemplate=(
-                ("행: %{y} · 열: %{x}<br>상태: " if not is_en else "Row: %{y} · Col: %{x}<br>State: ")
-                + state_name + "<extra></extra>"
-            ),
-        ))
-
-    # Mark origin
-    fig.add_trace(go.Scatter3d(
-        x=[origin_c], y=[origin_r], z=[1.3],
-        mode='markers+text',
-        marker=dict(size=10, color='white', symbol='diamond', opacity=1.0),
-        text=["🔥"],
-        textfont=dict(size=14),
-        textposition="top center",
-        name="발원 지점" if not is_en else "Fire Origin",
-        hovertemplate=("발원 지점<br>행: %{y} · 열: %{x}<extra></extra>" if not is_en
-                       else "Fire Origin<br>Row: %{y} · Col: %{x}<extra></extra>"),
-    ))
-
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(title="열 (Col)" if not is_en else "Col", backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                       tickmode='linear', tick0=0, dtick=1),
-            yaxis=dict(title="행 (Row)" if not is_en else "Row", backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                       tickmode='linear', tick0=0, dtick=1),
-            zaxis=dict(title="강도" if not is_en else "Intensity", backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                       range=[0, 1.5]),
-            bgcolor="rgba(0,0,0,0)",
-            camera=dict(eye=dict(x=1.6, y=-1.8, z=1.4)),
-        ),
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#c9d1d9",
-        legend=dict(bgcolor="rgba(30,30,30,0.6)", bordercolor="#30363d", borderwidth=1),
-        margin=dict(l=0, r=0, t=30, b=0),
-        height=500,
+                         chem, agent, spacing_m, response_sec, t_max_s):
+    cp = CHEM_PARAMS.get(chem, CHEM_PARAMS["LFP"])
+    ap = AGENT_PARAMS.get(agent, AGENT_PARAMS["None"])
+    return simulate_runaway(
+        rows, cols, (origin_r, origin_c),
+        hrr_MW=cp["hrr_MW"], onset_C=cp["onset_C"], energy_MJ=cp["energy_MJ"],
+        spacing_m=spacing_m, eta_supp=ap["eta"], q_cool_W=ap["q_cool_W"],
+        response_s=response_sec, t_max_s=t_max_s, n_frames=80,
     )
-    return fig
 
 
 # ── Main Module ───────────────────────────────────────────────────────────────
@@ -200,6 +95,10 @@ def run_fire_spread_module():
     st.title(t("p10_title"))
     st.markdown("---")
     st.info(t("p10_info"))
+    st.caption(
+        "⚠️ 축소차수 해석 모델 (SFPE 점원 복사 + 집중질량 랙 가열) — FDS / UL 9540A 실증시험을 대체하지 않습니다." if not is_en
+        else "⚠️ Reduced-order analytical model (SFPE point-source radiation + lumped rack heating) — not a substitute for FDS / UL 9540A testing."
+    )
 
     # ── 담당 부분 (Responsible Discipline) ───────────────────────────────────
     with st.expander("👷 " + ("담당 부분 지정" if not is_en else "Responsible Disciplines"), expanded=False):
@@ -231,14 +130,29 @@ def run_fire_spread_module():
         cols = int(st.number_input(t("p10_cols"), min_value=2, max_value=20, value=8, step=1))
     with p2:
         response_sec = int(st.number_input(t("p10_response"), min_value=1, max_value=300, value=10, step=1))
-        max_steps    = int(st.number_input(
-            "최대 시뮬레이션 시간 (초)" if not is_en else "Max Simulation Time (sec)",
-            min_value=10, max_value=600, value=60, step=10,
+        max_min = int(st.number_input(
+            "최대 시뮬레이션 시간 (분)" if not is_en else "Max Simulation Time (min)",
+            min_value=5, max_value=120, value=45, step=5,
         ))
+        t_max_s = max_min * 60.0
     with p3:
         agent_labels = {k: (v["label_ko"] if not is_en else v["label_en"]) for k, v in AGENT_PARAMS.items()}
         agent_key = st.selectbox(t("p10_agent"), list(agent_labels.keys()),
                                  format_func=lambda k: agent_labels[k])
+        spacing_m = st.slider(
+            "랙 간 이격거리 (m)" if not is_en else "Rack-to-Rack Clear Spacing (m)",
+            min_value=0.1, max_value=3.0, value=0.3, step=0.05,
+            help=("NFPA 855 기준 유닛 간 0.914 m (3 ft) 이격. 복사 열유속 ∝ 1/d² 이므로 "
+                  "이격거리가 전파 여부를 지배합니다." if not is_en else
+                  "NFPA 855 requires 0.914 m (3 ft) between units. Radiative flux ∝ 1/d², "
+                  "so spacing governs whether propagation occurs."),
+        )
+        if spacing_m >= NFPA855_SPACING_M:
+            st.caption("✅ " + ("NFPA 855 이격기준(0.914 m) 충족" if not is_en
+                                else "Meets NFPA 855 separation (0.914 m)"))
+        else:
+            st.caption("⚠️ " + (f"NFPA 855 기준(0.914 m) 미만 — {(NFPA855_SPACING_M - spacing_m)*100:.0f} cm 부족" if not is_en
+                                else f"Below NFPA 855 separation (0.914 m) by {(NFPA855_SPACING_M - spacing_m)*100:.0f} cm"))
 
     # ── 🔥 Fire Origin Button Grid ─────────────────────────────────────────────
     st.markdown("---")
@@ -287,45 +201,46 @@ def run_fire_spread_module():
 
     if run:
         with st.spinner("시뮬레이션 실행 중…" if not is_en else "Running fire spread simulation…"):
-            np.random.seed(42)
-            frames, fire_cnt, supp_cnt = simulate_fire_spread(
+            res = simulate_fire_spread(
                 rows, cols, origin_r, origin_c,
-                chem_key, agent_key, response_sec,
-                max_steps=max_steps,
+                chem_key, agent_key, float(spacing_m), response_sec, t_max_s,
             )
-        st.session_state["fire_frames"] = frames
-        st.session_state["fire_cnt"]    = fire_cnt
-        st.session_state["fire_supp"]   = supp_cnt
-        st.session_state["fire_sim_params"] = (rows, cols, origin_r, origin_c, chem_key, agent_key, response_sec, max_steps)
-        st.session_state["_fire_step_val"] = 0   # reset animation step
-        st.session_state["fire_playing"]  = False
+        st.session_state["fire_result"] = res
+        st.session_state["fire_sim_cfg"] = dict(
+            rows=rows, cols=cols, origin_r=origin_r, origin_c=origin_c,
+            chem=chem_key, agent=agent_key, spacing=float(spacing_m),
+            response=response_sec, t_max=t_max_s,
+        )
 
-    if "fire_frames" not in st.session_state:
+    if "fire_result" not in st.session_state:
         st.info(
             "시나리오 파라미터를 설정하고 **화재 확산 시뮬레이션 실행** 버튼을 누르세요." if not is_en
             else "Set scenario parameters and click **Run Fire Spread Simulation**."
         )
         return
 
-    frames   = st.session_state["fire_frames"]
-    fire_cnt = st.session_state["fire_cnt"]
-    supp_cnt = st.session_state["fire_supp"]
-    sim_params = st.session_state.get(
-        "fire_sim_params",
-        (rows, cols, origin_r, origin_c, chem_key, agent_key, response_sec, max_steps)
-    )
-    if len(sim_params) == 7:
-        sim_params = (*sim_params, max_steps)
-        
-    _, _, sim_or, sim_oc, sim_chem, sim_agent, sim_resp, sim_max_steps = sim_params
+    res      = st.session_state["fire_result"]
+    cfg      = st.session_state.get("fire_sim_cfg", dict(
+        rows=rows, cols=cols, origin_r=origin_r, origin_c=origin_c,
+        chem=chem_key, agent=agent_key, spacing=float(spacing_m),
+        response=response_sec, t_max=t_max_s,
+    ))
+    times    = res["times"]
+    T_frames = res["T_frames"]
+    frames   = res["state_frames"]
+    fire_cnt = res["fire_counts"]
+    supp_cnt = res["supp_counts"]
     n_steps  = len(frames)
+    onset_C  = CHEM_PARAMS[cfg["chem"]]["onset_C"]
 
-    max_fire  = max(fire_cnt)
+    # racks that EVER ignited (cumulative spread extent)
+    ever_fire = int(np.sum(np.maximum.reduce([(g == FIRE).astype(int) | (g == SUPPRESSED).astype(int)
+                                              for g in frames])))
     max_supp  = supp_cnt[-1]
 
     km1, km2, km3 = st.columns(3)
-    km1.metric(t("p10_total_t"),    f"{n_steps} sec")
-    km2.metric(t("p10_max_racks"),  f"{max_fire} racks")
+    km1.metric(t("p10_total_t"),    fmt_time(times[-1]))
+    km2.metric(t("p10_max_racks"),  f"{ever_fire} racks")
     km3.metric(t("p10_suppressed"), f"{max_supp} racks")
 
     st.markdown("---")
@@ -336,90 +251,91 @@ def run_fire_spread_module():
         "⚖️ " + ("방화 시스템 비교"           if not is_en else "Suppression Comparison"),
     ])
 
-    # ── Tab 1: @st.fragment — runs every 0.4s independently, no full-page rerun ──
+    _fire_cs = [
+        [0.00, STATE_COLORS[NORMAL]],
+        [0.25, STATE_COLORS[HEATING]],
+        [0.50, STATE_COLORS[THERMAL_RUNAWAY]],
+        [0.75, STATE_COLORS[FIRE]],
+        [1.00, STATE_COLORS[SUPPRESSED]],
+    ]
+    _state_labels = [t("p10_state0"), t("p10_state1"), t("p10_state2"),
+                     t("p10_state3"), t("p10_state4")]
+    _dark = dict(
+        paper_bgcolor="rgba(0,0,0,0)",
+        font_color="#c9d1d9",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+    frame_names = [f"k{i}" for i in range(n_steps)]
+    time_labels = [fmt_time(tt) for tt in times]
+
+    # ── Tab 1: go.Frames animations — rack temperature (3D) + state map (2D) ──
     with tab1:
-        _fire_cs = [
-            [0.00, STATE_COLORS[NORMAL]],
-            [0.25, STATE_COLORS[HEATING]],
-            [0.50, STATE_COLORS[THERMAL_RUNAWAY]],
-            [0.75, STATE_COLORS[FIRE]],
-            [1.00, STATE_COLORS[SUPPRESSED]],
-        ]
-        _state_labels = [t("p10_state0"), t("p10_state1"), t("p10_state2"),
-                         t("p10_state3"), t("p10_state4")]
-        _dark = dict(
-            paper_bgcolor="rgba(0,0,0,0)",
-            font_color="#c9d1d9",
-            plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(l=0, r=10, t=40, b=40),
-        )
+        col3d, col2d = st.columns([6, 5])
 
-        @st.fragment(run_every=0.4)
-        def _fire_anim():
-            _playing  = st.session_state.get("fire_playing", False)
-            _step_val = min(int(st.session_state.get("_fire_step_val", 0)), n_steps - 1)
+        with col3d:
+            st.markdown("**🌡️ " + ("3D 랙 온도장 (높이 = 온도)" if not is_en
+                                     else "3D Rack Temperature Field (height = temp)") + "**")
 
-            # Play / Pause
-            bcol1, bcol2, _ = st.columns([1, 1, 10])
-            with bcol1:
-                if st.button("▶ " + ("재생" if not is_en else "Play"), key="fire_play_btn"):
-                    st.session_state["_fire_step_val"] = 0
-                    st.session_state["fire_playing"] = True
-            with bcol2:
-                if st.button("⏸", key="fire_pause_btn"):
-                    st.session_state["fire_playing"] = False
-
-            _step = st.slider("t (sec)", 0, n_steps - 1, _step_val, key="fire_step_sl")
-            st.session_state["_fire_step_val"] = _step
-
-            # 3D + 2D
-            col3d, col2d = st.columns([6, 5])
-
-            def _3d_surf(grid: np.ndarray) -> go.Surface:
-                r_n, c_n = grid.shape
-                z_surf = [[_rack_height(int(grid[r, c])) for c in range(c_n)]
-                          for r in range(r_n)]
+            def _T_surf(Tg):
                 return go.Surface(
-                    x=list(range(c_n)), y=list(range(r_n)), z=z_surf,
-                    surfacecolor=grid.astype(float).tolist(),
-                    colorscale=_fire_cs, cmin=0, cmax=4,
-                    showscale=False, opacity=0.92,
-                    hovertemplate=("행: %{y} · 열: %{x}<extra></extra>" if not is_en
-                                   else "Row: %{y} · Col: %{x}<extra></extra>"),
+                    x=list(range(cfg["cols"])), y=list(range(cfg["rows"])), z=Tg,
+                    colorscale="Inferno", cmin=25.0, cmax=700.0,
+                    colorbar=dict(title="°C", thickness=12, x=1.02),
+                    hovertemplate=("행: %{y} · 열: %{x}<br><b>T: %{z:.0f}°C</b><extra></extra>" if not is_en
+                                   else "Row: %{y} · Col: %{x}<br><b>T: %{z:.0f}°C</b><extra></extra>"),
                 )
 
+            onset_plane = go.Surface(
+                x=[0, cfg["cols"] - 1], y=[0, cfg["rows"] - 1],
+                z=[[onset_C, onset_C], [onset_C, onset_C]],
+                colorscale=[[0, "rgba(255,255,0,0.22)"], [1, "rgba(255,255,0,0.22)"]],
+                showscale=False,
+                name=(f"열폭주 개시 {onset_C:.0f}°C" if not is_en else f"TR onset {onset_C:.0f}°C"),
+                hovertemplate=(f"열폭주 개시 온도 {onset_C:.0f}°C (UL 9540A 시험값 사용 권장)<extra></extra>" if not is_en
+                               else f"TR onset {onset_C:.0f}°C (use UL 9540A test data)<extra></extra>"),
+            )
             origin_marker = go.Scatter3d(
-                x=[sim_oc], y=[sim_or], z=[1.35],
+                x=[cfg["origin_c"]], y=[cfg["origin_r"]], z=[720],
                 mode='markers+text',
-                marker=dict(size=10, color='white', symbol='diamond', opacity=1.0),
-                text=["🔥"], textfont=dict(size=14),
-                textposition="top center",
+                marker=dict(size=8, color='white', symbol='diamond', opacity=1.0),
+                text=["🔥"], textfont=dict(size=13), textposition="top center",
                 name="발원 지점" if not is_en else "Fire Origin",
+                hovertemplate=("발원 지점<extra></extra>" if not is_en else "Fire Origin<extra></extra>"),
             )
 
-            with col3d:
-                st.markdown("**🔥 " + ("3D 화재 확산" if not is_en else "3D Fire Spread") + "**")
-                fig_3d = go.Figure(data=[_3d_surf(frames[_step]), origin_marker])
-                fig_3d.update_layout(
-                    **_dark, height=460,
-                    scene=dict(
-                        xaxis=dict(title="열 (Col)" if not is_en else "Col",
-                                   backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                                   tickmode='linear', tick0=0, dtick=1),
-                        yaxis=dict(title="행 (Row)" if not is_en else "Row",
-                                   backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                                   tickmode='linear', tick0=0, dtick=1),
-                        zaxis=dict(title="강도" if not is_en else "Intensity",
-                                   backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
-                                   range=[0, 1.5]),
-                        bgcolor="rgba(0,0,0,0)",
-                        camera=dict(eye=dict(x=1.6, y=-1.8, z=1.4)),
-                    ),
-                    legend=dict(bgcolor="rgba(30,30,30,0.6)", bordercolor="#30363d", borderwidth=1),
-                )
-                st.plotly_chart(fig_3d, use_container_width=True)
+            layout_3d = dict(
+                **_dark, height=520,
+                margin=dict(l=0, r=0, t=50, b=60),
+                title=("랙 온도 진행 — 점원 복사 가열" if not is_en
+                       else "Rack Temperature Evolution — Point-Source Radiative Heating"),
+                scene=dict(
+                    xaxis=dict(title="열 (Col)" if not is_en else "Col",
+                               backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
+                               tickmode='linear', tick0=0, dtick=1),
+                    yaxis=dict(title="행 (Row)" if not is_en else "Row",
+                               backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
+                               tickmode='linear', tick0=0, dtick=1),
+                    zaxis=dict(title="온도 (°C)" if not is_en else "Temp (°C)",
+                               backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d",
+                               range=[0, 780]),
+                    bgcolor="rgba(0,0,0,0)",
+                    camera=dict(eye=dict(x=1.6, y=-1.8, z=1.4)),
+                ),
+                legend=dict(bgcolor="rgba(30,30,30,0.6)", bordercolor="#30363d", borderwidth=1),
+            )
+            fig_3d = build_animation(
+                base_traces=[_T_surf(T_frames[0]), onset_plane, origin_marker],
+                frame_traces_list=[[_T_surf(Tg)] for Tg in T_frames],
+                frame_names=frame_names, time_labels=time_labels,
+                animated_trace_idx=[0], layout=layout_3d,
+                duration_ms=120, prefix="t = ",
+            )
+            st.plotly_chart(fig_3d, use_container_width=True, key="fire_3d_anim")
 
-            def _2d_hmap(grid: np.ndarray) -> go.Heatmap:
+        with col2d:
+            st.markdown("**📋 " + ("2D 상태 맵" if not is_en else "2D State Map") + "**")
+
+            def _2d_hmap(grid):
                 return go.Heatmap(
                     z=grid.astype(float),
                     colorscale=_fire_cs, zmin=0, zmax=4, showscale=True,
@@ -430,48 +346,45 @@ def run_fire_spread_module():
                                    else "Row: %{y} · Col: %{x}<extra></extra>"),
                 )
 
-            with col2d:
-                st.markdown("**📋 " + ("2D 뷰" if not is_en else "2D View") + "**")
-                fig_2d = go.Figure(data=[_2d_hmap(frames[_step])])
-                fig_2d.update_layout(
-                    **_dark, height=460,
-                    xaxis=dict(title="열 (Col)" if not is_en else "Col",
-                               tickmode='linear', tick0=0, dtick=1,
-                               gridcolor='rgba(0,0,0,0)', zeroline=False),
-                    yaxis=dict(title="행 (Row)" if not is_en else "Row",
-                               tickmode='linear', tick0=0, dtick=1,
-                               gridcolor='rgba(0,0,0,0)', zeroline=False,
-                               autorange='reversed'),
-                )
-                st.plotly_chart(fig_2d, use_container_width=True)
-
-            st.caption(
-                "3D: Surface 높이 = 화재 강도 | 2D: 격자 색상 = 상태 | ▶/⏸ + 슬라이더로 시간 제어 | ◆ = 발원 지점"
-                if not is_en else
-                "3D: Surface height = fire intensity | 2D: cell colour = state | ▶/⏸ + slider = time | ◆ = origin"
+            layout_2d = dict(
+                **_dark, height=520,
+                margin=dict(l=0, r=10, t=50, b=60),
+                title=("상태 전이 (정상→가열→열폭주→화재→소화/소진)" if not is_en
+                       else "State Transitions (Normal→Heating→TR→Fire→Supp.)"),
+                xaxis=dict(title="열 (Col)" if not is_en else "Col",
+                           tickmode='linear', tick0=0, dtick=1,
+                           gridcolor='rgba(0,0,0,0)', zeroline=False),
+                yaxis=dict(title="행 (Row)" if not is_en else "Row",
+                           tickmode='linear', tick0=0, dtick=1,
+                           gridcolor='rgba(0,0,0,0)', zeroline=False,
+                           autorange='reversed'),
             )
+            fig_2d = build_animation(
+                base_traces=[_2d_hmap(frames[0])],
+                frame_traces_list=[[_2d_hmap(g)] for g in frames],
+                frame_names=frame_names, time_labels=time_labels,
+                animated_trace_idx=[0], layout=layout_2d,
+                duration_ms=120, prefix="t = ",
+            )
+            st.plotly_chart(fig_2d, use_container_width=True, key="fire_2d_anim")
 
-            with st.expander("📊 " + ("최종 상태 요약" if not is_en else "Final State Summary"), expanded=False):
-                cur_g = frames[-1]
-                ca, cb, cc = st.columns(3)
-                ca.metric("🔥 " + ("화재" if not is_en else "Fire"),  str(int(np.sum(cur_g == FIRE))))
-                cb.metric("💨 " + ("소화" if not is_en else "Supp."), str(int(np.sum(cur_g == SUPPRESSED))))
-                cc.metric("🌡️ " + ("가열" if not is_en else "Heat"),
-                          str(int(np.sum(cur_g == HEATING)) + int(np.sum(cur_g == THERMAL_RUNAWAY))))
+        st.caption(
+            "3D: 높이·색상 = 랙 온도(°C), 노란 평면 = 열폭주 개시 온도 | 2D: 셀 색상 = 상태 | ▶ 재생 + 슬라이더 = 실제 경과 시간" if not is_en
+            else "3D: height/colour = rack temp (°C), yellow plane = TR onset | 2D: cell colour = state | ▶ Play + slider = real elapsed time"
+        )
 
-            # Auto-advance inside fragment — no st.rerun(), no page re-render
-            if _playing and _step < n_steps - 1:
-                st.session_state["_fire_step_val"] = _step + 1
-            elif _playing:
-                st.session_state["fire_playing"] = False
-
-        _fire_anim()
+        with st.expander("📊 " + ("최종 상태 요약" if not is_en else "Final State Summary"), expanded=False):
+            cur_g = frames[-1]
+            ca, cb, cc = st.columns(3)
+            ca.metric("🔥 " + ("화재" if not is_en else "Fire"),  str(int(np.sum(cur_g == FIRE))))
+            cb.metric("💨 " + ("소화/소진" if not is_en else "Supp./Burned"), str(int(np.sum(cur_g == SUPPRESSED))))
+            cc.metric("🌡️ " + ("가열" if not is_en else "Heat"),
+                      str(int(np.sum(cur_g == HEATING)) + int(np.sum(cur_g == THERMAL_RUNAWAY))))
 
     # ── Tab 2: Area Over Time ─────────────────────────────────────────────────
     with tab2:
-        times = list(range(len(fire_cnt)))
         fire_lbl = "화재 랙" if not is_en else "Fire Racks"
-        supp_lbl = "소화됨"  if not is_en else "Suppressed Racks"
+        supp_lbl = "소화/소진 랙"  if not is_en else "Suppressed/Burned Racks"
 
         df = pd.DataFrame({
             t("p10_time_ax"): times,
@@ -484,9 +397,9 @@ def run_fire_spread_module():
             color_discrete_map={fire_lbl: "#c0392b", supp_lbl: "#2ecc71"},
             markers=True,
         )
-        if sim_resp < len(times):
+        if cfg["response"] < times[-1]:
             fig_area.add_vline(
-                x=sim_resp, line_dash="dash", line_color="#3498db",
+                x=cfg["response"], line_dash="dash", line_color="#3498db",
                 annotation_text="소화 시스템 작동" if not is_en else "Suppression Activated",
             )
         fig_area.update_layout(
@@ -502,24 +415,25 @@ def run_fire_spread_module():
             key="dl_fire_csv",
         )
 
-    # ── Tab 3: Suppression Comparison ─────────────────────────────────────────
+    # ── Tab 3: Suppression Comparison (deterministic, identical scenario) ────
     with tab3:
         st.markdown(
-            "각 소화 시스템을 동일 조건에서 시뮬레이션하여 최대 확산 랙 수를 비교합니다." if not is_en
-            else "Runs the same scenario with each suppression system and compares max racks affected."
+            "각 소화 시스템을 동일 조건에서 시뮬레이션하여 화재 영향 랙 수(누적)를 비교합니다 — 결정론적 모델이므로 차이는 순수하게 소화 성능에 기인합니다." if not is_en
+            else "Runs the IDENTICAL scenario with each suppression system — the model is deterministic, so differences are attributable purely to suppression performance."
         )
         cmp_results = []
         sys_lbl  = "소화 시스템" if not is_en else "System"
-        rack_lbl = "최대 화재 랙 수" if not is_en else "Max Racks on Fire"
+        rack_lbl = "화재 영향 랙 수 (누적)" if not is_en else "Racks Ever Ignited"
         for ag, ap in AGENT_PARAMS.items():
-            np.random.seed(42)
-            _, fc, _ = simulate_fire_spread(
-                sim_params[0], sim_params[1], sim_or, sim_oc,
-                sim_chem, ag, sim_resp,
+            r2 = simulate_fire_spread(
+                cfg["rows"], cfg["cols"], cfg["origin_r"], cfg["origin_c"],
+                cfg["chem"], ag, cfg["spacing"], cfg["response"], cfg["t_max"],
             )
+            ever2 = int(np.sum(np.maximum.reduce(
+                [(g == FIRE).astype(int) | (g == SUPPRESSED).astype(int) for g in r2["state_frames"]])))
             cmp_results.append({
                 sys_lbl:  ap["label_ko" if not is_en else "label_en"],
-                rack_lbl: max(fc),
+                rack_lbl: ever2,
             })
         df_cmp = pd.DataFrame(cmp_results)
         fig_cmp = px.bar(
@@ -533,6 +447,45 @@ def run_fire_spread_module():
         )
         st.plotly_chart(fig_cmp, use_container_width=True)
 
+    # ── Methodology & Assumptions ─────────────────────────────────────────────
+    with st.expander("📐 " + ("해석 방법론 & 가정" if not is_en else "Methodology & Assumptions")):
+        st.markdown(
+            (
+                "**셀간 열폭주 전파 모델 (결정론적 — 난수 없음):**\n\n"
+                "- **복사 열유속 (SFPE 점원 모델):** q″ = χr·Q/(4π·d²), χr = 0.30, "
+                "d = 이격거리 + 랙 폭 0.6 m (대각선 ×√2 → 유속 ½)\n"
+                "- **인접 랙 가열 (집중질량):** m·c·dT/dt = q″·A_exp − h·A·(T − T_amb) − Q_cool,supp "
+                "(m·c = 1.2 MJ/K, A_exp = 4 m², h·A = 60 W/K)\n"
+                "- **열폭주 개시:** T ≥ T_onset (화학종별 대표값 — LFP 230 / NMC 170 / NCA 150 / LTO 280 °C). "
+                "실제 설계에는 UL 9540A 셀/모듈/유닛 시험값 적용 필수\n"
+                "- **연소 지속:** 랙 방출에너지(MJ)를 HRR로 나눈 시간 동안 연소 후 소진\n"
+                "- **소화:** 반응시간 이후 화염 HRR을 (1−η)로 저감, η/90초 노출 후 진화 — 단 진화 후에도 "
+                "15 % 잔여 발열(벤트가스 스몰더링) 유지. 가스계 소화제(FM-200/Novec)는 표면 냉각 없음, "
+                "워터미스트는 피폭 랙에 20 kW 직접 냉각\n"
+                "- **NFPA 855:** 유닛 간 0.914 m (3 ft) 이격 기준 — q″ ∝ 1/d² 이므로 기준 이상 이격 시 "
+                "전파가 차단되는 효과를 본 모델에서 직접 확인 가능\n\n"
+                "**한계:** 화염 충돌(직접 접염), 벤트가스 제트화염, 천장열기류 재복사, 배연 영향은 미반영. "
+                "가스계 소화제는 개방 화염만 억제하며 셀 내부 연쇄 열폭주를 멈추지 못할 수 있습니다. "
+                "성능 검증은 UL 9540A 유닛 시험 + FDS 해석이 필요합니다."
+            ) if not is_en else (
+                "**Cell-to-cell thermal-runaway propagation model (deterministic — no randomness):**\n\n"
+                "- **Radiative flux (SFPE point-source model):** q″ = χr·Q/(4π·d²), χr = 0.30, "
+                "d = clear spacing + 0.6 m rack width (diagonal ×√2 → half flux)\n"
+                "- **Target rack heating (lumped):** m·c·dT/dt = q″·A_exp − h·A·(T − T_amb) − Q_cool,supp "
+                "(m·c = 1.2 MJ/K, A_exp = 4 m², h·A = 60 W/K)\n"
+                "- **TR onset:** T ≥ T_onset (representative per chemistry — LFP 230 / NMC 170 / NCA 150 / LTO 280 °C). "
+                "Project designs MUST use UL 9540A cell/module/unit test data\n"
+                "- **Burn duration:** releasable rack energy (MJ) divided by HRR; rack burns out when exhausted\n"
+                "- **Suppression:** after response time, open-flame HRR knocked down by (1−η); extinguished after "
+                "~90/η s exposure — but 15 % residual heat release (vent-gas smoldering) persists. Gaseous agents "
+                "(FM-200/Novec) provide no surface cooling; water mist adds 20 kW direct cooling to exposed racks\n"
+                "- **NFPA 855:** 0.914 m (3 ft) unit separation — since q″ ∝ 1/d², the model directly demonstrates "
+                "propagation arrest at or above this spacing\n\n"
+                "**Limitations:** direct flame impingement, vent-gas jet flames, ceiling-layer re-radiation and "
+                "ventilation effects are not modelled. Gaseous agents suppress open flaming but may not arrest "
+                "internal cell-to-cell runaway. Verify with UL 9540A unit-level testing + FDS."
+            )
+        )
 
 
 run_fire_spread_module()

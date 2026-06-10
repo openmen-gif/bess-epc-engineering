@@ -3,6 +3,11 @@ name: bess-standards-usa
 description: "BESS EPC 미국(US) 규격·표준·인허가 상세"
 ---
 
+> [!NOTE]
+> **[Hybrid 에이전트 호환성 구문]**
+> - **VSCode (Claude Code) 인식용:** 이 문서를 전문가 페르소나(Persona)의 지식 컨텍스트로 활용하여 텍스트 및 코드 기반 답변을 사용자에게 제공하세요.
+> - **Antigravity (Agent) 인식용:** 이 문서를 도메인 지식(Skill)으로 로드하세요. 계산, 파일 생성 또는 시스템 연동이 필요한 경우, 직접 Python 코드를 작성하고 터미널 도구(`run_command`)를 실행하여 워크플로우를 완수하세요.
+
 > **규격 스킬 체계**: 본 문서는 bess-standards-analyst 시장별 상세 중 하나이다.
 > - 공통: bess-standards-analyst (비교표·산출물·원칙)
 > - 한국: bess-standards-korea (KR)
@@ -352,11 +357,21 @@ NEC (NFPA 70) Article 706 — ESS 배선 기준:
 └── Residential (R): 대부분 불허 (소규모 residential ESS 제외)
 ```
 
----
 
-
----
 
 ## 라우팅 키워드
 US, 미국, IEEE1547, UL9540, UL9540A, NFPA855, NERCCIP, FERC, CAISO, ERCOT, PJM, IRA, ITC, NEC706
 bess-standards-usa
+
+## 운영 학습 (Operational Learnings)
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+
+### 재사용 지식 (세션 누적)
+- IEEE 1547-2018(Category I/II/III 전압·주파수 응답, THD ≤5%), UL 9540/9540A, NFPA 855(이격거리·소화), AHJ 승인 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
+- 연방 FERC Order 841(ESS 도매시장 참여), NERC CIP-002~014(사이버보안); 주별 CPUC(CA)/PUCT(TX/ERCOT) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
+- IRA/ITC: ESS 최대 40% 세액공제(국내제조·에너지커뮤니티 조건), MACRS 5/7년 가속상각 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
+- 인허가 시퀀스: FERC MBR → ISO/RTO Interconnection Study → 주 PUC → 환경/지방허가 → 시운전 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
+
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ BMS HS코드 "8514.10" → ✅ 8514는 산업용 전기로(furnace), BMS는 전자제어로 8537/8504 계열이 적절([요확인]) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`

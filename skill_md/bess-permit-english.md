@@ -23,21 +23,7 @@ description: "인허가 전문가(영어권). US/AU/UK FERC, AEMO, Ofgem, G99, N
 ## 한 줄 정의
 미국(US)·호주(AU)·영국(UK) 시장의 BESS 프로젝트 인허가 절차를 총괄하며, 연방/주/지방 규제 체계에 따른 인허가 로드맵을 수립하고 관리한다.
 
----
 
-## 받는 인풋
-필수: 프로젝트 위치(주/State), BESS 용량(MW/MWh), 계통연계 전압, 대상 시장(US/AU/UK)
-선택: 토지 소유 형태, 환경 민감 지역 여부, ITC/PTC 적용, 기존 발전소 연계
-
-인풋 부족 시 기본값 자동 적용:
-```
-[기본값] 시장: US (미국)
-[기본값] 계통연계: HV (69kV~230kV)
-[기본값] 인허가 기간: 6~18개월
-[기본값] 환경 심사: NEPA (US), EPBC Act (AU), EIA Regs (UK)
-```
-
----
 
 ## 핵심 원칙
 - **규제 기관·조항 인용 필수** — FERC Order 2222, NER §5.3, G99 §12
@@ -47,48 +33,7 @@ description: "인허가 전문가(영어권). US/AU/UK FERC, AEMO, Ofgem, G99, N
 
 > **[Cross-Ref]** UL9540A/NFPA855 열폭주 시험·이격거리·방호 설계 상세: [`bess-fire-engineer.md`](./bess-fire-engineer.md) 참조
 
----
 
-## 시장별 인허가 체계
-
-### 미국 (US)
-```
-인허가                    근거 법령/기관              관할         소요기간
-────────────────────────────────────────────────────────────────────
-Interconnection Agreement FERC Order 2222/2003        ISO/RTO      6~18개월
-Land Use Permit           Local Zoning Code           County       2~6개월
-Building Permit           IBC/Local Building Code     County       1~3개월
-Environmental Review      NEPA / State CEQA(CA)       Federal/State 3~12개월
-Fire Marshal Review       NFPA 855, IFC              Fire Dept     1~2개월
-Electrical Permit         NEC/NFPA 70                Local AHJ    2~4주
-ITC/PTC Qualification     IRC §48/§45, IRA 2022      IRS/DOE      신청 시
-```
-
-### 호주 (AU)
-```
-인허가                    근거 법령/기관              관할         소요기간
-────────────────────────────────────────────────────────────────────
-Connection Agreement      NER Chapter 5               AEMO/TNSP   6~12개월
-Development Approval      State Planning Act          State/Council 3~6개월
-Environmental Approval    EPBC Act 1999               DAWE         3~12개월
-Electrical Safety         State Electrical Safety Act State Regulator 1~2개월
-Generator Registration    NER §2.2                    AEMO         2~4개월
-AS 4777 Compliance        AS 4777.2:2020              Clean Energy Council
-```
-
-### 영국 (UK)
-```
-인허가                    근거 법령/기관              관할         소요기간
-────────────────────────────────────────────────────────────────────
-Grid Connection           G99/G100, CUSC             DNO/NGESO    6~18개월
-Planning Permission       Town & Country Planning Act LPA          3~6개월
-EIA Screening/Scoping     EIA Regulations 2017        LPA          2~4개월
-Building Regulations      Building Regs 2010          Building Control 1~2개월
-Environmental Permit      Environmental Permitting    Environment Agency 2~4개월
-Generation Licence        Electricity Act 1989        Ofgem        (50MW↑)
-```
-
----
 
 ## Interconnection Process 상세
 
@@ -207,6 +152,128 @@ Grid Upgrade 비용 배분 (FERC Order 2023):
 └── CfD (Contract for Difference): ESS 단독 미적용, Hybrid 검토
 ```
 
+
+
+## IRA/ITC 관련 인허가 연계
+
+### IRA (Inflation Reduction Act) — BESS 인허가 연계 사항
+```
+항목                          인허가 연계                    영향
+────────────────────────────────────────────────────────────────
+ITC (Investment Tax Credit)   발전설비 등록, 상업운전일(COD) 확인  세액공제 30% (기본)
+ → IRC §48, IRA §13302       COD 지연 시 ITC 적용 시기 변경
+
+Domestic Content Bonus        제조 원산지 증명서 제출            추가 10%p 세액공제
+ → IRA §13101                조달 단계에서 미국산 비율 관리 필수
+                              Steel/Iron: 100% 미국산
+                              Manufactured Components: 40%+ (2025), 55%+ (2026)
+                              [관세/통관 서류와 연계]
+
+Prevailing Wage              건설 노무 임금 기준 충족 증빙       미충족 시 ITC 6%로 감소
+ → IRA §13101(g)             Davis-Bacon Act 기준 임금 지급 증명
+                              건설허가(Building Permit) 단계에서 반영 필수
+
+Apprenticeship               등록 견습생 비율 충족 증빙          미충족 시 ITC 6%로 감소
+ → IRA §13101(g)             총 노동시간의 12.5%+ (2024~)
+
+Energy Community Bonus       프로젝트 위치 확인 증빙             추가 10%p 세액공제
+ → IRA §13101                Brownfield, 폐광 지역, 화석연료 고용 지역
+                              Land Use Permit 신청 시 위치 증빙 활용
+
+Low-Income Community Bonus   저소득 지역 증빙, 혜택 공유 계획    추가 10~20%p 세액공제
+ → IRA §13103                별도 DOE 배정 프로그램 신청 필요
+
+ITC 세액공제 총정리:
+├── 기본: 30% (Prevailing Wage + Apprenticeship 충족 시)
+├── + Domestic Content: +10%
+├── + Energy Community: +10%
+├── + Low-Income: +10~20%
+├── 최대: 70% (모든 보너스 적용 시)
+└── 미충족(Prevailing Wage): 6% (기본)
+
+인허가 일정 영향:
+├── COD가 ITC 적용 기준 → 인허가 지연 = ITC 적용 시기 지연
+├── Domestic Content 증빙 → 조달/통관 단계 서류 추가
+├── Prevailing Wage → Building Permit 단계 노무 계획 반영
+└── Energy Community → Land Use Permit 단계 위치 증빙 확보
+```
+
+
+
+## 라우팅 키워드
+인허가, 미국, 호주, 영국, US, AU, UK, FERC, AEMO, Ofgem, DNO,
+NEPA, EPBC, G99, NER, IRA, ITC, Planning Permission, Interconnection
+
+
+
+## 협업 관계
+```
+[법률전문가]    ──법령──▶  [인허가(영어권)] ──일정──▶  [공정관리]
+[환경엔지니어]  ──EIA──▶   [인허가(영어권)] ──소방──▶  [소방설계]
+[계통해석]      ──계통──▶  [인허가(영어권)] ──G99/NER──▶ [규격전문가]
+[통역전문가]    ──번역──▶  [인허가(영어권)] ──보고──▶  [프로젝트매니저]
+```
+
+-|
+| 인허가 로드맵 (US/AU/UK) | Excel (.xlsx) | /output/permits/ |
+| 인허가 트래커 | Excel (.xlsx) | /output/permits/ |
+| Regulatory Compliance Matrix | Excel (.xlsx) | /output/permits/ |
+| Interconnection Study 검토서 | Word (.docx) | /output/permits/ |
+| Environmental Review Summary | Word (.docx) | /output/permits/ |
+
+## 받는 인풋
+필수: 프로젝트 위치(주/State), BESS 용량(MW/MWh), 계통연계 전압, 대상 시장(US/AU/UK)
+선택: 토지 소유 형태, 환경 민감 지역 여부, ITC/PTC 적용, 기존 발전소 연계
+
+인풋 부족 시 기본값 자동 적용:
+```
+[기본값] 시장: US (미국)
+[기본값] 계통연계: HV (69kV~230kV)
+[기본값] 인허가 기간: 6~18개월
+[기본값] 환경 심사: NEPA (US), EPBC Act (AU), EIA Regs (UK)
+```
+
+---
+
+## 시장별 인허가 체계
+
+### 미국 (US)
+```
+인허가                    근거 법령/기관              관할         소요기간
+────────────────────────────────────────────────────────────────────
+Interconnection Agreement FERC Order 2222/2003        ISO/RTO      6~18개월
+Land Use Permit           Local Zoning Code           County       2~6개월
+Building Permit           IBC/Local Building Code     County       1~3개월
+Environmental Review      NEPA / State CEQA(CA)       Federal/State 3~12개월
+Fire Marshal Review       NFPA 855, IFC              Fire Dept     1~2개월
+Electrical Permit         NEC/NFPA 70                Local AHJ    2~4주
+ITC/PTC Qualification     IRC §48/§45, IRA 2022      IRS/DOE      신청 시
+```
+
+### 호주 (AU)
+```
+인허가                    근거 법령/기관              관할         소요기간
+────────────────────────────────────────────────────────────────────
+Connection Agreement      NER Chapter 5               AEMO/TNSP   6~12개월
+Development Approval      State Planning Act          State/Council 3~6개월
+Environmental Approval    EPBC Act 1999               DAWE         3~12개월
+Electrical Safety         State Electrical Safety Act State Regulator 1~2개월
+Generator Registration    NER §2.2                    AEMO         2~4개월
+AS 4777 Compliance        AS 4777.2:2020              Clean Energy Council
+```
+
+### 영국 (UK)
+```
+인허가                    근거 법령/기관              관할         소요기간
+────────────────────────────────────────────────────────────────────
+Grid Connection           G99/G100, CUSC             DNO/NGESO    6~18개월
+Planning Permission       Town & Country Planning Act LPA          3~6개월
+EIA Screening/Scoping     EIA Regulations 2017        LPA          2~4개월
+Building Regulations      Building Regs 2010          Building Control 1~2개월
+Environmental Permit      Environmental Permitting    Environment Agency 2~4개월
+Generation Licence        Electricity Act 1989        Ofgem        (50MW↑)
+```
+
 ---
 
 ## 시장별 제출 서류 상세
@@ -307,52 +374,6 @@ Building Regulations          Building Regulations Application
 
 ---
 
-## IRA/ITC 관련 인허가 연계
-
-### IRA (Inflation Reduction Act) — BESS 인허가 연계 사항
-```
-항목                          인허가 연계                    영향
-────────────────────────────────────────────────────────────────
-ITC (Investment Tax Credit)   발전설비 등록, 상업운전일(COD) 확인  세액공제 30% (기본)
- → IRC §48, IRA §13302       COD 지연 시 ITC 적용 시기 변경
-
-Domestic Content Bonus        제조 원산지 증명서 제출            추가 10%p 세액공제
- → IRA §13101                조달 단계에서 미국산 비율 관리 필수
-                              Steel/Iron: 100% 미국산
-                              Manufactured Components: 40%+ (2025), 55%+ (2026)
-                              [관세/통관 서류와 연계]
-
-Prevailing Wage              건설 노무 임금 기준 충족 증빙       미충족 시 ITC 6%로 감소
- → IRA §13101(g)             Davis-Bacon Act 기준 임금 지급 증명
-                              건설허가(Building Permit) 단계에서 반영 필수
-
-Apprenticeship               등록 견습생 비율 충족 증빙          미충족 시 ITC 6%로 감소
- → IRA §13101(g)             총 노동시간의 12.5%+ (2024~)
-
-Energy Community Bonus       프로젝트 위치 확인 증빙             추가 10%p 세액공제
- → IRA §13101                Brownfield, 폐광 지역, 화석연료 고용 지역
-                              Land Use Permit 신청 시 위치 증빙 활용
-
-Low-Income Community Bonus   저소득 지역 증빙, 혜택 공유 계획    추가 10~20%p 세액공제
- → IRA §13103                별도 DOE 배정 프로그램 신청 필요
-
-ITC 세액공제 총정리:
-├── 기본: 30% (Prevailing Wage + Apprenticeship 충족 시)
-├── + Domestic Content: +10%
-├── + Energy Community: +10%
-├── + Low-Income: +10~20%
-├── 최대: 70% (모든 보너스 적용 시)
-└── 미충족(Prevailing Wage): 6% (기본)
-
-인허가 일정 영향:
-├── COD가 ITC 적용 기준 → 인허가 지연 = ITC 적용 시기 지연
-├── Domestic Content 증빙 → 조달/통관 단계 서류 추가
-├── Prevailing Wage → Building Permit 단계 노무 계획 반영
-└── Energy Community → Land Use Permit 단계 위치 증빙 확보
-```
-
----
-
 ## 인허가 리스크 및 대응
 
 ### 미국 (US) — 주요 리스크
@@ -408,13 +429,6 @@ Generation Licence 요건      ★★       50MW 이상 Ofgem 라이선스 사�
 
 ---
 
-## 라우팅 키워드
-인허가, 미국, 호주, 영국, US, AU, UK, FERC, AEMO, Ofgem, DNO,
-NEPA, EPBC, G99, NER, IRA, ITC, Planning Permission, Interconnection
-
----
-
-
 ## 역할 경계 (소유권 구분)
 
 > **Permit Expert (English)** vs **Standards Analyst** 업무 구분
@@ -427,16 +441,6 @@ NEPA, EPBC, G99, NER, IRA, ITC, Planning Permission, Interconnection
 
 ---
 
-## 협업 관계
-```
-[법률전문가]    ──법령──▶  [인허가(영어권)] ──일정──▶  [공정관리]
-[환경엔지니어]  ──EIA──▶   [인허가(영어권)] ──소방──▶  [소방설계]
-[계통해석]      ──계통──▶  [인허가(영어권)] ──G99/NER──▶ [규격전문가]
-[통역전문가]    ──번역──▶  [인허가(영어권)] ──보고──▶  [프로젝트매니저]
-```
-
----
-
 ## 산출물
 | 산출물 | 형식 | 저장 경로 |
 |--------|------|----------|
@@ -445,3 +449,14 @@ NEPA, EPBC, G99, NER, IRA, ITC, Planning Permission, Interconnection
 | Regulatory Compliance Matrix | Excel (.xlsx) | /output/permits/ |
 | Interconnection Study 검토서 | Word (.docx) | /output/permits/ |
 | Environmental Review Summary | Word (.docx) | /output/permits/ |
+
+## 운영 학습 (Operational Learnings)
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+
+### 재사용 지식 (세션 누적)
+- US FERC Order 2023/2222 Cluster Study, AU NER Chapter 5, UK G99/G100 연계가 스킬에 정리됨 — 근거: `00_Skill_MD/bess-permit-english.md`
+
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ "JCFC (Joint Committee on Tariff Classification), 미국 CBP 구성" → ✅ permit-asia 정의(Fire Code)와 상충, 미검증 약어로 사용 금지 — 근거: `sessions/2026-05-20T13-36-03/bess-permit-english.md`
+- ❌ HS코드/관세분류로 표류 → ✅ permit 도메인은 인허가 시퀀스/서류에 한정 — 근거: `sessions/2026-05-20T13-36-03/bess-permit-english.md`

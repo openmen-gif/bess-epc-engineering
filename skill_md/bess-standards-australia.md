@@ -1,7 +1,12 @@
 ---
 name: bess-standards-australia
-description: "BESS EPC 호주(AU) 규격·표준·인허가 상세"
+description: "BESS EPC 호주(AU) 규격·표준·인허가 상세 — AS 4777.2-2020 / AS/NZS 5139:2019 / NER Schedule 5.2 / AEMO·CEC 기반 정량 적합성 판정"
 ---
+
+> [!NOTE]
+> **[Hybrid 에이전트 호환성 구문]**
+> - **VSCode (Claude Code) 인식용:** 이 문서를 전문가 페르소나(Persona)의 지식 컨텍스트로 활용하여 텍스트 및 코드 기반 답변을 사용자에게 제공하세요.
+> - **Antigravity (Agent) 인식용:** 이 문서를 도메인 지식(Skill)으로 로드하세요. 계산, 파일 생성 또는 시스템 연동이 필요한 경우, 직접 Python 코드를 작성하고 터미널 도구(`run_command`)를 실행하여 워크플로우를 완수하세요.
 
 > **규격 스킬 체계**: 본 문서는 bess-standards-analyst 시장별 상세 중 하나이다.
 > - 공통: bess-standards-analyst (비교표·산출물·원칙)
@@ -16,290 +21,149 @@ description: "BESS EPC 호주(AU) 규격·표준·인허가 상세"
 
 ## 🇦🇺 호주 (Australia)
 
+호주 BESS 규격·표준·인허가의 **시장별 상세 전문가**. NEM(National Electricity Market) 5개 지역(QLD/NSW/VIC/SA/TAS)의 계통연계·화재안전·시장등록 요건을 조항 단위로 매핑하고, 설계 입력값을 **정량 합/부 기준**으로 판정한다. WA(SWIS)는 NEM 비참여로 WEM Rules·Western Power Technical Rules 별도 적용 [요확인].
+
 ### 관할 기관
 ```
-AEMO (Australian Energy Market Operator) — NEM 운영, FCAS 시장
-AER  (Australian Energy Regulator)       — 시장 규제
-AEMC (Australian Energy Market Commission) — 규정 수립
-각 주 규제기관 — SA (ESCOSA), VIC (ESC), NSW (IPART) 등
-CEC  (Clean Energy Council)             — 인증 목록 (보조금 연계)
+AEMO (Australian Energy Market Operator) — NEM 운영, FCAS 시장, 발전기 등록(Generator Registration)
+AER  (Australian Energy Regulator)       — 시장 규제, NER 집행
+AEMC (Australian Energy Market Commission) — NER/NERR 규정 수립·개정
+NSP/TNSP/DNSP — 연계 협상 당사자 (Connection Agreement), R0/R1/R2 모델링 검토
+각 주 규제기관 — SA (ESCOSA), VIC (ESC), NSW (IPART), QLD (QCA)
+CEC  (Clean Energy Council)             — 승인 제품 목록(Approved Products) + 인증 설치자 (보조금·STC 연계)
+주 안전규제 — NSW DCS, VIC Energy Safe Victoria, QLD ESO, SA OTR (전기안전 인허가)
 ```
 
-### 핵심 법령 · 규격
+### 핵심 법령 · 규격 (실재 조항)
 ```
-National Electricity Law (NEL)
+National Electricity Law (NEL) — 남호주 법으로 제정, 각 주 적용
 National Electricity Rules (NER)
-├── Chapter 5    — 발전기·ESS 등록
-├── Chapter 5A   — 분산형 자원
-└── Schedule 5.2 — 기술 연계 요건 (Technical Performance Standards)
+├── Chapter 5    — 발전기·ESS 연계 및 등록 (Connection / Registration)
+├── Chapter 5A   — 분산형 자원 (Embedded Generation, <5 MW)
+├── Schedule 5.2 — 발전기 기술 성능 표준 (S5.2.5.1~S5.2.5.14)
+│   ├── S5.2.5.3  — 주파수 운전 범위 (Frequency)
+│   ├── S5.2.5.4  — 전압 외란 내성 (Voltage Disturbance Ride-Through)
+│   ├── S5.2.5.5  — 무효전력 능력 (Reactive Power)
+│   ├── S5.2.5.8  — 외란 후 능동전력 회복 (Active Power Recovery)
+│   └── S5.2.5.11 — 외란/저전압 시 운전 지속 (Disturbance Ride-Through)
+└── Schedule 5.3/5.3a — 연계 신청·협상 절차
 
-기술 표준
-├── AS 4777-2020 — Grid connection of energy systems
-│   ├── Part 1: 설치 요건
-│   ├── Part 2: 인버터 요건 (전압·주파수 응답)
-│   └── Part 3: 계통 보호
-├── AS/NZS 5139:2019 — ESS 설치 (화재 안전)
-├── AS/NZS 3000:2018 — 배선 규정 (Wiring Rules)
-└── IEC 62933-5-2    — ESS 계통 통합 안전
+기술 표준 (AS = Australian Standard, AS/NZS = 호주·뉴질랜드 공동)
+├── AS 4777.1-2016  — 계통연계 Part 1: 설치 요건 (≤200 kVA/상)
+├── AS 4777.2-2020  — 계통연계 Part 2: 인버터 요건
+│   ├── 전압·주파수 응답 모드 (Volt-Watt, Volt-VAr, Volt-Watt response modes)
+│   ├── 지역별 설정 (Region A/B/C — AS 4777.2:2020 Table 3.X)
+│   └── Power Quality Response Modes
+├── AS/NZS 5139:2019 — 전기저장장치(ESS) 설치 안전 (화재·이격·환기)
+├── AS/NZS 3000:2018 — 배선 규정 (Wiring Rules / AS/NZS 3000)
+├── AS/NZS 5033       — PV 어레이 설치 (Solar+BESS 시 적용)
+├── AS 62619 (=IEC 62619) — 산업용 2차전지 안전 요건
+├── AS IEC 62933-5-2  — ESS 계통통합 안전 (대형 grid-scale)
+└── AESCSF / SOCI Act 2018 — 핵심 인프라 사이버보안 (등록 자산 의무)
 ```
-
-### 보호계전기 기준 (AS 4777-2020 / NER Schedule 5.2)
-| 계전기 | 정정값 범위 | 기본 동작 시간 |
-|--------|-----------|------------|
-| OVR-1 | 110~120% × Un | 60s |
-| OVR-2 | 120~130% × Un | 0.5s |
-| UVR-1 | 85~90% × Un | 2s |
-| UVR-2 | 70~80% × Un | 0.5s |
-| OFR | 51.0~52.0 Hz | 1s |
-| UFR | 47.5~49.0 Hz | 1s |
-| ROCOF | 1.5~4.0 Hz/s | 0.5s |
-
-> ⚠️ [요확인] 주(SA, VIC 등)별로 정정값 범위 상이. AEMO Connection Agreement에서 확정
-
-### FCAS 참여 요건 (AEMO)
-```
-6개 FCAS 서비스:
-┌──────────────┬────────────┬──────────┬──────┐
-│ 서비스        │ 응답 시간  │ 지속 시간 │ 방향 │
-├──────────────┼────────────┼──────────┼──────┤
-│ Raise 6-sec  │ 6초        │ 5분      │ 방전 │
-│ Raise 60-sec │ 60초       │ 5분      │ 방전 │
-│ Raise 5-min  │ 5분        │ 5분      │ 방전 │
-│ Lower 6-sec  │ 6초        │ 5분      │ 충전 │
-│ Lower 60-sec │ 60초       │ 5분      │ 충전 │
-│ Lower 5-min  │ 5분        │ 5분      │ 충전 │
-└──────────────┴────────────┴──────────┴──────┘
-
-참여 등록:
-├── AEMO 시장 참여자 등록
-├── MNSP/TNSP 네트워크 접속 협의
-├── Technical Performance Standards 충족
-└── 계량기: NEM12 포맷 데이터 전송
-
-수익 구조:
-├── FCAS: 낙찰 용량[MW] × [AUD/MW]
-├── NEM 에너지: 방전 에너지[MWh] × [AUD/MWh] (5분 정산)
-├── LGC (Large-scale Generation Certificate) — 재생에너지 연계 시
-└── ARENA / CEFC 보조금 — 프로젝트별
-```
-
-### 주(State)별 규제 차이
-```
-┌────────┬───────────────────────────────────────────────────────┐
-│ 주     │ 규제 기관 / 특이 사항                                  │
-├────────┼───────────────────────────────────────────────────────┤
-│ SA     │ ESCOSA — 가장 선진적 ESS 시장, 전체 재생비율 70%+     │
-│ (남호주)│ AEMO 주도 빅배터리 (Hornsdale 150MW), FCAS 활성       │
-│        │ Planning Consent: SA Planning Commission              │
-├────────┼───────────────────────────────────────────────────────┤
-│ VIC    │ ESC (Essential Services Commission)                   │
-│ (빅토리아)│ Victorian Big Battery (300MW/450MWh)               │
-│        │ Environment Effects Statement (EES): ≥ 임계값 시      │
-│        │ Planning Permit: 지자체 (Local Council)               │
-├────────┼───────────────────────────────────────────────────────┤
-│ NSW    │ IPART + NSW DPE (Department of Planning)             │
-│ (뉴사우스│ State Significant Development (SSD): ≥ 30MW          │
-│  웨일즈)│ Development Application (DA): < 30MW                  │
-│        │ Waratah Super Battery (850MW) 진행 중                 │
-├────────┼───────────────────────────────────────────────────────┤
-│ QLD    │ QCA (Queensland Competition Authority)                │
-│(퀸즐랜드)│ Development Assessment: SARA 프로세스                │
-│        │ 재생에너지 존 (REZ) 지정 — ESS 집중 입지              │
-├────────┼───────────────────────────────────────────────────────┤
-│ WA     │ ERA (Economic Regulation Authority)                   │
-│ (서호주)│ SWIS (South West Interconnected System) — NEM 비참여  │
-│        │ WEM (Wholesale Electricity Market) 독자 운영           │
-│        │ Synergy 주정부 전력회사 주도                           │
-└────────┴───────────────────────────────────────────────────────┘
-
-> ⚠️ [요확인] WA(서호주)는 NEM 비참여 → AEMO 규정이 아닌 WEM 규정 적용
-```
-
-### 통신 · SCADA 규격
-```
-AEMO 연동:
-├── 프로토콜:
-│   ├── 대규모 (≥30MW): IEC 61850 + DNP3 over TCP/IP
-│   ├── 중규모 (5~30MW): DNP3 over TCP/IP
-│   └── 소규모 (<5MW): Modbus TCP (DNSP 연동)
-├── AGC (Automatic Generation Control):
-│   ├── 전송 주기: 4초
-│   ├── 응답: ≤ 4초 이내 출력 변경
-│   └── FCAS 제어 신호: 실시간
-├── 전송 항목:
-│   ├── 필수: P, Q, V, f, SOC, 가용 용량, 운전 상태
-│   ├── FCAS: 응답 속도, 드룹 설정값, 가용 MW
-│   └── 선택: 온도, BMS 알람, 고장 정보
-├── 계량 (Metering):
-│   ├── NEM12 포맷: 5분 간격 데이터 (NMI 기반)
-│   ├── Revenue Meter: ±0.5% 정확도 (CT/PT 포함)
-│   ├── Metering Coordinator (MC) 지정 필수
-│   └── MSATS (Market Settlement and Transfer Solution) 등록
-└── 통신 경로:
-    ├── AEMO 전용 VPN (주) + 공공 인터넷 VPN (백업)
-    ├── 이중화 필수: 주/백업 경로 물리적 분리
-    └── 가용률: 99.5% 이상
-
-사이버보안:
-├── Australian Energy Sector Cyber Security Framework (AESCSF)
-│   ├── AEMO 주도 자발적 프레임워크
-│   ├── C2M2 (Capability Maturity Model) 기반
-│   └── 연간 자가 평가 + 외부 검증 (대규모)
-├── Critical Infrastructure Act 2018 (SOCI Act):
-│   ├── 에너지 부문: Critical Infrastructure 지정
-│   ├── Risk Management Program 수립 의무
-│   └── 사이버 사고 보고: ASD (Australian Signals Directorate)
-├── ISM (Information Security Manual): ASD 발행
-│   └── Essential Eight: 패치 관리, MFA, 백업 등 8대 기준
-└── AEMO 보안 요건:
-    ├── Market Participant 접속: TLS 1.2+ 암호화
-    ├── 인증: 공인 인증서 (PKI)
-    └── 접근 제어: 역할 기반 (RBAC)
-```
-
-### AS/NZS 5139 ESS 화재 안전 (상세)
-```
-AS/NZS 5139:2019 — 전기 에너지 저장 시스템 설치:
-├── 위험 등급 분류:
-│   ├── Low Risk: ≤ 2.4kWh 또는 비위험 화학물질
-│   ├── Medium Risk: 2.4kWh ~ 200kWh (리튬이온)
-│   └── High Risk: > 200kWh (리튬이온) — 대부분 BESS 해당
-├── 이격 거리 (High Risk):
-│   ├── ESS ↔ 거주 건물: ≥ 1,000mm (외부) 또는 방화벽
-│   ├── ESS ↔ 개구부 (창문/문): ≥ 1,000mm
-│   ├── ESS ↔ 가연성 재료: ≥ 600mm
-│   ├── ESS ↔ 부지 경계: ≥ 600mm
-│   └── ESS ↔ ESS: ≥ 600mm (컨테이너 간)
-├── 방화 요건:
-│   ├── 방화벽: FRL 60/60/60 이상 (비연소/차열/차단)
-│   ├── 바닥: 불연 재료, 배수 시설 (소화수 수집)
-│   ├── 환기: 자연 또는 기계식, 0.3 ACH 이상
-│   └── 비상 접근: 소방대 접근 가능 경로 확보
-├── 전기 안전:
-│   ├── DC 차단: 각 배터리 스트링 단위
-│   ├── 비상 차단 버튼: 접근 가능 위치
-│   ├── 접지: AS/NZS 3000 기준
-│   └── 과전류 보호: 각 스트링 단위
-└── 보호 시스템:
-    ├── 열 폭주 감지: 가스 감지 (CO, H₂) 또는 온도 감지
-    ├── 자동 소화: 스프링클러 또는 에어로졸 (AHJ 협의)
-    ├── 자동 화재 탐지: 연기감지 + 열감지 조합
-    └── 비상 대응 계획 (ERP): 소방서 제출 의무
-
-CEC (Clean Energy Council) 인증:
-├── CEC 승인 배터리 목록:
-│   ├── 호주 보조금 (SRES, 주정부 프로그램) 수령 시 필수
-│   ├── 승인 기준: IEC 62619, UL 1973, 또는 UN 38.3 + IEC 63056
-│   └── 목록 갱신: 분기별
-├── CEC 승인 인버터 목록:
-│   ├── AS 4777.2-2020 적합성 시험 통과 필수
-│   └── DER Register 등록 요건
-├── CEC Accredited Installer:
-│   ├── 설치 자격: CEC 인정 설치자
-│   ├── 설계 자격: CEC 인정 설계자 (Grid Connect 또는 Stand-alone)
-│   └── 자격 갱신: 연간 CPD (Continuing Professional Development)
-└── DER Register (Distributed Energy Resources):
-    ├── AEMO 운영, 2020년 시작
-    ├── 모든 DER (태양광+ESS) 등록 의무
-    └── DNSP (Distribution NSP) 통해 등록
-
-배터리 시험 요건:
-├── IEC 62619:2022 — 산업용 리튬이온 배터리 안전
-├── IEC 63056:2020 — 리튬이온 배터리 안전 (주거/상업용)
-├── UN 38.3 — 운송 시험 (위험물 운송)
-├── UL 9540A — 화재 전파 시험 (임의이나 AHJ 요구 증가)
-└── 시험 기관: SAI Global, TÜV SÜD Australia, CSIRO
-```
-
-### 인허가 절차 (상세)
-```
-1. AEMO 시장 참여자 등록 (Market Participant Registration)
-   ├── Generator (Scheduled/Semi-Scheduled): ≥ 30MW
-   ├── Non-Scheduled: 5~30MW (또는 자발적 등록)
-   ├── Small Generation Aggregator: < 5MW 집합
-   ├── 제출: Registration Application (AEMO 포털)
-   ├── 수수료: AUD 5,000~50,000 (규모별)
-   └── 소요: 4~8주
-
-2. Network Service Provider (NSP) 연결 신청
-   ├── TNSP (Transmission): ≥ 30MW 또는 고전압 연결
-   │   ├── TransGrid (NSW), AusNet (VIC), ElectraNet (SA) 등
-   │   ├── Connection Enquiry → Detailed Response → Application
-   │   └── 소요: 6~18개월 (Network Augmentation 포함 시 더 소요)
-   ├── DNSP (Distribution): < 30MW 또는 중/저전압 연결
-   │   ├── Ausgrid, Endeavour, Essential Energy (NSW) 등
-   │   ├── Basic Connection → Standard Connection → Negotiated Connection
-   │   └── 소요: 2~6개월
-   └── Technical Performance Standards 협의:
-       ├── NER Schedule 5.2 요건 충족 증빙
-       ├── GPS (Generator Performance Standards) 합의
-       └── AEMO 기술 검토 (≥ 30MW)
-
-3. 환경 영향 평가 (주별)
-   ├── SA: Development Approval (State Commission Assessment Panel)
-   ├── NSW: State Significant Development (SSD) EIS — ≥ 30MW
-   │   └── SSD 절차: Scoping → EIS 작성 → 공공 의견수렴 → 결정
-   ├── VIC: Planning Permit + Environment Effects Statement (필요 시)
-   ├── QLD: Development Assessment (SARA 프로세스)
-   └── 소요: 3~12개월 (SSD/EES 필요 시 12~24개월)
-
-4. 건설 허가
-   ├── Development Application (DA) 또는 Planning Permit
-   ├── Building Approval: National Construction Code (NCC) 기준
-   ├── 전기 안전: AS/NZS 3000 기반 Electrical Contractor 라이선스
-   └── 소요: 1~3개월
-
-5. 연결 계약 (Connection Agreement) 체결
-   ├── NSP와 정식 연결 계약
-   ├── Metering 설정: NMI 할당, MC/MP/MDP 지정
-   └── SCADA 연동 시험
-
-6. 시운전 · AEMO 등록 완료
-   ├── Generator Compliance Test: 보호계전기, VRT, FCAS 응답
-   ├── AEMO 기술 승인
-   ├── 시장 등록 최종 확인
-   └── COD (Commercial Operation Date)
-```
-
-### 환경 · 입지 허가 (상세)
-```
-연방 환경법:
-├── EPBC Act (Environment Protection and Biodiversity Conservation):
-│   ├── Matters of National Environmental Significance (MNES) 해당 시
-│   ├── 멸종위기종, 습지(Ramsar), 세계유산, 핵 활동 등
-│   ├── 자발적 Referral → DAWE (Department) 결정
-│   └── 소요: 3~6개월 (Controlled Action 결정 시 12개월+)
-└── Native Title Act: 원주민 토지 권리 확인 필수
-
-주별 환경 요건:
-├── SA: Development Act 1993 → Planning, Development and Infrastructure Act 2016
-├── NSW: EP&A Act, Biodiversity Conservation Act, Water Management Act
-├── VIC: Planning and Environment Act, Flora and Fauna Guarantee Act
-├── QLD: Planning Act 2016, Environmental Protection Act 1994
-└── WA: EP Act 1986, Environmental Protection (Clearing of Native Vegetation) Regulations
-
-소음 규제:
-├── SA: Environment Protection (Noise) Policy 2007
-│   └── 산업 소음: 주간 52 dB(A), 야간 45 dB(A) (거주지 경계)
-├── NSW: Noise Policy for Industry (EPA)
-│   └── Intrusive criteria + Amenity criteria 중 낮은 값
-├── VIC: SEPP N-1 (State Environment Protection Policy)
-│   └── 주간 55 dB(A), 야간 45 dB(A) (거주지)
-└── 주요 소음원: HVAC, 변압기, 인버터 냉각팬
-
-토지 이용:
-├── 일반 산업 구역: 허용 (Permitted Use)
-├── 농업 구역: Conditional Use (주별 상이)
-├── 보전 구역: 원칙적 불허
-├── Bush fire prone area: 추가 방화 요건 (AS 3959)
-└── Aboriginal Heritage: 원주민 문화유산 조사 (필요 시)
-```
+> ⚠️ AS 4777.2는 인버터 **≤200 kVA/상** 분산형 연계 범위. **Grid-scale(>5 MW) BESS는 NER Chapter 5 + Schedule 5.2 등록 경로**가 지배적이며 AS 4777은 보조 참조. 규모별 적용 경로를 반드시 구분할 것.
 
 ---
 
+## 받는 입력 (INPUT — 분석에 필요한 정보)
+
+| 입력 항목 | 단위/형식 | 미제공 시 |
+|--|--|--|
+| 연계 지점(POC) 전압 | kV (예: 0.4 / 11 / 33 / 66 / 132 / 275 kV) | [요확인] 발행 |
+| BESS 정격 | MW / MWh (예: 100 MW / 200 MWh) | [요확인] — 규모로 연계경로 분기 |
+| 연계 규모 분류 | <5 MW(Ch.5A) / ≥5 MW(Ch.5 Registered) / ≤200 kVA상(AS 4777.2) | 미명시 시 [가정] Registered |
+| NEM 지역 | QLD/NSW/VIC/SA/TAS, 또는 WA(SWIS) | 미명시 시 [요확인] (지역별 설정 상이) |
+| 설치 유형 | Type 1~5 (CLAUDE.md 공유 컨텍스트) | [가정] Type 1 Standalone |
+| 그리드 강도 | SCR (Short Circuit Ratio), 약계통 여부 | SCR<3 시 weak-grid 추가검토 [요확인] |
+| 화재안전 입력 | 셀 화학(LFP/NMC), 컨테이너 배치, 인접 경계 거리(m) | AS/NZS 5139 deflagration 평가 보류 |
+| 수익모델 | FCAS(8종)/Energy Arbitrage/Wholesale Demand Response | 시장 등록 범위 산정 불가 |
+
+---
+
+## 핵심 역량 및 업무 범위 (PROCESS — 단계·절차·체크리스트)
+
+### 1단계: 연계 경로 분류 (Registration Pathway)
+```
+규모/전압 판정 → 적용 규칙 결정
+├── ≤200 kVA/상, LV/MV 분산형 → AS 4777.1/4777.2 + DNSP 연계 (Ch.5A)
+├── 5 kW~5 MW Embedded → NER Ch.5A + DNSP technical requirements
+└── ≥5 MW → NER Ch.5 Registered Participant, Schedule 5.2 (S5.2.5.x) 전 항목
+   └── AEMO Generator Registration + R0/R1/R2 모델링(PSS®E, PSCAD)
+```
+
+### 2단계: 계통 성능 표준 적합성 (NER Schedule 5.2 — 정량 판정)
+
+| 항목 | 조항 | Minimum Access Standard 기준 | 합/부 판정 |
+|--|--|--|--|
+| 주파수 운전 | S5.2.5.3 | 47.0~52.0 Hz 연속 운전, 47.5~52 Hz 정상 | 범위 내 전 구간 운전 = PASS, 임의 trip = FAIL |
+| 전압 Ride-Through | S5.2.5.4 / S5.2.5.11 | 0 pu(0 V)에서 최소 0.45 s 지속, 전압 회복 곡선 추종 | 곡선 하회 trip = FAIL |
+| 무효전력 능력 | S5.2.5.5 | ±0.395 pu (역률 ±0.93 상당) at POC | 미달 시 FAIL → STATCOM/추가 MVAr 보강 |
+| 능동전력 회복 | S5.2.5.8 | 외란 제거 후 100 ms 내 회복 개시, 정격 95% 도달 | 회복 지연 시 FAIL |
+| FFR(빠른 주파수 응답) | NER/AEMO VFFRS | 1 s 이내 응답 (Fast/Very Fast FCAS) | t_response>1 s = FAIL |
+
+> 비정량 표현 금지: "응답 양호" → "외란 제거 후 100 ms 내 회복 개시, 95% 도달(PASS)"로 기술.
+
+### 3단계: 인버터 응답 모드 (AS 4777.2-2020 — 분산형 적용 시)
+
+| 응답 모드 | 조항 | 기본 설정 (Region A 예시) | 판정 |
+|--|--|--|--|
+| Volt-Watt | AS 4777.2:2020 §3.3.2.2 | V1~V4 곡선, 253 V에서 출력 저감 개시 | 곡선 일치 = PASS |
+| Volt-VAr | AS 4777.2:2020 §3.3.2.1 | 207~258 V 구간 무효전력 가변 | 설정값 일치 = PASS |
+| 과전압 trip | AS 4777.2:2020 | 265 V 즉시 / 258 V 지연 trip | 정정 일치 = PASS |
+| 주파수 응답(P-f) | AS 4777.2:2020 §3.4 | 50.25 Hz↑ 출력 저감, 47.5/52 Hz trip | 정정 일치 = PASS |
+> Region A/B/C 및 지역별 default는 AS 4777.2:2020 Table 기준값을 DNSP 요구와 대조 후 확정 [요확인].
+
+### 4단계: 화재안전·설치 적합성 (AS/NZS 5139:2019)
+```
+├── Deflagration(폭연) 위험평가 — Hazard Mitigation Analysis 요구 여부 판정
+├── 이격거리 — 인접 경계/건물/탈출경로 이격 (배치도 + 셀 화학 입력 필요)
+├── 환기 — 가스 배출/희석 환기율 (m³/h) 산정 — [요확인] 셀 가스방출 데이터
+├── BESS 설치 등급 분류 (실내/실외/지정구역)
+└── UL 9540A 시험 데이터 활용 가능 (대형 grid-scale, 제조사 시험성적서)
+```
+
+### 5단계: 시장·인허가·기타 체크리스트
+- [ ] AEMO Generator Registration (≥5 MW) 또는 NSP 연계 합의 (Connection Agreement)
+- [ ] FCAS 등록 범위 — 8종(Raise/Lower × 6s/60s/5min Regulation) 자격시험
+- [ ] EPBC Act 1999 — 연방 환경 승인(MNES 영향 시), 주 단위 EIA/DA(Development Application)
+- [ ] SOCI Act 2018 / AESCSF — 핵심전력자산 등록·사이버보안 의무 (등록 자산 한정)
+- [ ] CEC Approved Products + Accredited Installer (보조금·STC 연계 분산형)
+- [ ] GPS(Generator Performance Standards) 협상 — Negotiated Access Standard 도출
+
+### 역할 경계 / 하지 않는 것
+- ❌ **연계연구 모델링 직접 수행 안 함** — R0/R1/R2 PSS®E/PSCAD 동특성 해석은 계통해석 엔지니어(bess-power-system-analyst) 담당. 본 스킬은 **요건·조항·합부기준 매핑**만.
+- ❌ **인허가 실무 신청서 작성 안 함** — AEMO/NSP 제출 절차는 인허가(영어권) 전문가(bess-permit-english) 담당.
+- ❌ **재무·FCAS 수익 산정 안 함** — Revenue Stacking은 전력시장 전문가(bess-power-market-expert).
+- ❌ **AU 외 시장 표준 혼용 금지** — 인도/US/UK 표준을 AU에 적용 불가 (운영 학습 가드레일 참조).
+- ✅ 본 스킬 = AU 규격 조항·정량 기준·적용경로 분류 + 타 전문가 인계 트리거.
+
+---
+
+## 산출물 (OUTPUT — 결과물 형식)
+
+| 산출물 | 형식 | 핵심 내용 |
+|--|--|--|
+| AU 규격 적합성 매트릭스 | Excel (.xlsx) | NER S5.2.5.x / AS 4777.2 항목별 기준값 vs 설계값, PASS/FAIL, 근거 조항 |
+| 연계 경로 분류서 | Word (.docx) | 규모·전압 기반 Ch.5/5A/AS 4777 경로 판정 + 등록 요건 |
+| GPS 협상 입력표 | Excel | Minimum vs Negotiated Access Standard 격차 항목 |
+| 화재안전 적합성 노트 | Word | AS/NZS 5139:2019 Hazard Mitigation 평가 결과, 이격·환기 정량값 |
+| 리스크/요확인 목록 | Markdown/Excel | [요확인]·[가정] 태그 항목 + 후속 전문가 인계 매핑 |
+> 모든 판정은 **수치+단위+조항번호** 포함. 출력 형식 미명시 시 bess-output-generator 우선 호출, 완성 시 형식 검토 필수.
 
 ---
 
 ## 라우팅 키워드
-AU, 호주, AS4777, AS5139, AEMO, FCAS, NER, CEC, NEM, EPBC, SOCI, AESCSF
+AU, 호주, AS4777, AS5139, AS/NZS 3000, AEMO, FCAS, NER, Schedule 5.2, GPS, CEC, NEM, SWIS, WEM, EPBC, SOCI, AESCSF, NSP, DNSP, Generator Registration, VFFRS
 bess-standards-australia
+
+## 운영 학습 (Operational Learnings)
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+
+### 재사용 지식 (세션 누적)
+- AS 4777-2020(계통연계 인버터), AS/NZS 5139:2019(ESS 설치 화재안전), AS/NZS 3000:2018(배선규칙), NER Schedule 5.2 — 근거: `sessions/2026-06-01T05-32-02/bess-standards-australia.md`
+
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 호주 도메인에 인도(India) 시장·표준(BIS/TNEB/National Solar Mission/IES 18965) 혼입 → ✅ AU 도메인은 AU 시장만, 인도는 별도 도메인으로 분리 — 근거: `sessions/2026-06-04T22-29-13/bess-standards-australia.md`, `sessions/2026-06-01T05-32-02/bess-standards-australia.md`
+- ❌ "ISO 10444", "IES 18965-2019", "BS 18965"를 BESS 표준으로 사용 → ✅ 미확인/환각 가능, 검증 전 사용 금지 — 근거: `sessions/2026-06-04T22-29-13/bess-standards-australia.md`
+- ⚠️ AS 4777.2(≤200 kVA/상 분산형)와 NER Ch.5 Registered(≥5 MW grid-scale) 적용 경로를 혼동 금지 — 규모별 분기 필수.

@@ -141,6 +141,141 @@ def fetch_eia_us_battery_capacity() -> dict:
         return result
 
 
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def fetch_fx_timeseries(symbols: tuple = ("KRW", "JPY", "EUR", "CNY"), months: int = 12) -> dict:
+    """USD 기준 환율 월별 시계열을 Frankfurter(ECB 기준환율)에서 fetch.
+
+    Frankfurter는 무료·키 불필요·ECB 공식 기준환율 기반. 일별 데이터를 받아 각 월의
+    마지막 영업일 값으로 다운샘플링하여 월별 추이 시계열을 만든다. 이 시계열은 매월
+    실제로 변하므로 보고서의 '라이브' 추이 차트를 구성한다.
+
+    Returns:
+        {
+            "dates":  ["2025-07-31", ...],   # 월별 대표일(각 월 마지막 관측일)
+            "series": {"KRW": [1385.2, ...], "JPY": [...], ...},
+            "as_of":  "2026-06-09" | None,
+            "source": str,
+            "error":  str | None,
+        }
+    """
+    result = {"dates": [], "series": {}, "as_of": None,
+              "source": "Frankfurter (ECB reference rates)", "error": None}
+    try:
+        today = datetime.now(timezone.utc).date()
+        y, m = today.year, today.month - months
+        while m <= 0:
+            m += 12
+            y -= 1
+        start = f"{y:04d}-{m:02d}-01"
+        end = today.isoformat()
+        sym = ",".join(symbols)
+        url = f"https://api.frankfurter.dev/v1/{start}..{end}?base=USD&symbols={sym}"
+        req = urllib.request.Request(url, headers={"User-Agent": "BESS-EPC-Dashboard/1.0"})
+        with urllib.request.urlopen(req, timeout=EIA_TIMEOUT_SEC) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        rates = data.get("rates", {})
+        if not rates:
+            result["error"] = "Frankfurter 응답에 rates 데이터 없음"
+            return result
+        # 월별 다운샘플: 각 'YYYY-MM'의 마지막 관측일만 채택
+        monthly = {}
+        for d in sorted(rates.keys()):
+            monthly[d[:7]] = d
+        sel_dates = [monthly[ym] for ym in sorted(monthly.keys())]
+        result["dates"] = sel_dates
+        for s in symbols:
+            result["series"][s] = [rates[d].get(s) for d in sel_dates]
+        result["as_of"] = sel_dates[-1] if sel_dates else None
+        return result
+    except urllib.error.HTTPError as e:
+        result["error"] = f"Frankfurter HTTP {e.code}: {e.reason}"
+        return result
+    except urllib.error.URLError as e:
+        result["error"] = f"Frankfurter URL error: {e.reason}"
+        return result
+    except Exception as e:
+        _log.exception("Unexpected error fetching Frankfurter FX timeseries")
+        result["error"] = f"Frankfurter 오류: {e}"
+        return result
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def fetch_eia_us_battery_timeseries(months: int = 18) -> dict:
+    """미국 배터리 저장 월별 운영 용량 시계열(MW, 추정 GWh)을 EIA에서 fetch.
+
+    fetch_eia_us_battery_capacity와 동일 시리즈를 쓰되, 월별로 plant 용량을 합산하여
+    시간축이 있는 추이 시계열로 반환한다. 보고서의 '라이브' US 용량 추이 차트에 사용.
+
+    Returns:
+        {
+            "periods":  ["2024-12", "2025-01", ...],   # 오름차순
+            "mw":       [float, ...],
+            "gwh_est":  [float, ...],   # MW × 4h / 1000
+            "as_of":    "2026-04" | None,
+            "source":   str,
+            "error":    str | None,
+        }
+    """
+    result = {"periods": [], "mw": [], "gwh_est": [], "as_of": None,
+              "source": EIA_SOURCE_LABEL, "error": None}
+    key = _eia_api_key()
+    if not key:
+        result["error"] = "EIA_API_KEY 환경변수 미설정 (https://www.eia.gov/opendata/register.php 무료 발급)"
+        return result
+
+    # plant 단위 응답이므로 충분한 행을 받아 월별 합산. months개월 × 넉넉한 plant 수 가정.
+    params = {
+        "api_key": key,
+        "frequency": "monthly",
+        "data[0]": "nameplate-capacity-mw",
+        "facets[technology][]": "Batteries",
+        "sort[0][column]": "period",
+        "sort[0][direction]": "desc",
+        "length": 5000,
+    }
+    url = f"{EIA_API_BASE}/{EIA_SERIES_BATTERY_MW}?{urllib.parse.urlencode(params, doseq=True)}"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "BESS-EPC-Dashboard/1.0"})
+        with urllib.request.urlopen(req, timeout=EIA_TIMEOUT_SEC) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        rows = data.get("response", {}).get("data", [])
+        if not rows:
+            result["error"] = "EIA 응답에 데이터 행 없음"
+            return result
+        # 월별 합산
+        by_period = {}
+        for r in rows:
+            p = r.get("period")
+            if not p:
+                continue
+            try:
+                by_period[p] = by_period.get(p, 0.0) + float(r.get("nameplate-capacity-mw") or 0)
+            except (TypeError, ValueError):
+                continue
+        if not by_period:
+            result["error"] = "EIA 응답 파싱 후 유효한 용량값 없음"
+            return result
+        periods = sorted(by_period.keys())[-months:]
+        result["periods"] = periods
+        result["mw"] = [round(by_period[p], 1) for p in periods]
+        result["gwh_est"] = [round(by_period[p] * 4.0 / 1000.0, 2) for p in periods]
+        result["as_of"] = periods[-1] if periods else None
+        return result
+    except urllib.error.HTTPError as e:
+        result["error"] = f"EIA HTTP {e.code}: {e.reason}"
+        return result
+    except urllib.error.URLError as e:
+        result["error"] = f"EIA URL error: {e.reason}"
+        return result
+    except (json.JSONDecodeError, KeyError) as e:
+        result["error"] = f"EIA 응답 파싱 실패: {e}"
+        return result
+    except Exception as e:
+        _log.exception("Unexpected error fetching EIA battery timeseries")
+        result["error"] = f"예기치 못한 오류: {e}"
+        return result
+
+
 def get_live_us_capacity_or_fallback(snapshot_gwh: float | int) -> dict:
     """라이브 fetch 시도 → 실패 시 스냅샷 값으로 fallback.
 

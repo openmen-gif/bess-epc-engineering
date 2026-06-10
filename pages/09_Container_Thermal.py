@@ -15,57 +15,41 @@ import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
+from utils.sim_physics import (
+    heat2d_transient, stratification_profile,
+    build_animation, fmt_time,
+)
 
 # Display grid for HVAC vent selector (columns × rows)
 HVAC_NX, HVAC_NY = 10, 4
 
-# Snap iteration counts for time-evolution animation
-SNAP_ITERS = [5, 15, 35, 70, 120, 200, 300, 400]
+# Physical snapshot times for the heat-up transient animation [s]
+SNAP_TIMES_S = [0, 10, 30, 60, 120, 300, 600, 1200, 1800]
 
 
 # ── Solvers ───────────────────────────────────────────────────────────────────
-def _make_src_map(heat_sources, nx, ny):
-    src_map = {}
-    for (sx, sy, T_src) in heat_sources:
-        ix = min(max(int(sx), 1), nx - 2)
-        iy = min(max(int(sy), 1), ny - 2)
-        src_map[(iy, ix)] = float(T_src)
-    return src_map
-
-
 from utils.config import IS_API_MODE, API_BASE_URL
 
 
-def _solve_local(nx, ny, dx, dy, ambient, heat_sources, hvac_kw, area_m2, sim_vent_cells):
-    """Local FDM solver — standalone mode or API fallback."""
-    T = np.full((ny, nx), ambient, dtype=float)
-    src_map = _make_src_map(heat_sources, nx, ny)
-    hvac_alpha = min((hvac_kw * 1000.0) / max(area_m2 * 60000.0, 1.0), 0.08)
-    vent_extra = hvac_alpha * 2.5
-    vent_set = set()
-    for (vx, vy) in sim_vent_cells:
-        cx = min(max(int(vx), 1), nx - 2)
-        cy = min(max(int(vy), 1), ny - 2)
-        vent_set.add((cy, cx))
-    snap_set = set(SNAP_ITERS)
-    snapshots = []
-    for i in range(1, max(SNAP_ITERS) + 1):
-        T_new = T.copy()
-        T_new[1:-1, 1:-1] = 0.25 * (
-            T[2:,  1:-1] + T[:-2, 1:-1] +
-            T[1:-1, 2:] + T[1:-1, :-2]
-        )
-        T_new[1:-1, 1:-1] += hvac_alpha * (ambient - T_new[1:-1, 1:-1])
-        for (cy, cx) in vent_set:
-            T_new[cy, cx] += vent_extra * (ambient - T_new[cy, cx])
-        T_new[0, :]  = T_new[-1, :] = ambient
-        T_new[:, 0]  = T_new[:, -1] = ambient
-        for (iy, ix), T_src in src_map.items():
-            T_new[iy, ix] = T_src
-        T = T_new
-        if i in snap_set:
-            snapshots.append(T.copy())
-    return snapshots
+def _solve_local(nx, ny, dx, dy, ambient, heat_sources, hvac_kw, area_m2,
+                 sim_vent_cells, bat_kw=50.0, con_h=2.59):
+    """Local reduced-order FDM solver (physical time base).
+
+    2-D depth-averaged energy balance:
+      ρ·cp·H·∂T/∂t = k_eff·H·∇²T + q″_rack − G_hvac·(T − T_sup) − h_env·(T − T_amb)
+    Rack heat enters as a SOURCE TERM (bat_kw split over racks) and HVAC as a
+    sensible-cooling conductance G = Q_rated/ΔT_design — i.e. the steady mean
+    temperature follows the enclosure energy balance instead of a prescribed
+    rack temperature."""
+    Lx, Ly = nx * dx, ny * dy
+    src_cells  = [(int(s[0]), int(s[1])) for s in heat_sources]
+    vent_cells = [(int(v[0]), int(v[1])) for v in sim_vent_cells]
+    _, snaps = heat2d_transient(
+        Lx, Ly, con_h, ambient, src_cells, bat_kw * 1000.0,
+        hvac_kw * 1000.0, vent_cells, nx, ny, SNAP_TIMES_S,
+        alpha_eff=0.08, U_env=2.5, dT_design=12.0, src_sigma_m=0.45,
+    )
+    return snaps
 
 
 def _solve_via_api(nx, ny, dx, dy, ambient, heat_sources, hvac_kw, area_m2, sim_vent_cells):
@@ -86,7 +70,8 @@ def _solve_via_api(nx, ny, dx, dy, ambient, heat_sources, hvac_kw, area_m2, sim_
 
 
 def solve_temperature_transient(nx, ny, dx, dy, ambient, heat_sources,
-                                 hvac_kw, area_m2, sim_vent_cells):
+                                 hvac_kw, area_m2, sim_vent_cells,
+                                 bat_kw=50.0, con_h=2.59):
     """Dual-mode: API mode tries backend first with local fallback; standalone runs locally."""
     if IS_API_MODE:
         try:
@@ -95,7 +80,8 @@ def solve_temperature_transient(nx, ny, dx, dy, ambient, heat_sources,
         except Exception:
             pass
     return _solve_local(nx, ny, dx, dy, ambient, heat_sources,
-                        hvac_kw, area_m2, sim_vent_cells)
+                        hvac_kw, area_m2, sim_vent_cells,
+                        bat_kw=bat_kw, con_h=con_h)
 
 
 def make_heat_sources(nx, ny, n_racks, T_rack):
@@ -114,9 +100,12 @@ def make_heat_sources(nx, ny, n_racks, T_rack):
 
 
 def build_3d_field(T_floor, ambient, con_h, nz=14):
-    z_vals = np.linspace(0.0, con_h, nz)
-    decay  = np.exp(-z_vals / (con_h * 0.65))
-    T_3d   = ambient + np.einsum('z,yx->zyx', decay, T_floor - ambient)
+    """Extrude the 2-D depth-averaged field with a linear stratification
+    profile p(z): depth-average = 1.0, ceiling ≈ 2× floor excess temperature
+    (buoyant hot air accumulates at the ceiling)."""
+    z_vals  = np.linspace(0.0, con_h, nz)
+    profile = stratification_profile(z_vals, con_h, ratio=2.0)
+    T_3d    = ambient + np.einsum('z,yx->zyx', profile, T_floor - ambient)
     return T_3d, z_vals
 
 
@@ -332,6 +321,8 @@ def run_container_thermal_module():
         area   = con_l * con_w
         dx, dy = con_l / NX, con_w / NY
 
+        # Indicative rack-surface temp (legacy API payload only — the local
+        # solver injects bat_kw as a volumetric source term instead)
         cooling_eff = min(hvac_kw / max(bat_kw, 1.0), 2.0)
         dT    = max(5.0, 45.0 * max(0.05, 1.0 - 0.7 * min(cooling_eff, 1.0)))
         T_rack = amb + min(dT, 50.0)
@@ -348,8 +339,11 @@ def run_container_thermal_module():
         if run:
             with st.spinner("3D 시뮬레이션 계산 중…" if not is_en else "Running 3D simulation…"):
                 snapshots = solve_temperature_transient(NX, NY, dx, dy, amb, sources,
-                                                        hvac_kw, area, sim_vents)
+                                                        hvac_kw, area, sim_vents,
+                                                        bat_kw=bat_kw, con_h=con_h)
+            snap_times = SNAP_TIMES_S[:len(snapshots)]
             st.session_state["thermal_snapshots"]   = snapshots
+            st.session_state["thermal_times"]       = snap_times
             st.session_state["thermal_sources"]     = sources
             st.session_state["thermal_sim_vents"]   = sim_vents
             st.session_state["thermal_sim_exhaust"] = sim_exhaust
@@ -358,6 +352,7 @@ def run_container_thermal_module():
             st.session_state["thermal_snap_slider"] = 0
         else:
             snapshots   = st.session_state["thermal_snapshots"]
+            snap_times  = st.session_state.get("thermal_times", SNAP_TIMES_S[:len(snapshots)])
             sources     = st.session_state.get("thermal_sources", sources)
             sim_vents   = st.session_state.get("thermal_sim_vents",   sim_vents)
             sim_exhaust = st.session_state.get("thermal_sim_exhaust", sim_vents)
@@ -405,9 +400,11 @@ def run_container_thermal_module():
             "💨 " + ("3D 공기 흐름 Cone" if not is_en else "3D Airflow Cones"),
         ])
 
-        # ── Tab 1: 3D Surface — Plotly built-in animation (no Streamlit state) ──
+        # ── Tab 1: 3D Surface — go.Frames time animation (physical seconds) ──
         with tab1:
             n_snaps = len(snapshots)
+            cmax_all = max(float(np.max(s)) for s in snapshots)
+            cmax_all = max(cmax_all, amb + 1.0)
 
             src_x     = [s[0] * dx for s in sources]
             src_y     = [s[1] * dy for s in sources]
@@ -418,81 +415,70 @@ def run_container_thermal_module():
 
             _scene_t1 = dict(
                 **_base_scene,
-                zaxis=dict(title="온도 (°C)" if not is_en else "Temperature (°C)", **_ax),
+                zaxis=dict(title="온도 (°C)" if not is_en else "Temperature (°C)",
+                           range=[amb - 1.0, max(cmax_all, 56.0) + 3.0], **_ax),
                 aspectmode='manual',
                 aspectratio=dict(x=con_l / con_w, y=1.0, z=0.7),
                 camera=dict(eye=dict(x=1.6, y=-1.9, z=1.3)),
             )
 
-            @st.fragment(run_every=0.5)
-            def _thermal_anim():
-                fi = int(st.session_state.get("th_frame", n_snaps - 1)) % n_snaps
-                playing = st.session_state.get("th_playing", False)
-                
-                # Controls inside fragment to prevent full page rerun (tab reset)
-                _t1_sc1, _t1_sc2 = st.columns([6, 2])
-                with _t1_sc1:
-                    _step = st.slider(
-                        "반복 재생 스텝 (~Iter):" if not is_en else "Playback Step (~Iter):",
-                        0, n_snaps - 1, fi,
-                        format="%d",
-                        key="th_step_slider",
-                    )
-                with _t1_sc2:
-                    if st.button("▶ 시작" if not is_en else "▶ Start", key="th_play_btn", type="primary", use_container_width=True):
-                        st.session_state["th_playing"] = True
-                        st.session_state["th_frame"] = 0
-                    if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="th_pause_btn", type="secondary", use_container_width=True):
-                        st.session_state["th_playing"] = False
-                if _step != fi and not playing:
-                    fi = _step
-                    st.session_state["th_frame"] = fi
-
-                T_snap = snapshots[fi]
-                surf = go.Surface(
+            def _t1_surf(T_snap):
+                return go.Surface(
                     x=x_c, y=y_c, z=T_snap,
                     colorscale="RdYlBu_r",
-                    cmin=amb, cmax=max(float(T_snap.max()), amb + 1),
+                    cmin=amb, cmax=cmax_all,
                     colorbar=dict(title="°C", x=1.02),
                     hovertemplate="X: %{x:.1f}m | Y: %{y:.1f}m | <b>T: %{z:.1f}°C</b><extra></extra>",
                     name="Temp Field",
                 )
-                rack_trace = go.Scatter3d(
-                    x=src_x, y=src_y, z=[z + 0.15 for z in src_z_fin],
+
+            rack_trace = go.Scatter3d(
+                x=src_x, y=src_y, z=[z + 0.15 for z in src_z_fin],
+                mode='markers',
+                marker=dict(size=7, color='#111', opacity=0.9, symbol='square'),
+                name="배터리 랙" if not is_en else "Battery Rack",
+                hovertemplate="Rack X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
+            )
+            # 45 °C HVAC-adequacy reference plane (same limit as KPI banner)
+            limit45 = go.Surface(
+                x=[0.0, con_l], y=[0.0, con_w], z=[[45.0, 45.0], [45.0, 45.0]],
+                colorscale=[[0, "rgba(248,81,73,0.25)"], [1, "rgba(248,81,73,0.25)"]],
+                showscale=False,
+                name="한계 45 °C" if not is_en else "45 °C limit",
+                hovertemplate=("HVAC 적정성 한계 45 °C<extra></extra>" if not is_en
+                               else "HVAC adequacy limit 45 °C<extra></extra>"),
+            )
+            base_data = [_t1_surf(snapshots[0]), limit45, rack_trace]
+            if vent_x:
+                base_data.append(go.Scatter3d(
+                    x=vent_x, y=vent_y, z=[z + 0.2 for z in vent_z_fin],
                     mode='markers',
-                    marker=dict(size=7, color='#111', opacity=0.9, symbol='square'),
-                    name="배터리 랙" if not is_en else "Battery Rack",
-                    hovertemplate="Rack X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
-                )
-                init_data = [surf, rack_trace]
-                if vent_x:
-                    init_data.append(go.Scatter3d(
-                        x=vent_x, y=vent_y, z=[z + 0.2 for z in vent_z_fin],
-                        mode='markers',
-                        marker=dict(size=8, color='#00b4d8', opacity=0.9, symbol='diamond'),
-                        name="HVAC 덕트" if not is_en else "HVAC Duct",
-                        hovertemplate="Duct X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
-                    ))
+                    marker=dict(size=8, color='#00b4d8', opacity=0.9, symbol='diamond'),
+                    name="HVAC 덕트" if not is_en else "HVAC Duct",
+                    hovertemplate="Duct X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
+                ))
 
-                fig3d = go.Figure(data=init_data)
-                fig3d.update_layout(
-                    **dark_layout,
-                    title=f"3D 컨테이너 온도 진행 (~{SNAP_ITERS[fi]} 반복)" if not is_en
-                          else f"3D Container Temp Evolution (~{SNAP_ITERS[fi]} Iters)",
-                    scene=_scene_t1,
-                )
-                st.plotly_chart(fig3d, use_container_width=True, key="th_chart")
-
-                if playing:
-                    if fi < n_snaps - 1:
-                        st.session_state["th_frame"] = fi + 1
-                    else:
-                        st.session_state["th_playing"] = False
-
-            _thermal_anim()
+            _t1_layout = dict(
+                **dark_layout,
+                title=("3D 컨테이너 가열 과도응답 (0 → 30분)" if not is_en
+                       else "3D Container Heat-Up Transient (0 → 30 min)"),
+                scene=_scene_t1,
+                margin=dict(l=0, r=0, t=60, b=60),
+            )
+            fig3d = build_animation(
+                base_traces=base_data,
+                frame_traces_list=[[_t1_surf(s)] for s in snapshots],
+                frame_names=[f"t{i}" for i in range(n_snaps)],
+                time_labels=[fmt_time(tt) for tt in snap_times[:n_snaps]],
+                animated_trace_idx=[0],
+                layout=_t1_layout,
+                duration_ms=500,
+                prefix="t = ",
+            )
+            st.plotly_chart(fig3d, use_container_width=True, key="th_chart")
             st.caption(
-                "■ = 배터리 랙 | ◆ = HVAC 덕트 | 높이·색상 = 온도 | ▶ Play = 시간 진행 | 드래그로 회전" if not is_en
-                else "■ = Battery racks | ◆ = HVAC ducts | ▶ Play = time evolution | Drag to rotate"
+                "■ = 배터리 랙 | ◆ = HVAC 덕트 | 높이·색상 = 온도 | 빨간 평면 = 45 °C 한계 | ▶ 재생 = 실시간(초) 가열 진행 | 드래그로 회전" if not is_en
+                else "■ = Battery racks | ◆ = HVAC ducts | red plane = 45 °C limit | ▶ Play = heat-up in physical seconds | Drag to rotate"
             )
         # ── Tab 2: Animated single horizontal slice (floor → ceiling) ──────────
         with tab2:
@@ -763,6 +749,37 @@ def run_container_thermal_module():
             st.caption(
                 "파란 점 = 공기 파티클 | 💨(청록) = 배기 덕트 (공기 흡입) | 🔵(주황) = 흡기 덕트 (공기 공급) | ▶ 시작 / ⏸ 정지" if not is_en
                 else "Blue dots = air particles | 💨(cyan) = Exhaust duct (air out) | 🔵(orange) = Intake duct (air in) | ▶ Start / ⏸ Pause"
+            )
+
+        with st.expander("📐 " + ("해석 방법론 & 가정" if not is_en else "Methodology & Assumptions")):
+            st.markdown(
+                (
+                    "**지배 방정식 (2차원 깊이평균 에너지 수지, 양해법 FDM — 물리적 시간 기반):**\n\n"
+                    "ρ·c_p·H·∂T/∂t = k_eff·H·∇²T + q″_rack − G_hvac·(T − T_supply) − h_env·(T − T_amb)\n\n"
+                    "- **발열원:** 배터리 총 발열량(kW)을 랙 수로 균등 분배, 가우시안 footprint σ = 0.45 m (소스 항 — 랙 온도를 임의로 고정하지 않음)\n"
+                    "- **HVAC:** 현열 냉각 컨덕턴스 G = Q_rated/ΔT_design (ΔT_design = 12 K). 65 %는 재순환 공기 전체(강제 혼합), "
+                    "35 %는 선택한 덕트 셀에 집중 → 덕트 주변이 국부적으로 더 차가움. 냉각량은 (T − T_supply)에 비례(자기제한적)\n"
+                    "- **혼합:** 유효 난류 확산계수 α_eff = 0.08 m²/s | **외피:** U_env = 2.5 W/m²K (지붕+벽)\n"
+                    "- **수직 분포(탭 2):** 깊이평균 결과에 선형 성층 프로파일 적용 — 천장 초과온도 ≈ 바닥의 2배 (부력 성층 근사)\n"
+                    "- **공기 흐름(탭 3):** 최근접 덕트 방향의 단순 운동학적 벡터장 — 모멘텀 해석 아님(시각화 보조)\n\n"
+                    "⚠️ **축소차수 해석 모델** — 파라미터 스크리닝/덕트 배치 비교 용도입니다. 운동량·부력장을 직접 풀지 않으므로 "
+                    "제트 충돌, 급기 단락, 국부 재순환은 반영되지 않습니다. 설계 검증은 OpenFOAM / ANSYS Fluent CFD가 필요합니다."
+                ) if not is_en else (
+                    "**Governing equation (2-D depth-averaged energy balance, explicit FDM — physical time base):**\n\n"
+                    "ρ·c_p·H·∂T/∂t = k_eff·H·∇²T + q″_rack − G_hvac·(T − T_supply) − h_env·(T − T_amb)\n\n"
+                    "- **Sources:** total battery heat (kW) split evenly over racks, Gaussian footprint σ = 0.45 m "
+                    "(true source term — rack temperature is NOT prescribed)\n"
+                    "- **HVAC:** sensible-cooling conductance G = Q_rated/ΔT_design (ΔT_design = 12 K). 65 % acts on the "
+                    "recirculated bulk air (forced mixing), 35 % concentrated at the selected duct cells → locally cooler "
+                    "zones near ducts. Removal scales with (T − T_supply), i.e. self-limiting\n"
+                    "- **Mixing:** effective turbulent diffusivity α_eff = 0.08 m²/s | **Envelope:** U_env = 2.5 W/m²K (roof + walls)\n"
+                    "- **Vertical field (Tab 2):** linear stratification profile applied to the depth-averaged result — "
+                    "ceiling excess temp ≈ 2× floor (buoyant stratification surrogate)\n"
+                    "- **Airflow (Tab 3):** kinematic nearest-duct vector field — NOT a momentum solution (visual aid only)\n\n"
+                    "⚠️ **Reduced-order analytical model** — for parametric screening and duct-layout comparison. "
+                    "Momentum/buoyancy fields are not resolved, so jet impingement, supply short-circuiting and local "
+                    "recirculation are not captured. Use OpenFOAM / ANSYS Fluent CFD for design verification."
+                )
             )
 
     else:

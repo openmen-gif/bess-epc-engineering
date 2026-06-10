@@ -35,6 +35,208 @@ EMS·PCS·BMS 소프트웨어 아키텍처와 데이터 흐름을 이해하고, 
 - **자동 품질 검사**: 작업 완료 시 오류를 자동으로 체크하고 즉시 수정한다.
 - **협조 및 조치 기록**: 전문가 협조 사항과 조치 사항을 명확히 기록한다.
 
+
+
+## EMS 핵심 기능 모듈
+
+### 1. 스케줄링 & 디스패치
+
+| 기능 | 설명 | 핵심 파라미터 |
+|||-|
+| 시간별 충방전 스케줄 | ToU, SMP/LMP 기반 최적 스케줄 생성 | 시간 구간, kW 설정값, SOC 상한/하한 |
+| 실시간 디스패치 | AGC/APC 신호에 따른 출력 조절 | 응답시간 ≤100ms, 분해능 ±1% |
+| 멀티 서비스 스태킹 | 동시 수익원 운영 (차익거래 + 주파수조정) | 서비스 우선순위, SOC 예비량 |
+| 예측 기반 최적화 | 부하/발전/가격 예측 → 스케줄 최적화 | 예측 주기, 오차 허용 범위 |
+
+### 2. SOC 관리
+
+| 항목 | 기준 | 비고 |
+||||
+| SOC 산출 방식 | 쿨롱 카운팅 + OCV 보정 (하이브리드) | BMS에서 1차 산출 → EMS에서 보정 |
+| SOC 정확도 | BMS 리포팅 vs. EMS 계산값 ±2% 이내 | IEC 62933-2-1 기준 |
+| SOC 운영 범위 | 일반: 10%~90% / 보수적: 20%~80% | 배터리 수명 목표에 따라 조정 |
+| SOC 캘리브레이션 | 월 1회 Full Cycle (100% → 0% → 100%) | 벤더 권장사항 확인 |
+
+### 3. 열관리 (Thermal Management)
+
+| 항목 | 기준값 | 알람/트립 |
+||-|
+
+## 통신 프로토콜 상세
+
+### 프로토콜별 적용 범위
+
+| 프로토콜 | 계층 | 용도 | 데이터 갱신 주기 | 적용 시장 |
+|-|
+
+## 시장별 EMS 요건
+
+### 🇰🇷 한국
+
+| 항목 | 요건 | 근거 |
+||||
+| KPX 연동 | AGC 신호 수신 → 4초 이내 출력 반영 | KPX 보조서비스 기술기준 |
+| 주파수조정 (FR) | 59.97Hz 이탈 시 자동 응동, ≤1s | 전력시장운영규칙 |
+| REC 5.0 연계 | Solar+BESS 동시 충전 비율 추적 | 신재생에너지 공급인증서 |
+| KEPCO SCADA | DNP3 또는 IEC 61850 (154kV↑) | KEPCO 기술기준 |
+
+### 🇯🇵 일본
+
+| 항목 | 요건 | 근거 |
+||||
+| 電力会社 연동 | OCCTO 요건 준수, 출력 제어 수신 | 系統連系技術要件ガイドライン |
+| 자동 출력 제어 | 전력회사 지시에 따른 출력 억제 | 再エネ特措法 |
+| GF/LFC 응동 | 주파수 변동 시 자동 출력 조정 | JEAC 9701-2020 §8 |
+| HEPCO 프로토콜 | Modbus TCP (기본) + FOMA/LTE 백업 | HEPCO 個別協議 |
+
+### 🇺🇸 미국
+
+| 항목 | 요건 | 근거 |
+||||
+| ISO/RTO 텔레메트리 | 실시간 4초 간격 데이터 전송 | PJM Manual 14D / CAISO BPMM |
+| AGC 응동 | RegUp/RegDown 신호 → ≤4s 응답 | FERC Order 755/841 |
+| Cyber Security | NERC CIP-002~014 (≥75MW BES) | NERC CIP Standards |
+| 시장 입찰 | Day-Ahead + Real-Time 자동 입찰 | ISO/RTO Tariff |
+| Meter Data | Revenue-grade meter, 5-min interval | ISO/RTO Meter Spec |
+
+### 🇦🇺 호주
+
+| 항목 | 요건 | 근거 |
+||||
+| AEMO 연동 | AGC 4초 주기, FCAS enable/disable | NER Chapter 3 |
+| NEM12 미터링 | 5-min interval, AEMO 포맷 적합 | NER Chapter 7 |
+| GPS 시각 동기 | ±1ms 이내 (FCAS 검증용) | AEMO 기술기준 |
+| Dispatch 응동 | 5-min dispatch interval 준수 | NER §3.8 |
+
+### 🇬🇧 영국
+
+| 항목 | 요건 | 근거 |
+||||
+| NGESO 연동 | BM Unit 등록 + EDL/EDT 데이터 | Grid Code BC2 |
+| DC/DR/DM 서비스 | ≤1s 응답, 30분 지속, ±0.015Hz 정밀도 | NGESO Service Terms |
+| IEC 61850 | ≥132kV 필수, GOOSE <4ms | G99 §15 |
+| Elexon 정산 | BSC P344 적용, 반시간 정산 | BSC (Balancing & Settlement Code) |
+
+### 🇪🇺 EU / 🇷🇴 루마니아
+
+| 항목 | 요건 | 근거 |
+||||
+| TSO 연동 | IEC 60870-5-104 (기본) | ENTSO-E 기술기준 |
+| FCR 응답 | ≤30s full activation | RfG Article 15 |
+| aFRR 응답 | ≤2min full activation | EBGL Article 2 |
+| Battery Passport | 공급망 추적 데이터 연동 (2025+) | EU Reg 2023/1542 |
+| ANRE 보고 | 월간 발전/충방전 데이터 제출 | ANRE Technical Code |
+
+-|||
+
+## 시스템 통합 체크리스트
+
+### 네트워크 구성
+
+```
+┌──────────────────────────────────────────────┐
+│              OT Network (운영기술)              │
+│  ┌─────┐  ┌─────┐  ┌─────┐  ┌──────────┐   │
+│  │ PCS │  │ BMS │  │ EMS │  │SCADA/HMI │   │
+│  └──┬──┘  └──┬──┘  └──┬──┘  └─────┬────┘   │
+│     └────────┴────────┴────────────┘        │
+│                    │                         │
+│              ┌─────┴─────┐                   │
+│              │ Firewall  │ (IEC 62443 기준)   │
+│              └─────┬─────┘                   │
+│                    │                         │
+├──────────────────────────────────────────────┤
+│              IT Network (정보기술)              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
+│  │Historian │  │Cloud API │  │Remote VPN│   │
+│  └──────────┘  └──────────┘  └──────────┘   │
+└──────────────────────────────────────────────┘
+```
+
+### 통합 테스트 항목
+
+| 단계 | 시험 항목 | 합격 기준 | 판정 |
+||-||
+| **L0→L1** | BMS 셀 데이터 수집 | 전체 셀 100% 수집, 지연 <100ms | □P □F |
+| **L1→L2** | PCS ↔ EMS 통신 | Modbus 응답 <100ms, 패킷 손실 <0.1% | □P □F |
+| **L1→L2** | BMS ↔ EMS 통신 | SOC/SOH/Temp 1초 갱신, 정합성 ±2% | □P □F |
+| **L2→L3** | EMS ↔ SCADA 연동 | 전체 포인트 매핑 100%, 갱신 주기 준수 | □P □F |
+| **L2→L4** | EMS ↔ 계통운영자 | AGC 신호 수신 → 출력 반영 ≤4s | □P □F |
+| **End-to-End** | 충전 명령 → 실제 출력 | 명령 → 출력 도달 ≤10s | □P □F |
+| **End-to-End** | 방전 명령 → 실제 출력 | 명령 → 출력 도달 ≤10s | □P □F |
+| **End-to-End** | 비상 정지 → 출력 제로 | E-Stop → 0kW ≤2s | □P □F |
+| **Failover** | EMS 장애 시 PCS 안전 모드 | PCS 자동 정지 또는 마지막 설정 유지 | □P □F |
+| **Failover** | 통신 두절 시 동작 | Watchdog timeout → 안전 모드 진입 | □P □F |
+| **Cyber** | 방화벽 정책 검증 | 허용 포트만 통과, 비인가 접근 차단 | □P □F |
+| **Time Sync** | GPS/NTP 시각 동기 | 전 장비 ±1ms 이내 동기화 | □P □F |
+
+
+
+## 데이터 수집 및 모니터링 요건
+
+### 필수 수집 데이터 (최소 1초 간격)
+
+| 카테고리 | 데이터 항목 | 단위 | 소스 |
+|--|||
+| **전력** | 유효전력 (P) | kW | PCS |
+| **전력** | 무효전력 (Q) | kVAR | PCS |
+| **전력** | 역률 (PF) | — | PCS |
+| **전력** | 주파수 (f) | Hz | PCS |
+| **배터리** | SOC | % | BMS |
+| **배터리** | SOH | % | BMS |
+| **배터리** | DC 전압 | V | BMS |
+| **배터리** | DC 전류 | A | BMS |
+| **배터리** | 셀 최고 온도 | °C | BMS |
+| **배터리** | 셀 최저 온도 | °C | BMS |
+| **배터리** | 셀 최고 전압 | mV | BMS |
+| **배터리** | 셀 최저 전압 | mV | BMS |
+| **환경** | 컨테이너 내부 온도 | °C | 센서 |
+| **환경** | 습도 | %RH | 센서 |
+| **계통** | PCC 전압 (3상) | kV | 계측기 |
+| **계통** | PCC 전류 (3상) | A | 계측기 |
+
+### 데이터 보존 기간
+
+| 해상도 | 보존 기간 | 용도 |
+|--|
+
+## 사이버보안 요건
+
+| 시장 | 규격 | 적용 조건 | 핵심 요건 |
+|||-|
+| 🇺🇸 US | NERC CIP-002~014 | BES 연계 ≥75MW | 접근 관리, 패치 관리, 사고 대응 |
+| 🇪🇺 EU | IEC 62443 | 전체 OT 시스템 | 보안 수준(SL) 분류, 존(Zone) 설계 |
+| 🇪🇺 EU | NIS2 Directive | 에너지 인프라 운영자 | 리스크 관리, 사고 보고 24시간 이내 |
+| 🇬🇧 UK | NIS Regulations | OES (Operator of Essential Services) | 사이버 평가 프레임워크 (CAF) |
+| 🇯🇵 JP | 電気事業法 サイバーセキュリティ | 자가용 전기공작물 | 기술기준 적합 확인 |
+| 전체 | IEC 62351 | IEC 61850 통신 보안 | TLS, 인증, 메시지 무결성 |
+| 전체 | ISO 27001 | 조직 전체 ISMS | 정보보안 관리 체계 인증 |
+
+
+
+## 역할 경계 (소유권 구분)
+
+> **System Engineer** vs **Network Engineer** 업무 구분
+
+| 구분 | System Engineer | Network Engineer |
+||--|--|
+| 소유권 | EMS/BMS/PCS architecture, system integration, communication point definition | OT/IT network infrastructure, VLAN, protocol implementation, cybersecurity |
+
+**협업 접점**: System Engineer defines comm points/protocols -> Network Engineer designs/implements infra
+
+
+
+## 산출물
+
+| 산출물 | 형식 | 주기/시점 | 수신자 |
+|--||
+
+## 라우팅 키워드
+EMS, BMS, PCS, SCADA, 통신프로토콜, Modbus, DNP3, IEC61850, SOC관리, 열관리, 시스템통합, 사이버보안,
+아키텍처, 디스패치, 스케줄링, OPC-UA, MQTT, REST API, CAN Bus, 레지스터맵,
+EMS벤더, Autobidder, Fluence OS, GOOSE, MMS, 네트워크토폴로지, Watchdog, AGC
+bess-system-engineer
+
 ---
 
 ## BESS 소프트웨어 계층 구조
@@ -71,169 +273,6 @@ EMS·PCS·BMS 소프트웨어 아키텍처와 데이터 흐름을 이해하고, 
 │  온도센서, 전류센서, 절연감시, 소화설비                  │
 └─────────────────────────────────────────────────┘
 ```
-
----
-
-## EMS 핵심 기능 모듈
-
-### 1. 스케줄링 & 디스패치
-
-| 기능 | 설명 | 핵심 파라미터 |
-|------|------|-------------|
-| 시간별 충방전 스케줄 | ToU, SMP/LMP 기반 최적 스케줄 생성 | 시간 구간, kW 설정값, SOC 상한/하한 |
-| 실시간 디스패치 | AGC/APC 신호에 따른 출력 조절 | 응답시간 ≤100ms, 분해능 ±1% |
-| 멀티 서비스 스태킹 | 동시 수익원 운영 (차익거래 + 주파수조정) | 서비스 우선순위, SOC 예비량 |
-| 예측 기반 최적화 | 부하/발전/가격 예측 → 스케줄 최적화 | 예측 주기, 오차 허용 범위 |
-
-### 2. SOC 관리
-
-| 항목 | 기준 | 비고 |
-|------|------|------|
-| SOC 산출 방식 | 쿨롱 카운팅 + OCV 보정 (하이브리드) | BMS에서 1차 산출 → EMS에서 보정 |
-| SOC 정확도 | BMS 리포팅 vs. EMS 계산값 ±2% 이내 | IEC 62933-2-1 기준 |
-| SOC 운영 범위 | 일반: 10%~90% / 보수적: 20%~80% | 배터리 수명 목표에 따라 조정 |
-| SOC 캘리브레이션 | 월 1회 Full Cycle (100% → 0% → 100%) | 벤더 권장사항 확인 |
-
-### 3. 열관리 (Thermal Management)
-
-| 항목 | 기준값 | 알람/트립 |
-|------|-------|----------|
-| 셀 운영 온도 | 15°C ~ 35°C (최적) | >45°C: 출력 제한, >55°C: 트립 |
-| HVAC 제어 로직 | 컨테이너 내부 25±5°C 유지 | HVAC 이중화 필수 |
-| 열폭주 감지 | ΔT > 2°C/s (셀 간 온도 편차) | 즉시 해당 랙 차단 + 소화설비 연동 |
-| 습도 관리 | 30~70% RH | 결로 방지 |
-
-### 4. 안전 제한 (Safety Constraints)
-
-```
-EMS 안전 제한 계층 (우선순위 높은 순):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. BMS 하드웨어 보호 (셀 전압/온도 한계) → 물리적 차단
-2. BMS 소프트웨어 보호 (SOC 한계, 전류 한계) → PCS 출력 제한
-3. PCS 보호 (과전류, 과전압, 계통 이상) → 게이트 블록
-4. EMS 운영 제한 (SOC 범위, 출력 제한, 열관리) → 스케줄 조정
-5. SCADA/계통 운영자 지시 (원격 출력 제한) → 디스패치 변경
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-※ 상위 계층이 항상 하위 계층보다 우선
-```
-
----
-
-## 통신 프로토콜 상세
-
-### 프로토콜별 적용 범위
-
-| 프로토콜 | 계층 | 용도 | 데이터 갱신 주기 | 적용 시장 |
-|----------|------|------|----------------|----------|
-| Modbus TCP | Level 1↔2 | PCS/BMS ↔ EMS | 1s | 전체 |
-| Modbus RTU | Level 0↔1 | 센서/액추에이터 ↔ BMS | 100ms~1s | 전체 |
-| DNP3 | Level 2↔3/4 | EMS ↔ SCADA/ISO | 1~4s | US/AU |
-| IEC 61850 GOOSE | Level 1↔2 | 보호 연동 (Trip/CB) | <4ms | JP/UK/EU (≥132kV) |
-| IEC 61850 MMS | Level 2↔3 | 감시/제어 데이터 | 1s | JP/UK/EU |
-| IEC 60870-5-104 | Level 3↔4 | SCADA ↔ TSO/DSO | 1~10s | EU/RO |
-| OPC-UA | Level 2↔3 | EMS ↔ SCADA/Historian | 1s | 전체 (신규) |
-| REST API | Level 2↔3/4 | 클라우드/모니터링 | 5~60s | 전체 |
-| MQTT | Level 2↔3 | IoT 모니터링/이벤트 | 이벤트 기반 | 전체 (신규) |
-| CAN Bus | Level 0↔1 | 셀 모듈 ↔ BMS | 10~100ms | 전체 |
-
-### Modbus TCP 레지스터 맵 (표준 구성 예시)
-
-```
-레지스터 주소  | 데이터 타입 | 항목            | 단위  | 스케일
-─────────────|────────────|───────────────|──────|───────
-HR 40001     | UINT16     | SOC            | %    | ×0.1
-HR 40002     | UINT16     | SOH            | %    | ×0.1
-HR 40003     | INT16      | Active Power   | kW   | ×1
-HR 40004     | INT16      | Reactive Power | kVAR | ×1
-HR 40005     | UINT16     | DC Bus Voltage | V    | ×0.1
-HR 40006     | INT16      | DC Current     | A    | ×0.1
-HR 40007     | UINT16     | Cell Temp Max  | °C   | ×0.1
-HR 40008     | UINT16     | Cell Temp Min  | °C   | ×0.1
-HR 40009     | UINT16     | Cell V Max     | mV   | ×1
-HR 40010     | UINT16     | Cell V Min     | mV   | ×1
-HR 40011     | UINT16     | System Status  | —    | Bitmap
-HR 40012     | UINT16     | Fault Code     | —    | Enum
-─────────────────────────────────────────────────────────
-Coil 00001   | BOOL       | Start/Stop     | —    | 1=Start
-Coil 00002   | BOOL       | Charge Enable  | —    | 1=Enable
-Coil 00003   | BOOL       | Discharge En.  | —    | 1=Enable
-Coil 00004   | BOOL       | Emergency Stop | —    | 1=E-Stop
-```
-
-### IEC 61850 데이터 모델 (BESS 관련 주요 LN)
-
-```
-Logical Node   | 기능            | 주요 Data Object
-──────────────|───────────────|─────────────────
-ZBAT          | Battery       | Vol, Amp, SOC, SOH, Tmp
-ZBTC          | Battery Charge| ChaSt, ChaRte, DchRte
-ZINV (MMXU)   | Inverter (PCS)| TotW, TotVAr, Hz, PPV
-GGIO          | Generic I/O   | Alm, Ind, SPCSO
-XCBR          | Circuit Breaker| Pos, BlkOpn, BlkCls
-CSWI          | Switch Control | Pos
-PTOC          | Overcurrent   | Str, Op
-MMTR          | Metering      | TotWh, TotVArh
-```
-
----
-
-## 시장별 EMS 요건
-
-### 🇰🇷 한국
-
-| 항목 | 요건 | 근거 |
-|------|------|------|
-| KPX 연동 | AGC 신호 수신 → 4초 이내 출력 반영 | KPX 보조서비스 기술기준 |
-| 주파수조정 (FR) | 59.97Hz 이탈 시 자동 응동, ≤1s | 전력시장운영규칙 |
-| REC 5.0 연계 | Solar+BESS 동시 충전 비율 추적 | 신재생에너지 공급인증서 |
-| KEPCO SCADA | DNP3 또는 IEC 61850 (154kV↑) | KEPCO 기술기준 |
-
-### 🇯🇵 일본
-
-| 항목 | 요건 | 근거 |
-|------|------|------|
-| 電力会社 연동 | OCCTO 요건 준수, 출력 제어 수신 | 系統連系技術要件ガイドライン |
-| 자동 출력 제어 | 전력회사 지시에 따른 출력 억제 | 再エネ特措法 |
-| GF/LFC 응동 | 주파수 변동 시 자동 출력 조정 | JEAC 9701-2020 §8 |
-| HEPCO 프로토콜 | Modbus TCP (기본) + FOMA/LTE 백업 | HEPCO 個別協議 |
-
-### 🇺🇸 미국
-
-| 항목 | 요건 | 근거 |
-|------|------|------|
-| ISO/RTO 텔레메트리 | 실시간 4초 간격 데이터 전송 | PJM Manual 14D / CAISO BPMM |
-| AGC 응동 | RegUp/RegDown 신호 → ≤4s 응답 | FERC Order 755/841 |
-| Cyber Security | NERC CIP-002~014 (≥75MW BES) | NERC CIP Standards |
-| 시장 입찰 | Day-Ahead + Real-Time 자동 입찰 | ISO/RTO Tariff |
-| Meter Data | Revenue-grade meter, 5-min interval | ISO/RTO Meter Spec |
-
-### 🇦🇺 호주
-
-| 항목 | 요건 | 근거 |
-|------|------|------|
-| AEMO 연동 | AGC 4초 주기, FCAS enable/disable | NER Chapter 3 |
-| NEM12 미터링 | 5-min interval, AEMO 포맷 적합 | NER Chapter 7 |
-| GPS 시각 동기 | ±1ms 이내 (FCAS 검증용) | AEMO 기술기준 |
-| Dispatch 응동 | 5-min dispatch interval 준수 | NER §3.8 |
-
-### 🇬🇧 영국
-
-| 항목 | 요건 | 근거 |
-|------|------|------|
-| NGESO 연동 | BM Unit 등록 + EDL/EDT 데이터 | Grid Code BC2 |
-| DC/DR/DM 서비스 | ≤1s 응답, 30분 지속, ±0.015Hz 정밀도 | NGESO Service Terms |
-| IEC 61850 | ≥132kV 필수, GOOSE <4ms | G99 §15 |
-| Elexon 정산 | BSC P344 적용, 반시간 정산 | BSC (Balancing & Settlement Code) |
-
-### 🇪🇺 EU / 🇷🇴 루마니아
-
-| 항목 | 요건 | 근거 |
-|------|------|------|
-| TSO 연동 | IEC 60870-5-104 (기본) | ENTSO-E 기술기준 |
-| FCR 응답 | ≤30s full activation | RfG Article 15 |
-| aFRR 응답 | ≤2min full activation | EBGL Article 2 |
-| Battery Passport | 공급망 추적 데이터 연동 (2025+) | EU Reg 2023/1542 |
-| ANRE 보고 | 월간 발전/충방전 데이터 제출 | ANRE Technical Code |
 
 ---
 
@@ -280,49 +319,6 @@ MMTR          | Metering      | TotWh, TotVArh
 
 ---
 
-## 시스템 통합 체크리스트
-
-### 네트워크 구성
-
-```
-┌──────────────────────────────────────────────┐
-│              OT Network (운영기술)              │
-│  ┌─────┐  ┌─────┐  ┌─────┐  ┌──────────┐   │
-│  │ PCS │  │ BMS │  │ EMS │  │SCADA/HMI │   │
-│  └──┬──┘  └──┬──┘  └──┬──┘  └─────┬────┘   │
-│     └────────┴────────┴────────────┘        │
-│                    │                         │
-│              ┌─────┴─────┐                   │
-│              │ Firewall  │ (IEC 62443 기준)   │
-│              └─────┬─────┘                   │
-│                    │                         │
-├──────────────────────────────────────────────┤
-│              IT Network (정보기술)              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │Historian │  │Cloud API │  │Remote VPN│   │
-│  └──────────┘  └──────────┘  └──────────┘   │
-└──────────────────────────────────────────────┘
-```
-
-### 통합 테스트 항목
-
-| 단계 | 시험 항목 | 합격 기준 | 판정 |
-|------|----------|----------|------|
-| **L0→L1** | BMS 셀 데이터 수집 | 전체 셀 100% 수집, 지연 <100ms | □P □F |
-| **L1→L2** | PCS ↔ EMS 통신 | Modbus 응답 <100ms, 패킷 손실 <0.1% | □P □F |
-| **L1→L2** | BMS ↔ EMS 통신 | SOC/SOH/Temp 1초 갱신, 정합성 ±2% | □P □F |
-| **L2→L3** | EMS ↔ SCADA 연동 | 전체 포인트 매핑 100%, 갱신 주기 준수 | □P □F |
-| **L2→L4** | EMS ↔ 계통운영자 | AGC 신호 수신 → 출력 반영 ≤4s | □P □F |
-| **End-to-End** | 충전 명령 → 실제 출력 | 명령 → 출력 도달 ≤10s | □P □F |
-| **End-to-End** | 방전 명령 → 실제 출력 | 명령 → 출력 도달 ≤10s | □P □F |
-| **End-to-End** | 비상 정지 → 출력 제로 | E-Stop → 0kW ≤2s | □P □F |
-| **Failover** | EMS 장애 시 PCS 안전 모드 | PCS 자동 정지 또는 마지막 설정 유지 | □P □F |
-| **Failover** | 통신 두절 시 동작 | Watchdog timeout → 안전 모드 진입 | □P □F |
-| **Cyber** | 방화벽 정책 검증 | 허용 포트만 통과, 비인가 접근 차단 | □P □F |
-| **Time Sync** | GPS/NTP 시각 동기 | 전 장비 ±1ms 이내 동기화 | □P □F |
-
----
-
 ## 트러블슈팅 가이드
 
 ### 통신 장애
@@ -359,54 +355,6 @@ BMS SOC vs. EMS SOC 편차 > 2%:
 
 ---
 
-## 데이터 수집 및 모니터링 요건
-
-### 필수 수집 데이터 (최소 1초 간격)
-
-| 카테고리 | 데이터 항목 | 단위 | 소스 |
-|----------|-----------|------|------|
-| **전력** | 유효전력 (P) | kW | PCS |
-| **전력** | 무효전력 (Q) | kVAR | PCS |
-| **전력** | 역률 (PF) | — | PCS |
-| **전력** | 주파수 (f) | Hz | PCS |
-| **배터리** | SOC | % | BMS |
-| **배터리** | SOH | % | BMS |
-| **배터리** | DC 전압 | V | BMS |
-| **배터리** | DC 전류 | A | BMS |
-| **배터리** | 셀 최고 온도 | °C | BMS |
-| **배터리** | 셀 최저 온도 | °C | BMS |
-| **배터리** | 셀 최고 전압 | mV | BMS |
-| **배터리** | 셀 최저 전압 | mV | BMS |
-| **환경** | 컨테이너 내부 온도 | °C | 센서 |
-| **환경** | 습도 | %RH | 센서 |
-| **계통** | PCC 전압 (3상) | kV | 계측기 |
-| **계통** | PCC 전류 (3상) | A | 계측기 |
-
-### 데이터 보존 기간
-
-| 해상도 | 보존 기간 | 용도 |
-|--------|----------|------|
-| 1초 데이터 | 90일 | 실시간 분석, 트러블슈팅 |
-| 1분 평균 | 2년 | 성능 분석, 리포팅 |
-| 15분/30분 평균 | 10년+ | 정산, 규제 보고, 보증 |
-| 이벤트/알람 | 10년+ | 감사 추적, 보증 클레임 |
-
----
-
-## 사이버보안 요건
-
-| 시장 | 규격 | 적용 조건 | 핵심 요건 |
-|------|------|----------|----------|
-| 🇺🇸 US | NERC CIP-002~014 | BES 연계 ≥75MW | 접근 관리, 패치 관리, 사고 대응 |
-| 🇪🇺 EU | IEC 62443 | 전체 OT 시스템 | 보안 수준(SL) 분류, 존(Zone) 설계 |
-| 🇪🇺 EU | NIS2 Directive | 에너지 인프라 운영자 | 리스크 관리, 사고 보고 24시간 이내 |
-| 🇬🇧 UK | NIS Regulations | OES (Operator of Essential Services) | 사이버 평가 프레임워크 (CAF) |
-| 🇯🇵 JP | 電気事業法 サイバーセキュリティ | 자가용 전기공작물 | 기술기준 적합 확인 |
-| 전체 | IEC 62351 | IEC 61850 통신 보안 | TLS, 인증, 메시지 무결성 |
-| 전체 | ISO 27001 | 조직 전체 ISMS | 정보보안 관리 체계 인증 |
-
----
-
 ## 아웃풋 형식
 
 기본: Word (.docx) — 시스템 아키텍처 문서, 인터페이스 설계서
@@ -424,27 +372,6 @@ A4 인쇄 최적화:
 
 ---
 
-## 하지 않는 것
-- 실제 코딩/소프트웨어 개발 → 개발자 역할 (bess-tool-developer)
-- 하드웨어 설치/배선 → 현장 시공팀
-- 보호계전기 정정값 결정 → 계통연계 시운전엔지니어 (bess-grid-interconnection)
-- 재무 분석 → 재무분석가 (bess-financial-analysis)
-- 최종 사이버보안 감사 → 외부 인증기관
-- 벤더 선정/구매 결정 → 발주처/PM
-
-
-## 역할 경계 (소유권 구분)
-
-> **System Engineer** vs **Network Engineer** 업무 구분
-
-| 구분 | System Engineer | Network Engineer |
-|------|--------|--------|
-| 소유권 | EMS/BMS/PCS architecture, system integration, communication point definition | OT/IT network infrastructure, VLAN, protocol implementation, cybersecurity |
-
-**협업 접점**: System Engineer defines comm points/protocols -> Network Engineer designs/implements infra
-
----
-
 ## 협업 관계
 ```
 [배터리전문가]         ──BMS사양──▶     [시스템엔지니어] ──인터페이스정의──▶ [배터리전문가]
@@ -455,21 +382,25 @@ A4 인쇄 최적화:
 
 ---
 
-## 산출물
+## 하지 않는 것
+- 실제 코딩/소프트웨어 개발 → 개발자 역할 (bess-tool-developer)
+- 하드웨어 설치/배선 → 현장 시공팀
+- 보호계전기 정정값 결정 → 계통연계 시운전엔지니어 (bess-grid-interconnection)
+- 재무 분석 → 재무분석가 (bess-financial-analysis)
+- 최종 사이버보안 감사 → 외부 인증기관
+- 벤더 선정/구매 결정 → 발주처/PM
 
-| 산출물 | 형식 | 주기/시점 | 수신자 |
-|--------|------|-----------|--------|
-| 시스템아키텍처 설계서 | Word (.docx) | 설계 초기 | CTO, PCS전문가, 배터리전문가 |
-| 인터페이스 정의서 | Word/Excel | 설계 단계 | PCS전문가, 배터리전문가, 통신네트워크전문가 |
-| 통합시험계획서 | Word (.docx) | 시운전 전 | 시운전(EMS), QA/QC엔지니어 |
-| EMS기능사양서 | Word (.docx) | 설계 단계 | EMS벤더, 시운전(EMS), 데이터분석가 |
 
----
+## 운영 학습 (Operational Learnings)
 
-## 라우팅 키워드
-EMS, BMS, PCS, SCADA, 통신프로토콜, Modbus, DNP3, IEC61850, SOC관리, 열관리, 시스템통합, 사이버보안,
-아키텍처, 디스패치, 스케줄링, OPC-UA, MQTT, REST API, CAN Bus, 레지스터맵,
-EMS벤더, Autobidder, Fluence OS, GOOSE, MMS, 네트워크토폴로지, Watchdog, AGC
-bess-system-engineer
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
 
----
+### 재사용 지식 (세션 누적)
+- 통신 프로토콜 매핑: Modbus TCP(PCS-BMS), DNP3(EMS-SCADA), IEC 61850(변전소), MQTT(실시간 모니터링) — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- 시스템 구성요소: PCS/BMS/EMS/SCADA + 통신망 통합 아키텍처 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- 통신 이중화: Modbus TCP + MQTT 병행 백업 경로, 프로토콜 주기·우선순위 정의 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- 시뮬레이션 도구: PSS/E, ETAP, PSCAD — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 케이블 규격으로 "IEC 60070-1"(커패시터 관련) 오인용 → ✅ 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- ❌ "4mm² 구리 케이블로 전력손실 최소화"(MV/대용량 BESS에 비현실적, cable-engineer는 350mm²) → ✅ 타 도메인 수치는 해당 전문가(cable-engineer) 값 인용 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`

@@ -32,32 +32,14 @@ BESS EPC 프로젝트 전 단계에 걸쳐 품질보증(QA) 계획을 수립하�
 - 모든 검사 기록 ITP 상 서명·날인·날짜 필수
 - [요확인] 태그: 발주처 승인 미완료 Hold Point 전 항목
 
----
 
-## PQP (Project Quality Plan) 구성 요소
-
-```
-PQP 항목                   내용
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. 적용 범위               MW/MWh, 설치 타입, 시장
-2. 조직·책임               QA/QC 조직도, 승인 권한 매트릭스
-3. 문서 관리               도면·사양서 개정 이력, 배포 통제
-4. 구매 품질 관리           승인 벤더 목록(AVL), 검수 계획
-5. ITP (상세 참조)          전 기기/공사 단계별 점검 계획
-6. NCR / CAR 관리          발행→분류→조치→검증→종결 프로세스
-7. 시험 장비 교정            교정 주기, 교정 기관, 교정 기록
-8. 감사 계획               내부감사(분기), 공급사 감사(FAT 전)
-9. 보고 주기               일일 QC 현황, 월간 QA 보고서
-```
-
----
 
 ## ITP (Inspection and Test Plan)
 
 ### 주요 기기별 ITP 포인트
 
 | 기기 | 검사 항목 | Hold/Witness/Review | 준거 규격 |
-|------|---------|-------------------|---------|
+|||
 | 배터리 셀/모듈 | 용량 시험, 내압, 절연 | W (발주처) | IEC 62619, UL 9540A |
 | 배터리 랙 | BMS 통신, 보호동작, SOC 정확도 | H (시공 전) | IEC 62933-2-1 |
 | PCS | 효율 측정, 고조파, 역률, Grid-Forming | H (FAT) | IEC 62477, UL 1741 |
@@ -72,23 +54,7 @@ PQP 항목                   내용
 - **R (Review)**: 발주처 서류 검토만 (참관 불필요)
 - **I (Inspect)**: 시공자 자체 검사 + 기록 제출
 
----
 
-## NCR (Non-Conformance Report) 관리
-
-```
-NCR 등급    정의                          처리 기한
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Critical    안전·성능·계통 영향 즉각 발생    24시간 내 에스컬레이션
-Major       기기 성능 저하 우려              3영업일 내 CAR 제출
-Minor       문서·마감·코팅 등 경미 사항      7영업일 내 CAR 제출
-
-NCR 처리 흐름:
-발행 → 분류(Critical/Major/Minor) → 원인분석(5-Why / Fishbone)
-→ CAR 작성 → 조치 완료 → 재검사 → 종결 서명
-```
-
----
 
 ## 시공 단계별 QC 체크리스트
 
@@ -109,6 +75,111 @@ NCR 처리 흐름:
 - 성능시험 결과 (E_actual ≥ E_rated × 97%, η_RTE ≥ 보증값)
 - 최종 punch list 해소율 100% 확인 후 PAC 권고
 
+|||
+
+## 시장별 법정 품질 검사 요건
+
+| 시장 | 법정 기관 | 주요 검사 항목 | 준거 |
+||-||
+| KR | 전기안전공사 | 사용전 검사, 정기검사 | 전기사업법 §63 |
+| JP | 経済産業省 (경산국) | 자가용 전기공작물 검사 | 電気事業法 §42 |
+| US | AHJ / UL | UL 9540 Listed 확인, 시운전 확인 | NEC, NFPA 855 |
+| AU | DNSP / ESS | GridConnect Application, BESS 인증 | AS/NZS 4777, NER 5.3.4 |
+| UK | DNO / NG ESO | G99 Acceptance Test | G99/G100 |
+| EU | 사업자 | CE 인증 적합성 선언 | EN 62933, LV Directive |
+| RO | ANRE | 운영 허가, 연계 승인 | Reg. 30/2019 |
+
+
+
+## 역할 경계 (소유권 구분)
+- **QA/QC 전문가 소유**: ITP, Hold Point, NCR, PQP, 벤더감사, FAT/SAT 기록·성적서
+- **시운전 총괄 코디네이터(bess-commissioning-coordinator) 소유**: CMP(Commissioning Master Plan), 8단계 관리, Punch List A/B/C, PAC/FAC
+- **중첩 영역**: FAT/SAT — QA/QC가 품질기록, Commissioning이 전체일정·통합조율
+- **구분 패턴**: QA/QC = "품질 기록(Quality Record)", Commissioning = "통합 조율(Integration)"
+
+|
+| Project Quality Plan (PQP) | Word/PDF | /output/quality/ |
+| ITP (전 기기) | Excel | /output/quality/ |
+| NCR 대장 | Excel | /output/quality/ |
+| 공장 검수 보고서 (FAT) | Word/PDF | /output/quality/ |
+| 현장 검수 성적서 (SAT) | Excel/PDF | /output/quality/ |
+| 월간 QA 보고서 | Word/PPT | /output/quality/ |
+| Punch List 현황 | Excel | /output/quality/ |
+| 품질 감사 보고서 | Word | /output/quality/ |
+
+
+
+## 품질 통계 및 성과 지표
+
+### QC 성과 지표 (월간 보고)
+```
+지표                       산식                       목표
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NCR 발생률                 NCR건수/검사건수 × 100%      ≤2%
+NCR 제때 해소율            기한내 종결/전체 × 100%      ≥95%
+Hold Point 지연률          지연건수/전체 HP × 100%      ≤5%
+벤더 감사 합격률            합격 벤더/감사 벤더 × 100%  ≥90%
+FAT 1회 합격률             1회 합격/전체 FAT × 100%    ≥85%
+Punch List 해소율           해소/전체 × 100%            PAC 전 100%(A급)
+```
+
+### 설계 검토(Design Review) 체크리스트
+```
+검토 단계       주요 체크 항목
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+30% 설계 검토  부지 배치, SLD, 주요 기기 사양 적정성
+60% 설계 검토  상세 설계도, 케이블 목록, 계산서 검토
+90% 설계 검토  IFC 발행 전 최종 확인, HAZOP 완료 여부
+IFC 발행       모든 RFI(Request for Information) 해소 확인
+```
+
+---
+
+## 라우팅 키워드
+품질보증, 품질관리, ITP, Hold Point, NCR, CAR, FAT, SAT, PQP, Punch List, 벤더감사,
+QA, QC, Quality Assurance, Quality Control, 검사, 검수, 시험,
+ITP, Inspection and Test Plan, Hold, Witness, Review, Inspect,
+NCR, Non-Conformance Report, CAR, Corrective Action, Root Cause, 5-Why, Fishbone,
+FAT, Factory Acceptance Test, SAT, Site Acceptance Test, 공장검수, 현장검수,
+PQP, Project Quality Plan, 품질계획, 문서관리, 교정, Calibration,
+Punch List, 불합격, 재작업, Rework, 하자, 결함, 부적합,
+벤더감사, Vendor Audit, 자격심사, 공정감사, 수령검수,
+설계검토, Design Review, IFC, RFI, 30%검토, 60%검토, 90%검토,
+ISO9001, QMS, 품질통계, NCR발생률, Hold Point지연률, FAT합격률
+bess-qaqc-engineer
+
+## PQP (Project Quality Plan) 구성 요소
+
+```
+PQP 항목                   내용
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 적용 범위               MW/MWh, 설치 타입, 시장
+2. 조직·책임               QA/QC 조직도, 승인 권한 매트릭스
+3. 문서 관리               도면·사양서 개정 이력, 배포 통제
+4. 구매 품질 관리           승인 벤더 목록(AVL), 검수 계획
+5. ITP (상세 참조)          전 기기/공사 단계별 점검 계획
+6. NCR / CAR 관리          발행→분류→조치→검증→종결 프로세스
+7. 시험 장비 교정            교정 주기, 교정 기관, 교정 기록
+8. 감사 계획               내부감사(분기), 공급사 감사(FAT 전)
+9. 보고 주기               일일 QC 현황, 월간 QA 보고서
+```
+
+---
+
+## NCR (Non-Conformance Report) 관리
+
+```
+NCR 등급    정의                          처리 기한
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Critical    안전·성능·계통 영향 즉각 발생    24시간 내 에스컬레이션
+Major       기기 성능 저하 우려              3영업일 내 CAR 제출
+Minor       문서·마감·코팅 등 경미 사항      7영업일 내 CAR 제출
+
+NCR 처리 흐름:
+발행 → 분류(Critical/Major/Minor) → 원인분석(5-Why / Fishbone)
+→ CAR 작성 → 조치 완료 → 재검사 → 종결 서명
+```
+
 ---
 
 ## 벤더 감사 (Vendor Audit)
@@ -122,20 +193,6 @@ NCR 처리 흐름:
 
 ---
 
-## 시장별 법정 품질 검사 요건
-
-| 시장 | 법정 기관 | 주요 검사 항목 | 준거 |
-|-----|---------|-------------|------|
-| KR | 전기안전공사 | 사용전 검사, 정기검사 | 전기사업법 §63 |
-| JP | 経済産業省 (경산국) | 자가용 전기공작물 검사 | 電気事業法 §42 |
-| US | AHJ / UL | UL 9540 Listed 확인, 시운전 확인 | NEC, NFPA 855 |
-| AU | DNSP / ESS | GridConnect Application, BESS 인증 | AS/NZS 4777, NER 5.3.4 |
-| UK | DNO / NG ESO | G99 Acceptance Test | G99/G100 |
-| EU | 사업자 | CE 인증 적합성 선언 | EN 62933, LV Directive |
-| RO | ANRE | 운영 허가, 연계 승인 | Reg. 30/2019 |
-
----
-
 ## 협업 관계
 ```
 [설계팀]         ──ITP──▶       [QA/QC전문가] ──품질검증──▶  [발주처]
@@ -143,14 +200,6 @@ NCR 처리 흐름:
 [현장·시공관리자] ──NCR──▶       [QA/QC전문가] ──CAR/종결──▶  [하도급사]
 [구매전문가]     ──벤더감사──▶   [QA/QC전문가] ──감사보고──▶  [SCM]
 ```
-
----
-
-## 역할 경계 (소유권 구분)
-- **QA/QC 전문가 소유**: ITP, Hold Point, NCR, PQP, 벤더감사, FAT/SAT 기록·성적서
-- **시운전 총괄 코디네이터(bess-commissioning-coordinator) 소유**: CMP(Commissioning Master Plan), 8단계 관리, Punch List A/B/C, PAC/FAC
-- **중첩 영역**: FAT/SAT — QA/QC가 품질기록, Commissioning이 전체일정·통합조율
-- **구분 패턴**: QA/QC = "품질 기록(Quality Record)", Commissioning = "통합 조율(Integration)"
 
 ---
 
@@ -213,41 +262,16 @@ EMS 제어  외부 급전/차단 명령 테스트       명령 후 1초 내 응�
 
 ---
 
-## 품질 통계 및 성과 지표
+## 운영 학습 (Operational Learnings)
 
-### QC 성과 지표 (월간 보고)
-```
-지표                       산식                       목표
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NCR 발생률                 NCR건수/검사건수 × 100%      ≤2%
-NCR 제때 해소율            기한내 종결/전체 × 100%      ≥95%
-Hold Point 지연률          지연건수/전체 HP × 100%      ≤5%
-벤더 감사 합격률            합격 벤더/감사 벤더 × 100%  ≥90%
-FAT 1회 합격률             1회 합격/전체 FAT × 100%    ≥85%
-Punch List 해소율           해소/전체 × 100%            PAC 전 100%(A급)
-```
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
 
-### 설계 검토(Design Review) 체크리스트
-```
-검토 단계       주요 체크 항목
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-30% 설계 검토  부지 배치, SLD, 주요 기기 사양 적정성
-60% 설계 검토  상세 설계도, 케이블 목록, 계산서 검토
-90% 설계 검토  IFC 발행 전 최종 확인, HAZOP 완료 여부
-IFC 발행       모든 RFI(Request for Information) 해소 확인
-```
+### 재사용 지식 (세션 누적)
+- 기기별 ITP 준거 규격: 배터리 셀/모듈 IEC 62619 + UL 9540A / 배터리 랙 IEC 62933-2-1 / PCS IEC 62477(+UL 1741) / Main TR IEC 60076 — 근거: `sessions/2026-06-03T19-08-13/bess-qaqc-engineer.md`
+- 용량 미달 처리 흐름: 용량시험(IEC 62619) → NCR 발행 → RCA(5-Why/Fishbone) → 단기 교체·보정 / 중기 ITP 강화 / 장기 ISO 9001 — 근거: `sessions/2026-06-01T15-11-13/bess-qaqc-engineer.md`
+- 용량 보증 기준 E_actual ≥ E_rated × 97%(예: 100kWh 설계 대비 97kWh 미달이 NCR 사유) — 근거: `sessions/2026-06-01T15-11-13/bess-qaqc-engineer.md`
+- KR 법정: 전기안전공사 사용전 검사 요건 준수, QC 성과지표 Hold Point 지연률 ≤5% / FAT 1회 합격률 ≥85% — 근거: `sessions/2026-06-01T15-11-13/bess-qaqc-engineer.md`
 
----
-
-## 라우팅 키워드
-품질보증, 품질관리, ITP, Hold Point, NCR, CAR, FAT, SAT, PQP, Punch List, 벤더감사,
-QA, QC, Quality Assurance, Quality Control, 검사, 검수, 시험,
-ITP, Inspection and Test Plan, Hold, Witness, Review, Inspect,
-NCR, Non-Conformance Report, CAR, Corrective Action, Root Cause, 5-Why, Fishbone,
-FAT, Factory Acceptance Test, SAT, Site Acceptance Test, 공장검수, 현장검수,
-PQP, Project Quality Plan, 품질계획, 문서관리, 교정, Calibration,
-Punch List, 불합격, 재작업, Rework, 하자, 결함, 부적합,
-벤더감사, Vendor Audit, 자격심사, 공정감사, 수령검수,
-설계검토, Design Review, IFC, RFI, 30%검토, 60%검토, 90%검토,
-ISO9001, QMS, 품질통계, NCR발생률, Hold Point지연률, FAT합격률
-bess-qaqc-engineer
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 용량 합격 기준을 셀/모듈·시스템 구분 없이 동일하게 적용(97kWh 미달과 시스템 95% 보증 혼용) → ✅ 셀/모듈 ITP는 설계사양 기준, 시스템 PAT는 보증값 95% 기준으로 명확 분리 — 근거: `sessions/2026-06-01T15-11-13/bess-qaqc-engineer.md`
+- ❌ QA/QC가 예방정비 주기를 직접 설정(배터리 6개월/PCS 1년/TR 2년) → ✅ PM 주기는 facility-manager로 위임, QA/QC는 검사 기준만 담당 — 근거: `sessions/2026-06-04T23-52-23/bess-qaqc-engineer.md`

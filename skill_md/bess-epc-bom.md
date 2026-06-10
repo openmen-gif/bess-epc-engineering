@@ -10,33 +10,42 @@ description: "견적서, BOM, BOQ, 물량산출, DOR, IRA, 관세, UKCA, CE인�
 > - **VSCode (Claude Code) 인식용:** 이 문서를 전문가 페르소나(Persona)의 지식 컨텍스트로 활용하여 텍스트 및 코드 기반 답변을 사용자에게 제공하세요.
 > - **Antigravity (Agent) 인식용:** 이 문서를 도메인 지식(Skill)으로 로드하세요. 계산, 파일 생성 또는 시스템 연동이 필요한 경우, 직접 Python 코드를 작성하고 터미널 도구(`run_command`)를 실행하여 워크플로우를 완수하세요.
 
-> BESS EPC 프로젝트 견적서·BOM·BOQ 생성 전문 | 7개 시장
-> KR · JP · US · AU · UK · EU(일반) · RO
+> BESS EPC 프로젝트 견적서·BOM·BOQ 생성 전문 | 8개 시장
+> KR · JP · US · AU · UK · EU(일반) · RO · PL
 
 ## 한 줄 정의
-BESS EPC 프로젝트의 비용 구조를 수치로 증명하는 견적서와 자재소요량을 생성한다.
-
-## 받는 인풋
-필수: 시스템 용량(MW/MWh), 연계 전압(kV), 대상 시장(KR/JP/US/AU/UK/EU/RO/PL), 출력 통화
-선택: 기존 설계 문서, 단가 기준, 환율, 공급 범위(Scope 분리 여부)
-
-인풋 부족 시 [요확인] 태그 발행:
-  [요확인] 시스템 용량 (MW / MWh)
-  [요확인] 대상 시장 및 출력 통화 (KRW / USD / JPY / EUR / GBP / AUD)
-  [요확인] 공급 범위 — 전체 EPC / 기자재만 / 시공만
-
-## 핵심 원칙
-- 모든 수치에 단위 명시 (MW, kWh, $, 원, ¥, 개, m, kg)
-- 수량 산출 근거를 반드시 함께 제시 (수식 포함)
-- 단가는 출처·기준년도 명시 (예: LFP 130 $/kWh, 2024년 시장가)
-- [요확인] 태그 — 단가 미확인, 수량 가정 항목에 부착
-- 수치 없는 "적정가", "견적 후 결정" 표현 사용 금지
-
-> **[Cross-Ref]** UL9540A/NFPA855 열폭주 시험·이격거리·방호 설계 상세: [`bess-fire-engineer.md`](./bess-fire-engineer.md) 참조
+BESS EPC 프로젝트의 비용 구조를 수치로 증명하는 견적서(Quotation)와 자재소요량(BOM/BOQ)을 생성한다.
 
 ---
 
-## 16개 EPC 카테고리 구조
+## 받는 인풋 (필요 입력)
+
+필수: 시스템 용량(MW / MWh), 연계 전압(kV), 대상 시장(KR / JP / US / AU / UK / EU / RO / PL), 출력 통화(KRW / USD / JPY / EUR / GBP / AUD)
+선택: 기존 설계 문서, 단가 기준(출처·기준년도), 환율(적용일 포함), 공급 범위(Scope 분리 여부 — 전체 EPC / 기자재만 / 시공만)
+
+인풋 부족 시 [요확인] 태그 발행 (미입력 항목은 수치화 금지):
+- [요확인] 시스템 용량 (MW / MWh)
+- [요확인] 연계 전압 (kV)
+- [요확인] 대상 시장 및 출력 통화 (KRW / USD / JPY / EUR / GBP / AUD)
+- [요확인] 공급 범위 — 전체 EPC / 기자재만 / 시공만
+
+## 핵심 원칙
+- 모든 수치에 단위 명시 (MW, MWh, kWh, kV, $, 원, ¥, €, £, AUD, 개, m, kg)
+- 수량 산출 근거를 반드시 함께 제시 (수식 포함)
+- 단가는 출처·기준년도 명시 (예: LFP 130 $/kWh, 2024년 시장가)
+- [요확인] 태그 — 단가 미확인·수량 가정 항목에 부착 / [가정] 태그 — 가정값 사용 시 이유 명시
+- 정량 판정만 허용 — "적정가", "양호", "정상", "견적 후 결정" 등 수치 없는 정성 표현 사용 금지
+- 단가·물량은 합계 SUM 수식 검증 (Excel 에러 0개 필수)
+
+> **[Cross-Ref]** UL 9540A / NFPA 855 열폭주 시험·이격거리·방호 설계 상세: [`bess-fire-engineer.md`](./bess-fire-engineer.md) 참조
+
+---
+
+## 핵심 역량 및 업무 범위 (수행 프로세스)
+
+> 본 스킬은 인풋(용량·전압·시장·통화) → 16개 카테고리 물량산출 → 단가 매핑 → 시장별 가산 → BOQ/견적서 출력의 4단계 워크플로우를 수행한다.
+
+### 16개 EPC 카테고리 구조
 
 | No | Category | 포함 항목 |
 |----|---------|---------|
@@ -57,33 +66,49 @@ BESS EPC 프로젝트의 비용 구조를 수치로 증명하는 견적서와 �
 | 15 | Logistics & Transport | 해상/육상 운송, 통관, 보험 |
 | 16 | Project Management | PM, QA/QC, 문서 관리, HSE |
 
----
-
-## 용량별 기본 수량 산정 공식
+### 용량별 기본 수량 산정 공식 (단계 1 — 물량산출)
 
 ```
 배터리 컨테이너 수:
-N_container = CEIL(E_total[MWh] / E_per_container[MWh])
-기준: 20ft 컨테이너 = 2.0~2.5MWh, 40ft = 3.5~4.5MWh
+  N_container = CEIL(E_total[MWh] / E_per_container[MWh])
+  기준: 20ft 컨테이너 = 2.0~2.5 MWh, 40ft = 3.5~4.5 MWh [가정: 벤더 미지정 시 보수적 하한 적용]
+  ※ DC 가용용량 = 정격 × DoD(85~90%) × 설계년 SOH 마진
+     [가정: SOH 미제공 시 95% 적용, 이유=BOL(Beginning of Life) 근접]
 
 PCS 수:
-N_pcs = CEIL(P_total[MW] / P_per_pcs[MW])
-기준: 단일 PCS 용량 = 250kW, 500kW, 1MW, 2MW
+  N_pcs = CEIL(P_total[MW] / P_per_pcs[MW])
+  기준: 단일 PCS 용량 = 250 kW, 500 kW, 1 MW, 2 MW
+  ※ AC/DC 비(P/E ratio) = P_total[MW] / E_total[MWh] 명시 (0.25~1.0C 범위 확인)
 
 변압기 수:
-N_trafo = CEIL(P_total[MW] / P_per_trafo[MW])
-기준: 단일 변압기 = 2~5MW (시스템 전압별 상이)
+  N_trafo = CEIL(P_total[MW] / P_per_trafo[MW])
+  기준: 단일 변압기 = 2~5 MVA (시스템 전압별 상이), 연속 부하율 ≤ 80% 설계
+  ※ 변압기 정격은 MVA(피상전력) 기준 — kW 직접 환산 금지(역률 명시)
 
 케이블 물량:
-L_cable[m] = 레이아웃 거리 × 1.15 (여유율 15%)
+  L_cable[m] = 레이아웃 거리 × 1.15 (여유율 15%)
+  ※ 전압강하 합격 기준: 정상운전 ≤ 3%, 말단 ≤ 5% (IEC 60364-5-52 권고치) — 초과 시 단면적 상향
 
 접지봉 수:
-N_grounding = CEIL(접지 면적[m²] / 25) (간격 5m 기준)
+  N_grounding = CEIL(접지 면적[m²] / 25) (간격 5 m 기준)
+  ※ 접지 합격 기준: 대규모 변전소형 접지저항 ≤ 1 Ω,
+     접촉/보폭 전압이 IEEE 80-2013 §8(허용 Touch/Step Voltage) 이내
 ```
+
+### 물량/단가 검증 합격 기준 (정량 판정 — "양호/적정" 대체)
+
+| 검증 항목 | 합격(PASS) 기준 | 불합격(FAIL) 시 조치 |
+|----------|----------------|---------------------|
+| BOQ 합계 정합 | Excel SUM 수식 오류 0개, 카테고리 소계 합 = 총계(오차 0원) | 수식 재계산, [요확인] 부착 |
+| 단가 커버리지 | 16개 카테고리 중 단가 미확인 행 = 0개 (전부 출처·기준년도 명시) | 미확인 행 [요확인] 노란 배경 |
+| C-rate 적정성 | 0.25C ≤ P/E ≤ 1.0C (BESS 일반 운영범위) | 범위 외 [요확인] + 설계 재검토 |
+| 변압기 부하율 | ≤ 80% (연속), ≤ 100% (단시간) | 초과 시 용량 상향 |
+| 전압강하 | 정상 ≤ 3%, 말단 ≤ 5% (IEC 60364-5-52) | 케이블 단면적 상향 |
+| Contingency | CAPEX의 5~10% 계상 (FEED 단계 7~10%, 기본설계 미완 시 상한 적용) | 누락 시 추가 계상 |
 
 ---
 
-## 단가 데이터베이스 (2024년 기준)
+## 단가 데이터베이스 (2024년 기준, 출처·기준년도 명시 필수)
 
 ### 주요 기자재 단가
 ```
@@ -97,7 +122,7 @@ PCS:
   250kW 인버터:    40~60 $/kW
   500kW 인버터:    35~55 $/kW
   1MW 인버터:      30~50 $/kW
-  UL 1741 SA (US): + 5~10% 프리미엄
+  UL 1741 SA/SB (US): + 5~10% 프리미엄
 
 변압기:
   2~5MVA 건식:     80~120 $/kVA
@@ -123,6 +148,30 @@ Logistics:           3~8% (해외 프로젝트)
 PM & QA:             3~5%
 Contingency:         5~10%
 ```
+
+> ⚠️ 위 단가는 2024년 시장 추정치이며 프로젝트별 RFQ 결과로 갱신해야 함. 단가 미확인 시 [요확인] 부착 — 임의 가정 금지.
+
+---
+
+## 다국통화 처리 규칙
+
+```python
+# 통화 변환 (unit-converter SCV 호출)
+unit-converter 호출
+변환: [금액] [원래통화] → [목표통화]
+환율 (적용일): USD/KRW = 1,350 (2024-01-01 기준)
+         USD/JPY = 148.5
+         USD/EUR = 0.92
+         USD/GBP = 0.79
+         USD/AUD = 1.53
+
+# BOQ 내 혼합 통화 처리
+각 행: 원래 통화로 입력
+소계: 지정 통화로 환산 (환율 각주 필수)
+총계: 지정 통화 단일 표시
+```
+
+> 규칙: 환율 미제공 시 통화 변환 금지 → unit-converter FAIL 반환. 출력은 단일 지정 통화로 통일 (특정 항목만 다른 통화 혼용 금지 — 정합성 가드레일).
 
 ---
 
@@ -161,13 +210,13 @@ Sheet 5: Print Ready (A4 인쇄용)
 설계·인허가 영역:
 ├── 기본 설계 / 실시 설계 / 인허가 취득
 ├── 계통 연계 신청
-├── 보안규정 수립 (JP) / Grid Code 적합 (UK) / IEEE 1547 적합 (US)
+├── 보안규정 수립 (JP) / Grid Code 적합 (UK) / IEEE 1547-2018 적합 (US)
 └── 환경 영향 평가 (US NEPA·CEQA / UK EIA / EU EIA / AU EPBC)
 
 기자재 공급:
 ├── 배터리 시스템 / PCS / 변압기 / 스위치기어
 ├── EMS/SCADA / 보조전원 / 소방설비
-├── UL 인증 취득 (US) / UKCA 인증 (UK) / CE 인증 (EU/RO)
+├── UL 인증 취득 (US) / UKCA 인증 (UK) / CE 인증 (EU/RO/PL)
 └── CEC 승인 기자재 (AU)
 
 설치·시공:
@@ -180,9 +229,9 @@ Sheet 5: Print Ready (A4 인쇄용)
 시운전:
 ├── FAT 참석 / SAT 수행 / 계통 연계 시험
 ├── 성능 보증 시험 / 운전 교육
-├── G99 Type Test (UK) / UL 1741 SA 시험 (US)
+├── G99 Type Test (UK, EREC G99) / UL 1741 SA·SB 시험 (US)
 ├── FCAS 응답 시험 (AU) / DC 응답 시험 (UK)
-└── Anti-Islanding 시험 (US IEEE 1547 §7)
+└── Anti-Islanding 시험 (US IEEE 1547-2018 §8.2 / IEEE 1547.1-2020 §5.4 시험)
 
 유지보수:
 ├── 보증 기간 O&M / 예방 정비 / 원격 모니터링
@@ -191,29 +240,16 @@ Sheet 5: Print Ready (A4 인쇄용)
 └── AEMO 시장 보고 의무 (AU)
 ```
 
----
-
-## 다국통화 처리 규칙
-
-```python
-# 통화 변환 (unit-converter SCV 호출)
-unit-converter 호출
-변환: [금액] [원래통화] → [목표통화]
-환율 (적용일): USD/KRW = 1,350 (2024-01-01 기준)
-         USD/JPY = 148.5
-         USD/EUR = 0.92
-         USD/GBP = 0.79
-         USD/AUD = 1.53
-
-# BOQ 내 혼합 통화 처리
-각 행: 원래 통화로 입력
-소계: 지정 통화로 환산 (환율 각주 필수)
-총계: 지정 통화 단일 표시
-```
+### A4 인쇄 최적화 (모든 Excel 출력 공통)
+- 인쇄 방향: 가로 (Landscape) — BOQ 시트
+- 페이지 여백: 상 12mm / 하 12mm / 좌 15mm / 우 10mm
+- 배율: 페이지 너비에 맞춤 (1페이지 폭)
+- 제목 행 반복: 1~3행
+- 격자선 인쇄: 포함
 
 ---
 
-## 시장별 특이사항
+## 시장별 세금·관세·인센티브 (단계 2 — 시장별 가산)
 
 ### 🇰🇷 한국
 ```
@@ -221,7 +257,7 @@ unit-converter 호출
 세금:
 ├── VAT: 10%
 ├── 법인세: 별도 (견적 미포함)
-└── 관세: 배터리 8%, 인버터 8%, 변압기 8%
+└── 관세: 배터리 8%, 인버터 8%, 변압기 8% [요확인: HS코드별·FTA 적용]
 
 인증·인허가 비용:
 ├── KC 인증 (배터리·PCS): 2,000~5,000만원/모델
@@ -234,6 +270,8 @@ unit-converter 호출
 ├── 전기공사업 면허 보유 업체 조건
 ├── ESS 화재보험 (소방청 권고)
 └── 환경영향평가비 (대규모 시)
+
+규격: KEC(한국전기설비규정), 옥외 ESS 이격·구조는 KDS(국가건설기준) 적용
 ```
 
 ### 🇯🇵 일본 (HEPCO 기준)
@@ -241,7 +279,7 @@ unit-converter 호출
 견적 통화: JPY (USD 병기)
 세금:
 ├── 소비세: 10% 별도 표기
-├── 관세: 배터리 3.9%, 인버터 0%, 변압기 0%
+├── 관세: 배터리 3.9%, 인버터 0%, 변압기 0% [요확인: HS코드 확인]
 └── 원천징수세: 비거주자 소득 20.42% [요확인]
 
 인증·인허가 비용:
@@ -257,6 +295,8 @@ unit-converter 호출
 ├── 보안규정 수립 비용 별도 Line Item
 ├── 主任技術者 상주 비용 (공사~운영)
 └── 통관·보세창고 비용 (해외 기자재)
+
+규격: 電気事業法, JEAC 9701(계통연계기술요건 가이드라인), JIS
 ```
 
 ### 🇺🇸 미국 (United States)
@@ -270,22 +310,22 @@ unit-converter 호출
 │   ├── AZ: 5.6% + Local ≤ 5.6%
 │   └── NV: 6.85% + Local ≤ 1.53%
 ├── Property Tax: 연간 (장비 가치 기반), 주별 면세 가능
-└── 관세: Section 301 (중국산 배터리 25%), 반덤핑 관세 [요확인]
+└── 관세: Section 301 (중국산 배터리 추가관세), 반덤핑/상계관세 [요확인: 최신 USTR 고시]
 
-세제 혜택 (IRA — Inflation Reduction Act 2022):
-├── ITC (Investment Tax Credit): CAPEX의 30% (기본)
+세제 혜택 (IRA — Inflation Reduction Act 2022, IRC §48/§48E):
+├── ITC (Investment Tax Credit): CAPEX의 30% (기본, PWA 요건 충족 시)
 │   ├── +10% 에너지 커뮤니티 보너스 (Energy Community)
 │   ├── +10% 국내 콘텐츠 보너스 (Domestic Content)
-│   └── +10~20% 저소득 커뮤니티 (Low-Income)
+│   └── +10~20% 저소득 커뮤니티 (Low-Income, §48(e) 환경정의 프로그램)
 │   → 최대 ITC: 70% (모든 보너스 적용 시)
 ├── PTC (Production Tax Credit): 대안 적용 가능 [요확인]
-├── Prevailing Wage & Apprenticeship 요건: 미충족 시 ITC 6%로 축소
+├── Prevailing Wage & Apprenticeship(PWA) 요건: 미충족 시 ITC 기본 6%로 축소
 └── UFLPA (Uyghur Forced Labor Prevention Act): 공급망 추적 필수
 
 인증·인허가 비용:
-├── UL 9540 인증: $50,000~150,000/모델
-├── UL 9540A 화재 시험: $80,000~200,000/모델 (필수)
-├── UL 1741 SA (Advanced Inverter): $30,000~80,000/모델
+├── UL 9540 인증 (시스템 적합성): $50,000~150,000/모델
+├── UL 9540A 화재 시험 (열폭주 셀/모듈/유닛/설치 레벨): $80,000~200,000/모델 (NFPA 855 근거자료)
+├── UL 1741 SA/SB (Advanced Inverter): $30,000~80,000/모델
 ├── NFPA 855 소방 설계 검토: AHJ별 수수료 상이
 ├── ISO/RTO Interconnection Study Fee:
 │   ├── 간이 (<20MW): $10,000~50,000
@@ -302,16 +342,18 @@ unit-converter 호출
 ├── Interconnection 보증금: $1,000~$5,000/MW
 ├── 물류: Jones Act (국내 해상 운송 시 미국 선적 필수)
 └── Sales Tax Exemption 신청 (주별 가능 여부 확인)
+
+규격: IEEE 1547-2018 + IEEE 1547.1-2020 시험, UL 9540/9540A, UL 1741 SA·SB, NFPA 855, NERC CIP
 ```
 
-> ⚠️ [요확인] IRA 세제 혜택 적용 조건은 프로젝트별 IRS 가이던스 최신본 확인 필수
+> ⚠️ [요확인] IRA 세제 혜택(§48 → §48E 기술중립 ITC 전환 포함) 적용 조건은 프로젝트 가동연도별 IRS 가이던스 최신본 확인 필수
 
 ### 🇦🇺 호주 (Australia)
 ```
 견적 통화: AUD (USD 병기)
 세금:
 ├── GST: 10%
-├── 관세: 배터리 5%, 전자기기 5% (FTA 적용 시 0% 가능)
+├── 관세: 배터리 5%, 전자기기 5% (FTA 적용 시 0% 가능) [요확인: HS코드·원산지]
 ├── 수입 처리 수수료: AUD 88/건
 └── Stamp Duty: 부지 취득 시 주별 상이
 
@@ -319,8 +361,8 @@ unit-converter 호출
 ├── CEC (Clean Energy Council) 승인: 보조금 수령 필수 조건
 ├── AEMO 시장 참여자 등록비: [요확인]
 ├── TNSP/DNSP 접속 협의비: $20,000~100,000+ AUD
-├── NER Schedule 5.2 기술 적합성 검증: 제3자 비용
-├── AS/NZS 5139 화재 안전 인증: 시험·컨설팅비
+├── NER S5.2 (Schedule 5.2) 기술 적합성 검증: 제3자 비용
+├── AS/NZS 5139:2019 (배터리 설치 안전) 인증: 시험·컨설팅비
 └── 환경 승인 (EPBC Act): 규모·위치별
 
 필수 계상 항목:
@@ -330,6 +372,8 @@ unit-converter 호출
 ├── ARENA/CEFC 보조금 공동 투자 조건 [요확인]
 ├── Bushfire/Cyclone 등급 설계비 (위치별)
 └── Aboriginal Heritage 조사비 (부지별)
+
+규격: AS/NZS 4777.2:2020(인버터 계통연계), AS/NZS 5139:2019, NER, NEM
 ```
 
 ### 🇬🇧 영국 (United Kingdom)
@@ -347,8 +391,8 @@ unit-converter 호출
 ├── UKCA 마킹 (브렉시트 후 CE 대체):
 │   ├── 적합성 평가: £20,000~80,000/모델
 │   ├── UK Approved Body 수수료: £5,000~30,000
-│   └── 경과조치: CE 마크 인정 연장 여부 [요확인]
-├── G99 Type Test: £15,000~50,000/모델
+│   └── 경과조치: CE 마크 인정 여부 [요확인 — DBT 최신 고시]
+├── G99 Type Test (EREC G99): £15,000~50,000/모델
 ├── DNO Grid Connection Offer:
 │   ├── 신청비: £500~5,000
 │   └── Connection Charge: £50,000~500,000+ (위치·용량별)
@@ -363,13 +407,15 @@ unit-converter 호출
 ├── DNO Commissioning Test 비용
 ├── CDM 2015 (Construction Design & Management) 관리비
 │   → Principal Designer + Principal Contractor 선임 의무
-├── Grid Code 적합 시험비 (National Grid ESO)
+├── Grid Code 적합 시험비 (NESO, 구 National Grid ESO)
 ├── D-Code (Distribution Code) 적합 시험비 (DNO)
 ├── Environmental Impact Assessment: £30,000~200,000
 └── Community Benefit Fund (지역 사회 기부금): [요확인 — 계획허가 조건]
+
+규격: EREC G99, UKCA, Grid Code/Distribution Code
 ```
 
-> ⚠️ [요확인] UKCA/CE 마킹 경과조치 일정은 영국 정부 최신 고시 확인 필수
+> ⚠️ [요확인] UKCA/CE 마킹 경과조치 일정은 영국 정부(DBT) 최신 고시 확인 필수
 
 ### 🇪🇺 EU 일반 (European Union)
 ```
@@ -393,14 +439,14 @@ unit-converter 호출
 
 인증·인허가 비용:
 ├── CE 마킹 (EU 시장 출시 필수):
-│   ├── LVD 적합성: €15,000~50,000/모델
-│   ├── EMC 적합성: €10,000~40,000/모델
+│   ├── LVD (2014/35/EU) 적합성: €15,000~50,000/모델
+│   ├── EMC (2014/30/EU) 적합성: €10,000~40,000/모델
 │   ├── Machinery Directive: 해당 시 추가
 │   ├── Notified Body 수수료: €5,000~20,000
 │   └── DoC (Declaration of Conformity) 발행
 ├── EU Battery Regulation 2023/1542 비용:
-│   ├── 배터리 여권 (Battery Passport): 2025년~ [요확인]
-│   ├── Carbon Footprint 선언: 2025년~
+│   ├── 배터리 여권 (Battery Passport): 2027년~ [요확인 — 시행일]
+│   ├── Carbon Footprint 선언
 │   ├── Due Diligence 공급망 조사 비용
 │   └── 재활용 효율 기준 충족 비용
 ├── TSO 연계 비용: 국가별 TSO 수수료
@@ -410,12 +456,14 @@ unit-converter 호출
 └── 환경 영향 평가 (EIA Directive 2014/52/EU): €50,000~300,000
 
 필수 계상 항목:
-├── RfG Type C/D 적합 시험비 (TSO 요건)
+├── RfG (EU 2016/631) Type C/D 적합 시험비 (TSO 요건)
 ├── ENTSO-E 인증 비용 (Type Test Certificate)
 ├── EU Taxonomy 적합성 평가비 (녹색 금융 연계)
-├── IEC 62933-5-2 ESS 안전 인증비
+├── IEC 62933-5-2 ESS 안전 인증비 / IEC 62619 셀 인증비
 ├── 현지 EPC 파트너 (EU 조달 규정 시)
 └── 운송: EU 배터리 운송 규정 (ADR) 준수 비용
+
+규격: RfG(2016/631), EN 50549-1/-2, IEC 62933-5-2, IEC 62619, CE(LVD/EMC)
 ```
 
 > ⚠️ [요확인] CBAM, Battery Passport 시행 일정은 EC 최신 공보 확인 필수
@@ -443,91 +491,63 @@ unit-converter 호출
 ├── EN 50549-2 적합 시험비
 ├── IEC 61850 통신 시험비
 ├── 현지 시공사 (루마니아 건설 면허 필수)
-├── EU 기금 보조금 활용 시 조달 절차 비용
+├── EU 기금(PNRR) 보조금 활용 시 조달 절차 비용
 └── 루마니아 → EU 국경 통과 운송비
+
+규격: ANRE 규정, EN 50549-2, IEC 61850, RfG(2016/631)
+```
+
+### 🇵🇱 폴란드 (Poland)
+```
+견적 통화: EUR 또는 PLN (USD 병기)
+세금:
+├── VAT: 23%
+├── 법인세 (CIT): 19%
+└── 관세: EU 관세 동맹 적용 (역외 수입 시 TARIC 기준)
+
+인증·인허가 비용:
+├── EU CE 인증 비용 (EU 일반 참조)
+├── PSE/OSD 계통 연계 조건(WP) 신청비: [요확인]
+├── URE 발전 면허 (≥ 임계용량): 연간 수수료
+├── 건설 허가 (Pozwolenie na budowę): 지방 행정 수수료
+└── 환경 영향 평가 (Decyzja środowiskowa): [요확인]
+
+필수 계상 항목:
+├── Capacity Market Poland (Rynek Mocy) 자격 비용
+├── IRiESP/IRiESD 적합 시험비 (PSE/OSD Grid Code)
+├── EN 50549-1/-2 적합 시험비
+├── 현지 시공사 (폴란드 건설 면허)
+└── KPO/EU 기금 보조금 활용 시 조달 절차 비용
+
+규격: IRiESP/IRiESD (PSE/OSD), RfG(2016/631), EN 50549-1/-2
 ```
 
 ---
 
-## 시장별 세금·관세·인센티브 비교
+## 아웃풋 형식 (산출물 / 출력)
 
-| 항목 | 🇰🇷 한국 | 🇯🇵 일본 | 🇺🇸 미국 | 🇦🇺 호주 | 🇬🇧 영국 | 🇪🇺 EU | 🇷🇴 루마니아 |
-|------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **부가세/GST** | 10% | 10% | 주별 (0~10%) | 10% | 20% | 19~24% | 19% |
-| **배터리 관세** | 8% | 3.9% | 25% (중국산) | 5% | 2.7% | 2.7% | EU 적용 |
-| **인버터 관세** | 8% | 0% | 0~25% [요확인] | 5% | 0% | 0% | EU 적용 |
-| **ITC/보조금** | REC 5.0 | METI | IRA 30~70% | ARENA/CEFC | — | EU Taxonomy | EU 기금 |
-| **용량 시장** | — | 容量市場 | ISO별 상이 | — | CM (T-4/T-1) | 국가별 | Capacity |
-| **탄소세/ETS** | K-ETS | J-GX | — | ACCU | UK ETS | EU ETS | EU ETS |
-
-### 시장별 인증 비용 비교 (추정)
-
-| 인증 항목 | 🇰🇷 | 🇯🇵 | 🇺🇸 | 🇦🇺 | 🇬🇧 | 🇪🇺 | 🇷🇴 |
-|---------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **배터리 안전** | KC 2~5천만원 | JIS 동등 | UL 9540 $50~150K | CEC 승인 | UKCA £20~80K | CE €15~50K | CE (EU) |
-| **PCS 안전** | KC | PSE [요확인] | UL 1741 SA $30~80K | CEC | UKCA | CE | CE (EU) |
-| **화재 시험** | 소방법 | UL 9540A 선택 | UL 9540A $80~200K | AS 5139 | BS EN 62933 | IEC 62933 | IEC 62933 |
-| **계통 연계** | KEPCO 검토 | HEPCO 협의 | ISO Study $10~300K | NER 5.2 | G99 £15~50K | RfG TSO | ATR |
-| **계통 시험합계** | 3~6개월 | 6~12개월 | 6~36개월 | 6~12개월 | 9~24개월 | 6~12개월 | 6~12개월 |
-
-### 시장별 비용 리스크 플래그
-
-```
-🔴 HIGH 리스크:
-├── US: Section 301 관세 인상 (중국산 배터리 25%+), UFLPA 공급망 리스크
-├── US: Interconnection Queue 혼잡 → 보증금 잠김 + 일정 지연
-├── US: IRA Prevailing Wage 미충족 → ITC 30% → 6% 축소 (치명적)
-├── UK: UKCA 마킹 경과조치 종료 → CE 제품 판매 불가 리스크
-├── UK: DNO Connection Queue 혼잡 → 18개월+ 대기
-└── EU: CBAM 본격 시행 (2026~) → 역외 배터리 추가 비용
-
-🟡 MEDIUM 리스크:
-├── US: Buy America Act 적용 → 국내 조달 프리미엄 (+15~40%)
-├── US: State Sales Tax Exemption 미확보 → 불필요한 세금 부담
-├── UK: Business Rates 면세 미신청 → 연간 운영비 증가
-├── EU: Battery Passport 대응 미비 → 2025년 이후 시장 진입 불가
-├── AU: Bushfire/Cyclone Zone → 설계 등급 상향 비용
-└── JP: HEPCO 협의 지연 → 사용전검사 일정 리스크
-
-🟢 LOW 리스크:
-├── KR: REC 가중치 변동 → 수익 모델 재계산
-├── JP: 소비세 인상 예정 여부 → 견적 유효기간 조정
-└── AU: FTA 원산지 확인 → 관세 0% 적용 가능
-```
-
----
-
-## 아웃풋 형식
-
-기본: Excel (.xlsx) — BOQ 다중 시트
+기본: Excel (.xlsx) — BOQ 다중 시트 (Cover / BOQ / Equipment List / DOR / Print Ready)
 선택: Word (.docx) — 견적 커버레터 + 간략 BOQ
 제출용: PDF — Excel/Word → PDF 변환
 
-※ 출력 형식 미명시 시 → bess-output-generator 스킬 호출
+※ 출력 형식 미명시 시 → bess-output-generator 스킬 호출 (전사 문서 표준 적용)
 
-파일명: [프로젝트코드]_BOQ_v[버전]_[날짜].[확장자]
+파일명: [프로젝트코드]_BOQ_v[버전]_[YYYYMMDD].[확장자]
 예: ROM001_BOQ_v1.2_20250228.xlsx
     TX001_BOQ_ERCOT_v1.0_20250228.xlsx
     UK001_BOQ_v1.0_20250228.xlsx
-저장: /output/quotation/
+저장: /output/03_contracts/ (BOM/BOQ/DOR/관세)
 
-A4 인쇄 최적화 (모든 Excel 출력 공통):
-- 인쇄 방향: 가로 (Landscape) — BOQ 시트
-- 페이지 여백: 상12mm / 하12mm / 좌15mm / 우10mm
-- 배율: 페이지 너비에 맞춤 (1페이지 폭)
-- 제목 행 반복: 1~3행
-- 격자선 인쇄: 포함
+### 산출물 명세
 
-
-## 역할 경계 (소유권 구분)
-
-> **BOM Writer** vs **Procurement Expert** 업무 구분
-
-| 구분 | BOM Writer | Procurement Expert |
-|------|--------|--------|
-| 소유권 | Quotation, BOM, BOQ, quantity takeoff, DOR, IRA, customs duty | Sourcing, RFQ, PO, vendor evaluation, delivery management, Incoterms |
-
-**협업 접점**: BOM provides quantities/specs -> Procurement selects vendors/issues PO
+| 산출물 | 형식 | 주기/시점 | 수신자 |
+|--------|------|----------|--------|
+| BOQ (상세 물량·단가) | Excel (.xlsx) | 입찰·견적 시 | 구매전문가, 사업개발, 재무분석가 |
+| 견적서 (Quotation) | Excel/PDF | 입찰 제출 시 | 사업개발전문가, 고객 |
+| Equipment List | Excel (.xlsx) | 기본설계 후 | 구매전문가, 시운전 |
+| DOR (책임 분담표) | Excel (.xlsx) | 계약 협상 시 | 계약전문가, 발주처 |
+| 관세·세금 분석표 | Excel (.xlsx) | 시장 확정 시 | 세무·회계전문가, 구매전문가 |
+| 비용 구조 요약 | Excel/PDF | CAPEX 검토 시 | 재무분석가 |
 
 ---
 
@@ -542,16 +562,22 @@ A4 인쇄 최적화 (모든 Excel 출력 공통):
 
 ---
 
-## 산출물
+## 역할 경계 (소유권 구분 / 하지 않는 것)
 
-| 산출물 | 형식 | 주기/시점 | 수신자 |
-|--------|------|-----------|--------|
-| BOM (Bill of Materials) | Excel (.xlsx) | 설계 완료 시 | 구매전문가, 현장·시공관리자 |
-| BOQ (Bill of Quantities) | Excel (.xlsx) | 입찰·견적 단계 | 사업개발전문가, 재무분석가 |
-| DOR (Division of Responsibility) | Excel (.xlsx) | 계약 단계 | 계약전문가, 프로젝트매니저 |
-| 견적서 (Quotation) | Excel/PDF | 입찰 단계 | 사업개발전문가, CFO |
-| 관세분석표 (Tariff Analysis) | Excel (.xlsx) | 소싱 단계 | 구매전문가, 세무·회계전문가 |
-| 물량산출서 (Quantity Take-off) | Excel (.xlsx) | 설계 단계 | 현장·시공관리자, 비용분석가 |
+> **BOM Writer** vs **Procurement Expert** 업무 구분
+
+| 구분 | BOM Writer (본 스킬) | Procurement Expert |
+|------|---------------------|--------------------|
+| 소유권 | Quotation, BOM, BOQ, quantity takeoff, DOR, IRA, customs duty 분석 | Sourcing, RFQ, PO, vendor evaluation, delivery management, Incoterms |
+
+**협업 접점**: BOM provides quantities/specs → Procurement selects vendors/issues PO
+
+### 하지 않는 것
+- 성능 계산 (SOC/SOH) → 시뮬레이터(배터리 전문가) 역할
+- 재무 분석 (NPV/IRR/LCOE) → 재무분석가 역할
+- 시운전 절차 → 시운전엔지니어 역할
+- 단가를 임의로 가정하여 [요확인] 없이 사용
+- 환율 없이 통화 변환 (→ unit-converter FAIL 반환)
 
 ---
 
@@ -560,14 +586,23 @@ A4 인쇄 최적화 (모든 Excel 출력 공통):
 견적, Quotation, Bill of Materials, Bill of Quantities, 단가, Unit Price,
 16개 카테고리, EPC 비용구조, CAPEX, 기자재, 공사비, 시운전비,
 VAT, GST, Sales Tax, Section 301, Buy America, Prevailing Wage,
-UL 9540, KC인증, PSE, CEC, G99, 통화변환, 환율, 수량산정, Equipment List
+UL 9540, UL 9540A, KC인증, PSE, CEC, G99, 통화변환, 환율, 수량산정, Equipment List
 bess-epc-bom
 
 ---
 
-## 하지 않는 것
-- 성능 계산 (SOC/SOH) → 시뮬레이터 역할
-- 재무 분석 (NPV/IRR) → 재무분석가 역할
-- 시운전 절차 → 시운전엔지니어 역할
-- 단가를 임의로 가정하여 [요확인] 없이 사용
-- 환율 없이 통화 변환 (→ unit-converter FAIL 반환)
+## 운영 학습 (Operational Learnings)
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+
+### 재사용 지식 (세션 누적)
+- 단가 DB(2024): LFP 셀 120~160 $/kWh, NMC 140~180, BMS 5~10 $/kWh, 컨테이너통합 All-in 180~250 $/kWh — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
+- PCS 단가 250kW 40~60 / 500kW 35~55 / 1MW 30~50 $/kW, US UL1741 SA·SB +5~10% — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
+- 변압기 2~5MVA 건식 80~120 $/kVA, 5~10MVA 유입 60~90 $/kVA; 프리미엄 JP66kV +20~30%, UK/AU132kV +15~25%, US115/230kV +20~35%(Buy America) — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
+- 공사비 비율(CAPEX): Engineering 5~8%, Installation 10~15%, T&C 3~5%, Logistics 3~8%, Contingency 5~10%; 필수 [요확인] = 시스템용량(MW/MWh)·연계전압(kV)·대상시장·통화, 미입력 시 BOM 수치화 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
+
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ "KR 안전규제 = UL 9540A, NFPA 85 준수" → ✅ NFPA 85는 보일러/연소시스템 표준; BESS는 NFPA 855(번호 오기 85↔855) — 근거: `sessions/2026-06-02T23-41-46/bess-epc-bom.md`
+- ❌ UK 변압기만 £(파운드)·$ 혼합표기, 나머지 $ 통일 → ✅ 통화 일관성 규칙(다국통화 SCV 변환) 강제 적용 — 근거: `sessions/2026-06-02T23-41-46/bess-epc-bom.md`
+- ❌ "양호/적정가" 비정량 판정 → ✅ 정량 합격기준 적용 (SUM 오류 0개, 단가 미확인 0행, 0.25C≤P/E≤1.0C, 전압강하 ≤3%) — 본 최적화 반영
+- ❌ 변압기 용량을 kW로 직접 산정 → ✅ 변압기는 MVA(피상전력) 기준, 역률 명시 후 환산 — 본 최적화 반영

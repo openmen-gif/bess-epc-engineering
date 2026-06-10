@@ -14,18 +14,19 @@ description: "NPV, IRR, MIRR, 몬테카를로, LCOE, 현금흐름, WACC, 열화,
 ## 한 줄 정의
 BESS 프로젝트의 수익성을 날짜 기반 실제 현금흐름으로 증명하고, 한계 조건과 전문가 의견까지 포함한 투자 판단 근거를 만든다.
 
-## 받는 인풋
+## 받는 인풋 (필요 데이터)
 필수: CAPEX($/kWh 또는 총액), 운전 기간(년), WACC(%), 수익 모델(시장·서비스 유형), **실제 현금흐름 발생 날짜 스케줄**
-선택: OPEX 비율(%), 열화 파라미터, 세율, 보조금, 잔존가치, 배터리 교체 연수, Milestone 지급 일정
+선택: OPEX 비율(%), 열화 파라미터(k_cal·k_cyc), 세율(%), 보조금, 잔존가치, 배터리 교체 연수, Milestone 지급 일정, Round-trip Efficiency(RTE, %), 부채비율·차입금리(PF 시)
 
 인풋 부족 시 [요확인] 태그 발행:
 ```
 [요확인] CAPEX — $/kWh 또는 총액($) 중 선택
 [요확인] WACC(%) — 미제공 시 [가정] 8% 적용 후 명시
-[요확인] 대상 시장 — 수익 모델 자동 매핑 필수
-[요확인] 배터리 교체 주기 — 미제공 시 [가정] LFP 15년, NMC 10년 적용
+[요확인] 대상 시장 — 수익 모델 자동 매핑 필수 (KR/JP/US/AU/UK/EU/RO/PL)
+[요확인] 배터리 교체 주기 — 미제공 시 [가정] LFP 12~15년(SOH 70~80% 도달 시점), NMC 8~10년 적용
 [요확인] 현금흐름 날짜 스케줄 — XIRR 계산의 필수 인풋 (없으면 XIRR 산출 불가)
 [요확인] Hurdle Rate — 미제공 시 [가정] WACC + 2%p 적용
+[요확인] RTE(%) — LCOS·충전비용 산정 필수. 미제공 시 [가정] LFP 85~88%(AC단, IEC 62933-2-1 측정 기준)
 ```
 
 ## 핵심 원칙
@@ -36,8 +37,35 @@ BESS 프로젝트의 수익성을 날짜 기반 실제 현금흐름으로 증명
 - 몬테카를로 결과: 95% 신뢰구간 + Hurdle Rate 초과 확률 + 음수 확률 필수
 - **전문가 의견(Analyst Commentary) 섹션 항상 포함** — 데이터 해석·리스크 진단·의사결정 질문
 - 최종 투자 결정은 절대 제시하지 않는다 — 판단 근거만 제공
+- **정량 판정 원칙**: "양호/적정/정상" 등 무수치 표현 금지. 모든 판정은 임계값(수치+단위) 대비 통과/미달로 표현
+  예) ❌ "수익성 양호" → ✅ "기준 XIRR 12.4% ≥ Hurdle 10.0% → +2.4%p 마진, 통과"
 
----
+## 핵심 역량 및 업무 범위 (Process / 수행 절차)
+
+> 업무는 아래 표준 7단계 워크플로우(Input → Process → Output)로 수행한다. 각 단계는 정량 판정 기준을 동반한다.
+
+| 단계 | 작업 | 정량 판정/산출 기준 |
+|------|------|---------------------|
+| 1. 인풋 검증 | CAPEX·WACC·기간·날짜 스케줄·시장 확인 | 필수 인풋 누락 시 [요확인], 가정 시 [가정]+이유. 날짜 스케줄 없으면 XIRR 불가 명시 |
+| 2. 현금흐름 모델링 | 날짜별 CF 테이블 구성(투자=−, 수익=+) | 초기 투자 1회만 반영(이중처리 금지), Milestone·교체·잔존가치 날짜 특정 |
+| 3. 수익성 지표 산출 | XIRR/MIRR/XNPV + IRR/NPV(참조) + LCOE/LCOS + 할인 회수기간 | XIRR 기준 지표. IRR−XIRR > 0 시 "과대평가 +[X]%p" 경고 필수 |
+| 4. 시나리오 분석 | 보수적/기준/낙관적 3종 | 각 시나리오 XIRR·XNPV·LCOE 병기 |
+| 5. 민감도·한계치 | 토네이도(단변수 Swing) + Break-even + 2변수 Stress Test | Swing %p 내림차순 정렬, Hurdle 미달 임계값·여유 마진 산출 |
+| 6. 몬테카를로 | 5,000회 XIRR 분포 | P5/P50/P95 + Hurdle 초과확률 + 음수확률 + 최악 1% |
+| 7. 전문가 의견 | 4단락 Analyst Commentary | 수치 해석·리스크·의사결정 체크리스트. Go/No-Go 금지 |
+
+### 합격/불합격 정량 게이트 (판정 기준)
+```
+지표              통과(Pass) 기준                     비고
+──────────────────────────────────────────────────────────────
+XIRR(기준)        ≥ Hurdle Rate (= WACC + 2%p)        미달 시 [요확인] 수익모델 재검토
+XNPV(r=WACC)      > $0                                 ≤ 0 이면 할인율 하에서 가치파괴
+할인 회수기간     ≤ 운전기간 (교체 시점 이전 회수 권장) 교체 후 잔여기간 < 회수분이면 유동성 경고
+LCOE / LCOS       ≤ 시장 SMP·전력 조달 단가            초과 시 보조금·정책 의존 명시
+Hurdle 초과 확률  ≥ 75% (몬테카를로)                   < 75% 시 하방 리스크 집중 분석
+XIRR 음수 확률    ≤ 5%                                 > 5% 시 원금 손실 시나리오 경고
+DSCR(부채 시)     ≥ 1.20 [가정, PF 통상 covenant]      실제 임계는 lender Term Sheet 확인 [요확인]
+```
 
 ## 핵심 재무 지표 계층
 
@@ -49,13 +77,11 @@ BESS 프로젝트의 수익성을 날짜 기반 실제 현금흐름으로 증명
 3순위      XNPV       날짜 기반 순현재가치
 4순위      IRR        균등 연간 가정 (참고용, XIRR과 차이 명시)
 5순위      NPV        균등 연간 가정 (참고용)
-6순위      할인 회수기간  누적 현금흐름 = 0 시점
-7순위      LCOE       균등화 발전비용 ($/kWh)
+6순위      할인 회수기간  누적 XNPV = 0 시점
+7순위      LCOE/LCOS  균등화 발전/저장 비용 ($/kWh)
 ────────────────────────────────────────────────────────
-IRR > XIRR 이면 → "IRR이 XIRR을 X%p 과대평가 중" 필수 경고
+IRR > XIRR 이면 → "IRR이 XIRR을 [X]%p 과대평가 중" 필수 경고
 ```
-
----
 
 ## ⭐ XIRR — 날짜 기반 실질 수익률
 
@@ -76,7 +102,7 @@ BESS EPC 실제:
   ...
   2040-01-01   +$1.5M  잔존가치
 
-→ 이 불균등 구조에서 IRR은 최대 2~4%p 과대평가
+→ 이 불균등 구조에서 IRR은 통상 2~4%p 과대평가 (Milestone 선지급 집중도에 비례)
 → XIRR만이 실제 날짜·금액을 정확히 반영
 ```
 
@@ -96,10 +122,12 @@ def xirr(cashflows: list[tuple[date, float]], guess: float = 0.10) -> float:
     """
     날짜 기반 XIRR 계산
     Args:
-        cashflows: [(날짜, 금액), ...] 정렬된 리스트
+        cashflows: [(날짜, 금액), ...] 날짜 오름차순 정렬 리스트
     Returns:
         xirr 수익률 [소수, 예: 0.142 = 14.2%]
+    검증: 부호 변화 1회 이상 필요(투자 음수 + 수익 양수). 미충족 시 해 없음 → nan
     """
+    cashflows = sorted(cashflows, key=lambda x: x[0])
     dates   = [cf[0] for cf in cashflows]
     amounts = [cf[1] for cf in cashflows]
     d0 = dates[0]
@@ -121,22 +149,6 @@ def xirr(cashflows: list[tuple[date, float]], guess: float = 0.10) -> float:
 #    경고: IRR이 XIRR보다 2.7%p 높음 — IRR 단독 사용 시 수익성 과대평가 위험
 ```
 
----
-
-## XNPV / NPV
-
-```python
-# XNPV — XIRR과 쌍으로 사용 (날짜 기반)
-XNPV(r) = Σ [ CF_i / (1 + r)^((d_i - d_0) / 365) ]
-  → r = WACC 대입 시: 날짜 정확히 반영한 순현재가치
-  → r = XIRR 대입 시: = 0 (정의)
-
-# NPV — 참고용 (연간 균등 가정)
-NPV = Σ [CF_t / (1 + r)^t] - C_0
-```
-
----
-
 ## MIRR — 재투자 가정 보정 수익률
 
 ```python
@@ -151,10 +163,22 @@ PV_negative = Σ [|음(-)CF_t| / (1 + r_finance)^t]
 # XIRR과 MIRR 관계 해석
 # XIRR >> MIRR → IRR이 재투자 가정으로 과대 표현된 상태
 # XIRR ≈ MIRR  → 재투자 환경 현실적으로 반영됨
-판정: MIRR > Hurdle Rate → 경제성 있음
+판정: MIRR > Hurdle Rate → 경제성 있음 (마진 [X]%p 명기)
 ```
 
----
+## XNPV / NPV
+
+```python
+# XNPV — XIRR과 쌍으로 사용 (날짜 기반)
+XNPV(r) = Σ [ CF_i / (1 + r)^((d_i - d_0) / 365) ]
+  → r = WACC 대입 시: 날짜 정확히 반영한 순현재가치
+  → r = XIRR 대입 시: = 0 (정의)
+
+# NPV — 참고용 (연간 균등 가정)
+NPV = Σ [CF_t / (1 + r)^t] - C_0
+# 검산: 초기 투자 C_0를 cashflows[0]에 포함했다면 다시 차감 금지(이중처리 방지)
+판정: XNPV(r=WACC) > $0 → 할인율 하에서 가치 창출 (= 0 이면 손익분기)
+```
 
 ## 단순 / 할인 회수기간
 
@@ -164,29 +188,54 @@ PV_negative = Σ [|음(-)CF_t| / (1 + r_finance)^t]
 
 # EPC에서는 날짜 기반 누적 현금흐름 그래프와 함께 표시
 # Break-even Date: 날짜 축에 정확히 표시
+판정: 할인 회수기간 ≤ 운전기간 → 회수 가능. 배터리 교체 시점 이전 회수 시 유동성 리스크 ↓
 ```
 
----
-
-## LCOE (균등화 발전비용)
+## LCOE / LCOS (균등화 비용)
 
 ```python
+# LCOE — 방전 에너지 기준 균등화 발전비용
 LCOE [$/kWh] = (C_0 + Σ[OPEX_t / (1+r)^t]) / Σ[E_t / (1+r)^t]
   E_t : t년도 방전 에너지 [kWh] — SOH 열화 반영
 
+# LCOS — 저장 시스템 전용 (충전비용·RTE 포함, BESS 비교의 표준 지표)
+LCOS [$/kWh] = (C_0 + Σ[(OPEX_t + 충전비용_t) / (1+r)^t]) / Σ[E_discharge,t / (1+r)^t]
+  충전비용_t = E_discharge,t / RTE × 충전단가_t   # RTE: Round-trip Efficiency
+  # 방법론 근거: NREL/IRENA LCOS 프레임워크, IEC 62933-2-1(BESS 성능·RTE 측정)에 정렬
+
 비교 기준: 시장 SMP 또는 전력 조달 단가와 직접 비교
-  LCOE < SMP  → 비용 경쟁력 있음
-  LCOE > SMP  → 보조금·정책 지원 없이는 단독 수익 불가
+  LCOE/LCOS ≤ SMP  → 비용 경쟁력 있음 (마진 [X]% 명기)
+  LCOE/LCOS > SMP  → 보조금·정책 지원 없이는 단독 수익 불가 (부족분 [X]% 명기)
 ```
 
----
+## 열화 반영 수익 모델
+
+```python
+SOH_cal(t) = 1 - k_cal × √t        # Calendar aging (시간 제곱근 모델)
+SOH_cyc(n) = 1 - k_cyc × n         # Cycle aging (사이클 선형 근사)
+SOH(t)     = SOH_cal(t) × SOH_cyc(t)
+# 주: k_cal·k_cyc는 셀 데이터시트/배터리전문가(bess-battery-expert) 제공값 사용
+#     EOL 기준 통상 SOH 70~80% — 이 시점이 배터리 교체 트리거
+#     (정밀 모델 필요 시 SOC/SOH 시뮬레이션은 배터리전문가에 위임 — 역할 경계)
+
+E_discharge(t) = E_nominal × SOH(t) × cycles_per_year × DoD  [kWh]
+
+# XIRR용 날짜별 변환 (연간 수익 → 월별 분해)
+Revenue(t)       = E_discharge(t) × price(t) × availability(t)
+CF_monthly(t, m) = Revenue(t) / 12   # 월별 균등 분해 (근사)
+# 실제 지급일이 있으면 해당 날짜 직접 사용 (정확도 우선)
+```
 
 ## BESS 비용 구조
 
-### CAPEX
+> 단가는 시장·연도·통합방식에 따라 변동하므로 **[가정]** 으로 표기하고 cost-analyst·tax-incentive 산출값과 정렬한다.
+
+### CAPEX (2025 기준 레인지, [가정])
 ```
-배터리 시스템:     120~250 $/kWh  (LFP~NMC, 통합 방식별)
-PCS:               30~80 $/kW
+배터리 시스템(셀):  300~400 $/kWh  (LFP 셀 단가) [가정]
+시스템 turnkey:    200~300 $/kWh  (BOP·PCS·EPC 포함, DC/AC 통합방식별, 2025) [가정]
+                    ※ 셀 단가와 turnkey 단가를 혼동 금지 (운영 학습 가드레일)
+PCS:               30~80 $/kW [가정]
 EMS/SCADA:         CAPEX의 2~5%
 BOP:               CAPEX의 10~15%
 설치·시운전:       CAPEX의 10~15%
@@ -196,39 +245,29 @@ BOP:               CAPEX의 10~15%
 ### OPEX + 날짜 지정 항목
 ```
 O&M:          CAPEX의 1~2%/년  → 매년 1월 계상
-보험:         CAPEX의 0.5~1%/년 → 매년 1월 계상
+보험:         CAPEX의 0.5~1%/년 → 매년 1월 계상 (보험전문가 견적과 정렬)
+BMS/SW 유지보수: 약 $0.05/kWh/년 [가정]
 배터리 교체:  배터리 CAPEX의 60~70% 일시 계상
               → 교체 날짜 특정 필수 (예: 2040-06-01)
               [요확인] 교체 시점 미확인 시 XIRR 오차 발생
-계통 사용료:  시장·요금제별 상이
+계통 사용료:  시장·요금제별 상이 [요확인]
 ```
 
----
-
-## 열화 반영 수익 모델
-
-```python
-SOH_cal(t) = 1 - k_cal × √t        # Calendar aging
-SOH_cyc(n) = 1 - k_cyc × n         # Cycle aging
-SOH(t)     = SOH_cal(t) × SOH_cyc(t)
-
-E_discharge(t) = E_nominal × SOH(t) × cycles_per_year × DoD  [kWh]
-
-# XIRR용 날짜별 변환 (연간 수익 → 월별 분해)
-Revenue(t)     = E_discharge(t) × price(t) × availability(t)
-CF_monthly(t, m) = Revenue(t) / 12   # 월별 균등 분해
-# 실제 지급일이 있으면 해당 날짜 직접 사용 (정확도 우선)
+### 자본구조 디폴트 ([가정])
 ```
-
----
+부채 40% / 자본 60% (단·장기 부채 분리, 정부보조금 포함) [가정]
+→ WACC = D/(D+E)×r_d×(1−세율) + E/(D+E)×r_e
+→ PF 적용 시 DSCR ≥ 1.20 covenant 확인 [요확인 — lender Term Sheet]
+```
 
 ## 시장별 수익 모델
 
+> 단가 수치는 미제공 시 [요확인]. 규격·시장규칙 인용은 해당 시장 standards 스킬과 교차 확인.
 ```
 한국 (KPX):
   주파수조정 용량요금: [원/kW·월] × 설치용량[kW] × 12
   SMP:                [원/kWh]  × 방전 에너지[kWh]
-  REC:                5.0 × [원/REC] × 충전 전력량[kWh]
+  REC:                가중치 × [원/REC] × 충전 전력량[kWh]   ※ 가중치는 RPS 고시 확인 [요확인]
 
 일본 (OCCTO):
   調整力 용량요금:   [¥/kW·月] × 설치용량[kW] × 12
@@ -238,23 +277,22 @@ CF_monthly(t, m) = Revenue(t) / 12   # 월별 균등 분해
   Balancing Market:  [€/MWh] × 조정 에너지[MWh]
   Capacity Market:   [€/MW·Year] × 계약용량[MW]
 
-호주 (AEMO):
-  FCAS 6개 서비스:   [AUD/MW] × 낙찰용량[MW] (서비스별)
+호주 (AEMO / NEM):
+  FCAS 8개 서비스:   [AUD/MW] × 낙찰용량[MW] (서비스별)
+                     ※ NER 하 FCAS 8종 = Raise/Lower × Fast(6s)·Slow(60s)·Delayed(5min) + Regulation Up/Down
   NEM 에너지:        [AUD/MWh] × 방전 에너지[MWh]
 
 미국 (ISO별):
-  Regulation Up/Down: [$/MW·h] + Energy [$/MWh]
+  Regulation Up/Down: [$/MW·h] + Energy [$/MWh]   ※ PJM RegD/CAISO 등 시장별 상이 [요확인]
 
-영국:
-  DC/DR: [£/MW/h] + CM [£/kW·year] + BM [£/MWh]
+영국 (NESO):
+  DC/DM/DR(동적 서비스): [£/MW/h] + CM(Capacity Market) [£/kW·year] + BM(Balancing) [£/MWh]
 
 폴란드 (PSE/TGE):
   Capacity Market:   [PLN/kW·Year] × 계약용량[kW]
   Balancing Market:  [PLN/MWh] × 조정 에너지[MWh]
   aFRR/mFRR:         [PLN/MW·h] × 낙찰용량[MW]
 ```
-
----
 
 ## 민감도 분석 (Sensitivity Analysis)
 
@@ -282,7 +320,7 @@ def tornado_analysis(base_cashflows, vars_dict):
         cf_high = apply_change(base_cashflows, var, ranges['high'])
         xi_low  = xirr(cf_low)
         xi_high = xirr(cf_high)
-        swing   = xi_high - xi_low  # 영향 크기
+        swing   = abs(xi_high - xi_low)  # 영향 크기 (절대값)
         results[var] = {'low': xi_low, 'base': base_xi,
                         'high': xi_high, 'swing': swing}
     # swing 기준 내림차순 → 1위=가장 영향력 큰 변수
@@ -310,8 +348,6 @@ def tornado_analysis(base_cashflows, vars_dict):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
----
-
 ## 한계치 분석 (Break-even / Threshold Analysis)
 
 ### XIRR 한계치 — 각 변수별 허용 최악값
@@ -338,23 +374,24 @@ def find_breakeven(base_cashflows, variable, hurdle_rate, search_range):
 # COD Break-even: 14.2개월 지연 → 이 이상 지연 시 Hurdle Rate 미달
 ```
 
-### 한계치 출력 형식
+### 한계치 출력 형식 (정량 판정)
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Break-even 한계치  (Hurdle Rate: [X]% / XIRR 기준)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-변수              현재(기준)       한계치           여유 마진  판정
+변수              현재(기준)       한계치           여유 마진  판정(정량)
 ─────────────────────────────────────────────────────
-SMP / 전력단가   [X]원/kWh       -[X]% = [Y]원   [Z]%      ⚠️ 주의
-CAPEX            $[X]M           +[X]% = $[Y]M   [Z]%      ✅ 마진 충분
-COD 지연         0개월           +[X]개월         [X]개월   ⚠️ 주의
-배터리 열화율    기준 곡선        +[X]% 악화       [X]%      ✅ 마진 충분
-가동률           [X]%            [Y]%까지 허용    [Z]%p     ✅ 마진 충분
-WACC             [X]%            [Y]%까지 허용    [Z]%p     ✅ 마진 충분
+SMP / 전력단가   [X]원/kWh       -[X]% = [Y]원   [Z]%      여유<15% → ⚠️ 취약
+CAPEX            $[X]M           +[X]% = $[Y]M   [Z]%      여유≥25% → ✅ 충분
+COD 지연         0개월           +[X]개월         [X]개월   인허가기간 대비 차 산출
+배터리 열화율    기준 곡선        +[X]% 악화       [X]%      여유≥15% → ✅ 충분
+가동률           [X]%            [Y]%까지 허용    [Z]%p     여유≥5%p → ✅ 충분
+WACC             [X]%            [Y]%까지 허용    [Z]%p     여유≥1%p → ✅ 충분
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔴 Red Flag: SMP 한계 여유 [X]% — 시장 변동성 감안 시 취약 구간
-🔴 Red Flag: COD 한계 [X]개월 — [시장] 평균 인허가 [Y]개월과 근접
-✅ Safe Zone: CAPEX 한계 여유 [X]% — 조달 리스크 수용 가능 수준
+판정 임계 정의: 여유 마진 < 15% → 🔴 Red Flag / 15~25% → 🟡 주의 / ≥ 25% → ✅ Safe Zone
+🔴 Red Flag: SMP 한계 여유 [X]% (<15%) — 시장 변동성 감안 시 취약 구간
+🔴 Red Flag: COD 한계 [X]개월 — [시장] 평균 인허가 [Y]개월과 차이 [Z]개월(<3개월 시 위험)
+✅ Safe Zone: CAPEX 한계 여유 [X]% (≥25%) — 조달 리스크 수용 가능 수준
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -381,10 +418,8 @@ def stress_test_2d(base_cf, var1_range, var2_range, hurdle):
     return results
 
 # 출력 예시: CAPEX 변동(행) × SMP 변동(열) 12×12 매트릭스
-#           경계선 이하(빨강) 셀은 투자 불가 영역
+#           경계선 이하(빨강) 셀은 Hurdle 미달(투자 불가) 영역
 ```
-
----
 
 ## 몬테카를로 시뮬레이션 (XIRR 기반)
 
@@ -443,44 +478,8 @@ def monte_carlo_xirr(base_cashflows, params, n_sim=5000, hurdle=0.10):
         'prob_negative':      (arr < 0).mean() * 100,       # 음수 XIRR 확률
         'worst_1pct':         np.percentile(arr, 1),        # 최악 1% 시나리오
     }
+# 판정: Hurdle 초과 확률 ≥ 75% AND 음수 확률 ≤ 5% → 통계적 robust
 ```
-
----
-
-## 종합 요약 출력 (보고서 표준)
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[프로젝트명] 수익성 분석  v[버전]  [날짜]
-시스템: [MW]MW / [MWh]MWh | 시장: [시장코드]
-CAPEX: $[X]M | WACC: [X]% | Hurdle Rate: [X]% | 분석 기간: [년]년
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-지표                 보수적       기준         낙관적
-─────────────────────────────────────────────────────
-⭐ XIRR (날짜 기반)  [X]%        [X]%        [X]%
-   MIRR              [X]%        [X]%        [X]%
-   IRR (참고)        [X]%        [X]%        [X]%  ←XIRR 대비 +[X]%p 과대
-   XNPV(r=WACC)     $[X]M       $[X]M       $[X]M
-   할인 회수기간      [X]년       [X]년       [X]년
-   LCOE              $[X]/kWh    $[X]/kWh    $[X]/kWh
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-몬테카를로 (5,000회 / XIRR 기준):
-  P5:  [X]%  │  P50: [X]%  │  P95: [X]%
-  Hurdle Rate([X]%) 초과 확률: [X]%
-  XIRR 음수 확률: [X]%    최악 1%: [X]%
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Break-even 한계치 (Hurdle Rate=[X]% 기준):
-  SMP 최대 하락: -[X]% ([Z]% 여유)
-  CAPEX 최대 초과: +[X]% ([Z]% 여유)
-  COD 최대 지연: [X]개월 ([Z]개월 여유)
-  가용률 최저: [X]% ([Z]%p 여유)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[가정] WACC: [X]% / 배터리 교체: [X]년(LFP 기준) / COD: [날짜]
-[요확인] SMP 최신 단가 / 배터리 교체 날짜 특정
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
----
 
 ## ⭐ 전문가 의견 (Analyst Commentary)
 
@@ -506,20 +505,21 @@ MIRR([X]%)과 XIRR의 근접도([X]%p 차이)는 재투자 가정이 비교적
 민감도 분석 결과 SMP/전력 단가가 XIRR Swing [X]%p로 가장 큰 영향을
 미칩니다. Break-even 분석에 따르면 SMP가 기준 대비 [X]% 이상 하락하면
 Hurdle Rate를 하회합니다. 현재 [시장] 단가 기준 여유는 [Z]%이며,
-[시장 상황에 따라 이 여유가 충분한지 추가 검토가 필요합니다.]
+여유 마진 [Z]%는 [<15% 취약 / 15~25% 주의 / ≥25% 충분] 구간입니다.
 
 COD 지연 한계는 [X]개월로, [시장] 평균 계통 연계 허가 기간 [Y]개월과
-[X]개월 여유가 있습니다. 이 여유는 [충분/제한적]이므로 일정 리스크
-관리가 [중요/최우선 과제]입니다.
+[X]개월 차이가 있습니다. 차이 [<3개월 위험 / ≥3개월 관리가능]이므로 일정
+리스크 관리가 [최우선 과제 / 통상 관리] 수준입니다.
 
-CAPEX 한계 여유([+X]%)는 [충분/주의 수준]입니다.
+CAPEX 한계 여유([+X]%)는 [≥25% 충분 / <25% 주의] 수준입니다.
 배터리 교체([X]년, $[Y]M 예상)는 현금흐름 상 가장 큰 단일 지출 이벤트로,
 해당 시점 유동성 확보 계획이 필요합니다.
 
 [3] 몬테카를로 해석
 5,000회 시뮬레이션에서 Hurdle Rate 초과 확률 [X]%, XIRR 음수 확률 [X]%
-입니다. P5 시나리오([X]%)에서도 XIRR이 [양/음]수를 유지하므로
-[극단적 하방 리스크가 제한적/추가 검토 필요] 합니다.
+입니다. 초과 확률 [≥75% robust / <75% 하방 취약], 음수 확률 [≤5% 안전 / >5% 손실위험].
+P5 시나리오([X]%)에서도 XIRR이 [양/음]수를 유지하므로
+[극단적 하방 리스크가 제한적 / 추가 검토 필요] 합니다.
 최악 1% 시나리오([X]%)는 [SMP 급락 + COD 지연 동시 발생] 상황에
 주로 기인하는 것으로 분석됩니다.
 
@@ -546,7 +546,7 @@ CAPEX 한계 여유([+X]%)는 [충분/주의 수준]입니다.
 ```
 ✅ 반드시 포함:
   ├── XIRR vs IRR 차이 수치와 원인 설명
-  ├── Swing 1위 변수 집중 해설 + Break-even 여유 해석
+  ├── Swing 1위 변수 집중 해설 + Break-even 여유 해석 (정량 임계 대비)
   ├── 몬테카를로 P5 의미 + 음수 확률 해석
   ├── 배터리 교체 이벤트 현금흐름 영향
   └── 의사결정 체크리스트 (미확인 질문 목록)
@@ -558,9 +558,40 @@ CAPEX 한계 여유([+X]%)는 [충분/주의 수준]입니다.
   └── 법률·세무 판단 영역
 ```
 
----
+## 종합 요약 출력 (보고서 표준)
 
-## 아웃풋 형식
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[프로젝트명] 수익성 분석  v[버전]  [날짜]
+시스템: [MW]MW / [MWh]MWh | 시장: [시장코드]
+CAPEX: $[X]M | WACC: [X]% | Hurdle Rate: [X]% | 분석 기간: [년]년
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+지표                 보수적       기준         낙관적
+─────────────────────────────────────────────────────
+⭐ XIRR (날짜 기반)  [X]%        [X]%        [X]%
+   MIRR              [X]%        [X]%        [X]%
+   IRR (참고)        [X]%        [X]%        [X]%  ←XIRR 대비 +[X]%p 과대
+   XNPV(r=WACC)     $[X]M       $[X]M       $[X]M
+   할인 회수기간      [X]년       [X]년       [X]년
+   LCOE / LCOS       $[X]/kWh    $[X]/kWh    $[X]/kWh
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+몬테카를로 (5,000회 / XIRR 기준):
+  P5:  [X]%  │  P50: [X]%  │  P95: [X]%
+  Hurdle Rate([X]%) 초과 확률: [X]%  (목표 ≥75%)
+  XIRR 음수 확률: [X]%  (목표 ≤5%)    최악 1%: [X]%
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Break-even 한계치 (Hurdle Rate=[X]% 기준):
+  SMP 최대 하락: -[X]% ([Z]% 여유)
+  CAPEX 최대 초과: +[X]% ([Z]% 여유)
+  COD 최대 지연: [X]개월 ([Z]개월 여유)
+  가용률 최저: [X]% ([Z]%p 여유)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[가정] WACC: [X]% / 배터리 교체: [X]년(LFP, SOH 70~80% 도달 시) / COD: [날짜]
+[요확인] SMP 최신 단가 / 배터리 교체 날짜 특정 / RTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+## 산출물 / 아웃풋 형식
 
 ```
 Excel (.xlsx) — XIRR 중심 다중 시트:
@@ -595,54 +626,54 @@ A4 인쇄:
 ※ 출력 형식 미명시 시 → bess-output-generator 스킬 호출
 
 파일명: [프로젝트코드]_Financial_v[버전]_[날짜]
-저장: /output/financial/
-
-## 하지 않는 것
-- SOC/SOH 성능 시뮬레이션 → 시뮬레이터 역할
-- 최종 투자 결정(Go/No-Go) → 사람이 직접
-- 회계 처리 및 세무 조언 → 전문 회계사
-- SMP 등 시장 가격 예측치 확정 → 시나리오 범위로만 표현
-- 인풋 없이 수치 가정 → [가정] 태그 필수
-- "투자 권장/비권장" 표현 → 의사결정 체크리스트로 대체
-
----
-
-
-## 역할 경계 (소유권 구분)
-
-> **Financial Analyst** vs **Business Developer** 업무 구분
-
-| 구분 | Financial Analyst | Business Developer |
-|------|--------|--------|
-| 소유권 | NPV, IRR, MIRR, LCOE, cash flow modeling, WACC, sensitivity analysis | BD, bid strategy, Go/No-Go, pipeline, MOU/JV |
-
-**협업 접점**: Financial provides profitability/risk numbers -> BD makes Go/No-Go and bid price decisions
-
----
+저장: /output/02_reports/ (재무 모델 주산출물) — 재무 기반 계약 검토는 /output/03_contracts/
 
 ## 협업 관계
 ```
 BD(사업개발) ──사업성 검토 요청──▶ 재무분석가 ──XIRR/NPV 결과──▶ 경영진
 구매전문가 ──CAPEX 데이터──▶ 재무분석가 ──비용 구조 분석──▶ BD(사업개발)
 세무·회계전문가 ──Tax Model──▶ 재무분석가 ──세후 현금흐름──▶ 법률전문가
+배터리전문가 ──열화/SOH 파라미터──▶ 재무분석가 ──교체 시점 CF 반영──▶ 종합 모델
+전력시장전문가 ──Revenue Stacking──▶ 재무분석가 ──수익 모델 입력──▶ 시나리오
+비용분석가 ──CAPEX/LCOS 검증──▶ 재무분석가 ──정렬된 단가──▶ 재무 모델
 ```
 
----
+## 역할 경계 (소유권 구분)
 
-## 산출물
+> **Financial Analyst** vs **Business Developer** 업무 구분
 
-| 산출물 | 형식 | 주기/시점 | 수신자 |
-|--------|------|-----------|--------|
-| 재무모델 | Excel | 프로젝트별 | 경영진, BD, 법률전문가 |
-| NPV/IRR 분석서 | Excel/PDF | 프로젝트별 | 경영진, 사업개발 전문가 |
-| LCOE 계산서 | Excel | 프로젝트별 | 마케터, 전력시장 전문가 |
-| 민감도분석 보고서 | Excel/PDF | 프로젝트별 | 경영진, 리스크 관리자 |
-| 현금흐름표 | Excel | 프로젝트별 | CFO, 세무·회계전문가 |
+| 구분 | Financial Analyst | Business Developer |
+|------|-------------------|--------------------|
+| 소유권 | NPV, IRR, MIRR, XIRR, XNPV, LCOE/LCOS, cash flow modeling, WACC, sensitivity analysis | BD, bid strategy, Go/No-Go, pipeline, MOU/JV |
 
----
+**협업 접점**: Financial provides profitability/risk numbers → BD makes Go/No-Go and bid price decisions
+
+## 하지 않는 것 (역할 경계)
+- SOC/SOH 성능 시뮬레이션 → 배터리전문가·시뮬레이터 역할
+- 최종 투자 결정(Go/No-Go) → 사람(경영진)이 직접
+- 회계 처리 및 세무 조언 → 세무·회계전문가·전문 회계사
+- SMP 등 시장 가격 예측치 확정 → 시나리오 범위로만 표현
+- 인풋 없이 수치 가정 → [가정] 태그 필수
+- "투자 권장/비권장" 표현 → 의사결정 체크리스트로 대체
 
 ## 라우팅 키워드
-NPV, IRR, MIRR, 몬테카를로, LCOE, 현금흐름, WACC, 열화, 배터리교체,
-XIRR, XNPV, 수익성, 재무분석, 투자분석, 할인율, 회수기간, Hurdle Rate,
-민감도분석, 토네이도, Break-even, 한계치, 시나리오분석, CAPEX, OPEX,
+NPV, IRR, MIRR, 몬테카를로, LCOE, LCOS, 현금흐름, WACC, 열화, 배터리교체,
+XIRR, XNPV, 수익성, 재무분석, 투자분석, 할인율, 회수기간, Hurdle Rate, DSCR,
+민감도분석, 토네이도, Break-even, 한계치, 시나리오분석, CAPEX, OPEX, RTE,
 Revenue Stacking, SMP, REC, 전력단가, 몬테카를로시뮬레이션
+
+## 운영 학습 (Operational Learnings)
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+
+### 재사용 지식 (세션 누적)
+- 핵심 재무지표 세트 XIRR(기준)/IRR/MIRR/NPV/LCOE 항상 병기. 기준 시나리오 XIRR 12.4% / NPV +$150M(할인율 8%) / LCOE $0.15/kWh / Hurdle Rate = WACC+2%p(WACC 8%→10%) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 민감도 표준: SMP ±20%→NPV ±10%, CAPEX ±15%→NPV ±15%, 배터리 교체주기 ±5년→NPV ±5% — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 자본구조 디폴트 가정: 부채 40% / 자본 60%(단·장기 부채 분리, 정부보조금 포함) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 신흥시장 PF(IFC/ADB) 불규칙 현금흐름 → IRR이 XIRR보다 과대평가, XIRR 사용. 디폴트 가정 CAPEX $50M / WACC 8% / 운영 10년 / OPEX 5% / 배터리 교체 10년 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
+- BMS 비용 단가: 고급 BMS $50/kWh(LFP) + SW $10/kWh, 유지보수 $0.05/kWh/년 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
+
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 1 MWh LFP CAPEX를 $550,000(=$550/kWh, HW $500+SW $50)로 제시 → ✅ 셀 단가($300~400/kWh)와 시스템 turnkey CAPEX(BOP·PCS·EPC 포함, 통상 $200~300/kWh, 2025)를 구분, cost-analyst·tax-incentive와 정렬 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
+- ❌ 로드맵에 "2023년/2024-2026년" 과거 연도 하드코딩(작성일 2026-06) → ✅ 상대 연도(T+0/T+1)로 표기 — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- ❌ NPV 코드에서 초기 투자를 `cashflows[0]` 합산 후 다시 차감하는 이중처리 → ✅ 초기 투자 1회만 반영하도록 검산 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`

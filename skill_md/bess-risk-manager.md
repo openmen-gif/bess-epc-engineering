@@ -37,16 +37,7 @@ BESS EPC 프로젝트 전 생애주기에 걸쳐 기술·일정·원가·계약�
 > **리스크 관리자(Risk Manager)** vs **공정 관리 전문가(Scheduler)** 업무 구분
 
 | 구분 | 리스크 관리자 | 공정 관리 전문가 |
-|------|-------------|-----------------|
-| 소유권 | Risk Register, Monte Carlo 시뮬레이션, P50/P80/P90 정량화, Risk Response Plan, EWI(조기 경보 지표) | WBS, CPM, Baseline, S-Curve, 진도 측정, 지연 분석(EOT), Look-Ahead, EVM (Single Source of Truth) |
-| 핵심 질문 | "만약(If)" — 해당 리스크가 발생하면 확률과 영향은? | "언제(When)" — 각 Activity의 시작일·종료일·Float은? |
-| 산출물 | 리스크 등록부, Monte Carlo 분석, 리스크 히트맵, 조기 경보 대시보드, Contingency 사용 내역 | 공정표(Baseline/Update), S-Curve, EVM 보고서, 지연 분석서, Look-Ahead 공정표 |
-
-**협업 접점**: 일정 리스크(Schedule Risk) — 공기 지연 발생 확률 분석
-- 리스크 관리자: 공정 데이터에 확률 분포 부여, Monte Carlo 시뮬레이션으로 P50/P80/P90 완공일 산출
-- 공정 관리 전문가: CPM 데이터, Activity 기간·Float·Critical Path 제공
-
----
+||-|
 
 ## 리스크 분류 체계 (Risk Breakdown Structure)
 
@@ -81,34 +72,14 @@ Level 1           Level 2           대표 리스크 예시
                   6.3 정책 변화     보조금 축소, 시장 구조 변경
 ```
 
----
 
-## 리스크 평가 매트릭스
-
-```
-         영향도 (Impact)
-         1 (미미)  2 (소)  3 (중)  4 (대)  5 (치명)
-P 5 (매우 높음)  5     10    15    20     25  ← Critical
-R 4 (높음)      4      8    12    16     20  ← Critical
-O 3 (보통)      3      6     9    12     15  ← High
-B 2 (낮음)      2      4     6     8     10  ← Medium
-  1 (매우 낮음) 1      2     3     4      5  ← Low
-
-등급 구분:
-  Critical (20~25): CEO 즉시 보고, 즉각 대응 계획 수립
-  High (12~16):     PM 주간 보고, 대응 계획 2주 내 수립
-  Medium (5~10):    월간 모니터링, 대응 계획 수립
-  Low (1~4):        분기 검토, 수용(Accept) 가능
-```
-
----
 
 ## 리스크 등록부 (Risk Register) 구조
 
 > 본 섹션은 리스크 관리 방법론의 단일 정의 출처이다. PM(bess-project-manager)은 본 섹션 산출물을 활용한다.
 
 | 필드 | 설명 |
-|------|------|
+|||
 | ID | R-001 형식 |
 | 분류 | RBS Level 2 기준 |
 | 리스크 설명 | "IF ~ THEN ~ 결과" 형식 |
@@ -123,20 +94,7 @@ B 2 (낮음)      2      4     6     8     10  ← Medium
 | 상태 | 활성/해소/보류 |
 | 최종 업데이트 | YYYY-MM-DD |
 
----
 
-## 대응 전략 (Risk Response)
-
-```
-전략        정의                      BESS EPC 적용 예시
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Avoid       리스크 원인 제거          단일 벤더 의존 → Dual Source 확보
-Mitigate    발생 가능성/영향 감소     납기 리드타임 조기 발주 → Buffer 확보
-Transfer    제3자에게 이전            수입보험(K-SURE/NEXI), 성능보증보험
-Accept      수용 (적극/소극)          소액 Minor 리스크 수용, 예비비 확보
-```
-
----
 
 ## 정량적 리스크 분석
 
@@ -163,20 +121,7 @@ Critical Path 구간    기간 불확실성     P50 완공    P80 완공
 통합 CPM 시뮬레이션:  P50 완공 W+42   P80 완공 W+48
 ```
 
----
 
-## 조기 경보 지표 (Early Warning Indicators)
-
-| 지표 | 임계값 | 대응 |
-|------|-------|------|
-| SPI (일정 성과 지수) | < 0.9 | 즉시 PM 보고, 만회 계획 수립 |
-| CPI (원가 성과 지수) | < 0.95 | 예비비 사용 승인 요청 |
-| 배터리 납기 리드타임 | > 계획 +4주 | 대안 벤더 즉시 접촉 |
-| 계통연계 심사 지연 | > 2개월 초과 | 계통연계 조건부 착공 검토 |
-| NCR Critical 건수 | > 2건 동시 | 설계 전면 재검토 |
-| 환율 변동 | > ±10% (기준 대비) | 환 헤징 또는 계약 조건 재협상 |
-
----
 
 ## 리스크 보고 체계
 
@@ -188,35 +133,12 @@ Critical Path 구간    기간 불확실성     P50 완공    P80 완공
 분기 리스크 감사   분기    경영진        정량 분석 업데이트 + Contingency 소진율
 ```
 
----
-
-## 시장별 주요 리스크 특이사항
-
-| 시장 | 고유 리스크 | 비고 |
-|-----|-----------|------|
-| KR | 계통영향평가 장기화 (12~24개월), REC 정책 변경 | 한전 협의 조기 착수 |
-| JP | 경산국 심사 불확실성, 지진 리스크 | 耐震設計 추가 원가 |
-| US | IRA 세액공제 요건 변경, FERC Order 복잡성 | Domestic Content 요건 |
-| AU | AEMO 계통 제약, 화재 리스크 (산불) | AS 5139 배터리 이격거리 |
-| UK | Planning 거부 리스크 (지역 민원), G99 조건 강화 | 주민 설명회 조기 실시 |
-| EU | REPowerEU 규정 변화, 탄소국경세(CBAM) | Battery Passport 요건 |
-| RO | 금융 접근성, 환율 (RON/EUR) 리스크 | EU 보조금 활용 전략 |
-
----
+--|
 
 ## 산출물 목록
 
 | 산출물 | 형식 | 저장 경로 |
-|-------|------|---------|
-| 리스크 등록부 | Excel | /output/risk-management/ |
-| 정량 리스크 분석 (Monte Carlo) | Excel/Python | /output/risk-management/ |
-| 월간 리스크 보고서 | Word/PPT | /output/risk-management/ |
-| 리스크 히트맵 | PPT/Excel | /output/risk-management/ |
-| 조기 경보 대시보드 | Excel | /output/risk-management/ |
-| 리스크 대응 계획서 | Word | /output/risk-management/ |
-| Contingency 사용 내역 | Excel | /output/risk-management/ |
-
----
+|-||
 
 ## 리스크 분석 도구 및 템플릿
 
@@ -314,3 +236,80 @@ LD, Liquidated Damages, 지체상금, Claim, 공기연장, EOT,
 리스크매트릭스, 히트맵, Heat Map, Critical, High, Medium, Low,
 리스크등록부, 리스크보고서, 분기감사, 리스크플래시, 시나리오분석
 bess-risk-manager
+
+## 리스크 평가 매트릭스
+
+```
+         영향도 (Impact)
+         1 (미미)  2 (소)  3 (중)  4 (대)  5 (치명)
+P 5 (매우 높음)  5     10    15    20     25  ← Critical
+R 4 (높음)      4      8    12    16     20  ← Critical
+O 3 (보통)      3      6     9    12     15  ← High
+B 2 (낮음)      2      4     6     8     10  ← Medium
+  1 (매우 낮음) 1      2     3     4      5  ← Low
+
+등급 구분:
+  Critical (20~25): CEO 즉시 보고, 즉각 대응 계획 수립
+  High (12~16):     PM 주간 보고, 대응 계획 2주 내 수립
+  Medium (5~10):    월간 모니터링, 대응 계획 수립
+  Low (1~4):        분기 검토, 수용(Accept) 가능
+```
+
+---
+
+## 대응 전략 (Risk Response)
+
+```
+전략        정의                      BESS EPC 적용 예시
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Avoid       리스크 원인 제거          단일 벤더 의존 → Dual Source 확보
+Mitigate    발생 가능성/영향 감소     납기 리드타임 조기 발주 → Buffer 확보
+Transfer    제3자에게 이전            수입보험(K-SURE/NEXI), 성능보증보험
+Accept      수용 (적극/소극)          소액 Minor 리스크 수용, 예비비 확보
+```
+
+---
+
+## 조기 경보 지표 (Early Warning Indicators)
+
+| 지표 | 임계값 | 대응 |
+|------|-------|------|
+| SPI (일정 성과 지수) | < 0.9 | 즉시 PM 보고, 만회 계획 수립 |
+| CPI (원가 성과 지수) | < 0.95 | 예비비 사용 승인 요청 |
+| 배터리 납기 리드타임 | > 계획 +4주 | 대안 벤더 즉시 접촉 |
+| 계통연계 심사 지연 | > 2개월 초과 | 계통연계 조건부 착공 검토 |
+| NCR Critical 건수 | > 2건 동시 | 설계 전면 재검토 |
+| 환율 변동 | > ±10% (기준 대비) | 환 헤징 또는 계약 조건 재협상 |
+
+---
+
+## 시장별 주요 리스크 특이사항
+
+| 시장 | 고유 리스크 | 비고 |
+|-----|-----------|------|
+| KR | 계통영향평가 장기화 (12~24개월), REC 정책 변경 | 한전 협의 조기 착수 |
+| JP | 경산국 심사 불확실성, 지진 리스크 | 耐震設計 추가 원가 |
+| US | IRA 세액공제 요건 변경, FERC Order 복잡성 | Domestic Content 요건 |
+| AU | AEMO 계통 제약, 화재 리스크 (산불) | AS 5139 배터리 이격거리 |
+| UK | Planning 거부 리스크 (지역 민원), G99 조건 강화 | 주민 설명회 조기 실시 |
+| EU | REPowerEU 규정 변화, 탄소국경세(CBAM) | Battery Passport 요건 |
+| RO | 금융 접근성, 환율 (RON/EUR) 리스크 | EU 보조금 활용 전략 |
+
+---
+
+## 운영 학습 (Operational Learnings)
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+
+### 재사용 지식 (세션 누적)
+- 리스크 등록부(Risk Register) 표준 필드: 카테고리 / 설명 / P(발생가능성) / I(영향도) / Score=P×I / 등급 / Owner / 대응전략 / 완화조치 — 근거: `sessions/2026-06-08T07-19-19/bess-risk-manager.md`
+- 표준 리스크 카테고리 6종: 기술/일정/원가/계약/규제/시장 (+HSE·환경·사이버 확장) — 근거: `sessions/2026-05-12T04-00-10/bess-risk-manager.md`
+- 정량 분석 템플릿(Monte Carlo): 배터리가격 삼각분포(-10~+25%), 환율 정규분포(μ1,350 σ50), 승인지연 0~60일; 산출 P50/P80/P90 + Contingency=P80-P50 — 근거: `sessions/2026-06-08T07-19-19/bess-risk-manager.md`
+- 계통연계 리스크 세트: SCR 성능, 고조파 필터링, KEPCO 계통영향평가 지연, SMP/REC·FIT 가격변동 — 근거: `sessions/2026-06-08T07-19-19/bess-risk-manager.md`
+- 리스크 히트맵(표)로 우선순위화 + 동료 권고를 P/I 재평가하는 라운드2 패턴 — 근거: `sessions/2026-06-03T19-08-13/bess-risk-manager.md`
+
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 등급 임계값 비일관(Score 16>15인데 16=High·15=Critical로 더 낮게 표기) → ✅ 5×5 매트릭스 단일 임계값 고정: ≥20 Critical, 15-19 High, 8-14 Medium, <8 Low — 근거: `sessions/2026-06-03T19-08-13/bess-risk-manager.md` vs `sessions/2026-06-08T07-19-19/bess-risk-manager.md`
+- ❌ 등급-Score 매핑 세션별 상이(2026-05-12 Score 12=High vs 2026-06-03 15=Critical) → ✅ 단일 등급표를 모든 산출물에 강제하여 컷오프 표류 차단 — 근거: `sessions/2026-05-12T04-00-10/bess-risk-manager.md` vs `sessions/2026-06-03T19-08-13/bess-risk-manager.md`
+- ❌ 약어 환각 "VRT(Virtual Synchronization Technology)" / "SCR(Static Synchronization Device)" → ✅ VRT=Voltage Ride-Through, SCR=Short-Circuit Ratio(계통강도) — 근거: `sessions/2026-06-08T07-19-19/bess-risk-manager.md`
+- ❌ "KEPCO 계통영향평가(EIA)" → ✅ EIA는 환경영향평가 약어이며 계통영향평가(grid impact study)와 별개 — 약어 충돌 금지 — 근거: `sessions/2026-06-08T07-19-19/bess-risk-manager.md`
