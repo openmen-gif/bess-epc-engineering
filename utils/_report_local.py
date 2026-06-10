@@ -958,6 +958,42 @@ def generate_word_report():
             _r.font.size = Pt(9); _r.font.name = FONT
             _r.font.color.rgb = RGBColor(0x2E, 0x75, 0xB6)
 
+    # 최신 기사 기반 시장 신호 — 생성 시점에 산업 뉴스 RSS를 fetch→수치 자동 추출(LLM/키 불필요).
+    # "보고서 버튼 클릭 = 그 시점 공개 기사 분석"을 배포 런타임에서 구현하는 부분.
+    doc.add_heading("최신 기사 기반 시장 신호 (생성 시점 자동 추출)", level=2)
+    try:
+        _commentary = md.extract_market_commentary(max_items=8)
+    except Exception as _ce:
+        _commentary = []
+    if _commentary:
+        _p_cdesc = doc.add_paragraph(
+            "아래는 보고서를 생성하는 바로 그 시점에 산업 뉴스 RSS(Energy-Storage.News·PV-Tech·Utility Dive 등)에서 "
+            "실시간 수집해 본문에서 자동 추출한 시장 수치 신호입니다. 정밀 데이터셋이 아닌 참고 신호이므로 "
+            "각 원문 링크로 검증하십시오. (스냅샷 큐레이션값과 교차 확인용)"
+        )
+        for _r in _p_cdesc.runs:
+            _r.font.size = Pt(9); _r.font.name = FONT
+        for _c in _commentary[:8]:
+            _figs = ", ".join(_c.get("figures", [])[:5])
+            _p = doc.add_paragraph(style="List Bullet")
+            if _figs:
+                _rf = _p.add_run(f"[{_figs}] ")
+                _rf.bold = True; _rf.font.size = Pt(9); _rf.font.name = FONT
+                _rf.font.color.rgb = CLR_H2
+            _title = (_c.get("title", "") or "")[:130]
+            _url = _c.get("url", "")
+            if _url:
+                add_hyperlink(_p, _url, _title, size_pt=9)
+            else:
+                _rt = _p.add_run(_title); _rt.font.size = Pt(9); _rt.font.name = FONT
+    else:
+        _p_cnone = doc.add_paragraph(
+            "ℹ️ 생성 시점에 추출된 기사 수치가 없습니다(네트워크 제한 또는 일시적 오류). "
+            "환율·미국 EIA 등 다른 라이브 항목은 정상 수집됩니다."
+        )
+        for _r in _p_cnone.runs:
+            _r.font.size = Pt(9); _r.font.name = FONT
+
     # 라이브 지표 스냅샷 — 보고서 생성 시각 기준 실시간 수집값 (매 생성마다 갱신)
     doc.add_heading("실시간 지표 스냅샷 (생성 시각 기준)", level=2)
     doc.add_paragraph(
