@@ -945,6 +945,19 @@ def generate_word_report():
     for _r in _p_interp.runs:
         _r.font.size = Pt(10); _r.font.name = FONT
 
+    # 최근 분기 실적 콜아웃 — 현재 시점(분기 트래커) 앵커. 연간 스냅샷보다 신선한 공개치.
+    _rq = getattr(md, "RECENT_QUARTER", None)
+    if _rq:
+        _p_rq = doc.add_paragraph(
+            f"[최근 분기 실적 · {_rq['period']}] 글로벌 약 {_rq['global_gwh']} GWh 도입(전년동기 +54%), "
+            f"미국 약 {_rq['us_gwh']} GWh(역대 최대 분기), LFP 셀 최저 ${_rq['lfp_cell_low_usd_kwh']}/kWh 조달가. "
+            f"출처: {_rq['source']}. 연간 스냅샷보다 신선한 분기 트래커로, 현재 시장이 전망 경로 상에 있음을 확인."
+        )
+        _p_rq.paragraph_format.space_before = Pt(2)
+        for _r in _p_rq.runs:
+            _r.font.size = Pt(9); _r.font.name = FONT
+            _r.font.color.rgb = RGBColor(0x2E, 0x75, 0xB6)
+
     # 라이브 지표 스냅샷 — 보고서 생성 시각 기준 실시간 수집값 (매 생성마다 갱신)
     doc.add_heading("실시간 지표 스냅샷 (생성 시각 기준)", level=2)
     doc.add_paragraph(
