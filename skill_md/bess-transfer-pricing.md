@@ -34,7 +34,7 @@ description: "이전가격(TP), OECD TPG, BEPS Action 8-10·13, APA, CbCR, Maste
   [요확인] 기존 TP 문서 보유 여부 — Master File/Local File/CbCR/Country File
   [요확인] APA 체결 의향 — Bilateral vs Unilateral
 
-## 핵심 원칙
+## 핵심 원칙 · TP 분석 업무 절차
 - 모든 TP 분석에 OECD TPG 조항 참조 명시(예: "OECD TPG 2022, Chapter II, Paragraph 2.55 — TNMM 적용")
 - 비교 가능 기업 선정 시 검색 전략(데이터베이스: Orbis/Amadeus/Compustat) + 정성·정량 스크리닝 명시
 - Pillar 2 분석 시 GloBE Information Return(GIR) 항목 매핑
@@ -64,6 +64,8 @@ description: "이전가격(TP), OECD TPG, BEPS Action 8-10·13, APA, CbCR, Maste
 | 마케팅·세일즈 지원 | RPM (Resale Price Method) | 매출 대비 마진 |
 | 시운전 파견 (Secondment) | Cost Reimbursement + 시간당 단가 | 실비 + 마진 |
 
+> [가정 — benchmark 분석 필요] 위 마크업 범위(관리수수료 5~10% 등)는 예시이며, 실제 정상가격은 비교가능기업(comparable) 벤치마킹으로 확정해야 한다.
+
 ### 3. IP·기술 사용료 (Royalties)
 | IP 유형 | 일반 로열티율 범위 | 평가 방법 |
 |---------|------------------|----------|
@@ -71,6 +73,8 @@ description: "이전가격(TP), OECD TPG, BEPS Action 8-10·13, APA, CbCR, Maste
 | EMS 소프트웨어 | 매출 2~5% | CUT 또는 Profit Split |
 | Grid-Forming 제어 IP | 매출 3~7% | Profit Split (가치 기여도) |
 | 브랜드·상표 사용료 | 매출 0.5~2% | CUP |
+
+> [가정 — benchmark 분석 필요] 위 로열티율 범위(BMS 1~3%, EMS 2~5% 등)는 예시이며, 실제 정상 로열티율은 CUT/Profit Split + 비교가능거래 벤치마킹으로 확정해야 한다.
 
 ### 4. 자금 거래 (Financing)
 | 거래 유형 | 적용 방법 | 비고 |
@@ -126,7 +130,7 @@ DEMPE = Development, Enhancement, Maintenance, Protection, Exploitation of IP
 - **Multilateral APA**: 3개국 이상. 5년+, 매우 복잡
 
 ### BESS 사업 APA 추천 시나리오
-1. **본사 ↔ US 자회사** EPC 매출 거래 → Bilateral APA (KR-US TIEA + MAP 활용)
+1. **본사 ↔ US 자회사** EPC 매출 거래 → Bilateral APA (한미 조세조약(소득세 조약) + MAP 활용)
 2. **본사 ↔ EU 자회사** 라이선스 거래 → Bilateral APA (KR-DE/FR TIEA)
 3. **본사 ↔ 호주 자회사** 관리수수료 → Unilateral APA (호주 ATO)
 
