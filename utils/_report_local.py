@@ -825,6 +825,32 @@ def generate_word_report():
     fresh_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     fresh_r.font.name = FONT
 
+    # 생성 시점 신선도 배너 — 클릭(생성)한 '그 날짜' 기준으로 동적 계산.
+    # 라이브 항목(환율·EIA·뉴스)은 생성 시점에 실시간 수집, 시장 스냅샷은 경과일/갱신 권고를 표시.
+    try:
+        _snap_date = datetime.datetime.strptime(md.DATA_SNAPSHOT_AS_OF, "%Y-%m-%d").date()
+        _age_days = (now.date() - _snap_date).days
+    except Exception:
+        _age_days = None
+    _age_p = doc.add_paragraph()
+    _age_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    if _age_days is None:
+        _age_txt = f"생성 시각 {now_str} · 시장 스냅샷 기준일 확인 불가"
+        _age_clr = RGBColor(0x80, 0x80, 0x80)
+    elif _age_days <= 35:
+        _age_txt = (f"✅ 생성 시각 {now_str} 기준 — 라이브 항목(환율·미국 EIA·뉴스) 실시간 수집, "
+                    f"시장 스냅샷 {_age_days}일 전(최신)")
+        _age_clr = RGBColor(0x2E, 0x7D, 0x32)
+    else:
+        _age_txt = (f"⚠️ 생성 시각 {now_str} 기준 — 시장 스냅샷이 {_age_days}일 경과(월간 갱신 권장). "
+                    f"라이브 항목(환율·미국 EIA·뉴스)만 실시간 반영됨.")
+        _age_clr = RGBColor(0xC6, 0x28, 0x28)
+    _age_r = _age_p.add_run(_age_txt)
+    _age_r.font.size = Pt(9)
+    _age_r.font.bold = True
+    _age_r.font.color.rgb = _age_clr
+    _age_r.font.name = FONT
+
     for _ in range(3): doc.add_paragraph()
     org_p = doc.add_paragraph()
     org_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
