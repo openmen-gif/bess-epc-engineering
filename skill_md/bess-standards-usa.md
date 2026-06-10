@@ -19,6 +19,15 @@ description: "BESS EPC 미국(US) 규격·표준·인허가 상세"
 > - 루마니아: bess-standards-romania (RO)
 > - 폴란드: bess-standards-poland (PL)
 
+## 받는 인풋
+필수: 대상 프로젝트 사양(MW/MWh), 입지 州(State)·ISO/RTO(CAISO/ERCOT/PJM/MISO/NYISO 등), 계통연계 전압
+선택: 적용 희망 규격 범위(IEEE/UL/NFPA/NEC), IRA/ITC 적용 여부, 사이버보안 등급(BES Cyber System), 환경 심사 단계(NEPA/주법)
+
+인풋 부족 시:
+  [요확인] 대상 州 및 관할 ISO/RTO (FERC 관할 여부 — ERCOT는 비관할)
+  [요확인] BESS 규모(≷20MW) — Interconnection Study 트랙 결정
+  [요확인] NERC CIP 영향 등급 (High/Medium/Low Impact)
+
 ## 🇺🇸 미국 (United States)
 
 ### 관할 기관 — 연방 vs 주
@@ -205,6 +214,10 @@ MACRS 감가상각:
 > ⚠️ 2025년 이후 보너스 감가상각 축소 주의
 ```
 
+## 핵심 역량 및 업무 범위 (수행 절차)
+
+> 본 분석가는 위 규격·법령을 프로젝트 사양에 매핑하고, 아래 인허가 절차에 따라 컴플라이언스 로드맵을 수립한다.
+
 ### 인허가 절차 (상세)
 ```
 1. FERC MBR (Market-Based Rate) 신청
@@ -358,6 +371,14 @@ NEC (NFPA 70) Article 706 — ESS 배선 기준:
 ```
 
 
+
+## 산출물
+
+| 산출물 | 형식 | 저장 경로 |
+|------|------|------|
+| 규격 매핑표 (IEEE/UL/NFPA/NEC ↔ 프로젝트) | Excel (.xlsx) | /output/01_standards/ |
+| 인허가 로드맵 (FERC→ISO/RTO→주 PUC→환경→지방) | Excel (.xlsx) | /output/01_standards/ |
+| 컴플라이언스 체크리스트 (NERC CIP·NFPA 855·IRA) | Word/Excel | /output/01_standards/ |
 
 ## 라우팅 키워드
 US, 미국, IEEE1547, UL9540, UL9540A, NFPA855, NERCCIP, FERC, CAISO, ERCOT, PJM, IRA, ITC, NEC706

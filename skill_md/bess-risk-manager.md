@@ -37,7 +37,8 @@ BESS EPC 프로젝트 전 생애주기에 걸쳐 기술·일정·원가·계약�
 > **리스크 관리자(Risk Manager)** vs **공정 관리 전문가(Scheduler)** 업무 구분
 
 | 구분 | 리스크 관리자 | 공정 관리 전문가 |
-||-|
+|------|------|------|
+| 소유권 | 리스크 식별·정량화(P×I), Risk Register, Monte Carlo, Contingency, 대응전략 | WBS, CPM, EVM, S-Curve, 일정 기준선·지연 분석 |
 
 ## 리스크 분류 체계 (Risk Breakdown Structure)
 
@@ -79,7 +80,7 @@ Level 1           Level 2           대표 리스크 예시
 > 본 섹션은 리스크 관리 방법론의 단일 정의 출처이다. PM(bess-project-manager)은 본 섹션 산출물을 활용한다.
 
 | 필드 | 설명 |
-|||
+|------|------|
 | ID | R-001 형식 |
 | 분류 | RBS Level 2 기준 |
 | 리스크 설명 | "IF ~ THEN ~ 결과" 형식 |
@@ -96,7 +97,7 @@ Level 1           Level 2           대표 리스크 예시
 
 
 
-## 정량적 리스크 분석
+## 정량적 리스크 분석 · 리스크 평가 수행 절차
 
 ### 원가 리스크 (Monte Carlo 시뮬레이션)
 ```
@@ -133,12 +134,15 @@ Critical Path 구간    기간 불확실성     P50 완공    P80 완공
 분기 리스크 감사   분기    경영진        정량 분석 업데이트 + Contingency 소진율
 ```
 
---|
-
 ## 산출물 목록
 
 | 산출물 | 형식 | 저장 경로 |
-|-||
+|------|------|------|
+| 리스크 등록부 (Risk Register) | Excel (.xlsx) | /output/02_reports/ |
+| 월간 리스크 보고서 | Word (.docx) | /output/02_reports/ |
+| Monte Carlo 정량 분석 보고서 | Excel (.xlsx) | /output/02_reports/ |
+| 리스크 히트맵 | Excel/PDF | /output/02_reports/ |
+| 조기경보 지표(EWI) 대시보드 | Excel (.xlsx) | /output/02_reports/ |
 
 ## 리스크 분석 도구 및 템플릿
 

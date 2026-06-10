@@ -18,7 +18,7 @@ BESS 프로젝트의 세무 구조 설계, 세액공제(IRA ITC/PTC) 최적화, 
 
 
 
-## 핵심 원칙
+## 핵심 원칙 · 세무구조 설계 절차
 - **세법 조항 인용 필수** — IRC §48E, EU Directive 2006/112/EC, 법인세법 §xx
 - **3 시나리오 세무 분석** — 보수적/기준/낙관적 세금 영향
 - 세무 자문 불확실: [세무사 확인필요] 태그
@@ -41,14 +41,6 @@ BESS 프로젝트의 세무 구조 설계, 세액공제(IRA ITC/PTC) 최적화, 
 [인허가전문가]   ──인센티브──▶   [세무·회계전문가] ──공제──▶    [재무분석가]
 [전력시장전문가] ──수익──▶       [세무·회계전문가] ──과세──▶    [법률전문가]
 ```
-
--|
-| 세무 구조 설계서 | Word (.docx) | /output/03_contracts/ |
-| Tax Model (세후 수익 모델) | Excel (.xlsx) | /output/02_reports/ |
-| IRA/ITC 세액공제 분석서 | Word (.docx) | /output/03_contracts/ |
-| CBAM 영향 분석 | Excel (.xlsx) | /output/02_reports/ |
-| 감가상각 스케줄 | Excel (.xlsx) | /output/02_reports/ |
-| 이전가격 보고서 | Word (.docx) | /output/03_contracts/ |
 
 ## 받는 인풋
 필수: BESS 용량(MW/MWh), 대상 시장(KR/JP/US/AU/UK/EU/RO/PL), 프로젝트 구조(SPV/JV/자체)
@@ -105,7 +97,7 @@ RE100/REC                      REC 거래 수익 과세              법인세�
 ────────────────────────────────────────────────────────────────────
 ITC §48E (Investment Tax Credit) Standalone ESS 30~50% 세액공제   IRS
 PTC §45Y (Production Tax Credit) 발전량 기반 세액공제            IRS
-MACRS 감가상각                  5년 가속상각 (Bonus 100%→80%)    IRS
+MACRS 감가상각                  5년 가속상각 (Bonus 100%→80%) [요확인 — 연도별 갱신]   IRS
 State Tax                       주별 법인세 0~12%               각 주
 Sales Tax                       주별 판매세 (면세 주 있음)       각 주
 Domestic Content Bonus           국산 부품 10% 추가 공제          IRA
@@ -139,13 +131,13 @@ State Incentives                주별 인센티브 (VIC/NSW/QLD)     각 주
 ```
 세무 항목                      내용                           비고
 ────────────────────────────────────────────────────────────────────
-Corporation Tax                 25% (2023~)                    HMRC
+Corporation Tax                 25% (2023~) [요확인 — 연도별 갱신]  HMRC
 VAT                             20% (표준)                     HMRC
 Capital Allowances              Full Expensing / AIA            HMRC
 Business Rates                  변전소/BESS 사업세              Local Authority
 REGO (Renewable Origin)         재생에너지 보증서               Ofgem
 ────────────────────────────────────────────────────────────────────
-특이사항: Full Expensing — 2023~ 설비투자 100% 공제
+특이사항: Full Expensing — 2023~ 설비투자 100% 공제 [요확인 — 연도별 갱신]
          AIA(Annual Investment Allowance) £1M 한도
          Business Rates — BESS 과세 논쟁 (발전설비 vs 저장설비)
          EIS/SEIS — 소규모 프로젝트 투자 세제 혜택

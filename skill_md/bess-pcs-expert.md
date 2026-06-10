@@ -25,7 +25,7 @@ PCS(Power Conversion System)의 하드웨어·소프트웨어·제어 알고리�
   [요확인] 냉각 방식 (강제 공냉 / 액냉 / 히트파이프)
   [요확인] 제어 플랫폼 (DSP / FPGA / PLC / 벤더 고유)
 
-## 핵심 원칙
+## 핵심 원칙 · 핵심 업무 절차
 - 모든 PCS 사양에 정격값·효율·응답시간·고조파 수치 명시
 - "성능 양호", "응답 빠름" 같은 비정량적 표현 금지 → 효율 98.2%, 응답시간 ≤50ms, THDi ≤3% 등 수치 판정
 - 토폴로지·스위칭 주파수·필터 설계의 상호 영향 반드시 고려
@@ -44,8 +44,8 @@ PCS(Power Conversion System)의 하드웨어·소프트웨어·제어 알고리�
 
 ### 1. 토폴로지
 
-| 토폴로지 | 전압 레벨 | 장점 | 단점 | 적용 용량 |
-|-|||-|-|||
+| 스위칭 소자 | 전압/전류 정격 | 스위칭 주파수 | 효율 | 적용 |
+|------|------|------|------|------|
 | Si IGBT | 600V~6.5kV / ~3600A | 2~20kHz | 97~98.5% | 주류 (Infineon, ABB, Mitsubishi) |
 | SiC MOSFET | 650V~3.3kV / ~400A | 20~100kHz | 98~99.2% | 차세대 주류, 고효율·소형 |
 | GaN HEMT | 650V / ~100A | 50~500kHz | ≥99% | 소용량, 초고주파수 |
@@ -73,7 +73,10 @@ PCS(Power Conversion System)의 하드웨어·소프트웨어·제어 알고리�
 ### 3. 출력 필터
 
 | 필터 타입 | 구성 | 감쇠 | 적용 | 비고 |
-|-|-||
+|------|------|------|------|------|
+| L | 단일 인덕터 | -20dB/dec | 저 fsw | 단순·대형 |
+| LC | 인덕터+커패시터 | -40dB/dec | 중 fsw | 공진 주의 |
+| LCL | 인덕터-커패시터-인덕터 | -60dB/dec | 고 fsw | 주류, 댐핑 필수 |
 
 ## 소프트웨어 (S/W) 및 제어 알고리즘
 
@@ -114,16 +117,16 @@ Layer 0: 하드웨어 보호 (FPGA/Hardware)       주기: <10μs
 ### 2. PLL (Phase-Locked Loop)
 
 | PLL 타입 | 적용 조건 | 특징 | 비고 |
-|-|||
+|------|------|------|------|
 | SRF-PLL | 강계통 (SCR≥10) | 3상 동기화, 단순 | 기본 |
 | DSOGI-PLL | 약계통, 불평형 | 정상/역상 분리, 강건 | 주류 채택 |
 | FFPLL (Frequency-Fixed) | 약계통 (SCR<3) | 주파수 고정, 안정 | Grid-Forming |
 | PLL-Free (Virtual Oscillator) | 극약계통, 아일랜딩 | PLL 불필요, 자율 동기 | 차세대 |
 
-### 3. 운전 모드
+### 3. 주요 제어 파라미터
 
-| 모드 | 제어 변수 | 적용 상황 | Grid-Following/Forming |
-||-||-||
+| 파라미터 | 범위 | 영향 | 설정 지침 |
+|------|------|------|------|
 | fsw (스위칭 주파수) | 4~64kHz | THD↓, 손실↑, 소음 | 효율-THD 트레이드오프 |
 | PLL Bandwidth | 10~50Hz | 동기화 속도 ↔ 노이즈 | 약계통 시 ≤20Hz |
 | Current Loop BW | 500~2000Hz | 응답속도 ↔ 안정성 | fsw/10 이하 권장 |
@@ -132,8 +135,6 @@ Layer 0: 하드웨어 보호 (FPGA/Hardware)       주기: <10μs
 | Droop (Q-V) | 2~5% | 전압 조정 크기 | 무효전력 한계 |
 | Ramp Rate | 10~100%/s | 출력 변동 제한 | 시장별 규정 |
 | Dead-time | 1~4μs | 출력 왜곡 | 소자별 최소값 |
-
--|||-||
 
 ## Grid-Forming 제어 (확장 — 2026-05-13)
 
@@ -233,12 +234,20 @@ Black Start 요건 체크리스트:
 ## PCS 벤더별 특징
 
 | 벤더 | 대표 제품 | 토폴로지 | 소자 | 용량 범위 | 강점 |
-||||
+|------|------|------|------|------|------|
+| SMA | Sunny Central Storage | 3레벨 | Si IGBT | ~4.6MVA | 신뢰성, GFM 지원 |
+| Sungrow | PowerStack/PowerTitan | 3레벨 | Si IGBT/SiC | ~5MVA | 가격 경쟁력, 액냉 |
+| TMEIC | SOLAR WARE | 3레벨 | Si IGBT | ~4MVA | 고신뢰, 일본 시장 |
+| Power Electronics | Freemaq | 3레벨 | Si IGBT | ~4MVA | GFM 표준, 유럽 강세 |
 
 ## PCS 핵심 사양 비교 기준
 
 | 항목 | 단위 | 우수 기준 | 비고 |
-|||
+|------|------|------|------|
+| 효율 (정격) | % | ≥98.5 | Euro/CEC 가중 효율 |
+| 응답시간 | ms | ≤50 | P/Q 스텝 응답 |
+| THDi | % | ≤3 | 정격 출력 기준 |
+| 역률 | - | 0.95 lead~lag | 무효전력 가용 범위 |
 
 ## 트러블슈팅 가이드
 
@@ -265,7 +274,7 @@ THD 과다                    | 필터 인덕턴스 측정           | 스위칭
 > **PCS Expert** vs **Battery Expert** 업무 구분
 
 | 구분 | PCS Expert | Battery Expert |
-||--|--|
+|------|------|------|
 | 소유권 | Inverter topology, control, LCL filter, Grid-Forming/Following, VRT, efficiency | Cell chemistry, degradation, SOC/SOH, BMS, Cell Balancing, UL9540A |
 
 **협업 접점**: DC voltage range, max charge/discharge current, battery protection interlock -> PCS control
@@ -275,7 +284,11 @@ THD 과다                    | 필터 인덕턴스 측정           | 스위칭
 ## 산출물
 
 | 산출물 | 형식 | 주기/시점 | 수신자 |
-|--||
+|------|------|------|------|
+| PCS 사양 검토서 | Word | 기본설계 | 시스템엔지니어 |
+| 제어 설계서 | Word | 상세설계 | 계통해석 |
+| 시험 보고서 (형식/현장) | Word/Excel | 시운전 | QA/QC, PM |
+| 벤더 기술 평가서 | Word | 구매 단계 | 구매전문가 |
 
 ## 라우팅 키워드
 인버터토폴로지, IGBT, SiC, PWM, LCL필터, Grid-Forming, VRT제어, PLL, 효율, 형식시험, UL1741,

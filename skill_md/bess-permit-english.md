@@ -35,7 +35,7 @@ description: "인허가 전문가(영어권). US/AU/UK FERC, AEMO, Ofgem, G99, N
 
 
 
-## Interconnection Process 상세
+## 인허가 수행 절차 (Interconnection Process)
 
 ### 미국 (US) — FERC Order 2023/2222 기반 Cluster Study
 
@@ -213,13 +213,6 @@ NEPA, EPBC, G99, NER, IRA, ITC, Planning Permission, Interconnection
 [계통해석]      ──계통──▶  [인허가(영어권)] ──G99/NER──▶ [규격전문가]
 [통역전문가]    ──번역──▶  [인허가(영어권)] ──보고──▶  [프로젝트매니저]
 ```
-
--|
-| 인허가 로드맵 (US/AU/UK) | Excel (.xlsx) | /output/permits/ |
-| 인허가 트래커 | Excel (.xlsx) | /output/permits/ |
-| Regulatory Compliance Matrix | Excel (.xlsx) | /output/permits/ |
-| Interconnection Study 검토서 | Word (.docx) | /output/permits/ |
-| Environmental Review Summary | Word (.docx) | /output/permits/ |
 
 ## 받는 인풋
 필수: 프로젝트 위치(주/State), BESS 용량(MW/MWh), 계통연계 전압, 대상 시장(US/AU/UK)
