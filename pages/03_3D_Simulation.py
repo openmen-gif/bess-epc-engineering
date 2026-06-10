@@ -17,7 +17,7 @@ from utils.sim_physics import (
 # ── Model constants (documented in Methodology expanders) ─────
 CFD_L, CFD_W, CFD_H = 15.0, 15.0, 4.0     # enclosure dims [m]
 CFD_NX = CFD_NY = 30
-CFD_SNAPS = [0, 30, 60, 120, 300, 600, 1200, 1800]   # s
+CFD_SNAPS = list(range(0, 1801, 60))   # s — 0~30분, 60초 균일 31프레임(부드러운 재생/스크럽)
 THERMAL_LIMIT_C = 50.0                     # design verification limit
 
 STR_HCG   = 1.5                            # container C.G. height above pad [m]

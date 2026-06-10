@@ -24,7 +24,7 @@ from utils.sim_physics import (
 HVAC_NX, HVAC_NY = 10, 4
 
 # Physical snapshot times for the heat-up transient animation [s]
-SNAP_TIMES_S = [0, 10, 30, 60, 120, 300, 600, 1200, 1800]
+SNAP_TIMES_S = list(range(0, 1801, 60))   # 0~30분, 60초 균일 31프레임(부드러운 재생/스크럽)
 
 
 # ── Solvers ───────────────────────────────────────────────────────────────────
