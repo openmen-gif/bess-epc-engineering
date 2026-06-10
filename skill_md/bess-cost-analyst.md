@@ -127,7 +127,7 @@ BESS EPC 프로젝트의 CAPEX/OPEX 항목별 견적을 검증하고, 벤더 단
 ### 재사용 지식 (세션 누적)
 - CAPEX 단가 레인지: Li-ion 배터리 $300~400/kWh, PCS $50~80/kW, 컨트롤러/관리시스템 $10,000~20,000/시스템. 배터리 효율 ≥90%, PCS 효율 ≥98% — 근거: `sessions/2026-06-05T06-17-18/bess-cost-analyst.md`
 - BOM 비용 구조 디폴트: 배터리 모듈 70% / 인버터(PCS) 15% / BMS 10% / 기타 5% — 근거: `sessions/2026-06-05T13-23-17/bess-cost-analyst.md`
-- TCO 수명 가정: 배터리 10년, PCS 15년. Payback 5~7년, IRR 10~15% 추정 레인지 — 근거: `sessions/2026-06-05T06-17-18/bess-cost-analyst.md`
+- TCO 수명 가정: 배터리 LFP 15년 / NMC 10년, PCS 15년. Payback 5~7년, IRR 10~15% 추정 레인지 — 근거: `sessions/2026-06-05T06-17-18/bess-cost-analyst.md`
 - 벤더 비교 표준: 최소 3개 벤더 견적, 예산 대비 ±5% 허용범위, 환율·물류비(4~7%) 반영 — 근거: `sessions/2026-06-05T13-23-17/bess-cost-analyst.md`
 
 ### 정합성 가드레일 (반복 오류 차단)
