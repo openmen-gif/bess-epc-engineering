@@ -37,7 +37,11 @@ BESS EPC 프로젝트의 전체 공정(WBS·CPM·Baseline Schedule) 수립, 진�
 > **공정 관리 전문가(Scheduler)** vs **리스크 관리자(Risk Manager)** 업무 구분
 
 | 구분 | 공정 관리 전문가 | 리스크 관리자 |
-||
+|------|----------------|--------------|
+| 소유권 | WBS, CPM, Baseline Schedule, S-Curve, EVM(SPI/CPI), 지연 분석(TIA) | Risk Register, Monte Carlo, 예비비(Contingency), 리스크 히트맵 |
+| 일정 관점 | 결정론적 공정표 + 3점 추정 PERT | 확률론적 일정 리스크(P50/P80/P90) |
+
+**협업 접점**: Scheduler가 Critical Path·Activity 기간을 제공 → Risk Manager가 일정 불확실성을 정량화(Monte Carlo)하여 예비비 산정.
 
 ## BESS EPC 표준 WBS (Work Breakdown Structure)
 
@@ -93,20 +97,22 @@ WBS Level 1   WBS Level 2                    WBS Level 3
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
--|||
-| 5~20 MWh (소규모) | 6~9개월 | C&I / 배전연계 |
-| 50~200 MWh (중규모) | 9~14개월 | 유틸리티급 |
-| 200~500 MWh (대규모) | 12~18개월 | 송전연계 |
-| 500 MWh+ (초대형) | 18~24개월+ | 다단계 인허가 |
-
-
-
 ## 마일스톤 & 보고
 
 ### FIDIC 기반 주요 마일스톤
 
 | 마일스톤 | FIDIC 조항 | 내용 | LD 연관 |
-|--||-||||
+|---------|-----------|------|--------|
+| NTP (착공 지시) | Silver §8.1 (Commencement) | 공사 개시일, 공기 기산점 | 공기 기준점 |
+| Time for Completion | Silver §8.2 | 계약 공기 (착공~PAC) | Delay LD 적용 |
+| Taking-Over (PAC) | Silver §10.1 | 시운전·PAT 완료 후 잠정인수 | Delay LD 종료 |
+| Performance Cert (FAC) | Silver §11.9 | 결함보증 기간 완료 후 최종인수 | 성능 LD 정산 |
+| Milestone Payments | Silver §14.3 | 중간 마일스톤 기성 (설계/조달/시공) | 지급 연계 |
+
+### 보고 주기 (Reporting Cadence)
+
+| 보고 유형 | 주기 | 내용 | 수신자 |
+|----------|------|------|--------|
 | 일일 보고 | 매일 | 시공 진도, 인원, 장비, 이슈 | PM, 현장소장 |
 | 주간 보고 | 매주 | WBS별 진도율, CP 업데이트, 이슈 | PM, 발주처 |
 | 월간 보고 | 매월 | S-Curve, EVM, 리스크, 변경관리 | 발주처, 경영진 |
@@ -118,7 +124,14 @@ WBS Level 1   WBS Level 2                    WBS Level 3
 ## 공정 관리 체크리스트
 
 | 단계 | 항목 | 확인 내용 | 판정 |
-|||
+|------|------|----------|------|
+| Baseline | WBS 분해 | Level 3까지 분해, 발주처 승인 완료 | 충족 / 미충족 |
+| Baseline | Critical Path | Float=0 경로 식별, 마일스톤 충족 | 충족 / 미충족 |
+| Baseline | 자원 부하 | Resource Histogram 평준화 완료 | 충족 / 미충족 |
+| 진도 | 실적 입력 | 주간 실적(%) 수집, As-Built 갱신 | 충족 / 미충족 |
+| 진도 | SPI/CPI | SPI ≥ 1.0, CPI ≥ 1.0 여부 | SPI=__ / CPI=__ |
+| 리스크 | 납기 추적 | 주요 기기 납기 vs Baseline 편차 | 편차 __일 |
+| 지연 | 지연 분석 | TIA/Window 분석, EOT 근거 확보 | 해당 / 미해당 |
 
 ## 아웃풋 형식
 
@@ -372,14 +385,6 @@ S-Curve 작성, EVM 공정, 지연 분석, EOT Claim, Look-Ahead,
 - 현장 시공 감독 → 현장소장/감리
 - 인허가 행정 처리 → 발주처/PM
 - 자재 구매/발주 → 조달팀
-
--|--|
-| Master Schedule (P6/MS Project) | PDF/MPP | 착공 시 + 월간 갱신 | PM, CEO, 전 부서 |
-| WBS Dictionary | Excel | 착공 시 | PM, 전 부서 |
-| EVM 보고서 (SPI/CPI/EAC) | Excel/PDF | 월간 | PM, CFO |
-| S-Curve 진도 보고서 | Excel/PDF | 월간 | PM, CEO |
-| 지연 분석 보고서 (TIA) | Word/PDF | 지연 발생 시 | PM, 계약전문가, 법률 |
-| Monte Carlo 일정 리스크 분석 | Excel/PDF | 분기 1회 | 리스크관리자, PM |
 
 ## 운영 학습 (Operational Learnings)
 

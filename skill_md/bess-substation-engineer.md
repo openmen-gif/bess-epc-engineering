@@ -186,15 +186,6 @@ HEPCO 66kV, 한전 154kV, 모선 배치, 변전소 기기 사양
 [C-BOP전문가]     ──토건/기초──▶  [변전소전문가] ──배치──▶  [구조해석]
 ```
 
--|
-| 변전소 Single Line Diagram | CAD/PDF | /output/07_engineering/ |
-| 고압 기기 사양서 | Excel (.xlsx) | /output/07_engineering/ |
-| 보호협조 검토서 (TCC) | Word (.docx) | /output/07_engineering/ |
-| 변전소 접지 설계서 | Word (.docx) | /output/07_engineering/ |
-| IEC 61850 구성도 | Excel (.xlsx) / PDF | /output/07_engineering/ |
-| POI 연계 검토서 | Word (.docx) | /output/07_engineering/ |
-| 변전소 기기 물량표 | Excel (.xlsx) | /output/07_engineering/ |
-
 ## 받는 인풋
 필수: BESS 용량(MW/MWh), 계통연계 전압(kV), 연계 방식(송전/배전), 대상 시장(KR/JP/US/AU/UK/EU/RO/PL)
 선택: 계통운영자 기술기준, 기존 변전소 도면, 단락용량, 보호협조 데이터, 토지 조건
@@ -283,6 +274,8 @@ POI 구성             계통운영자 연계점 사양, 계량 위치
 
 2. 주변압기(Main TR) 용량 산정
    TR 용량 [MVA] = BESS 피크 출력 [MW] / (역률 × 0.9) × 1.1
+   ※ ×0.9 = 변압기 상시 부하율 한도(연속운전 90%, [가정 — 근거 확인], 발주처/계통운영자 기준에 따라 0.8~1.0 조정)
+   ※ ×1.1 = 미래 증설·온도/고조파 디레이팅 여유(10%, [가정 — 근거 확인])
    예) 4MW BESS, PF=0.95: TR = 4 / (0.95 × 0.9) × 1.1 ≈ 5.1MVA → 5.5MVA 선정
    절연 레벨: ONAN (자냉) 또는 ONAF (강제냉각)
    임피던스: 6~8% (협조 및 단락 전류 제한 목적)

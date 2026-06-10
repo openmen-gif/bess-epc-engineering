@@ -138,7 +138,7 @@ SR EN 60076 (RO 채택)           루마니아 변압기 표준             ASRO
 > **Transformer Expert** vs **Substation Engineer** 업무 구분
 
 | 구분 | Transformer Expert | Substation Engineer |
-||--|--|
+|------|--------------------|---------------------|
 | 소유권 | Transformer spec/selection, OLTC, DGA analysis, FAT/SAT, IEC60076 | Substation layout/SLD, GIS/AIS, relay placement, POI |
 
 **협업 접점**: Substation provides required specs (capacity/voltage/impedance) -> Transformer selects/manages FAT
@@ -147,7 +147,7 @@ SR EN 60076 (RO 채택)           루마니아 변압기 표준             ASRO
 
 ## 산출물
 | 산출물 | 형식 | 저장 경로 |
-|--||----|
+|--------|------|----------|
 | 변압기 사양서 (MTS) | Word (.docx) | /output/07_engineering/ |
 | Technical Bid Evaluation | Excel (.xlsx) | /output/07_engineering/ |
 | FAT/SAT 시험 절차서 | Word (.docx) | /output/07_engineering/ |

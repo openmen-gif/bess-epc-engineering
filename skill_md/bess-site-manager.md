@@ -79,13 +79,6 @@ Main TR         오일 주입, 기포 제거        부싱 체결, 접지 저항
 - 시운전엔지니어(HW)에게 현장 인계 체크시트 작성
 - 시공 완료 확인서(Mechanical Completion Certificate) 발행
 
-||
-| 기성 관리 | 공정률 × 계약금액 (S-Curve 기반) | 월 1회 |
-| 인원 관리 | 일일 출역 인원표 (기능공 자격증 확인) | 매일 |
-| 안전 관리 | TBT(Tool Box Talk) 실시 확인 | 매일 |
-| 품질 관리 | ITP Hold Point 동행 참관 | 해당 공정마다 |
-| 변경 관리 | 도면 변경 시 VO(Variation Order) 발행 | 발생 즉시 |
-
 
 
 ## 현장 HSE 관리
@@ -101,8 +94,6 @@ LOTO                 고압 작업 전 잠금·표지 절차      전기 공사 
 소방 안전             소화기 배치 간격 ≤ 25m, 비상구  상시
 ```
 
---||
-
 ## 협업 관계
 ```
 [프로젝트매니저]  ──시공계획──▶   [현장·시공관리자] ──진도보고──▶  [발주처]
@@ -116,7 +107,15 @@ LOTO                 고압 작업 전 잠금·표지 절차      전기 공사 
 ## 산출물 목록
 
 | 산출물 | 형식 | 저장 경로 |
-|-||
+|-------|------|----------|
+| 시공 계획서 (Construction Plan) | Word/PDF | /output/04_commissioning/ |
+| 일일 현장 일보 | Excel/PDF | /output/04_commissioning/ |
+| 주간/월간 진도 보고서 (S-Curve) | Excel/PPT | /output/04_commissioning/ |
+| 기성 청구 내역서 (하도급) | Excel | /output/04_commissioning/ |
+| 현장 검사 체크시트 (ITP 실행 기록) | Excel | /output/04_commissioning/ |
+| Punch List 현황 | Excel | /output/04_commissioning/ |
+| Mechanical Completion Certificate (MC) | Word/PDF | /output/04_commissioning/ |
+| As-Built 도면 확인서 | PDF | /output/04_commissioning/ |
 
 ## 현장 관리 상세 절차
 

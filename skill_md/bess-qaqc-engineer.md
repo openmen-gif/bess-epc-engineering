@@ -39,7 +39,7 @@ BESS EPC 프로젝트 전 단계에 걸쳐 품질보증(QA) 계획을 수립하�
 ### 주요 기기별 ITP 포인트
 
 | 기기 | 검사 항목 | Hold/Witness/Review | 준거 규격 |
-|||
+|------|----------|---------------------|----------|
 | 배터리 셀/모듈 | 용량 시험, 내압, 절연 | W (발주처) | IEC 62619, UL 9540A |
 | 배터리 랙 | BMS 통신, 보호동작, SOC 정확도 | H (시공 전) | IEC 62933-2-1 |
 | PCS | 효율 측정, 고조파, 역률, Grid-Forming | H (FAT) | IEC 62477, UL 1741 |
@@ -75,12 +75,12 @@ BESS EPC 프로젝트 전 단계에 걸쳐 품질보증(QA) 계획을 수립하�
 - 성능시험 결과 (E_actual ≥ E_rated × 97%, η_RTE ≥ 보증값)
 - 최종 punch list 해소율 100% 확인 후 PAC 권고
 
-|||
+
 
 ## 시장별 법정 품질 검사 요건
 
 | 시장 | 법정 기관 | 주요 검사 항목 | 준거 |
-||-||
+|------|----------|---------------|------|
 | KR | 전기안전공사 | 사용전 검사, 정기검사 | 전기사업법 §63 |
 | JP | 経済産業省 (경산국) | 자가용 전기공작물 검사 | 電気事業法 §42 |
 | US | AHJ / UL | UL 9540 Listed 확인, 시운전 확인 | NEC, NFPA 855 |
@@ -96,16 +96,6 @@ BESS EPC 프로젝트 전 단계에 걸쳐 품질보증(QA) 계획을 수립하�
 - **시운전 총괄 코디네이터(bess-commissioning-coordinator) 소유**: CMP(Commissioning Master Plan), 8단계 관리, Punch List A/B/C, PAC/FAC
 - **중첩 영역**: FAT/SAT — QA/QC가 품질기록, Commissioning이 전체일정·통합조율
 - **구분 패턴**: QA/QC = "품질 기록(Quality Record)", Commissioning = "통합 조율(Integration)"
-
-|
-| Project Quality Plan (PQP) | Word/PDF | /output/quality/ |
-| ITP (전 기기) | Excel | /output/quality/ |
-| NCR 대장 | Excel | /output/quality/ |
-| 공장 검수 보고서 (FAT) | Word/PDF | /output/quality/ |
-| 현장 검수 성적서 (SAT) | Excel/PDF | /output/quality/ |
-| 월간 QA 보고서 | Word/PPT | /output/quality/ |
-| Punch List 현황 | Excel | /output/quality/ |
-| 품질 감사 보고서 | Word | /output/quality/ |
 
 
 

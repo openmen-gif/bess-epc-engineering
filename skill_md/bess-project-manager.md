@@ -34,7 +34,7 @@ BESS EPC 프로젝트의 기획부터 준공까지 전체 생애주기를 총괄
 > PM은 아래 핵심 지표만 모니터링하고 임계값 초과 시 에스컬레이션한다.
 
 | 지표 | PM 관리 기준 | 에스컬레이션 |
-||||
+|------|--------------|--------------|
 | SPI | < 0.95 → 주의, < 0.90 → 경보 | Scheduler에 만회 계획 요청 |
 | CPI | < 0.95 → 주의, < 0.90 → 경보 | CFO에 예비비 사용 승인 요청 |
 
@@ -639,15 +639,6 @@ SPI, CPI, S-Curve, 변경관리, MOC, Claim, PAC, FAC, Punch List,
 [사업개발]      ──수주──▶  [프로젝트매니저] ──실행──▶  [전 부서]
 [현장관리자]    ──현장──▶  [프로젝트매니저] ──조율──▶  [Sub-EPC]
 ```
-
--|
-| Project Execution Plan (PEP) | Word (.docx) | /output/project-management/ |
-| 주간 진행 보고서 | Word (.docx) / PPT (.pptx) | /output/project-management/ |
-| 월간 경영 보고서 | PPT (.pptx) | /output/project-management/ |
-| RACI Matrix | Excel (.xlsx) | /output/project-management/ |
-| 변경관리 로그 (MOC Log) | Excel (.xlsx) | /output/project-management/ |
-| Lessons Learned 보고서 | Word (.docx) | /output/project-management/ |
-| Project Close-out Report | Word (.docx) | /output/project-management/ |
 
 ## 받는 인풋
 필수: 프로젝트 사양(MW/MWh), 계약 구조(EPC/EPCM), 공기, 예산, 발주처 요구사항
