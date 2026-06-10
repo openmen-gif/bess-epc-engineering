@@ -777,7 +777,7 @@ def add_page_number(section):
 > **Output Generator** vs **All Departments** 업무 구분
 
 | 구분 | Output Generator | All Departments |
-||--|--|
+|------|------------------|-----------------|
 | 소유권 | Document standardization, A4/A3 print optimization, format review, naming rules | Content creation, domain-specific deliverables |
 
 **협업 접점**: All departments create content -> Output Generator reviews format/standard before final output
@@ -874,6 +874,10 @@ Sources 최소     5건             10건            20건           29건+
 ```
 
 ---
+
+## 핵심 역량 및 업무 범위 (수행 절차)
+
+> 출력관리자의 핵심 업무 절차는 아래 형식별 생성 가이드(Excel/Word/Python/PDF/인쇄패키지/복합출력)와 콘텐츠×형식 매핑에 따라 수행한다.
 
 ## 형식별 생성 가이드
 
@@ -1001,35 +1005,8 @@ time.sleep(2)  # COM 해제 대기
 ### Word 문서 고급 패턴
 
 #### TOC (목차) 표준 필드코드 삽입
-```python
-# Word 표준 TOC — 열면 자동 페이지 번호 + 하이퍼링크
-# Heading 1~2 수준을 자동 수집
-def add_toc_field(doc):
-    p = doc.add_paragraph()
-    # fldChar begin
-    run1 = p.add_run()
-    fld_begin = OxmlElement('w:fldChar')
-    fld_begin.set(qn('w:fldCharType'), 'begin')
-    run1._element.append(fld_begin)
-    # instrText
-    run2 = p.add_run()
-    instr = OxmlElement('w:instrText')
-    instr.set(qn('xml:space'), 'preserve')
-    instr.text = r' TOC \o "1-2" \h \z \u '
-    run2._element.append(instr)
-    # fldChar separate
-    run3 = p.add_run()
-    fld_sep = OxmlElement('w:fldChar')
-    fld_sep.set(qn('w:fldCharType'), 'separate')
-    run3._element.append(fld_sep)
-    # placeholder
-    run4 = p.add_run("목차 업데이트: 우클릭 → 필드 업데이트")
-    # fldChar end
-    run5 = p.add_run()
-    fld_end = OxmlElement('w:fldChar')
-    fld_end.set(qn('w:fldCharType'), 'end')
-    run5._element.append(fld_end)
-```
+> 📌 표준 TOC 삽입은 위 [검증된 필수 코드 패턴](#검증된-필수-코드-패턴-python-docx)의 `add_toc(doc)` 함수를 사용한다.
+> 해당 정본 함수는 TOC 1/2 스타일 간격 축소 + `w:updateFields`(문서 열 때 자동 갱신)까지 포함한 완성형이므로, 별도 간이 변형(`add_toc_field`)은 사용하지 않는다.
 
 #### 페이지 번호 (오른쪽 하단)
 ```python
@@ -1147,173 +1124,7 @@ HOK001_InterconnectionTest_v1.0_20250228.pdf
 
 > ❌ 수동 텍스트 목차 / 텍스트 URL / 페이지 번호 직접 입력 → 절대 금지
 
----
-
-### 검증된 필수 코드 패턴 (python-docx)
-
-> 아래 3개 함수를 모든 DOCX 생성 스크립트에 그대로 복사·사용한다.
-
-#### ① add_hyperlink — URL을 클릭 가능 링크로 삽입
-
-```python
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
-
-def add_hyperlink(paragraph, url: str, text: str, size_pt: float = 10):
-    """
-    paragraph 에 클릭 가능한 하이퍼링크 삽입 (검증 완료 패턴).
-    - w:hyperlink + r:id 관계 → Word가 클릭 시 브라우저 열기
-    - 스타일: Calibri/맑은고딕, 파란색 #2196F3, 밑줄, 10pt 기본
-    """
-    part = paragraph.part
-    r_id = part.relate_to(
-        url,
-        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
-        is_external=True,
-    )
-
-    hl = OxmlElement("w:hyperlink")
-    hl.set(qn("r:id"), r_id)
-
-    run = OxmlElement("w:r")
-
-    rPr = OxmlElement("w:rPr")
-    # 폰트
-    rFonts = OxmlElement("w:rFonts")
-    rFonts.set(qn("w:ascii"),   "Calibri")
-    rFonts.set(qn("w:eastAsia"),"맑은 고딕")
-    rPr.append(rFonts)
-    # 색상 #2196F3
-    color = OxmlElement("w:color")
-    color.set(qn("w:val"), "2196F3")
-    rPr.append(color)
-    # 밑줄
-    u = OxmlElement("w:u")
-    u.set(qn("w:val"), "single")
-    rPr.append(u)
-    # 크기 (half-points)
-    twips = str(int(size_pt * 2))
-    for tag in ("w:sz", "w:szCs"):
-        el = OxmlElement(tag)
-        el.set(qn("w:val"), twips)
-        rPr.append(el)
-
-    run.append(rPr)
-
-    t = OxmlElement("w:t")
-    t.set(qn("xml:space"), "preserve")
-    t.text = text
-    run.append(t)
-
-    hl.append(run)
-    paragraph._p.append(hl)
-```
-
-#### ② add_toc — TOC 필드 삽입 (점선 + 페이지 번호 + 자동 갱신)
-
-```python
-from docx.shared import Pt, RGBColor
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-
-def add_toc(doc):
-    """
-    Word TOC 필드 삽입.
-    - Heading 1~2 수집, 점선 dot-leader + 페이지 번호 + 하이퍼링크 자동 생성
-    - TOC 1/2 스타일: 10pt, space 0pt, line_spacing 11pt (최소 간격)
-    - 문서 열 때 w:updateFields = true → 자동 갱신
-    - 수동 갱신: Ctrl+A → F9
-    """
-    # ★ TOC 1/2 스타일 간격 축소 (기본값 너무 넓음)
-    from docx.shared import Mm as _Mm
-    for lvl, indent in [("TOC 1", _Mm(0)), ("TOC 2", _Mm(5))]:
-        try:
-            toc_style = doc.styles[lvl]
-        except KeyError:
-            toc_style = doc.styles.add_style(lvl, 1)  # 1 = PARAGRAPH
-        toc_style.font.size = Pt(10)
-        toc_style.font.name = "맑은 고딕"
-        toc_style.paragraph_format.space_before = Pt(0)
-        toc_style.paragraph_format.space_after  = Pt(0)
-        toc_style.paragraph_format.line_spacing = Pt(11)  # 고정 줄간격 11pt (단일)
-        toc_style.paragraph_format.left_indent  = indent
-
-    p = doc.add_paragraph()
-    p.paragraph_format.space_before = Pt(0)
-    p.paragraph_format.space_after  = Pt(0)
-
-    def _fld_run(fld_type=None, instr=None):
-        r = p.add_run()
-        if fld_type:
-            fc = OxmlElement("w:fldChar")
-            fc.set(qn("w:fldCharType"), fld_type)
-            r._element.append(fc)
-        if instr:
-            it = OxmlElement("w:instrText")
-            it.set(qn("xml:space"), "preserve")
-            it.text = instr
-            r._element.append(it)
-        return r
-
-    _fld_run("begin")
-    _fld_run(instr=' TOC \\o "1-2" \\h \\z \\u ')
-    _fld_run("separate")
-    placeholder = p.add_run("목차 갱신: Ctrl+A → F9  (또는 우클릭 → 필드 업데이트)")
-    placeholder.italic = True
-    placeholder.font.size = Pt(9)
-    placeholder.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
-    _fld_run("end")
-
-    # 문서 열 때 자동 갱신
-    settings = doc.settings.element
-    upd = OxmlElement("w:updateFields")
-    upd.set(qn("w:val"), "true")
-    settings.append(upd)
-```
-
-#### ③ add_page_number — 푸터 오른쪽 "Page X / Y"
-
-```python
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-
-def add_page_number(section):
-    """
-    section.footer 오른쪽에 'Page X / Y' 필드 삽입.
-    - PAGE / NUMPAGES Word 필드 사용 → Word가 자동 계산
-    - 폰트: 9pt(18 half-pts), 회색 #9E9E9E
-    """
-    footer = section.footer
-    para   = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
-    para.clear()
-    para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-
-    def _r(fld_type=None, instr=None, literal=None):
-        r = OxmlElement("w:r")
-        rPr = OxmlElement("w:rPr")
-        for tag, val in [("w:sz","18"), ("w:szCs","18")]:
-            el = OxmlElement(tag); el.set(qn("w:val"), val); rPr.append(el)
-        clr = OxmlElement("w:color"); clr.set(qn("w:val"), "9E9E9E"); rPr.append(clr)
-        r.append(rPr)
-        if fld_type:
-            fc = OxmlElement("w:fldChar"); fc.set(qn("w:fldCharType"), fld_type); r.append(fc)
-        if instr:
-            it = OxmlElement("w:instrText"); it.set(qn("xml:space"), "preserve")
-            it.text = f" {instr} "; r.append(it)
-        if literal:
-            t = OxmlElement("w:t"); t.set(qn("xml:space"), "preserve")
-            t.text = literal; r.append(t)
-        return r
-
-    p = para._p
-    for item in [
-        _r("begin"), _r(instr="PAGE"), _r("separate"), _r(literal="1"), _r("end"),
-        _r(literal=" / "),
-        _r("begin"), _r(instr="NUMPAGES"), _r("separate"), _r(literal="1"), _r("end"),
-    ]:
-        p.append(item)
-```
+> 📌 **코드 본체는 위 [검증된 필수 코드 패턴 (python-docx)](#검증된-필수-코드-패턴-python-docx) 섹션의 `add_hyperlink` / `add_toc` / `add_page_number` 3개 함수를 그대로 복사·사용한다.** (중복 게재 제거 — 단일 정본 유지)
 
 ---
 

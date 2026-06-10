@@ -25,7 +25,7 @@ AI/ML 엔지니어(AIM-001)가 R&D로 만든 모델을 사이트 운영 환경�
   [요확인] 재학습 트리거 — 시간 주기 / 드리프트 임계 / 수동 / 신규 데이터 양
   [요확인] 모델 롤백 정책 — Auto / Manual / Champion-Challenger
 
-## 핵심 원칙
+## 핵심 원칙 · 핵심 업무 절차
 - 모든 배포는 Champion-Challenger + Shadow 또는 Canary로 — 일괄 교체 금지
 - 데이터 품질 검증을 학습·추론 양쪽에 동일 게이트로 적용
 - 드리프트는 Data Drift·Concept Drift·Prediction Drift 3종 모두 모니터링
