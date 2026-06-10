@@ -53,80 +53,21 @@ BESS 계통 연계 시험과 API 통신 검증을 7개 시장 규격에 맞는 �
 담당자: _______  서명: _______  날짜: _______
 ```
 
---|
-| AC 기기 (PCS, 변압기 2차) | ≥100MΩ @ 1000VAC | JIS C 0364-6-61 / BS 7671 §6.4 |
-| DC 기기 (배터리 랙, 직류 배선) | ≥1MΩ @ 1000VDC | JEAC 9701 §6.3.2 / UL 9540 |
-| 케이블 (600V 이하) | ≥0.5MΩ @ 500VDC | IEC 60364-6 |
-| 케이블 (600V~1kV) | ≥1MΩ @ 1000VDC | IEC 60364-6 |
-| MV 케이블 (>1kV) | ≥100MΩ @ 5000VDC | IEC 60502-2 |
-
-### 접지저항 (Earthing/Grounding)
-
-| 시장 | 접지 유형 | 기준 | 적용 규격 |
-||--|
-| 🇰🇷 KR | 제1종 (154kV) | ≤10Ω | KEC 351조 |
-| 🇰🇷 KR | 제3종 (400V) | ≤100Ω | KEC 351조 |
-| 🇯🇵 JP | A종 (고압) | ≤10Ω | 電気設備技術基準 §11 |
-| 🇯🇵 JP | D종 (300V 이하) | ≤100Ω | 電気設備技術基準 §11 |
-| 🇺🇸 US | Grounding electrode | ≤25Ω (typical) | NEC 250.56 / IEEE 142 |
-| 🇦🇺 AU | Earth electrode | ≤1Ω (substation) | AS/NZS 3000 §5.6 |
-| 🇬🇧 UK | Earth electrode | ≤20Ω (standard) | BS 7671 §5.4 |
-| 🇪🇺 EU | Earth system | Per IEC 61936 | IEC 61936 / EN 50522 |
-
-### 보호계전기 정정값 비교표 (Transmission-Level)
-
-| 항목 | 🇰🇷 KR 154kV | 🇯🇵 JP 66kV | 🇺🇸 US IEEE | 🇦🇺 AU NER | 🇬🇧 UK G99 | 🇪🇺 EU RfG |
-||::|::|::|
-| **OVR** | 1.1Un / 0.5s | 1.1Un / 0.5s | 1.2pu / 0.16s | 1.2Un / 0.5s | 1.14Un / 0.5s | — |
-| **UVR** | 0.9Un / 1.0s | 0.9Un / 2.0s | 0.88pu / 2.0s | 0.85Un / 2.0s | 0.87Un / 2.5s | — |
-| **OFR** | 62.0Hz / 0.5s | 60.5Hz / 0.5s | 62.0Hz / 0.16s | 52.0Hz / 1.0s | 51.0Hz / 0.5s | 51.5Hz |
-| **UFR** | 57.5Hz / 1.6s | 59.0Hz / 2.0s | 57.0Hz / 0.16s | 47.5Hz / 1.0s | 47.5Hz / 20s | 47.5Hz |
-| **ROCOF** | — | — | — | 4.0Hz/s / 0.5s | 1.0Hz/s / 0.5s | ≥2.0Hz/s |
-
-※ 미국은 IEEE 1547-2018 Category II 기준 | 호주는 AS 4777-2020 기준 | 영국은 G99 132kV 기준
-
-### VRT/FRT 비교표
-
-| 항목 | 🇰🇷 KR | 🇯🇵 JP | 🇺🇸 US Cat-II | 🇦🇺 AU | 🇬🇧 UK G99 | 🇪🇺 EU RfG |
-||::|::|::|
-| **LVRT (0.0pu)** | 150ms | 150ms | 1.0s | State별 | 140ms | 140ms |
-| **HVRT** | 1.3pu/100ms | 1.3pu/100ms | 1.2pu/0.16s | 1.2pu/0.5s | 1.2pu/100ms | — |
-| **Post-fault Q injection** | — | — | — | — | ΔQ=2%×ΔV | TSO별 |
-| **Active power recovery** | — | — | — | — | ≥0.1pu/s | — |
-
-### FFR / 주파수 응답 비교표
-
-| 항목 | 🇰🇷 KR | 🇯🇵 JP | 🇺🇸 US | 🇦🇺 AU FCAS | 🇬🇧 UK DC | 🇪🇺 EU FCR |
-||::|::|::|
-| **응답 시간** | ≤1s | ≤500ms | ISO별 | 6s/60s/5min | ≤1s | ≤30s |
-| **지속 시간** | 5min | 설정별 | ISO별 | 5min | 30min | 15min |
-| **트리거** | Δf | 59.5Hz | ISO별 | AEMO 신호 | ±0.015Hz | ±0.2Hz |
-| **출력 정밀도** | ±1% | ±1% | ±5% | ±1% | ±1% | ±5% |
-
-### 충방전 시험
-
-| 항목 | 기준 | 비고 |
-||||
-| C-rate 단계 | 0.25C → 0.5C → 1C | 단계별 확인 |
-| 출력 정밀도 | 설정값의 ±1% 이내 | PCC 기준 측정 |
-| SOC 표시 정확도 | 계산값 대비 ±2% 이내 | BMS vs 실측 비교 |
-| 전류 파형 THD | <3% (일반) / <5% (US IEEE 1547) | IEC 61000-3-2 / IEEE 1547 §8 |
-| RTE (Round-Trip Efficiency) | ≥85% (typical) | IEC 62933-2-1 기준 |
-
-### 통신 시험
-
-| 프로토콜 | 합격 기준 | 적용 시장 |
-|--|
+> 시험 항목별 합격 기준 수치(절연저항·접지저항·보호계전기·VRT/FRT·FFR·충방전·통신)는 아래 "합격 기준 수치 데이터베이스" 섹션 참조.
 
 ## API 통신 테스트 시나리오
-```
-케이스ID | 프로토콜 | 입력 | 예상 출력 | 판정
-||
+
+| 케이스ID | 프로토콜 | 입력 | 예상 출력 | 판정 |
+|---------|---------|------|----------|------|
+| API-01 | Modbus TCP | Read HR(SOC) | SOC 값 응답 ≤100ms | □P □F |
+| API-02 | DNP3 | Class 1 Event Poll | 이벤트 데이터 수신 | □P □F |
+| API-03 | IEC 61850 GOOSE | 트립 신호 | 전달시간 ≤4ms | □P □F |
+| API-04 | REST API | Dispatch 명령 | 200 OK + 실행 확인 | □P □F |
 
 ## 시장별 인증 및 사전 준비 체크리스트
 
 | 항목 | 🇰🇷 KR | 🇯🇵 JP | 🇺🇸 US | 🇦🇺 AU | 🇬🇧 UK | 🇪🇺 EU |
-||::|::|::|
+|------|:---:|:---:|:---:|:---:|:---:|:---:|
 | **시스템 인증** | KC | PSE/JET | UL 9540 | CEC List | UKCA | CE |
 | **열폭주 시험** | — | Optional | UL 9540A **필수** | — | — | — |
 | **소방 기준** | 소방법 | 消防法 | NFPA 855 | AS/NZS 5139 | BS EN 50549 | EN standards |
@@ -150,12 +91,17 @@ BESS 계통 연계 시험과 API 통신 검증을 7개 시장 규격에 맞는 �
 ### 시장별 안전 규정 참조
 
 | 시장 | 안전 규정 | Arc Flash 기준 | PPE 등급 |
-||-|
+|------|----------|---------------|----------|
+| 🇺🇸 US | NFPA 70E | IEEE 1584 계산 | Cat 1~4 (cal/cm²별) |
+| 🇰🇷 KR | KOSHA / 산업안전보건법 | — | 절연장갑·절연화 |
+| 🇯🇵 JP | 労働安全衛生法 | — | 保護具 착용 |
+| 🇬🇧 UK | HSE / CDM 2015 | — | BS EN 차폐 PPE |
+| 🇪🇺 EU | EU Machinery Directive | — | EN 차폐 PPE |
 
 ## 시장별 리스크 플래그
 
 | 시장 | 고위험 항목 | 사전 조치 | 소요 기간 |
-|||--|
+|------|------------|----------|----------|
 | 🇺🇸 US | Interconnection Queue 적체 (3~5년) | ISO/RTO 조기 신청 | 12~60개월 |
 | 🇺🇸 US | UL 9540A 열폭주 시험 | 제조사 일정 조기 확인 | 3~6개월 |
 | 🇯🇵 JP | HEPCO 보호계전기 설정값 미확정 | 기술 협의 조기 착수 | 3~6개월 |
@@ -174,7 +120,7 @@ BESS 계통 연계 시험과 API 통신 검증을 7개 시장 규격에 맞는 �
 > **Precom Engineer (HW)** vs **FIT Engineer (EMS)** 업무 구분
 
 | 구분 | Precom Engineer | FIT Engineer |
-||--|--|
+|------|----------------|--------------|
 | 소유권 | Pre-commissioning, insulation/grounding tests, FAT/SAT procedures, relay tests | FIT, EMS communication tests, schedule simulation, packet logging |
 
 **협업 접점**: HW completes electrical/mechanical tests -> EMS proceeds with communication/integration tests
@@ -184,7 +130,12 @@ BESS 계통 연계 시험과 API 통신 검증을 7개 시장 규격에 맞는 �
 ## 산출물
 
 | 산출물 | 형식 | 주기/시점 | 수신자 |
-|--||
+|--------|------|-----------|--------|
+| 사전시운전 절차서 (Pre-Com) | Word → PDF | 시험 전 | 시운전 총괄, QA/QC |
+| FAT/SAT 절차서 | Word → PDF | 공장/현장 시험 전 | QA/QC, 발주처 |
+| 시험 체크리스트 | Excel | 시험 수행 시 | 시운전 총괄, QA/QC |
+| 시험 성적서 (절연/접지/계전기/충방전) | Word/Excel → PDF | 각 시험 완료 후 | E-BOP, 배터리, QA/QC |
+| 국가별 시운전 보고서 | Word → PDF | 단계 완료 시 | 시운전 총괄, 인허가 |
 
 ## 라우팅 키워드
 사전시운전, 절차서, FAT, SAT, 체크리스트, 절연, 접지, 계전기, 충방전,

@@ -232,7 +232,7 @@ ESS 의무설치 확대                       2026.01 [요확인]  일정 규모
 > **Permit Expert (Asia)** vs **Standards Analyst** 업무 구분
 
 | 구분 | Permit Expert (Asia) | Standards Analyst |
-||--|--|
+|------|---------------------|-------------------|
 | 소유권 | KR/JP permit roadmap, KEPCO/METI coordination, generation license | IEC/IEEE/JIS/KEC standard mapping, risk grading, standard trends |
 
 **협업 접점**: Standards provides applicable standards/changes -> Permit reflects in local permit procedures
@@ -241,7 +241,7 @@ ESS 의무설치 확대                       2026.01 [요확인]  일정 규모
 
 ## 산출물
 | 산출물 | 형식 | 저장 경로 |
-|--||----|
+|--------|------|-----------|
 | 인허가 로드맵 (KR/JP) | Excel (.xlsx) | /output/permits/ |
 | 인허가 트래커 | Excel (.xlsx) | /output/permits/ |
 | 인허가 체크리스트 | Excel (.xlsx) | /output/permits/ |

@@ -39,7 +39,7 @@ BESS 사이트의 OT/IT 통신 네트워크 — EMS↔SCADA↔PCS↔BMS 간 프�
 ### 1. Modbus TCP/RTU
 
 | 항목 | Modbus TCP | Modbus RTU |
-||--|
+|------|-----------|-----------|
 | 물리 계층 | Ethernet (Cat5e/6) | RS-485 (차폐 트위스트 페어) |
 | 토폴로지 | Star (스위치 기반) | Bus (데이지 체인) |
 | 포트 | TCP 502 | — |
@@ -81,7 +81,7 @@ Modbus 설계 체크포인트:
 ### 2. DNP3 (Distributed Network Protocol 3)
 
 | 항목 | 내용 | 비고 |
-||||
+|------|------|------|
 | 적용 | EMS ↔ SCADA / 계통운영자 | US, AU 주로 사용 |
 | 계층 | Master (SCADA) ↔ Outstation (RTU/EMS) | 요청-응답 + Unsolicited Response |
 | 포트 | TCP 20000 (일반) | 변경 가능 |
@@ -90,10 +90,12 @@ Modbus 설계 체크포인트:
 | 시각 동기 | 내장 (Master → Outstation 시각 동기) | ±1ms 정밀도 |
 | 보안 | SA (Secure Authentication) v5 | IEEE 1815 / IEC 62351-5 |
 
-### 3. IEC 61850
+### 3. 기타 프로토콜 (IEC 61850 MMS/GOOSE 및 상위 통신)
 
-| 서비스 | 용도 | 전송 방식 | 지연 | 적용 |
-|--||||||
+| 프로토콜 | 용도 | 포트/전송 | 비고 |
+|---------|------|----------|------|
+| IEC 61850 MMS | IED ↔ SCADA (보고/제어) | TCP 102 | Client-Server, 데이터셋/리포팅 |
+| IEC 61850 GOOSE | IED ↔ IED (보호/트립) | Layer 2 Multicast | 전달시간 ≤4ms, 우선순위 VLAN |
 | IEC 60870-5-104 | TSO/DSO ↔ RTU (EU) | TCP 2404 | EU/RO 주 사용 |
 | OPC-UA | EMS ↔ SCADA/Historian | TCP 4840 | 차세대 표준, 보안 내장 |
 | MQTT | IoT 모니터링/이벤트 | TCP 1883/8883(TLS) | Broker 기반, QoS 0/1/2 |
@@ -101,21 +103,6 @@ Modbus 설계 체크포인트:
 | SNMP | 네트워크 장비 관리 | UDP 161/162 | 스위치/라우터 모니터링 |
 | Syslog | 로그 수집 | UDP 514 / TCP 514 | 보안 이벤트 로그 |
 | NTP/PTP | 시각 동기 | UDP 123 / UDP 319,320 | GPS → 전 장비 ±1ms |
-
-||||
-| VLAN 10 | EMS/SCADA 관리 | 10.10.10.0/24 | Management |
-| VLAN 20 | PCS 통신 (Modbus) | 10.10.20.0/24 | PCS #1~#n |
-| VLAN 30 | BMS 통신 (Modbus) | 10.10.30.0/24 | BMS #1~#n |
-| VLAN 40 | IEC 61850 MMS | 10.10.40.0/24 | IED, MU |
-| VLAN 50 | IEC 61850 GOOSE | — (Layer 2) | Multicast Only |
-| VLAN 60 | 보조 장비 | 10.10.60.0/24 | HVAC, 센서, CCTV |
-| VLAN 70 | 원격 접속 (VPN) | 10.10.70.0/24 | Jump Host 경유 |
-| VLAN 100 | IT (인터넷/클라우드) | DHCP / NAT | Firewall 분리 |
-
-### 이중화 (Redundancy)
-
-| 방식 | 전환시간 | 적용 | 규격 |
-||
 
 ## 패킷 분석 가이드
 
@@ -151,38 +138,24 @@ IEC 61850 MMS:
 ### 통신 성능 판정 기준
 
 | 항목 | 기준 | 측정 방법 |
-|||
+|------|------|----------|
+| 응답시간 (Modbus) | ≤100ms | 폴링 요청-응답 왕복 시간 측정 |
+| GOOSE 전달시간 | ≤4ms | 패킷 타임스탬프 분석 (IEC 61850-5) |
+| 패킷 손실률 | ≤0.01% (24h 연속) | tcpdump/Wireshark 캡처 통계 |
+| 대역폭 사용률 | ≤60% (동시 폴링) | 스위치 포트 모니터링/SNMP |
+| 시각 동기 편차 | ±1ms (NTP) / ±1μs (PTP) | 동기 오프셋 로그 |
 
 ## 사이버보안
 
-### IEC 62443 Zone & Conduit
+### 시장별 사이버보안 규격 (IEC 62443 Zone & Conduit 기반)
 
-| Zone | 보안 수준 (SL) | 포함 장비 | 비고 |
-||--|-||
+| 시장 | 규격 | 적용 범위 | 비고 |
+|------|------|----------|------|
 | 🇺🇸 US | NERC CIP-002~014 | BES ≥75MW | ESP 정의, 접근관리, 패치 |
 | 🇪🇺 EU | NIS2 Directive | 에너지 인프라 | 24시간 사고보고 |
 | 🇬🇧 UK | NIS Regulations + CAF | OES | 사이버평가프레임워크 |
 | 전체 | IEC 62443 | OT 시스템 | Zone/Conduit, SL 분류 |
 | 전체 | IEC 62351 | IEC 61850 통신 | TLS, 인증, 무결성 |
-
--||
-| **Infra** | 케이블/포트 | Cat6 인증, 광케이블 OTDR, 포트 속도/듀플렉스 | □P □F |
-| **Infra** | 스위치 설정 | VLAN, QoS, RSTP/PRP, 미러 포트 | □P □F |
-| **Infra** | 방화벽 정책 | Whitelist 규칙 적용, 불필요 포트 차단 | □P □F |
-| **Proto** | Modbus 통신 | 전체 레지스터 R/W 확인, 응답시간 ≤100ms | □P □F |
-| **Proto** | DNP3 통신 | 정적/이벤트 데이터, Unsolicited Response | □P □F |
-| **Proto** | IEC 61850 GOOSE | 전달시간 ≤4ms, 우선순위 VLAN 동작 | □P □F |
-| **Proto** | IEC 61850 MMS | 전체 데이터셋 수집, 리포팅 동작 | □P □F |
-| **Sync** | 시각 동기 | 전 장비 ±1ms (NTP) 또는 ±1μs (PTP) | □P □F |
-| **Redun** | 이중화 | Link 절체 시 무중단 (PRP) 또는 <2s (RSTP) | □P □F |
-| **Perf** | 부하 시험 | 모든 장비 동시 폴링, 대역폭 ≤60% | □P □F |
-| **Perf** | 패킷 손실 | 24시간 연속, 손실률 ≤0.01% | □P □F |
-| **Sec** | 방화벽 검증 | 비허용 포트 접근 차단 확인 | □P □F |
-| **Sec** | 접근 관리 | 계정/패스워드/MFA 정책 확인 | □P □F |
-| **Sec** | 취약점 스캔 | Nessus/OpenVAS 스캔 결과 | □P □F |
-| **Doc** | 포인트 리스트 | 전체 SCADA 포인트 매핑 100% 확인 | □P □F |
-
-
 
 ## 협업 관계
 ```
@@ -190,13 +163,6 @@ IEC 61850 MMS:
 보안전문가 ──보안 정책──▶ 네트워크전문가 ──사이버보안 구현──▶ 인허가 전문가
 FIT(시운전엔지니어EMS) ──시험 요건──▶ 네트워크전문가 ──패킷 분석──▶ 데이터분석가
 ```
-
---|--|
-| 네트워크 설계서 | Word | 설계 단계 | 시스템엔지니어, 시운전엔지니어(EMS) |
-| VLAN 구성도 | Visio/Draw.io | 설계 단계 | 시스템엔지니어, 보안전문가 |
-| 프로토콜 사양서 | Word/Excel | 설계 단계 | 시운전엔지니어(EMS), PCS 전문가 |
-| 사이버보안 정책서 | Word/PDF | 설계 단계 | 보안전문가, 인허가 전문가 |
-| 패킷분석 보고서 | Word/Excel | 시험 완료 시 | 시운전엔지니어(EMS), 데이터분석가 |
 
 ---
 

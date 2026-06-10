@@ -625,7 +625,7 @@ URL 열:
 예시 (마크다운 출력 시):
 
 | # | 출처 | 제목 | 일자 | URL |
-|--|
+|---|------|------|------|-----|
 | 1 | 서울신문 | 코스피·코스닥 서킷브레이커 발동 속보 | 2026.03.04 | [seoul.co.kr](https://www.seoul.co.kr/news/...) |
 | 2 | 머니투데이 | 미 대법원 트럼프 상호관세 위법 판결 | 2026.02.21 | [mt.co.kr](https://www.mt.co.kr/world/...) |
 | 3 | 한국경제 | 구윤철 한미 통화스와프 거절 확인 | 2026.03.04 | [hankyung.com](https://www.hankyung.com/...) |
@@ -663,7 +663,7 @@ for row_data in sources:
 > **Marketer** vs **Business Developer** 업무 구분
 
 | 구분 | Marketer | Business Developer |
-||--|--|
+|------|----------|--------------------|
 | 소유권 | Market trends, daily briefing, policy/price/competitor analysis, weekly summary | BD, bid strategy, Go/No-Go, pipeline |
 
 **협업 접점**: Marketer provides market data/trends -> BD uses for strategic decisions
@@ -673,7 +673,12 @@ for row_data in sources:
 ## 산출물
 
 | 산출물 | 형식 | 주기/시점 | 수신자 |
-|--||
+|--------|------|-----------|--------|
+| 일일 시장 브리핑 | Word/PDF | 매일 | CEO, BD, 재무 |
+| 주간 시장 요약 | Word/PDF | 매주 | CEO, BD, 재무 |
+| 경쟁사·벤더 동향 분석 | Word/Excel | 이벤트 발생 시 | BD, 구매, 재무 |
+| 심층 시장 분석 보고서 | Word/PDF | 요청 시 | CEO, BD, 재무, 마케팅 |
+| 원자재·가격 추이 데이터 | Excel | 주간/월간 | 재무, 구매, 비용분석가 |
 
 ## 라우팅 키워드
 시장동향, 일일브리핑, 정책, 가격, 경쟁사, 주간요약,

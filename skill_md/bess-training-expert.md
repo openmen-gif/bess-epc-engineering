@@ -130,7 +130,7 @@ SSM (RO 산업안전)               RO 산업안전 교육 의무           ITM
 
 ## 산출물
 | 산출물 | 형식 | 저장 경로 |
-|--||----|
+|--------|------|-----------|
 | 교육 커리큘럼 | Word (.docx) | /output/04_commissioning/ |
 | SOP (표준작업절차서) | Word (.docx) | /output/04_commissioning/ |
 | 교육 교재 (Training Material) | PPT (.pptx) | /output/05_presentations/ |
