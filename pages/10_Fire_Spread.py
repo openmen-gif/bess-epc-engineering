@@ -124,7 +124,7 @@ def run_fire_spread_module():
     chem_options = {k: v["label"] for k, v in CHEM_PARAMS.items()}
 
     with p1:
-        chem_key = st.selectbox(t("p10_chem"), list(chem_options.keys()),
+        chem_key = st.selectbox(t("p10_chem"), list(chem_options.keys()), index=1,
                                 format_func=lambda k: chem_options[k])
         rows = int(st.number_input(t("p10_rows"), min_value=2, max_value=20, value=6, step=1))
         cols = int(st.number_input(t("p10_cols"), min_value=2, max_value=20, value=8, step=1))
@@ -242,6 +242,35 @@ def run_fire_spread_module():
     km1.metric(t("p10_total_t"),    fmt_time(times[-1]))
     km2.metric(t("p10_max_racks"),  f"{ever_fire} racks")
     km3.metric(t("p10_suppressed"), f"{max_supp} racks")
+
+    # 결과 해석 배너 — "왜 이런 결과인지" 명시(전파 없음이 정상인지 설명, 고장 오해 방지)
+    _chem = cfg["chem"]; _sp = float(cfg["spacing"])
+    _met = _sp >= NFPA855_SPACING_M
+    if ever_fire <= 1:
+        st.success(
+            (f"✅ **전파 차단** — 인접 랙으로 확산되지 않고 발원 랙 1개만 연소 후 소진되었습니다"
+             f"(에너지 소진, 자연소화가 아님). 원인: **{_chem}** 화학의 전파저항"
+             + (f" + NFPA 855 이격({_sp:.2f} m ≥ 0.914 m) 충족" if _met
+                else f" + 이격 {_sp:.2f} m에서 복사 열유속이 인접 랙을 onset까지 못 올림")
+             + ". 🔥 **전파를 보려면 화학 = NMC/NCA + 이격 0.3~0.5 m** 로 설정하세요." )
+            if not is_en else
+            (f"✅ **Propagation arrested** — fire stayed at the single origin rack and burned out "
+             f"(energy-limited, not a magic self-extinguish). Cause: **{_chem}** propagation resistance"
+             + (f" + NFPA 855 spacing ({_sp:.2f} m)" if _met else f" + insufficient radiative flux at {_sp:.2f} m")
+             + ". To see propagation, set **chemistry = NMC/NCA and spacing 0.3–0.5 m**.")
+        )
+    elif max_supp >= ever_fire:
+        st.warning(
+            (f"🔥➡️🛡️ **부분 전파 후 억제** — 최대 **{ever_fire}개** 랙이 점화되었으나 방화 시스템/연소 소진으로 억제되었습니다."
+             if not is_en else
+             f"🔥➡️🛡️ **Partial spread, then contained** — up to **{ever_fire}** racks ignited but were suppressed / burned out.")
+        )
+    else:
+        st.error(
+            (f"🔥 **열폭주 전파 발생** — 최대 **{ever_fire}개** 랙으로 확산되었습니다. 이격 확대(≥0.914 m) 또는 방화 강화가 필요합니다."
+             if not is_en else
+             f"🔥 **Thermal-runaway propagation** — spread to up to **{ever_fire}** racks. Increase spacing (≥0.914 m) or strengthen suppression.")
+        )
 
     st.markdown("---")
 
