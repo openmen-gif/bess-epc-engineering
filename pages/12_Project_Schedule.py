@@ -12,10 +12,10 @@ except Exception:
 import plotly.graph_objects as go
 from datetime import date, datetime
 from utils.css_loader import apply_custom_css
-from utils.auth_helper import require_auth, sidebar_user_info
+from utils.auth_helper import require_auth, sidebar_user_info, current_role
 from utils.project_store import (
     load_projects, save_projects, add_project, update_project, delete_project,
-    get_kpi, new_project_template,
+    get_kpi, new_project_template, sync_status, hf_backup_now, hf_restore_now,
     STATUS_OPTIONS, STATUS_OPTIONS_EN, PHASE_STATUS, DEFAULT_PHASES,
 )
 
@@ -25,6 +25,10 @@ sidebar_user_info()
 
 lang  = st.session_state.get("lang", "KO")
 is_en = (lang == "EN")
+
+# ── 계정 연동: 본인 프로젝트만, 관리자(admin)는 전체 ─────────────────────────────
+cur_user = st.session_state.get("auth_user")
+is_admin = (current_role() == "admin")
 
 # ── 상수 ──────────────────────────────────────────────────────────────────────
 REGIONS = ["한국", "미국", "호주", "영국", "EU", "일본", "중동", "기타"]
@@ -47,6 +51,40 @@ def _phase_status_opts():
 # ── 헤더 ──────────────────────────────────────────────────────────────────────
 st.caption("🛤️ **BESS EPC Workflow:** ... → **[12: Project Schedule]**")
 st.title("📅 " + ("Project Schedule Manager" if is_en else "프로젝트 공정 관리"))
+
+# ── 계정/권한 안내 ─────────────────────────────────────────────────────────────
+if is_admin:
+    st.caption("🔧 " + ("Admin view — showing **all users'** projects."
+                        if is_en else "관리자 보기 — **전체 사용자**의 프로젝트를 표시합니다."))
+else:
+    st.caption("👤 " + (f"Showing projects owned by **{cur_user}**."
+                        if is_en else f"**{cur_user}** 계정이 등록한 프로젝트만 표시됩니다."))
+
+# ── 관리자 전용: 영속성/동기화 진단 + 수동 백업·복원 ─────────────────────────────
+if is_admin:
+    _ss = sync_status()
+    with st.expander("🔌 " + ("Data Persistence / HF Sync" if is_en else "데이터 영속성 / HF 동기화"),
+                     expanded=not _ss["hf_token_set"]):
+        if _ss["hf_token_set"]:
+            st.success("✅ HF 토큰 설정됨 — 재배포 시에도 데이터가 유지됩니다 (repo: `%s`)." % _ss["hf_repo"])
+        else:
+            st.error(
+                "⚠️ **HF 토큰 미설정** — 재배포(Docker rebuild) 시 등록 데이터가 사라집니다.\n\n"
+                "HF Space → **Settings → Variables and secrets** 에서 **Write 권한 토큰**을 "
+                "`BESS_HF_TOKEN` 시크릿으로 추가한 뒤 Space를 재시작하세요."
+            )
+        st.caption(f"store: `{_ss['store_path']}` | exists: {_ss['store_exists']} | "
+                   f"/data mounted: {_ss['data_dir_mounted']}")
+        bcol1, bcol2 = st.columns(2)
+        if bcol1.button("☁️ " + ("Backup to HF now" if is_en else "지금 HF로 백업")):
+            st.success("백업 완료" if hf_backup_now() else "토큰이 없어 백업할 수 없습니다.")
+        if bcol2.button("⬇️ " + ("Restore from HF" if is_en else "HF에서 복원")):
+            if hf_restore_now():
+                st.success("복원 완료 — 새로고침합니다.")
+                st.rerun()
+            else:
+                st.warning("복원 실패 — 토큰 또는 백업 파일을 확인하세요.")
+
 st.markdown("---")
 
 # ── 탭 구성 ───────────────────────────────────────────────────────────────────
@@ -57,7 +95,7 @@ tab_list, tab_reg, tab_detail, tab_gantt = st.tabs([
     "📊 " + ("Gantt / Charts"   if is_en else "간트 / 차트"),
 ])
 
-projects = load_projects()
+projects = load_projects(owner=cur_user, include_all=is_admin)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -154,7 +192,7 @@ with tab_list:
                 st.warning(f"정말 삭제하시겠습니까? **{del_proj['name']}**")
                 cc1, cc2 = st.columns(2)
                 if cc1.button("✅ 확인 삭제", type="primary"):
-                    delete_project(del_id)
+                    delete_project(del_id, owner=cur_user, include_all=is_admin)
                     st.session_state.pop("ps_confirm_del", None)
                     st.rerun()
                 if cc2.button("❌ 취소"):
@@ -215,7 +253,7 @@ with tab_reg:
                 "start_date": str(s_date), "end_date": str(e_date),
                 "notes": notes.strip(), "phases": init_phases,
             })
-            add_project(proj)
+            add_project(proj, owner=cur_user)
             st.success(f"✅ '{name}' 프로젝트가 등록되었습니다.")
             st.rerun()
 
@@ -312,7 +350,7 @@ with tab_detail:
             save_btn = st.form_submit_button("💾 " + ("Save" if is_en else "저장"), type="primary")
 
         if save_btn:
-            update_project(proj["id"], {
+            update_project(proj["id"], owner=cur_user, include_all=is_admin, updated={
                 "name": new_name, "name_en": new_name_en,
                 "client": new_client, "region": new_region,
                 "capacity_mw": new_mw, "capacity_mwh": new_mwh,

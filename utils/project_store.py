@@ -10,12 +10,16 @@ import os
 import threading as _threading
 from pathlib import Path
 from datetime import datetime
+from filelock import FileLock
 
 _log = logging.getLogger(__name__)
 
 # Prefer /data (HF Spaces persistent storage), fallback to /tmp
 _DEFAULT_STORE = "/data/bess_projects.json" if os.path.isdir("/data") else "/tmp/bess_projects.json"
 _STORE_PATH = Path(os.environ.get("PROJECT_STORE_PATH", _DEFAULT_STORE))
+# Cross-process write lock — multiple logged-in users share one JSON file,
+# so guard read-modify-write so concurrent saves don't clobber each other.
+_STORE_LOCK = Path(str(_STORE_PATH) + ".lock")
 
 # ── HuggingFace Hub sync (persistent project data across container restarts) ──
 _HF_REPO_ID = "openmen-gif/bess-user-data"
@@ -76,6 +80,34 @@ def _hf_upload_projects() -> None:
 if _HF_TOKEN and not _STORE_PATH.exists():
     _hf_download_projects()
 
+
+def sync_status() -> dict:
+    """영속성/동기화 상태 진단 (관리자 화면 표시용).
+    토큰이 없으면 재배포 시 데이터가 사라진다 — 이를 즉시 식별하기 위함."""
+    return {
+        "hf_token_set": bool(_HF_TOKEN),
+        "hf_repo": _HF_REPO_ID,
+        "store_path": str(_STORE_PATH),
+        "store_exists": _STORE_PATH.exists(),
+        "data_dir_mounted": os.path.isdir("/data"),
+    }
+
+
+def hf_backup_now() -> bool:
+    """현재 프로젝트 파일을 HF Hub로 즉시 업로드 (관리자 수동 백업)."""
+    if not _HF_TOKEN:
+        return False
+    _hf_upload_projects()
+    return True
+
+
+def hf_restore_now() -> bool:
+    """HF Hub에서 프로젝트 파일을 즉시 내려받아 로컬을 덮어씀 (관리자 수동 복원)."""
+    if not _HF_TOKEN:
+        return False
+    _hf_download_projects()
+    return _STORE_PATH.exists()
+
 # ── 기본 공정 단계 템플릿 ──────────────────────────────────────────────────────
 DEFAULT_PHASES = [
     {"name": "설계",   "name_en": "Design",       "progress": 0, "status": "대기", "start_date": "", "end_date": ""},
@@ -133,43 +165,68 @@ def _save_raw(data: list) -> None:
     t.join(timeout=30)
 
 
-def load_projects() -> list:
-    """전체 프로젝트 목록 반환."""
-    return _load_raw()
+def _can_access(p: dict, owner: str | None, include_all: bool) -> bool:
+    """소유권 검사: include_all(관리자) → 항상 True, 아니면 owner 일치 시 True.
+    owner 필드가 없는 레거시 프로젝트는 include_all(관리자)에게만 보인다."""
+    if include_all:
+        return True
+    return p.get("owner") == owner
+
+
+def load_projects(owner: str | None = None, include_all: bool = False) -> list:
+    """프로젝트 목록 반환.
+    - include_all=True  : 전체 반환 (관리자).
+    - owner 지정          : 해당 owner 프로젝트만 반환. owner 없는 레거시는 제외.
+    - 둘 다 미지정         : 전체 반환 (하위 호환).
+    """
+    projects = _load_raw()
+    if include_all or owner is None:
+        return projects
+    return [p for p in projects if p.get("owner") == owner]
 
 
 def save_projects(projects: list) -> None:
     """전체 프로젝트 목록 저장."""
-    _save_raw(projects)
+    with FileLock(str(_STORE_LOCK), timeout=10):
+        _save_raw(projects)
 
 
-def add_project(proj: dict) -> None:
-    projects = _load_raw()
-    proj["id"] = datetime.now().strftime("%Y%m%d%H%M%S%f")
-    proj["created_at"] = datetime.now().isoformat()
-    projects.append(proj)
-    _save_raw(projects)
+def add_project(proj: dict, owner: str | None = None) -> None:
+    with FileLock(str(_STORE_LOCK), timeout=10):
+        projects = _load_raw()
+        proj["id"] = datetime.now().strftime("%Y%m%d%H%M%S%f")
+        proj["created_at"] = datetime.now().isoformat()
+        if owner:
+            proj["owner"] = owner
+        projects.append(proj)
+        _save_raw(projects)
 
 
-def update_project(proj_id: str, updated: dict) -> bool:
-    projects = _load_raw()
-    for i, p in enumerate(projects):
-        if p.get("id") == proj_id:
-            projects[i].update(updated)
-            projects[i]["updated_at"] = datetime.now().isoformat()
-            _save_raw(projects)
-            return True
+def update_project(proj_id: str, updated: dict,
+                   owner: str | None = None, include_all: bool = False) -> bool:
+    with FileLock(str(_STORE_LOCK), timeout=10):
+        projects = _load_raw()
+        for i, p in enumerate(projects):
+            if p.get("id") == proj_id:
+                if not _can_access(p, owner, include_all):
+                    return False
+                projects[i].update(updated)
+                projects[i]["updated_at"] = datetime.now().isoformat()
+                _save_raw(projects)
+                return True
     return False
 
 
-def delete_project(proj_id: str) -> bool:
-    projects = _load_raw()
-    before = len(projects)
-    projects = [p for p in projects if p.get("id") != proj_id]
-    if len(projects) < before:
+def delete_project(proj_id: str,
+                   owner: str | None = None, include_all: bool = False) -> bool:
+    with FileLock(str(_STORE_LOCK), timeout=10):
+        projects = _load_raw()
+        target = next((p for p in projects if p.get("id") == proj_id), None)
+        if not target or not _can_access(target, owner, include_all):
+            return False
+        projects = [p for p in projects if p.get("id") != proj_id]
         _save_raw(projects)
         return True
-    return False
 
 
 def get_project(proj_id: str) -> dict | None:
