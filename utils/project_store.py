@@ -66,12 +66,18 @@ def _hf_upload_projects() -> None:
     try:
         from huggingface_hub import HfApi
         api = HfApi(token=_HF_TOKEN)
-        api.create_repo(
-            repo_id=_HF_REPO_ID,
-            repo_type="dataset",
-            private=True,
-            exist_ok=True,
-        )
+        # 데이터셋은 이미 존재하므로 create_repo는 best-effort.
+        # fine-grained 토큰(특정 repo write 전용)은 repo 생성 권한이 없어 403이 날 수 있는데,
+        # 그게 업로드 전체를 막지 않도록 별도로 삼킨다.
+        try:
+            api.create_repo(
+                repo_id=_HF_REPO_ID,
+                repo_type="dataset",
+                private=True,
+                exist_ok=True,
+            )
+        except Exception as ce:
+            _log.info("create_repo skipped (likely existing/no-create-perm): %s", ce)
         api.upload_file(
             path_or_fileobj=str(_STORE_PATH),
             path_in_repo=_HF_PROJ_FILENAME,
