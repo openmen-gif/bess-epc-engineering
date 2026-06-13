@@ -26,9 +26,14 @@ _HF_REPO_ID = "openmen-gif/bess-user-data"
 _HF_PROJ_FILENAME = "bess_projects.json"
 _HF_TOKEN = os.environ.get("BESS_HF_TOKEN", "") or os.environ.get("HF_TOKEN", "")
 
+# 마지막 동기화 결과 (진단 패널 표시용) — 실패 원인을 삼키지 않고 노출한다.
+_LAST_DOWNLOAD_ERR = ""
+_LAST_UPLOAD_ERR = ""
+
 
 def _hf_download_projects() -> None:
     """Download bess_projects.json from HF Hub (best-effort)."""
+    global _LAST_DOWNLOAD_ERR
     if not _HF_TOKEN:
         _log.info("HF_TOKEN not set, skipping project download")
         return
@@ -47,12 +52,15 @@ def _hf_download_projects() -> None:
             import shutil
             shutil.copy2(downloaded, _STORE_PATH)
         _log.info("Downloaded bess_projects.json → %s", _STORE_PATH)
+        _LAST_DOWNLOAD_ERR = ""
     except Exception as e:
+        _LAST_DOWNLOAD_ERR = f"{type(e).__name__}: {e}"
         _log.warning("HF project download failed: %s", e)
 
 
 def _hf_upload_projects() -> None:
     """Upload bess_projects.json to HF Hub."""
+    global _LAST_UPLOAD_ERR
     if not _HF_TOKEN or not _STORE_PATH.exists():
         return
     try:
@@ -71,7 +79,9 @@ def _hf_upload_projects() -> None:
             repo_type="dataset",
         )
         _log.info("Uploaded bess_projects.json to HF Hub successfully")
+        _LAST_UPLOAD_ERR = ""
     except Exception as e:
+        _LAST_UPLOAD_ERR = f"{type(e).__name__}: {e}"
         _log.error("HF project upload failed: %s", e)
 
 
@@ -84,12 +94,22 @@ if _HF_TOKEN and not _STORE_PATH.exists():
 def sync_status() -> dict:
     """영속성/동기화 상태 진단 (관리자 화면 표시용).
     토큰이 없으면 재배포 시 데이터가 사라진다 — 이를 즉시 식별하기 위함."""
+    count = -1
+    try:
+        if _STORE_PATH.exists():
+            with open(_STORE_PATH, "r", encoding="utf-8") as f:
+                count = len(json.load(f))
+    except Exception:
+        count = -1
     return {
         "hf_token_set": bool(_HF_TOKEN),
         "hf_repo": _HF_REPO_ID,
         "store_path": str(_STORE_PATH),
         "store_exists": _STORE_PATH.exists(),
+        "store_count": count,
         "data_dir_mounted": os.path.isdir("/data"),
+        "last_download_err": _LAST_DOWNLOAD_ERR,
+        "last_upload_err": _LAST_UPLOAD_ERR,
     }
 
 
@@ -179,6 +199,10 @@ def load_projects(owner: str | None = None, include_all: bool = False) -> list:
     - owner 지정          : 해당 owner 프로젝트만 반환. owner 없는 레거시는 제외.
     - 둘 다 미지정         : 전체 반환 (하위 호환).
     """
+    # 자가복구: 로컬 파일이 없고 토큰이 있으면 부팅 시 복원이 실패했을 수 있으므로
+    # 첫 로드 때 HF에서 한 번 더 내려받기를 시도한다.
+    if _HF_TOKEN and not _STORE_PATH.exists():
+        _hf_download_projects()
     projects = _load_raw()
     if include_all or owner is None:
         return projects

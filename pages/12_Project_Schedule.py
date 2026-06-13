@@ -74,7 +74,11 @@ if is_admin:
                 "`BESS_HF_TOKEN` 시크릿으로 추가한 뒤 Space를 재시작하세요."
             )
         st.caption(f"store: `{_ss['store_path']}` | exists: {_ss['store_exists']} | "
-                   f"/data mounted: {_ss['data_dir_mounted']}")
+                   f"count: {_ss.get('store_count', '?')} | /data mounted: {_ss['data_dir_mounted']}")
+        if _ss.get("last_download_err"):
+            st.error(f"⬇️ 다운로드 실패 원인: `{_ss['last_download_err']}`")
+        if _ss.get("last_upload_err"):
+            st.error(f"☁️ 업로드 실패 원인: `{_ss['last_upload_err']}`")
         bcol1, bcol2 = st.columns(2)
         if bcol1.button("☁️ " + ("Backup to HF now" if is_en else "지금 HF로 백업")):
             st.success("백업 완료" if hf_backup_now() else "토큰이 없어 백업할 수 없습니다.")
