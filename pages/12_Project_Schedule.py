@@ -65,8 +65,16 @@ if is_admin:
     _ss = sync_status()
     with st.expander("🔌 " + ("Data Persistence / HF Sync" if is_en else "데이터 영속성 / HF 동기화"),
                      expanded=not _ss["hf_token_set"]):
-        if _ss["hf_token_set"]:
-            st.success("✅ HF 토큰 설정됨 — 재배포 시에도 데이터가 유지됩니다 (repo: `%s`)." % _ss["hf_repo"])
+        if _ss["hf_token_set"] and not _ss.get("last_download_err") and not _ss.get("last_upload_err"):
+            st.success("✅ HF 토큰 정상 — 재배포 시에도 데이터가 유지됩니다 (repo: `%s`)." % _ss["hf_repo"])
+        elif _ss["hf_token_set"]:
+            st.warning(
+                "⚠️ **토큰은 설정됐지만 데이터셋 접근에 실패**했습니다 (아래 원인 참조). "
+                "토큰이 만료됐거나 private 데이터셋 `%s` 에 대한 권한이 없습니다.\n\n"
+                "→ https://huggingface.co/settings/tokens 에서 **Write 권한** 토큰을 새로 발급해 "
+                "Space **Settings → Variables and secrets** 의 `BESS_HF_TOKEN` 값을 교체하고 Space를 재시작하세요."
+                % _ss["hf_repo"]
+            )
         else:
             st.error(
                 "⚠️ **HF 토큰 미설정** — 재배포(Docker rebuild) 시 등록 데이터가 사라집니다.\n\n"
