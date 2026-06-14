@@ -7,7 +7,7 @@ import utils.auth_helper as _auth_mod          # for _sidebar_shown reset
 from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.auth_helper import (
-    require_auth, sidebar_user_info, is_authenticated,
+    require_auth, sidebar_user_info, is_authenticated, current_role,
 )
 import utils.market_data as _market_data
 import utils.project_store as _ps
@@ -55,8 +55,10 @@ sidebar_user_info()  # rendered once; pages' calls are deduped
 
 st.sidebar.title(t("hp_sidebar_title"))
 st.sidebar.markdown("---")
-st.sidebar.link_button("⚡ BESS AI Control Center", "https://bess-ai-control.work", use_container_width=True)
-st.sidebar.markdown("---")
+# Control Center 링크는 관리자(admin)에게만 노출
+if is_authenticated() and current_role() == "admin":
+    st.sidebar.link_button("⚡ BESS AI Control Center", "https://bess-ai-control.work", use_container_width=True)
+    st.sidebar.markdown("---")
 st.sidebar.markdown(t("hp_sidebar_ver"))
 st.sidebar.info(t("hp_sidebar_hint"))
 
