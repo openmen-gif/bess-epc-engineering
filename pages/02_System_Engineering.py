@@ -1,6 +1,6 @@
 import streamlit as st
 try:
-    st.set_page_config(page_title="BESS EPC Platform", layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(page_title="BESS EPC Platform", layout="wide", initial_sidebar_state="auto")
 except Exception:
     pass
 

@@ -239,3 +239,42 @@ else:
     nav = st.navigation([_home_pg, _p_market, _login_pg])
 
 nav.run()
+
+# ── 모바일 UX: 메뉴 선택 시 사이드바 자동 닫힘 ────────────────────────────────
+# st.navigation은 모바일 오버레이 사이드바를 페이지 이동 후에도 열어둔다(실측).
+# 지속형 iframe + MutationObserver로 내비 링크에 자동 닫힘 핸들러를 상시 바인딩.
+import streamlit.components.v1 as _components
+
+_components.html(
+    """
+    <script>
+    // 부모 문서에 상주 스크립트 주입 — 이 iframe은 리런마다 소멸하므로
+    // 타이머·리스너를 부모 렘(realm)에 두어야 페이지 전환 후에도 동작한다.
+    (function () {
+      const doc = window.parent.document;
+      if (doc.getElementById("bess-nav-autoclose")) return;
+      const s = doc.createElement("script");
+      s.id = "bess-nav-autoclose";
+      s.textContent = `(function () {
+        if (window.__bessNavAC) return; window.__bessNavAC = 1;
+        const close = () => {
+          if (window.innerWidth > 768) return;
+          const sb = document.querySelector('[data-testid="stSidebar"]');
+          if (!sb || sb.getBoundingClientRect().width < 50) return;
+          const btn = document.querySelector('[data-testid="stSidebarCollapseButton"] button')
+                   || document.querySelector('[data-testid="stSidebarCollapseButton"]');
+          if (btn) btn.click();
+        };
+        document.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!t || !t.closest) return;
+          if (!t.closest('[data-testid="stSidebarNavLink"]')) return;
+          [300, 900, 1800, 3000].forEach((d) => setTimeout(close, d));
+        }, true);
+      })();`;
+      doc.body.appendChild(s);
+    })();
+    </script>
+    """,
+    height=0,
+)

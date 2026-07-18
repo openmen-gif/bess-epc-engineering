@@ -33,8 +33,46 @@ def apply_custom_css():
             font-family: var(--bess-font);
         }
         html, body, [class*="css"] { font-family: var(--bess-font); }
-        /* Streamlit 헤더 완전 숨김 — 콘텐츠 가림 방지 */
-        header[data-testid="stHeader"] { display: none !important; }
+        /* Streamlit 헤더 — 공간·배경은 제거하되 '사이드바 열기' 버튼은 보존.
+           (display:none으로 전체 숨김하면 사이드바 접힘 상태에서 메뉴를
+            다시 열 방법이 없어짐 — 특히 모바일은 기본 접힘이라 내비 불능) */
+        header[data-testid="stHeader"] {
+            display: block !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            pointer-events: none !important;
+            overflow: visible !important;
+        }
+        /* 툴바 자체는 유지(사이드바 열기 버튼이 이 안에 있음) — 잡동사니만 숨김 */
+        header[data-testid="stHeader"] [data-testid="stToolbar"] {
+            display: flex !important;
+            background: transparent !important;
+            pointer-events: none !important;
+        }
+        [data-testid="stToolbarActions"],
+        [data-testid="stStatusWidget"],
+        [data-testid="stAppDeployButton"],
+        [data-testid="stMainMenu"] {
+            display: none !important;
+        }
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="stSidebarCollapsedControl"] {
+            display: flex !important;
+            pointer-events: auto !important;
+            position: fixed !important;
+            top: 8px !important;
+            left: 8px !important;
+            z-index: 9990 !important;
+            background: rgba(22, 27, 34, 0.88) !important;
+            border: 1px solid var(--bess-border) !important;
+            border-radius: 8px !important;
+        }
+        [data-testid="stExpandSidebarButton"] svg,
+        [data-testid="stSidebarCollapsedControl"] svg {
+            color: var(--bess-accent) !important;
+        }
         [data-testid="stDecoration"] { display: none !important; }
         /* stMainBlockContainer inline style 강제 오버라이드 (headerHeight 패딩 제거) */
         [data-testid="stMainBlockContainer"] { padding-top: 1rem !important; }
@@ -249,7 +287,7 @@ def apply_custom_css():
             [data-testid="stMetricDelta"] {
                 font-size: 0.7rem !important;
             }
-            /* Columns → 세로 스택 */
+            /* Columns → 세로 스택 (일반 2~6열 레이아웃) */
             [data-testid="stHorizontalBlock"] {
                 flex-wrap: wrap !important;
                 gap: 0.3rem !important;
@@ -257,6 +295,23 @@ def apply_custom_css():
             [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
                 min-width: 100% !important;
                 flex: 1 1 100% !important;
+            }
+            /* 예외: 7열 이상 버튼 그리드(09 덕트·10 발화점)는 세로 분해 대신
+               가로 유지 + 가로 스크롤 — 스택하면 40여 개 버튼이 세로로 폭주함 */
+            [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(7)) {
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                gap: 0.15rem !important;
+                scrollbar-width: thin !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(7)) > [data-testid="stColumn"] {
+                min-width: 2.4rem !important;
+                flex: 0 0 auto !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(7)) .stButton > button {
+                padding: 4px 6px !important;
+                font-size: 0.75rem !important;
             }
             /* 탭 — 가로 스크롤 허용 + 글자 잘림 방지 (강한 우선순위) */
             .stApp .stTabs [data-baseweb="tab-list"],
