@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
+from utils.theme import PALETTE
 from utils.sim_physics import (
     heat2d_transient, stratification_profile,
     build_animation, fmt_time,
@@ -31,6 +32,7 @@ SNAP_TIMES_S = list(range(0, 1801, 60))   # 0~30분, 60초 균일 31프레임(�
 from utils.config import IS_API_MODE, API_BASE_URL
 
 
+@st.cache_data(show_spinner=False)
 def _solve_local(nx, ny, dx, dy, ambient, heat_sources, hvac_kw, area_m2,
                  sim_vent_cells, bat_kw=50.0, con_h=2.59):
     """Local reduced-order FDM solver (physical time base).
@@ -192,9 +194,10 @@ def run_container_thermal_module():
             value=min(float(max(st.session_state.get('capacity_mw', 50.0), 1.0) * 50.0), 5000.0),
             step=10.0,
         )
+        # 기본값 60 kW/MW — 발열 기본(50 kW/MW)을 상회하도록 (30이면 기본 조합이 항상 과열 판정)
         hvac_kw = st.number_input(
             t("p9_hvac_cap"), min_value=1.0, max_value=3000.0,
-            value=min(float(max(st.session_state.get('capacity_mw', 50.0), 1.0) * 30.0), 3000.0),
+            value=min(float(max(st.session_state.get('capacity_mw', 50.0), 1.0) * 60.0), 3000.0),
             step=5.0,
         )
     with c2:
@@ -380,10 +383,10 @@ def run_container_thermal_module():
         T_3d, z_vals = build_3d_field(T_floor, amb, con_h)
         NZ = len(z_vals)
 
-        _ax = dict(backgroundcolor="rgba(0,0,0,0)", gridcolor="#30363d")
+        _ax = dict(backgroundcolor="rgba(0,0,0,0)", gridcolor=PALETTE["border"])
         dark_layout = dict(
             paper_bgcolor="rgba(0,0,0,0)",
-            font_color="#c9d1d9",
+            font_color=PALETTE["text2"],
             height=580,
             legend=dict(bgcolor="rgba(0,0,0,0)"),
         )
@@ -515,11 +518,15 @@ def run_container_thermal_module():
                 camera=dict(eye=dict(x=1.8, y=-1.6, z=1.5)),
             )
 
-            @st.fragment(run_every=0.4)
+            # 정지 상태에서는 run_every=None — 유휴 시 0.4초 무한 재렌더 루프 차단.
+            # 재생 상태 전환은 st.rerun(scope="app")으로 전체 rerun하여 타이머를 재장전한다.
+            _sl_every = 0.4 if st.session_state.get("sl_playing", False) else None
+
+            @st.fragment(run_every=_sl_every)
             def _slice_anim():
                 zi = int(st.session_state.get("sl_frame", 0)) % n_z
                 playing = st.session_state.get("sl_playing", False)
-                
+
                 _t2_sc1, _t2_sc2 = st.columns([6, 2])
                 with _t2_sc1:
                     _step = st.slider(
@@ -532,8 +539,10 @@ def run_container_thermal_module():
                     if st.button("▶ 시작" if not is_en else "▶ Start", key="sl_play_btn", type="primary", use_container_width=True):
                         st.session_state["sl_playing"] = True
                         st.session_state["sl_frame"] = 0
+                        st.rerun(scope="app")
                     if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="sl_pause_btn", type="secondary", use_container_width=True):
                         st.session_state["sl_playing"] = False
+                        st.rerun(scope="app")
                 if _step != zi and not playing:
                     zi = _step
                     st.session_state["sl_frame"] = zi
@@ -570,6 +579,7 @@ def run_container_thermal_module():
                         st.session_state["sl_frame"] = zi + 1
                     else:
                         st.session_state["sl_playing"] = False
+                        st.rerun(scope="app")   # 재생 종료 — 타이머 해제
 
             _slice_anim()
             st.caption(
@@ -598,7 +608,13 @@ def run_container_thermal_module():
             step_y = con_w * 0.07
 
             # Pre-compute trajectories once per simulation result
-            traj_key = f"af_traj_{id(T_floor)}"
+            # 캐시 키: id() 대신 결과 시그니처 — 재실행마다 세션에 쌓이는 누수·오매칭 방지
+            _traj_sig = (round(float(T_floor.sum()), 3), tuple(sim_exhaust), tuple(sim_intake),
+                         round(float(con_l), 3), round(float(con_w), 3))
+            traj_key = "af_traj"
+            if st.session_state.get("af_traj_sig") != _traj_sig:
+                st.session_state.pop(traj_key, None)
+                st.session_state["af_traj_sig"] = _traj_sig
             if traj_key not in st.session_state:
                 traj_x_b = [p0x.copy()]
                 traj_y_b = [p0y.copy()]
@@ -621,7 +637,9 @@ def run_container_thermal_module():
             traj_x, traj_y = st.session_state[traj_key]
 
             # Speed stored in session state; fragment reads it on each run
-            _af_iv = st.session_state.get("af_interval", 0.3)
+            # 정지 상태에서는 run_every=None — 유휴 시 0.3초 무한 재렌더 루프 차단
+            _af_iv = (st.session_state.get("af_interval", 0.3)
+                      if st.session_state.get("af_playing", False) else None)
 
             _scene_c = dict(
                 **_base_scene,
@@ -646,16 +664,21 @@ def run_container_thermal_module():
                         value=st.session_state.get("af_interval", 0.3),
                         key="af_speed_sel",
                     )
+                    _iv_changed = st.session_state.get("af_interval") != _new_iv
                     st.session_state["af_interval"] = _new_iv
+                    if _iv_changed and playing:
+                        st.rerun(scope="app")   # 재생 중 속도 변경 — 새 간격으로 타이머 재장전
                 with _af_c2:
                     if st.button("▶ 시작" if not is_en else "▶ Start", key="af_play_btn",
                                  type="primary", use_container_width=True):
                         st.session_state["af_playing"] = True
                         st.session_state["af_frame"] = 0
+                        st.rerun(scope="app")   # 타이머 장전 (run_every 재평가)
                 with _af_c3:
                     if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="af_pause_btn",
                                  type="secondary", use_container_width=True):
                         st.session_state["af_playing"] = False
+                        st.rerun(scope="app")   # 타이머 해제
 
                 traces = []
                 # Tail traces (fading)

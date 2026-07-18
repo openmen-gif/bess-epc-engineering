@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from utils.lang_helper import t
 from utils.auth_helper import require_auth
 from utils.css_loader import apply_custom_css
+from utils import theme  # bess_dark 템플릿 등록 — px 차트 다크·브랜드 colorway 자동 적용
 import utils.market_data as md
 from utils.data_fetchers import get_live_us_capacity_or_fallback
 

@@ -9,6 +9,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
+from utils import theme  # bess_dark 템플릿 등록 — px 차트 다크·브랜드 colorway 자동 적용
 from utils.lang_helper import t
 from utils.standards_helper import get_standards
 from utils.auth_helper import require_auth, sidebar_user_info

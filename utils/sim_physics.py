@@ -185,7 +185,7 @@ def smoke_layer_series(Q_MW, u_fan, A_floor, H, A_fan=3.0,
     L_f = flame_height_m(Q_kW)
     Q_ext = u_fan * A_fan                          # extraction volumetric flow m³/s
     times = np.linspace(0.0, t_end, int(n))
-    z_min = 1.0
+    z_min = 0.3   # 표시 하한 — 피난 한계(2.0 m)보다 낮게 두어 위험 구간 값을 그대로 표시
 
     V = 0.0
     z_i = H

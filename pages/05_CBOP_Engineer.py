@@ -100,7 +100,7 @@ def run_cbop_engineer_module():
         with hc1:
             bat_power = max(st.session_state.get('capacity_mw', 50.0), 1.0)
             bat_heat  = st.number_input(t("p5_hvac_bat_heat"), min_value=0.0,
-                                        value=float(bat_power * 0.05 * 1000),  # 5% heat loss → kW
+                                        value=float(bat_power * 0.03 * 1000),  # 3% 발열 (0.5C 스크리닝 대표값)
                                         step=10.0)
             pcs_heat  = st.number_input(t("p5_hvac_pcs_heat"), min_value=0.0,
                                         value=float(bat_power * 0.02 * 1000),  # 2% PCS heat
@@ -117,7 +117,9 @@ def run_cbop_engineer_module():
             import math
             dt = max(amb_temp - indoor_t, 0)
             base_load  = bat_heat + pcs_heat
-            total_load = base_load * (1 + safety / 100.0) + dt * 0.5  # simplified external gain
+            # 외피 취득열 = U·A·ΔT — 40ft 컨테이너 기준 U≈2.5 W/m²K × A≈80 m² = 0.2 kW/K
+            ENV_UA_KW_PER_K = 0.2
+            total_load = base_load * (1 + safety / 100.0) + dt * ENV_UA_KW_PER_K
             hvac_units = math.ceil(total_load / unit_kw)
             hvac_power = total_load / cop
 
@@ -140,9 +142,12 @@ def run_cbop_engineer_module():
         # Design concentration by agent (%, as fraction of volume)
         agent_conc  = {"FM-200 (HFC-227ea)": 7.9, "Novec 1230 (FK-5-1-12)": 5.9,
                        "CO₂ (고농도)": 34.0, "질소 (N₂)": 40.6}
-        # Agent density (kg/m³ at design concentration)
-        agent_dens  = {"FM-200 (HFC-227ea)": 7.28, "Novec 1230 (FK-5-1-12)": 8.35,
-                       "CO₂ (고농도)": 1.88, "질소 (N₂)": 1.16}
+        # 증기 밀도 1/s @20°C (kg/m³) — NFPA 2001 비체적 s: FM-200 s=0.1269+0.0005151·t,
+        # Novec(FK-5-1-12) s=0.0664+0.0002741·t → 20°C에서 각각 7.29 / 13.91 kg/m³
+        agent_dens  = {"FM-200 (HFC-227ea)": 7.29, "Novec 1230 (FK-5-1-12)": 13.91,
+                       "CO₂ (고농도)": 1.84, "질소 (N₂)": 1.165}
+        # 불활성·CO₂는 고농도라 선형식 부적합 → NFPA 2001 로그식 적용 대상
+        inert_agents = {"CO₂ (고농도)", "질소 (N₂)"}
 
         with fc1:
             room_opts = ["배터리셀실" if st.session_state.get('lang','KO')=='KO' else "Battery Cell Room",
@@ -156,10 +161,13 @@ def run_cbop_engineer_module():
                                     value=agent_conc.get(agent, 7.9), step=0.1)
 
         with fc2:
-            # Simplified agent mass = Volume × (C/(100-C)) × agent_density
-            c_frac  = conc / (100.0 - conc)
-            density = agent_dens.get(agent, 7.28)
-            qty_kg  = vol * c_frac * density
+            # NFPA 2001 소요량 — 할로카본(저농도): W = V·(C/(100−C))·(1/s)
+            #                    불활성(고농도): V_agent = V·ln(100/(100−C)), W = V_agent·ρ
+            density = agent_dens.get(agent, 7.29)
+            if agent in inert_agents:
+                qty_kg = vol * math.log(100.0 / (100.0 - conc)) * density
+            else:
+                qty_kg = vol * (conc / (100.0 - conc)) * density
             cyls    = math.ceil(qty_kg / 50.0)
 
             st.metric(t("p5_fire_qty"), f"{qty_kg:.1f} kg")

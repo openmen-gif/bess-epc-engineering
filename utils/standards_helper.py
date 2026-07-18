@@ -173,14 +173,14 @@ _STD: dict[tuple, str] = {
         "**United States (US) C-BOP Standards:**\n"
         "* **IBC (International Building Code):** Equipment pad structural design requirements\n"
         "* **ASCE 7:** Minimum Design Loads (Wind, Seismic, Snow)\n"
-        "* **NFPA 855:** Separation distances (10 ft from lot lines, 10 ft between units unless UL 9540A tested)\n"
+        "* **NFPA 855:** Separation distances (10 ft from lot lines/exposures, 3 ft between units — adjustable via UL 9540A large-scale fire testing)\n"
         "* **EPA / Local Ordinances:** Stormwater Pollution Prevention Plan (SWPPP)"
     ),
     ("US", "cbop", "KO"): (
         "**United States (US) C-BOP 적용 표준:**\n"
         "* **IBC (국제건축기준):** 기기 패드 구조 설계 요건\n"
         "* **ASCE 7:** 최소 설계 하중 (풍하중, 지진, 적설)\n"
-        "* **NFPA 855:** 이격 거리 (부지 경계선 10ft, 유닛 간 10ft — UL 9540A 미시험 시)\n"
+        "* **NFPA 855:** 이격 거리 (부지 경계선·노출물 10ft(3m), 유닛 간 3ft(0.9m) — UL 9540A 대규모 화재시험으로 조정 가능)\n"
         "* **EPA / 지방 조례:** 우수 오염 방지 계획 (SWPPP)"
     ),
     ("JP", "cbop", "EN"): (

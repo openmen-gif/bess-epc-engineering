@@ -39,9 +39,23 @@ _auth_mod._sidebar_shown = False
 if "lang" not in st.session_state:
     st.session_state.lang = "KO"
 
-st.sidebar.image(
-    "https://img.icons8.com/color/144/000000/artificial-intelligence.png",
-    width=100,
+# 로고 — 외부 CDN(icons8) 의존 제거, 자체 인라인 SVG (토큰 색상)
+st.sidebar.markdown(
+    """
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 2px 10px;">
+      <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="10" width="40" height="28" rx="6" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+        <path d="M25 15 L18 26 h5 l-2 8 8 -12 h-5 l2 -7 z" fill="#e3b341" stroke="#e3b341" stroke-linejoin="round"/>
+        <rect x="10" y="16" width="4" height="16" rx="1.5" fill="#3fb950"/>
+        <rect x="34" y="16" width="4" height="16" rx="1.5" fill="#3fb950"/>
+      </svg>
+      <div style="line-height:1.15;">
+        <div style="font-weight:800;font-size:1.05rem;color:#e6edf3;">BESS EPC</div>
+        <div style="font-size:0.72rem;color:#8b949e;letter-spacing:0.08em;">ENGINEERING PLATFORM</div>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 lang_choice = st.sidebar.radio(
     t("lang_label"),

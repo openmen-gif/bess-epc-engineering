@@ -4,12 +4,35 @@ def apply_custom_css():
     st.markdown(
         """
         <style>
+        /* Pretendard — 한국어 최적화 가변 폰트 (@import는 최상단 필수) */
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+        /* ── 디자인 토큰 (정본: utils/theme.py PALETTE와 1:1 동기) ── */
+        :root {
+            --bess-bg:      #0d1117;
+            --bess-bg2:     #161b22;
+            --bess-bg3:     #21262d;
+            --bess-border:  #30363d;
+            --bess-text:    #e6edf3;
+            --bess-text2:   #c9d1d9;
+            --bess-muted:   #8b949e;
+            --bess-accent:  #58a6ff;
+            --bess-accent2: #79c0ff;
+            --bess-ok:      #3fb950;
+            --bess-warn:    #e3b341;
+            --bess-danger:  #f85149;
+            --bess-radius:  10px;
+            --bess-font:    'Pretendard Variable', Pretendard, 'Segoe UI', Tahoma, sans-serif;
+        }
+
         /* Overall App Background and Default Text Size */
         .stApp {
-            background-color: #0d1117;
-            color: #e6edf3;
+            background-color: var(--bess-bg);
+            color: var(--bess-text);
             font-size: 16px;
+            font-family: var(--bess-font);
         }
+        html, body, [class*="css"] { font-family: var(--bess-font); }
         /* Streamlit 헤더 완전 숨김 — 콘텐츠 가림 방지 */
         header[data-testid="stHeader"] { display: none !important; }
         [data-testid="stDecoration"] { display: none !important; }
@@ -24,43 +47,80 @@ def apply_custom_css():
         
         /* Sidebar Styling */
         [data-testid="stSidebar"] {
-            background-color: #161b22;
-            border-right: 1px solid #30363d;
+            background-color: var(--bess-bg2);
+            border-right: 1px solid var(--bess-border);
         }
-        
+
         /* Sidebar Nav Links Styling */
         [data-testid="stSidebarNav"] span {
-            color: #c9d1d9;
+            color: var(--bess-text2);
             font-weight: 500;
             font-size: 16px !important;
         }
-        
+        [data-testid="stSidebarNav"] a {
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+        [data-testid="stSidebarNav"] a:hover {
+            background: rgba(88, 166, 255, 0.08);
+        }
+
         /* Top Header Area — hidden via display:none above */
 
         /* Buttons Styling */
         .stButton>button {
-            background-color: #238636;
+            background: linear-gradient(180deg, #2ea043 0%, #238636 100%);
             color: #ffffff;
             border: 1px solid rgba(240, 246, 252, 0.1);
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 16px !important;
             transition: all 0.2s ease-in-out;
         }
         .stButton>button:hover {
-            background-color: #2ea043;
-            border-color: rgba(240, 246, 252, 0.1);
+            background: linear-gradient(180deg, #34b551 0%, #2ea043 100%);
+            border-color: rgba(240, 246, 252, 0.2);
             color: white;
-            box-shadow: 0 0 10px rgba(46, 160, 67, 0.4);
+            box-shadow: 0 4px 14px rgba(46, 160, 67, 0.35);
+            transform: translateY(-1px);
         }
-        
+
         /* Expander/Accordion Styling */
         .streamlit-expanderHeader {
-            background-color: #21262d;
-            border-radius: 6px;
-            color: #e6edf3;
+            background-color: var(--bess-bg3);
+            border-radius: 8px;
+            color: var(--bess-text);
             font-size: 18px !important;
         }
+        [data-testid="stExpander"] {
+            border: 1px solid var(--bess-border) !important;
+            border-radius: var(--bess-radius) !important;
+            background: var(--bess-bg2);
+        }
+
+        /* 탭 — 모던 언더라인 스타일 */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 4px;
+            border-bottom: 1px solid var(--bess-border);
+        }
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 8px 8px 0 0;
+            color: var(--bess-muted);
+        }
+        .stTabs [aria-selected="true"] {
+            color: var(--bess-accent) !important;
+        }
+        .stTabs [data-baseweb="tab-highlight"] {
+            background-color: var(--bess-accent);
+        }
+
+        /* 스크롤바 — 얇은 다크 */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bess-bg); }
+        ::-webkit-scrollbar-thumb {
+            background: var(--bess-border); border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: #3e4750; }
         
         /* Checkbox Styling - ensure long labels wrap within column */
         .stCheckbox label {
@@ -88,22 +148,39 @@ def apply_custom_css():
         /* Markdown / Text Overrides */
         h1 {
             font-size: 2.5rem !important;
-            color: #58a6ff !important;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: 700;
+            font-family: var(--bess-font);
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--bess-accent) 0%, var(--bess-accent2) 65%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
         }
-        h2 { font-size: 2.0rem !important; color: #58a6ff !important; font-weight: 700; }
-        h3 { font-size: 1.6rem !important; color: #58a6ff !important; font-weight: 700; }
-        h4 { font-size: 1.3rem !important; color: #58a6ff !important; font-weight: 600; }
-        
-        /* Dataframes & Metrics */
+        h2 { font-size: 2.0rem !important; color: var(--bess-accent) !important; font-weight: 700; letter-spacing: -0.01em; }
+        h3 { font-size: 1.6rem !important; color: var(--bess-accent) !important; font-weight: 700; }
+        h4 { font-size: 1.3rem !important; color: var(--bess-accent) !important; font-weight: 600; }
+
+        /* Dataframes & Metrics — 카드형 메트릭 */
+        [data-testid="stMetric"] {
+            background: var(--bess-bg2);
+            border: 1px solid var(--bess-border);
+            border-radius: var(--bess-radius);
+            padding: 12px 16px;
+            transition: border-color 0.15s ease, transform 0.15s ease;
+        }
+        [data-testid="stMetric"]:hover {
+            border-color: var(--bess-accent);
+            transform: translateY(-1px);
+        }
         [data-testid="stMetricValue"] {
-            color: #3fb950;
-            font-size: 2.2rem !important;
+            color: var(--bess-ok);
+            font-size: 2.0rem !important;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
         }
         [data-testid="stMetricLabel"] {
-            color: #8b949e;
-            font-size: 1rem !important;
+            color: var(--bess-muted);
+            font-size: 0.95rem !important;
         }
         
         /* Info/Success/Warning/Error boxes text size */
@@ -362,9 +439,11 @@ def apply_custom_css():
                 text-shadow: none !important;
             }
             
-            /* Make headings bold and pure black */
+            /* Make headings bold and pure black (그라디언트 텍스트 해제 포함) */
             h1, h2, h3, h4 {
                 color: #000000 !important;
+                background: none !important;
+                -webkit-text-fill-color: #000000 !important;
                 page-break-after: avoid;
                 margin-top: 10px !important;
                 margin-bottom: 5px !important;

@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from utils.lang_helper import t
+from utils.theme import PALETTE, COLORWAY  # bess_dark 템플릿 등록 + 브랜드 팔레트
 
 def _chk(session_key: str) -> str:
     return "✅" if st.session_state.get(session_key) else "⏳"
@@ -128,12 +129,12 @@ def render_phase_avg_chart(_kpi):
     fig = px.bar(
         data, x=x_col, y=y_col, color=x_col,
         title=t("hp_chart_title"),
-        color_discrete_sequence=px.colors.sequential.Teal,
+        color_discrete_sequence=COLORWAY,  # Teal 이탈 팔레트 → 앱 브랜드 colorway로 통일
     )
     fig.update_layout(
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#c9d1d9"),
+        font=dict(color=PALETTE["text2"]),
         showlegend=False,
     )
     st.plotly_chart(fig, use_container_width=True)

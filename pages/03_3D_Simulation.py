@@ -8,6 +8,7 @@ import numpy as np
 import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
 from utils.auth_helper import require_auth, sidebar_user_info
+from utils.theme import AX3D, DARK_LAYOUT
 from utils.sim_physics import (
     heat2d_transient, bearing_pressure, seismic_pulse,
     smoke_layer_series, plume_particles,
@@ -385,6 +386,24 @@ def _run_smoke(q_mw, u_fan):
                               A_fan=FDS_AFAN, t_end=FDS_TEND, n=49)
 
 
+@st.cache_data(show_spinner=False)
+def _plume_frame_arrays(q_mw, u_fan):
+    """플룸 몬테카를로 점 좌표를 프레임별로 사전 계산·캐시 — rerun마다 ~1.9만 점 재샘플 방지."""
+    res = _run_smoke(q_mw, u_fan)
+    idx = list(range(0, len(res["times"]), 2))
+    fx, fy = FDS_L / 2.0, FDS_W / 2.0
+    frames = []
+    for i in idx:
+        z_i = float(res["z_layer"][i])
+        T_l = float(res["T_layer_C"][i])
+        px, py, pz, pt = plume_particles(
+            z_i, T_l, q_mw, FDS_H, dom_x=FDS_L, dom_y=FDS_W,
+            fire_x=fx, fire_y=fy, u_fan=u_fan, frame_seed=i,
+        )
+        frames.append((i, z_i, px, py, pz, pt))
+    return idx, frames
+
+
 # ── Main Page ─────────────────────────────────────────────────
 apply_custom_css()
 require_auth("03")
@@ -397,8 +416,9 @@ st.markdown("---")
 
 role = st.selectbox(T["select"], T["roles"])
 
-_ax3 = dict(color="#c9d1d9", gridcolor="#30363d", backgroundcolor="rgba(0,0,0,0)")
-_dark = dict(paper_bgcolor="rgba(0,0,0,0)", font=dict(color="#c9d1d9"))
+# 디자인 토큰 정본(utils/theme.py) 참조 — 페이지 로컬 하드코딩 제거
+_ax3 = AX3D
+_dark = DARK_LAYOUT
 
 # ── CFD ───────────────────────────────────────────────────────
 if role == T["roles"][0]:
@@ -436,7 +456,7 @@ if role == T["roles"][0]:
         dxc, dyc = CFD_L / CFD_NX, CFD_W / CFD_NY
         x_vals = (np.arange(CFD_NX) + 0.5) * dxc
         y_vals = (np.arange(CFD_NY) + 0.5) * dyc
-        cmax = max(peak_T, THERMAL_LIMIT_C + 2.0)
+        cmax = max(peak_T, THERMAL_LIMIT_C + 2.0, float(ambient_temp) + 1.0)  # cmin==cmax 퇴화 방지
         z_top = cmax + 4.0
 
         def _surf(Z):
@@ -513,10 +533,11 @@ elif role == T["roles"][1]:
         live_load  = st.number_input(T["str_live"],    value=3.0,  step=0.5)
         wind_load  = st.number_input(T["str_wind"],    value=12.0, step=1.0)
         seismic_g  = st.slider(T["str_seismic"], min_value=0.05, max_value=0.4, value=0.2, step=0.05)
-        pad_w      = st.number_input(T["str_padw"],    value=6.05, step=0.1)
-        pad_l      = st.number_input(T["str_padl"],    value=3.44, step=0.1)
+        pad_w      = st.number_input(T["str_padw"],    value=6.05, step=0.1, min_value=0.5)
+        pad_l      = st.number_input(T["str_padl"],    value=3.44, step=0.1, min_value=0.5)
 
-        seismic_load = dead_load * seismic_g * 9.81
+        # 등가정적 지진 횡하중 V = Cs·W — dead_load는 이미 중량(kN/m²)이므로 g 재곱셈 금지
+        seismic_load = dead_load * seismic_g
         total_combo  = 1.2 * dead_load + 1.6 * live_load + 0.5 * wind_load
         dcr = total_combo / STR_ALLOW
 
@@ -673,17 +694,12 @@ else:
         st.subheader(T["fds_viewer"])
         st.caption(T["fds_guide"])
 
-        # subsample frames (every 2nd step → ~24 frames)
-        idx = list(range(0, len(res["times"]), 2))
+        # subsample frames (every 2nd step → ~24 frames) — 좌표는 캐시에서
+        idx, plume_frames = _plume_frame_arrays(q_mw, float(vent_speed))
         fx, fy = FDS_L / 2.0, FDS_W / 2.0
 
-        def _frame_traces(i):
-            z_i = float(res["z_layer"][i])
-            T_l = float(res["T_layer_C"][i])
-            px, py, pz, pt = plume_particles(
-                z_i, T_l, q_mw, FDS_H, dom_x=FDS_L, dom_y=FDS_W,
-                fire_x=fx, fire_y=fy, u_fan=vent_speed, frame_seed=i,
-            )
+        def _frame_traces(frame_data):
+            i, z_i, px, py, pz, pt = frame_data
             smoke = go.Scatter3d(
                 x=px, y=py, z=pz, mode="markers",
                 marker=dict(size=3, color=pt, colorscale="Hot_r", cmin=25, cmax=450,
@@ -721,7 +737,7 @@ else:
             hovertemplate=f"Exhaust fan: {vent_speed:.1f} m/s<extra></extra>",
         )
 
-        frame_list = [_frame_traces(i) for i in idx]
+        frame_list = [_frame_traces(fd) for fd in plume_frames]
         names  = [f"p{i}" for i in idx]
         labels = [fmt_time(res["times"][i]) for i in idx]
 
@@ -753,53 +769,61 @@ else:
 
 # ── Phase Checklist ───────────────────────────────────────────
 st.markdown("---")
-st.header("📋 Phase Checklists (I/P/O)")
 
-tab_i, tab_p, tab_o = st.tabs([T["tab_in"], T["tab_proc"], T["tab_out"]])
-with tab_i:
-    st.markdown(T["inp_title"])
-    st.checkbox(T["inp_cad"])
-    if T["roles"][0] in role:
-        st.checkbox(T["inp_heat"])
-        st.checkbox(T["inp_weather"])
-    else:
-        st.checkbox(T["inp_soil"])
 
-with tab_p:
-    st.markdown(T["proc_title"])
-    st.checkbox(T["proc_mesh"])
-    st.checkbox(T["proc_bc"])
-    st.checkbox(T["proc_run"])
+@st.fragment
+def _phase_checklist():
+    """체크박스·버튼 상호작용을 fragment로 격리 — 상단 3D 차트 재직렬화 방지."""
+    st.header("📋 Phase Checklists (I/P/O)")
 
-with tab_o:
-    st.markdown(T["out_title"])
-    st.checkbox(T["out_plots"])
-    st.checkbox(T["out_report"])
-    st.markdown("#### Document Generation Gateway")
-    if st.button(T["out_export"], key="sim_rep"):
-        import time as _time
-        with st.spinner("Compiling..."):
-            _time.sleep(1.2)
-            report = (
-                "BESS 3D Analysis & Simulation Verification Report\n"
-                "===================================================\n"
-                f"Discipline: {role}\nStatus: VERIFIED (PASS)\n\n"
-                "Method: Reduced-order analytical models (energy-balance FDM thermal,\n"
-                "rigid-pad bearing pressure, NFPA 92 plume/smoke-layer correlations).\n"
-                "NOT a substitute for OpenFOAM / ANSYS / FDS detailed analysis.\n\n"
-                "Key Findings:\n"
-                "- Thermal: peak/mean enclosure air temps evaluated vs 50 degC limit.\n"
-                "- Structural: bearing pressure vs 45 kN/m2 allowable, seismic rocking eccentricity vs kern.\n"
-                "- Fire/Smoke: smoke layer equilibrium height vs 2.0 m tenability objective.\n"
+    tab_i, tab_p, tab_o = st.tabs([T["tab_in"], T["tab_proc"], T["tab_out"]])
+    with tab_i:
+        st.markdown(T["inp_title"])
+        st.checkbox(T["inp_cad"])
+        if T["roles"][0] in role:
+            st.checkbox(T["inp_heat"])
+            st.checkbox(T["inp_weather"])
+        else:
+            st.checkbox(T["inp_soil"])
+
+    with tab_p:
+        st.markdown(T["proc_title"])
+        st.checkbox(T["proc_mesh"])
+        st.checkbox(T["proc_bc"])
+        st.checkbox(T["proc_run"])
+
+    with tab_o:
+        st.markdown(T["out_title"])
+        st.checkbox(T["out_plots"])
+        st.checkbox(T["out_report"])
+        st.markdown("#### Document Generation Gateway")
+        if st.button(T["out_export"], key="sim_rep"):
+            import time as _time
+            with st.spinner("Compiling..."):
+                _time.sleep(1.2)
+                report = (
+                    "BESS 3D Analysis & Simulation Verification Report\n"
+                    "===================================================\n"
+                    f"Discipline: {role}\nStatus: VERIFIED (PASS)\n\n"
+                    "Method: Reduced-order analytical models (energy-balance FDM thermal,\n"
+                    "rigid-pad bearing pressure, NFPA 92 plume/smoke-layer correlations).\n"
+                    "NOT a substitute for OpenFOAM / ANSYS / FDS detailed analysis.\n\n"
+                    "Key Findings:\n"
+                    "- Thermal: peak/mean enclosure air temps evaluated vs 50 degC limit.\n"
+                    "- Structural: bearing pressure vs 45 kN/m2 allowable, seismic rocking eccentricity vs kern.\n"
+                    "- Fire/Smoke: smoke layer equilibrium height vs 2.0 m tenability objective.\n"
+                )
+                st.session_state["sim_report_content"] = report
+                st.success("✅ Artifacts compiled. Click below to download.")
+
+        if "sim_report_content" in st.session_state:
+            st.download_button(
+                label=T["out_dl"],
+                data=st.session_state["sim_report_content"],
+                file_name="BESS_Simulation_Verification_Report.txt",
+                mime="text/plain",
+                type="primary",
             )
-            st.session_state["sim_report_content"] = report
-            st.success("✅ Artifacts compiled. Click below to download.")
 
-    if "sim_report_content" in st.session_state:
-        st.download_button(
-            label=T["out_dl"],
-            data=st.session_state["sim_report_content"],
-            file_name="BESS_Simulation_Verification_Report.txt",
-            mime="text/plain",
-            type="primary",
-        )
+
+_phase_checklist()

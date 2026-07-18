@@ -140,7 +140,9 @@ def run_ebop_engineer_module():
         with col2:
             V_line   = _parse_kv(hv)
             V_drop   = V_line * (voltage_drop / 100.0)
-            min_area = (rho * 2 * length * current) / V_drop * 1e6
+            # 3상 전압강하 ΔV(L-L) = √3·I·L·R′ — 왕복 계수 2는 DC/단상용이라 √3으로 교정
+            # (리액턴스 X 무시 — 저항 지배 가정의 스크리닝 값)
+            min_area = (rho * np.sqrt(3.0) * length * current) / V_drop * 1e6
             std_areas = [16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400, 500]
             rec_area  = next((a for a in std_areas if a >= min_area), std_areas[-1])
             st.metric(t("p4_cable_area"), f"{min_area:.1f} mm²")
@@ -153,7 +155,10 @@ def run_ebop_engineer_module():
         rho   = st.slider(t("p4_gnd_rho"), 10, 1000, 100, 10)
         area  = st.number_input(t("p4_gnd_area"), 100, 100000, 2500, 100)
         length = st.number_input(t("p4_gnd_len"), 100, 10000, 1000, 100)
-        rg = rho / (4 * np.sqrt(area)) + rho / length
+        # Laurent 단순식 Rg = ρ/(4r) + ρ/L, r = 등가 원판 반경 √(A/π)
+        # (기존 √A 사용은 첫 항을 √π≈1.77배 과소평가 — 비보수적 오류)
+        r_eq = np.sqrt(area / np.pi)
+        rg = rho / (4 * r_eq) + rho / length
         st.metric(t("p4_gnd_rg"), f"{rg:.3f} Ω")
         if rg <= 1.0:
             st.success(t("p4_gnd_ok"))

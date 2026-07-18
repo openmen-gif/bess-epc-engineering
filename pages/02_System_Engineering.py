@@ -67,12 +67,27 @@ def run_system_engineering_module():
         aux_loss   = st.session_state.get('aux_loss_percent', 2.5) / 100.0
         epc_margin = st.session_state.get('epc_margin', 5.0) / 100.0
 
+        _ko = st.session_state.get('lang', 'KO') == 'KO'
+        dod = st.number_input(
+            "설계 방전심도 DoD (%)" if _ko else "Design DoD (%)",
+            min_value=80.0, max_value=100.0, value=95.0, step=1.0,
+        ) / 100.0
+        soh_eol = st.number_input(
+            "수명말 보증 SOH (%)" if _ko else "End-of-Life SOH (%)",
+            min_value=60.0, max_value=100.0, value=80.0, step=1.0,
+            help=("BOL 일괄 오버사이징 기준. 증설(augmentation) 전략이면 100%로 두고 별도 증설 계획 수립."
+                  if _ko else "BOL oversizing basis. For augmentation strategy set 100% and plan separate additions."),
+        ) / 100.0
+
+        # 방전 경로는 편도 효율 √RTE 적용 (RTE는 왕복) + DoD·수명말 SOH 반영
+        eta_discharge = float(np.sqrt(rte))
         required_ac_energy   = energy_mwh * (1 + aux_loss)
-        required_dc_nameplate = required_ac_energy / rte * (1 + epc_margin)
+        required_dc_nameplate = required_ac_energy / (eta_discharge * dod * soh_eol) * (1 + epc_margin)
 
         st.metric(label=t("p2_duration"), value=f"{energy_mwh / power_mw:.2f} Hours")
         st.metric(label=t("p2_nameplate"), value=f"{required_dc_nameplate:.2f} MWh",
-                  help=f"Includes {epc_margin*100}% Margin, {aux_loss*100}% Aux Loss, {(1-rte)*100:.1f}% RTE Derating.")
+                  help=(f"{epc_margin*100:.0f}% Margin, {aux_loss*100:.1f}% Aux, "
+                        f"편도효율 √RTE={eta_discharge*100:.1f}%, DoD {dod*100:.0f}%, EOL SOH {soh_eol*100:.0f}% 반영"))
 
         num_containers = np.ceil(required_dc_nameplate / batt_unit_mwh)
         st.metric(label=t("p2_enclosure"), value=f"{int(num_containers)} Units", help=f"Capacity per unit: {batt_unit_mwh} MWh")
@@ -120,8 +135,6 @@ def run_system_engineering_module():
         st.markdown(t("doc_gateway"))
         if st.button(t("p2_gen_rep"), key="sys_rep"):
             with st.spinner("Compiling..."):
-                import time
-                time.sleep(1)
                 report_content = (
                     f"BESS System Architecture Conceptual Report\n"
                     f"=============================================\n"

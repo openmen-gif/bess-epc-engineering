@@ -142,10 +142,12 @@ def run_fire_spread_module():
         spacing_m = st.slider(
             "랙 간 이격거리 (m)" if not is_en else "Rack-to-Rack Clear Spacing (m)",
             min_value=0.1, max_value=3.0, value=0.3, step=0.05,
-            help=("NFPA 855 기준 유닛 간 0.914 m (3 ft) 이격. 복사 열유속 ∝ 1/d² 이므로 "
-                  "이격거리가 전파 여부를 지배합니다." if not is_en else
-                  "NFPA 855 requires 0.914 m (3 ft) between units. Radiative flux ∝ 1/d², "
-                  "so spacing governs whether propagation occurs."),
+            help=("NFPA 855의 0.914 m (3 ft)는 '유닛·어레이 간' 이격 기준입니다. 컨테이너 내부 랙-랙 간격에는 "
+                  "참고 지표로만 적용하세요 (내부 랙 배치는 UL 9540A 시험·AHJ 승인 사항). "
+                  "복사 열유속 ∝ 1/d² 이므로 이격거리가 전파 여부를 지배합니다." if not is_en else
+                  "NFPA 855's 0.914 m (3 ft) applies to unit/array separation. Treat it as a reference only for "
+                  "intra-container rack spacing (governed by UL 9540A testing & AHJ approval). "
+                  "Radiative flux ∝ 1/d², so spacing governs whether propagation occurs."),
         )
         if spacing_m >= NFPA855_SPACING_M:
             st.caption("✅ " + ("NFPA 855 이격기준(0.914 m) 충족" if not is_en

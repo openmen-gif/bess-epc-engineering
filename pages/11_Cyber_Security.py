@@ -101,7 +101,7 @@ _ACCESS_CTRL = [
     ("최소 권한 원칙(PoLP) 적용",                                 "Principle of Least Privilege (PoLP) applied"),
     ("계정 생명주기 관리 (생성 / 변경 / 삭제)",                   "Account lifecycle management (create / modify / delete)"),
     ("특권 계정(Admin/Root) 별도 관리",                            "Privileged account (Admin/Root) separately managed"),
-    ("패스워드 정책: 길이 12+, 복잡도, 90일 교체",                "Password policy: 12+ chars, complexity, 90-day rotation"),
+    ("패스워드 정책: 길이 12+, 유출 검증 시 즉시 교체 (NIST 800-63B — 주기적 강제 교체 지양)", "Password policy: 12+ chars, change on compromise (NIST 800-63B — no forced periodic rotation)"),
     ("유휴 세션 자동 잠금 (15분)",                                 "Idle session auto-lock (15 min)"),
     ("접근 감사 로그 90일 이상 보관",                              "Access audit logs retained 90+ days"),
     ("퇴직/이직자 접근 24시간 내 회수",                           "Access revoked within 24h of departure"),

@@ -25,3 +25,4 @@ test.*
 =0.20.0
 utils/users_backup_*.json
 ~$*
+utils/sessions.json

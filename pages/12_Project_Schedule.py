@@ -12,6 +12,7 @@ except Exception:
 import plotly.graph_objects as go
 from datetime import date, datetime
 from utils.css_loader import apply_custom_css
+from utils.theme import PALETTE
 from utils.auth_helper import require_auth, sidebar_user_info, current_role
 from utils.project_store import (
     load_projects, save_projects, add_project, update_project, delete_project,
@@ -33,9 +34,12 @@ is_admin = (current_role() == "admin")
 # ── 상수 ──────────────────────────────────────────────────────────────────────
 REGIONS = ["한국", "미국", "호주", "영국", "EU", "일본", "중동", "기타"]
 REGIONS_EN = ["Korea", "USA", "Australia", "UK", "EU", "Japan", "Middle East", "Other"]
-STATUS_COLORS = {"계획중": "#58a6ff", "진행중": "#3fb950", "완료": "#a5d6ff", "보류": "#e3b341"}
-STATUS_COLORS_EN = {"Planned": "#58a6ff", "In Progress": "#3fb950", "Completed": "#a5d6ff", "On Hold": "#e3b341"}
-PHASE_COLOR = {"대기": "#555", "진행중": "#3fb950", "완료": "#58a6ff"}
+# 색상 정본: utils/theme.py PALETTE 토큰
+STATUS_COLORS = {"계획중": PALETTE["accent"], "진행중": PALETTE["ok"],
+                 "완료": "#a5d6ff", "보류": PALETTE["warn"]}
+STATUS_COLORS_EN = {"Planned": PALETTE["accent"], "In Progress": PALETTE["ok"],
+                    "Completed": "#a5d6ff", "On Hold": PALETTE["warn"]}
+PHASE_COLOR = {"대기": "#555", "진행중": PALETTE["ok"], "완료": PALETTE["accent"]}
 
 
 def _status_opts():
@@ -453,7 +457,16 @@ with tab_gantt:
             p_end   = _safe_date(proj.get("end_date"))
             if p_end <= p_start:
                 p_end = p_start + timedelta(days=30)
-            total_prog = round(sum(ph.get('progress', 0) for ph in proj.get('phases', [])) / max(len(proj.get('phases', [])), 1))
+            # 전체 진행률 = 단계 기간 가중 평균 (EPC S-Curve 관례 — 단순 평균은 단계 길이 무시)
+            _phs = proj.get('phases', [])
+            _wsum, _wtot = 0.0, 0.0
+            for _ph in _phs:
+                _ps = _safe_date(_ph.get("start_date") or str(p_start))
+                _pe = _safe_date(_ph.get("end_date") or str(p_end))
+                _w = max((_pe - _ps).days, 1)
+                _wsum += _w * _ph.get('progress', 0)
+                _wtot += _w
+            total_prog = round(_wsum / _wtot) if _wtot else 0
             gantt_tasks.append(dict(
                 task=f"🔷 {proj['name']}", start=p_start, end=p_end,
                 color=STATUS_COLORS.get(proj.get("status", "계획중"), "#888"),
@@ -523,7 +536,7 @@ with tab_gantt:
 
                 # Invisible scatter for hover
                 mid = t["start"] + timedelta(days=(t["end"] - t["start"]).days // 2)
-                crit_txt = (" 🔴 Critical Path" if t["is_critical"] else "")
+                crit_txt = (" 🔴 완료 지배 단계 (최장 종료)" if t["is_critical"] else "")
                 fig_g.add_trace(go.Scatter(
                     x=[mid], y=[y_pos],
                     mode="text",
@@ -562,8 +575,13 @@ with tab_gantt:
             )
             st.plotly_chart(fig_g, use_container_width=True)
 
-            # ── 크리티컬 패스 요약 ─────────────────────────────────────────
-            st.markdown("#### 🔴 " + ("Critical Path Summary" if is_en else "크리티컬 패스 요약"))
+            # ── 완료 지배 단계 요약 (의존성 네트워크·float 기반 정식 CPM 아님) ──
+            st.markdown("#### 🔴 " + ("Completion-Driving Phase" if is_en else "완료 지배 단계"))
+            st.caption(
+                "종료일이 가장 늦어 프로젝트 완료를 지배하는 단계입니다. 의존성 네트워크·여유(float) 기반의 정식 CPM 분석이 아닙니다."
+                if not is_en else
+                "The phase with the latest finish date, which drives project completion. Not a full CPM analysis (no dependency network / float)."
+            )
             for proj in projects:
                 phases = proj.get("phases", [])
                 if not phases:
@@ -581,11 +599,11 @@ with tab_gantt:
                 ph_name = crit_ph[0].get("name_en", crit_ph[0]["name"]) if is_en else crit_ph[0]["name"]
                 remaining = 100 - crit_ph[0].get("progress", 0)
                 st.markdown(
-                    f"**{proj['name']}** → 크리티컬: **{ph_name}** "
+                    f"**{proj['name']}** → 완료 지배: **{ph_name}** "
                     f"({crit_ph[1]} ~ {crit_ph[2]}, {crit_ph[3]}일) "
                     f"| 잔여: **{remaining}%**"
                     if not is_en else
-                    f"**{proj['name']}** → Critical: **{ph_name}** "
+                    f"**{proj['name']}** → Completion-driving: **{ph_name}** "
                     f"({crit_ph[1]} ~ {crit_ph[2]}, {crit_ph[3]} days) "
                     f"| Remaining: **{remaining}%**"
                 )

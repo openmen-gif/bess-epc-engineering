@@ -3,5 +3,10 @@ headless = true
 enableCORS = false
 enableXsrfProtection = false
 
+# 디자인 토큰 정본: utils/theme.py PALETTE (css_loader.py --bess-* 와 1:1)
 [theme]
 base = "dark"
+primaryColor = "#58a6ff"
+backgroundColor = "#0d1117"
+secondaryBackgroundColor = "#161b22"
+textColor = "#e6edf3"
