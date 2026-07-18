@@ -8,7 +8,7 @@ import numpy as np
 import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
 from utils.auth_helper import require_auth, sidebar_user_info
-from utils.theme import AX3D, DARK_LAYOUT
+from utils.theme import AX3D, DARK_LAYOUT, CBAR
 from utils.sim_physics import (
     heat2d_transient, bearing_pressure, seismic_pulse,
     smoke_layer_series, plume_particles,
@@ -464,7 +464,7 @@ if role == T["roles"][0]:
                 x=x_vals, y=y_vals, z=Z,
                 colorscale="Inferno", cmin=float(ambient_temp), cmax=cmax,
                 colorbar=dict(title=dict(text=T["cfd_ctitle"], font=dict(color="#c9d1d9")),
-                              tickfont=dict(color="#c9d1d9")),
+                              tickfont=dict(color="#c9d1d9"), **CBAR),
                 hovertemplate=T["cfd_hover"],
             )
 
@@ -571,7 +571,7 @@ elif role == T["roles"][1]:
                     x=xs_q, y=ys_q, z=Q,
                     colorscale="RdYlGn_r", cmin=0.0, cmax=cmax_q,
                     colorbar=dict(title=dict(text=T["str_ctitle1"], font=dict(color="#c9d1d9")),
-                                  tickfont=dict(color="#c9d1d9")),
+                                  tickfont=dict(color="#c9d1d9"), **CBAR),
                     hovertemplate=T["str_hover1"],
                 )
 
@@ -705,7 +705,7 @@ else:
                 marker=dict(size=3, color=pt, colorscale="Hot_r", cmin=25, cmax=450,
                             opacity=0.55,
                             colorbar=dict(title=dict(text=T["fds_ctitle"], font=dict(color="#c9d1d9")),
-                                          tickfont=dict(color="#c9d1d9"))),
+                                          tickfont=dict(color="#c9d1d9"), **CBAR)),
                 name="Smoke", hovertemplate="X=%{x:.1f} Y=%{y:.1f} Z=%{z:.1f} m<extra></extra>",
             )
             layer = go.Surface(

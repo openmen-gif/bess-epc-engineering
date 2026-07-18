@@ -20,6 +20,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 from utils.css_loader import apply_custom_css
+from utils.theme import CBAR
 from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils.sim_physics import simulate_runaway, build_animation, fmt_time
@@ -311,7 +312,7 @@ def run_fire_spread_module():
                 return go.Surface(
                     x=list(range(cfg["cols"])), y=list(range(cfg["rows"])), z=Tg,
                     colorscale="Inferno", cmin=25.0, cmax=700.0,
-                    colorbar=dict(title="°C", thickness=12, x=1.02),
+                    colorbar=dict(title="°C", **CBAR),
                     hovertemplate=("행: %{y} · 열: %{x}<br><b>T: %{z:.0f}°C</b><extra></extra>" if not is_en
                                    else "Row: %{y} · Col: %{x}<br><b>T: %{z:.0f}°C</b><extra></extra>"),
                 )
@@ -371,8 +372,7 @@ def run_fire_spread_module():
                     z=grid.astype(float),
                     colorscale=_fire_cs, zmin=0, zmax=4, showscale=True,
                     colorbar=dict(tickvals=[0, 1, 2, 3, 4], ticktext=_state_labels,
-                                  title="상태" if not is_en else "State", x=1.02,
-                                  thickness=12, len=0.8),
+                                  title="상태" if not is_en else "State", **CBAR),
                     hovertemplate=("행: %{y} · 열: %{x}<extra></extra>" if not is_en
                                    else "Row: %{y} · Col: %{x}<extra></extra>"),
                 )

@@ -46,6 +46,10 @@ DARK_LAYOUT = dict(paper_bgcolor="rgba(0,0,0,0)",
                    plot_bgcolor="rgba(0,0,0,0)",
                    font=dict(color=PALETTE["text2"]))
 
+# 컴팩트 컬러바 — 모바일에서 컬러바가 캔버스 폭 40%를 잠식하던 문제 대응.
+# 사용: colorbar=dict(title=..., **CBAR)
+CBAR = dict(thickness=12, len=0.68, outlinewidth=0, xpad=2, x=1.0)
+
 
 def _register_template():
     tpl = go.layout.Template()
@@ -60,7 +64,11 @@ def _register_template():
                    linecolor=PALETTE["border"]),
         yaxis=dict(gridcolor=PALETTE["border"], zerolinecolor=PALETTE["border"],
                    linecolor=PALETTE["border"]),
-        legend=dict(font=dict(color=PALETTE["text2"]), bgcolor="rgba(0,0,0,0)"),
+        # 범례: 가로 배치 + 플롯 안쪽 좌상단(제목 아래) — 우측 컬러바·상단 제목과의
+        # 겹침을 동시에 회피 (모바일 필수, 데스크톱도 개선). 반투명 배경으로 가독 확보.
+        legend=dict(font=dict(color=PALETTE["text2"], size=11),
+                    bgcolor="rgba(13,17,23,0.55)",
+                    orientation="h", x=0.0, xanchor="left", y=0.97, yanchor="top"),
         hoverlabel=dict(bgcolor=PALETTE["bg3"],
                         font=dict(color=PALETTE["text"], size=12),
                         bordercolor=PALETTE["border"]),

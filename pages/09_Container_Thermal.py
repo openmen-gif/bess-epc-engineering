@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
-from utils.theme import PALETTE
+from utils.theme import PALETTE, CBAR
 from utils.sim_physics import (
     heat2d_transient, stratification_profile,
     airflow_trajectories, build_animation, fmt_time,
@@ -438,7 +438,7 @@ def run_container_thermal_module():
                     x=x_c, y=y_c, z=T_snap,
                     colorscale="RdYlBu_r",
                     cmin=amb, cmax=cmax_all,
-                    colorbar=dict(title="°C", x=1.02),
+                    colorbar=dict(title="°C", **CBAR),
                     hovertemplate="X: %{x:.1f}m | Y: %{y:.1f}m | <b>T: %{z:.1f}°C</b><extra></extra>",
                     name="Temp Field",
                 )
@@ -539,7 +539,7 @@ def run_container_thermal_module():
                     colorscale="RdYlBu_r",
                     cmin=amb, cmax=max(peak, amb + 1),
                     showscale=True,
-                    colorbar=dict(title="°C", x=1.02, thickness=12),
+                    colorbar=dict(title="°C", **CBAR),
                     opacity=0.92,
                     hovertemplate=(
                         f"z={z_val:.2f}m | X: %{{x:.1f}}m | Y: %{{y:.1f}}m | "
@@ -609,7 +609,7 @@ def run_container_thermal_module():
                         size=4.5, color=traj["speed"][k], colorscale='Turbo',
                         cmin=0.0, cmax=sp_max, opacity=0.9,
                         colorbar=dict(title=("유속 (m/s)" if not is_en else "Speed (m/s)"),
-                                      x=1.02, thickness=12),
+                                      **CBAR),
                     ),
                     name="공기 파티클" if not is_en else "Air Particles",
                     hovertemplate="X=%{x:.1f}m Y=%{y:.1f}m Z=%{z:.2f}m<extra></extra>",
