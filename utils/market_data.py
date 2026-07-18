@@ -446,11 +446,13 @@ def fetch_commodity_prices():
 
     # ── Fallback reference values ────────────────────────────────────
     # 정기 갱신 필요. 갱신 시 _COMMODITY_REF_DATE도 같이 업데이트.
-    _COMMODITY_REF_DATE = "2026-06"
+    _COMMODITY_REF_DATE = "2026-07"
     _FALLBACK = {
         "brent_crude_usd": 72.5,
         "wti_crude_usd": 68.8,
-        "lithium_carbonate_usd_ton": 24000,  # 2026-06 ~$24.2k/t (TradingEconomics); 변동성 큼
+        # 출처: TradingEconomics https://tradingeconomics.com/commodity/lithium
+        # (2026-07-13 CNY 165,000/t ≈ $23.1k, 6/29 저점 CNY 151,750 반등); 변동성 큼
+        "lithium_carbonate_usd_ton": 23000,
         "copper_usd_ton": 9200,
         "nickel_usd_ton": 16800,
     }
@@ -498,7 +500,9 @@ YEAR_LABELS = _build_year_labels(YEARS)
 # 각 카테고리의 마지막 큐레이션 시점과 1차 출처를 명시.
 # 갱신 시 이 dict와 해당 상수를 함께 수정.
 # ============================================================
-DATA_SNAPSHOT_AS_OF = "2026-06-11"
+DATA_SNAPSHOT_AS_OF = "2026-07-19"
+# 2026-07-19 갱신: 핵심 지표 웹 재검증 — BNEF 1H2026(2026F 158GW/459GWh)·턴키 $117/kWh·
+#   미국 Q1 9.7GWh 최신치와 일치 확인(무변경), 리튬 $24k→$23k (TradingEconomics 2026-07-13).
 # 2026-06-11 갱신: 글로벌 연간도입·CAPEX·셀가·리튬·지역 2025 실적을 최신 공개통계로 재추정.
 # 1차 출처: BNEF Energy Storage Market Outlook 1H2026 (2025=112GW/307GWh, 2026F=158GW/459GWh),
 #   BNEF 2025 Battery Price Survey(LFP셀 최저 $36·정치형팩 $70·턴키 $117/kWh),

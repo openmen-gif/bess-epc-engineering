@@ -75,12 +75,16 @@ NFPA855_SPACING_M = 0.914   # 3 ft separation per NFPA 855
 # ── Simulation engine (deterministic — see utils/sim_physics.py) ─────────────
 @st.cache_data(show_spinner=False)
 def simulate_fire_spread(rows, cols, origin_r, origin_c,
-                         chem, agent, spacing_m, response_sec, t_max_s):
+                         chem, agent, spacing_m, response_sec, t_max_s,
+                         hrr_MW=None, onset_C=None, energy_MJ=None):
+    """hrr/onset/energy가 주어지면 화학종 대표값 대신 사용 (UL 9540A 시험값 주입)."""
     cp = CHEM_PARAMS.get(chem, CHEM_PARAMS["LFP"])
     ap = AGENT_PARAMS.get(agent, AGENT_PARAMS["None"])
     return simulate_runaway(
         rows, cols, (origin_r, origin_c),
-        hrr_MW=cp["hrr_MW"], onset_C=cp["onset_C"], energy_MJ=cp["energy_MJ"],
+        hrr_MW=(hrr_MW if hrr_MW else cp["hrr_MW"]),
+        onset_C=(onset_C if onset_C else cp["onset_C"]),
+        energy_MJ=(energy_MJ if energy_MJ else cp["energy_MJ"]),
         spacing_m=spacing_m, eta_supp=ap["eta"], q_cool_W=ap["q_cool_W"],
         response_s=response_sec, t_max_s=t_max_s, n_frames=80,
     )
@@ -160,6 +164,45 @@ def run_fire_spread_module():
             st.caption("⚠️ " + (f"NFPA 855 기준(0.914 m) 미만 — {(NFPA855_SPACING_M - spacing_m)*100:.0f} cm 부족" if not is_en
                                 else f"Below NFPA 855 separation (0.914 m) by {(NFPA855_SPACING_M - spacing_m)*100:.0f} cm"))
 
+    # ── 🧪 UL 9540A 시험값 주입 (대표값 → 실측값 승격) ─────────────────────────
+    _cp_sel = CHEM_PARAMS[chem_key]
+    with st.expander("🧪 " + ("UL 9540A 시험값 직접 입력 (권장 — 실측 기반)" if not is_en
+                              else "UL 9540A Test-Data Override (recommended)"), expanded=False):
+        st.caption(
+            "셀/모듈/유닛 대규모 화재시험(UL 9540A) 성적서의 값을 입력하면 화학종 대표값 대신 "
+            "시뮬레이션에 사용됩니다. 프로젝트 설계 검토는 반드시 실측값 기반으로 수행하세요." if not is_en
+            else "Values from UL 9540A cell/module/unit large-scale fire test reports replace the "
+                 "representative chemistry defaults. Project design reviews must use tested values."
+        )
+        ul_use = st.checkbox(
+            "시험값 사용" if not is_en else "Use test data",
+            key="ul_override", value=False,
+        )
+        u1, u2, u3 = st.columns(3)
+        ul_hrr = u1.number_input(
+            "랙 피크 HRR (MW)" if not is_en else "Rack peak HRR (MW)",
+            min_value=0.1, max_value=15.0, value=float(_cp_sel["hrr_MW"]), step=0.1,
+            key="ul_hrr", disabled=not ul_use,
+        )
+        ul_onset = u2.number_input(
+            "열폭주 개시온도 (°C)" if not is_en else "TR onset temp (°C)",
+            min_value=80.0, max_value=400.0, value=float(_cp_sel["onset_C"]), step=5.0,
+            key="ul_onset", disabled=not ul_use,
+        )
+        ul_energy = u3.number_input(
+            "랙 방출에너지 (MJ)" if not is_en else "Rack releasable energy (MJ)",
+            min_value=100.0, max_value=20000.0, value=float(_cp_sel["energy_MJ"]), step=100.0,
+            key="ul_energy", disabled=not ul_use,
+        )
+        if ul_use:
+            st.success(("✅ 시험값 모드 — HRR {:.1f} MW · onset {:.0f} °C · {:.0f} MJ 로 계산합니다."
+                        if not is_en else
+                        "✅ Test-data mode — computing with HRR {:.1f} MW · onset {:.0f} °C · {:.0f} MJ.")
+                       .format(ul_hrr, ul_onset, ul_energy))
+    _ovr_hrr    = float(ul_hrr)    if ul_use else None
+    _ovr_onset  = float(ul_onset)  if ul_use else None
+    _ovr_energy = float(ul_energy) if ul_use else None
+
     # ── 🔥 Fire Origin Button Grid ─────────────────────────────────────────────
     st.markdown("---")
     st.markdown("#### 🔥 " + ("화재 발원 지점 선택" if not is_en else "Select Fire Origin"))
@@ -210,12 +253,14 @@ def run_fire_spread_module():
             res = simulate_fire_spread(
                 rows, cols, origin_r, origin_c,
                 chem_key, agent_key, float(spacing_m), response_sec, t_max_s,
+                hrr_MW=_ovr_hrr, onset_C=_ovr_onset, energy_MJ=_ovr_energy,
             )
         st.session_state["fire_result"] = res
         st.session_state["fire_sim_cfg"] = dict(
             rows=rows, cols=cols, origin_r=origin_r, origin_c=origin_c,
             chem=chem_key, agent=agent_key, spacing=float(spacing_m),
             response=response_sec, t_max=t_max_s,
+            hrr=_ovr_hrr, onset=_ovr_onset, energy=_ovr_energy,
         )
 
     if "fire_result" not in st.session_state:
@@ -240,7 +285,15 @@ def run_fire_spread_module():
     ext_cnt  = res.get("ext_counts", supp_cnt)
     burn_cnt = res.get("burnout_counts", [0] * len(supp_cnt))
     n_steps  = len(frames)
-    onset_C  = CHEM_PARAMS[cfg["chem"]]["onset_C"]
+    onset_C  = cfg.get("onset") or CHEM_PARAMS[cfg["chem"]]["onset_C"]   # UL 시험값 우선
+    if cfg.get("hrr") or cfg.get("onset") or cfg.get("energy"):
+        st.caption("🧪 " + (
+            f"UL 9540A 시험값 모드 — HRR {cfg.get('hrr') or CHEM_PARAMS[cfg['chem']]['hrr_MW']:.1f} MW · "
+            f"onset {onset_C:.0f} °C · {cfg.get('energy') or CHEM_PARAMS[cfg['chem']]['energy_MJ']:.0f} MJ"
+            if not is_en else
+            f"UL 9540A test-data mode — HRR {cfg.get('hrr') or CHEM_PARAMS[cfg['chem']]['hrr_MW']:.1f} MW · "
+            f"onset {onset_C:.0f} °C · {cfg.get('energy') or CHEM_PARAMS[cfg['chem']]['energy_MJ']:.0f} MJ"
+        ))
 
     # racks that EVER ignited (cumulative spread extent)
     ever_fire = int(np.sum(np.maximum.reduce([
@@ -472,6 +525,7 @@ def run_fire_spread_module():
             r2 = simulate_fire_spread(
                 cfg["rows"], cfg["cols"], cfg["origin_r"], cfg["origin_c"],
                 cfg["chem"], ag, cfg["spacing"], cfg["response"], cfg["t_max"],
+                hrr_MW=cfg.get("hrr"), onset_C=cfg.get("onset"), energy_MJ=cfg.get("energy"),
             )
             ever2 = int(np.sum(np.maximum.reduce(
                 [(g == FIRE).astype(int) | (g == SUPPRESSED).astype(int) | (g == BURNED_OUT).astype(int)
@@ -502,7 +556,8 @@ def run_fire_spread_module():
                 "- **인접 랙 가열 (집중질량):** m·c·dT/dt = q″·A_exp − h·A·(T − T_amb) − Q_cool,supp "
                 "(m·c = 1.2 MJ/K, A_exp = 4 m², h·A = 60 W/K)\n"
                 "- **열폭주 개시:** T ≥ T_onset (화학종별 대표값 — LFP 230 / NMC 170 / NCA 150 / LTO 280 °C). "
-                "실제 설계에는 UL 9540A 셀/모듈/유닛 시험값 적용 필수\n"
+                "상단 '🧪 UL 9540A 시험값 직접 입력'으로 HRR·onset·에너지를 실측값으로 대체 가능 — "
+                "실제 설계에는 시험값 적용 필수\n"
                 "- **연소 지속:** 랙 방출에너지(MJ)를 HRR로 나눈 시간 동안 연소 후 소진\n"
                 "- **소화 (UL 9540A 실증 정합, 2026-07 갱신):** 약제는 반응시간 이후 '개방 화염 복사'만 (1−η)로 "
                 "저감합니다. **셀 내부 연쇄 열폭주는 약제로 멈출 수 없어 에너지 방출은 전속으로 계속** — "
