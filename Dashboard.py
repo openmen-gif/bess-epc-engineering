@@ -252,11 +252,12 @@ _components.html(
     // 타이머·리스너를 부모 렘(realm)에 두어야 페이지 전환 후에도 동작한다.
     (function () {
       const doc = window.parent.document;
-      if (doc.getElementById("bess-nav-autoclose")) return;
+      if (doc.getElementById("bess-helpers-v2")) return;
       const s = doc.createElement("script");
-      s.id = "bess-nav-autoclose";
+      s.id = "bess-helpers-v2";
       s.textContent = `(function () {
-        if (window.__bessNavAC) return; window.__bessNavAC = 1;
+        if (window.__bessHelpersV2) return; window.__bessHelpersV2 = 1;
+        /* 1) 모바일: 메뉴 선택 시 사이드바 자동 닫힘 */
         const close = () => {
           if (window.innerWidth > 768) return;
           const sb = document.querySelector('[data-testid="stSidebar"]');
@@ -271,6 +272,26 @@ _components.html(
           if (!t.closest('[data-testid="stSidebarNavLink"]')) return;
           [300, 900, 1800, 3000].forEach((d) => setTimeout(close, d));
         }, true);
+        /* 2) 3D 카메라 키퍼: 드래그로 바꾼 시점을 layout에 기록 —
+           ▶ Play/redraw가 어떤 경로로 재그려도 사용자 시점 유지 */
+        const hookCam = () => {
+          document.querySelectorAll('.js-plotly-plot').forEach((gd) => {
+            if (gd.dataset.bessCam || typeof gd.on !== 'function') return;
+            gd.dataset.bessCam = "1";
+            gd.on('plotly_relayout', (ev) => {
+              if (!ev) return;
+              Object.keys(ev).forEach((k) => {
+                const m = k.match(/^(scene\\d*)\\.camera$/);
+                if (m && gd.layout) {
+                  gd.layout[m[1]] = gd.layout[m[1]] || {};
+                  gd.layout[m[1]].camera = ev[k];
+                }
+              });
+            });
+          });
+        };
+        hookCam();
+        new MutationObserver(hookCam).observe(document.body, { childList: true, subtree: true });
       })();`;
       doc.body.appendChild(s);
     })();
