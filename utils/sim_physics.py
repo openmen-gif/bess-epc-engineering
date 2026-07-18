@@ -344,12 +344,15 @@ def airflow_trajectories(T_floor, exhaust_xy, intake_xy, Lx, Ly, H,
 # ═══════════════════════════════════════════════════════════════════════════
 # 4. Cell-to-cell thermal-runaway propagation (lumped rack model)
 #
-#    Incident flux (SFPE point-source): q″ = χr·Q_eff / (4π·d²)
+#    Incident flux (SFPE point-source): q″ = χr·Q_rad / (4π·d²)
 #    Target heating:  m·c·dT/dt = q″·A_exp − h·A·(T − T_amb) − Q_cool,supp
 #    Ignition:        T ≥ T_onset (chemistry; UL 9540A test-specific in reality)
-#    Burn-down:       E_rem -= Q_eff·dt ; burnout when E_rem ≤ 0
-#    Suppression:     flame knockdown Q_eff = (1−η)·Q after response time;
-#                     extinguished after ~90/η s exposure (then 15 % smolder)
+#    Burn-down:       E_rem -= Q_burn·dt ; burnout when E_rem ≤ 0
+#    Suppression (2026-07-18 UL 9540A 실증 정합):
+#      약제는 '개방 화염 복사'만 저감 — Q_rad = (1−η)·Q (응답시간 이후).
+#      셀 내부 연쇄 열폭주는 약제로 멈출 수 없으므로 에너지 방출 Q_burn은
+#      전속 유지, '진화' 전이 없음 (랙은 소진까지 연소). 워터미스트의
+#      q_cool은 인접(비연소) 랙 표면 냉각으로만 작용.
 # ═══════════════════════════════════════════════════════════════════════════
 # state codes (match page 10)
 # 4=소화(약제로 진화, 스몰더 잔존) / 5=소진(방출에너지 전부 연소 — 약제와 무관)
@@ -382,9 +385,8 @@ def simulate_runaway(rows, cols, origin_rc, hrr_MW, onset_C, energy_MJ,
     T = np.full((rows, cols), float(T_amb))
     E = np.full((rows, cols), float(energy_MJ))   # MJ remaining
     burning = np.zeros((rows, cols), dtype=bool)
-    extinguished = np.zeros((rows, cols), dtype=bool)
     burned_out = np.zeros((rows, cols), dtype=bool)
-    exposure = np.zeros((rows, cols))
+    flame_supp = np.zeros((rows, cols), dtype=bool)   # 화염 억제 중(약제 작동, TR 지속) — 표시용
 
     r0, c0 = origin_rc
     burning[r0, c0] = True
@@ -408,8 +410,8 @@ def simulate_runaway(rows, cols, origin_rc, hrr_MW, onset_C, energy_MJ,
         g[T >= T_amb + 20.0] = S_HEATING
         g[T >= onset_C - 15.0] = S_RUNAWAY
         g[burning] = S_FIRE
-        # 소화(약제)와 소진(연소 완료)을 구분 — 약제 미선택 시 소화 상태는 나올 수 없음
-        g[extinguished] = S_SUPPRESSED
+        # 상태 4 = 화염 억제 중(약제 작동, 내부 TR 지속) / 5 = 소진(연소 완료)
+        g[flame_supp] = S_SUPPRESSED
         g[burned_out] = S_BURNOUT
         return g
 
@@ -422,9 +424,9 @@ def simulate_runaway(rows, cols, origin_rc, hrr_MW, onset_C, energy_MJ,
         g = _state_grid()
         state_frames.append(g)
         fire_counts.append(int(np.sum(g == S_FIRE)))
-        ext_counts.append(int(np.sum(g == S_SUPPRESSED)))
-        burnout_counts.append(int(np.sum(g == S_BURNOUT)))
-        supp_counts.append(ext_counts[-1] + burnout_counts[-1])   # 하위호환: 소화+소진 합계
+        ext_counts.append(int(np.sum(g == S_SUPPRESSED)))       # 화염 억제 중(TR 지속)
+        burnout_counts.append(int(np.sum(g == S_BURNOUT)))      # 소진(연소 완료)
+        supp_counts.append(ext_counts[-1] + burnout_counts[-1])  # 하위호환 합계
 
     _record(0.0)
     t = 0.0
@@ -433,19 +435,22 @@ def simulate_runaway(rows, cols, origin_rc, hrr_MW, onset_C, energy_MJ,
         t += dt
         supp_active = (eta_supp > 0.0) and (t >= response_s)
 
-        # effective HRR per cell [MW]
-        Q_eff = np.zeros((rows, cols))
         knock = (1.0 - eta_supp) if supp_active else 1.0
-        Q_eff[burning] = hrr_MW * knock
-        Q_eff[extinguished] = hrr_MW * SMOLDER    # vented smolder, residual flux
 
-        # incident power on each cell from burning/smoldering neighbours [W]
-        P_in = _shift_sum(Q_eff, shifts_o) * f_orth + _shift_sum(Q_eff, shifts_d) * f_diag
+        # 복사 HRR — 약제는 '개방 화염 복사'만 (1−η)로 저감 [MW]
+        Q_rad = np.zeros((rows, cols))
+        Q_rad[burning] = hrr_MW * knock
+        # 내부 연쇄 방출 — 셀 캐스케이드는 약제로 못 멈춤 → 전속 유지 [MW]
+        Q_burn = np.zeros((rows, cols))
+        Q_burn[burning] = hrr_MW
+
+        # incident power on each cell from burning neighbours [W]
+        P_in = _shift_sum(Q_rad, shifts_o) * f_orth + _shift_sum(Q_rad, shifts_d) * f_diag
 
         # heat the non-burning, not-yet-consumed cells
-        target = (~burning) & (~burned_out) & (~extinguished)
+        target = (~burning) & (~burned_out)
         cool = HA_NAT * (T - T_amb)
-        cool_supp = q_cool_W if supp_active else 0.0
+        cool_supp = q_cool_W if supp_active else 0.0   # 워터미스트: 인접 랙 표면 냉각
         dT = (P_in - cool - cool_supp) / MC_RACK * dt
         T = np.where(target, np.maximum(T + dT, T_amb), T)
 
@@ -454,22 +459,15 @@ def simulate_runaway(rows, cols, origin_rc, hrr_MW, onset_C, energy_MJ,
         burning[ignite] = True
         T[ignite] = T_FLAME
 
-        # burn-down of energy (MW·s = MJ)
-        burn_now = burning | extinguished
-        E = np.where(burn_now, E - Q_eff * dt, E)
-        new_out = burn_now & (E <= 0.0)
+        # burn-down of energy (MW·s = MJ) — 내부 방출은 전속(약제 무관)
+        E = np.where(burning, E - Q_burn * dt, E)
+        new_out = burning & (E <= 0.0)
         burned_out |= new_out
         burning[new_out] = False
-        extinguished[new_out] = False
         T[new_out] = np.maximum(T[new_out] * 0.0 + T_amb + 80.0, T_amb)
 
-        # agent extinguishment of open flame
-        if supp_active and eta_supp > 0:
-            exposure[burning] += dt
-            newly_ext = burning & (exposure >= 90.0 / max(eta_supp, 0.05))
-            extinguished[newly_ext] = True
-            burning[newly_ext] = False
-            T[newly_ext] = onset_C + 50.0
+        # 화염 억제 표시 마스크 — 약제 작동 중인 연소 랙 (진화 아님, TR 지속)
+        flame_supp = burning & supp_active
 
         # passive cooling of consumed cells
         decay_mask = burned_out & (T > T_amb)

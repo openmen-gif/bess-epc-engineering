@@ -30,7 +30,7 @@ NORMAL          = 0
 HEATING         = 1
 THERMAL_RUNAWAY = 2
 FIRE            = 3
-SUPPRESSED      = 4   # 약제로 진화(스몰더 잔존) — 약제 미선택 시 나올 수 없음
+SUPPRESSED      = 4   # 화염 억제 중(약제 작동, 내부 TR 지속) — 약제 미선택 시 나올 수 없음
 BURNED_OUT      = 5   # 방출에너지 전부 연소(소진) — 약제와 무관
 
 STATE_COLORS = {
@@ -38,7 +38,7 @@ STATE_COLORS = {
     HEATING:         "#f4a234",
     THERMAL_RUNAWAY: "#e05c1a",
     FIRE:            "#c0392b",
-    SUPPRESSED:      "#2ecc71",   # 녹색 = 약제 소화 성공만
+    SUPPRESSED:      "#3498db",   # 파랑 = 화염 억제 중(TR 지속 — '안전' 아님)
     BURNED_OUT:      "#6e7681",   # 회색 = 연소 완료(소진)
 }
 
@@ -132,7 +132,8 @@ def run_fire_spread_module():
         rows = int(st.number_input(t("p10_rows"), min_value=2, max_value=20, value=6, step=1))
         cols = int(st.number_input(t("p10_cols"), min_value=2, max_value=20, value=8, step=1))
     with p2:
-        response_sec = int(st.number_input(t("p10_response"), min_value=1, max_value=300, value=10, step=1))
+        # 기본 60초 — 감지+방출 지연 현실화 (기존 10초는 낙관적)
+        response_sec = int(st.number_input(t("p10_response"), min_value=1, max_value=300, value=60, step=1))
         max_min = int(st.number_input(
             "최대 시뮬레이션 시간 (분)" if not is_en else "Max Simulation Time (min)",
             min_value=5, max_value=120, value=45, step=5,
@@ -250,7 +251,8 @@ def run_fire_spread_module():
     km1, km2, km3, km4 = st.columns(4)
     km1.metric(t("p10_total_t"),    fmt_time(times[-1]))
     km2.metric(t("p10_max_racks"),  f"{ever_fire} racks")
-    km3.metric("🛡️ " + ("약제 소화" if not is_en else "Extinguished"), f"{ext_cnt[-1]} racks")
+    km3.metric("🛡️ " + ("화염 억제(최대 동시)" if not is_en else "Flame knockdown (peak)"),
+               f"{max(ext_cnt)} racks")
     km4.metric("⬛ " + ("소진(연소완료)" if not is_en else "Burned Out"), f"{burn_cnt[-1]} racks")
 
     # 결과 해석 배너 — "왜 이런 결과인지" 명시(전파 없음이 정상인지 설명, 고장 오해 방지)
@@ -297,7 +299,7 @@ def run_fire_spread_module():
         _fire_cs.append([_i / 6.0, STATE_COLORS[_s]])
         _fire_cs.append([(_i + 1) / 6.0, STATE_COLORS[_s]])
     _state_labels = [t("p10_state0"), t("p10_state1"), t("p10_state2"), t("p10_state3"),
-                     ("소화(약제)" if not is_en else "Extinguished"),
+                     ("화염 억제 중(TR 지속)" if not is_en else "Knockdown (TR ongoing)"),
                      ("소진(연소완료)" if not is_en else "Burned out")]
     _dark = dict(
         paper_bgcolor="rgba(0,0,0,0)",
@@ -415,15 +417,15 @@ def run_fire_spread_module():
             cur_g = frames[-1]
             ca, cb, cc, cd = st.columns(4)
             ca.metric("🔥 " + ("화재" if not is_en else "Fire"),  str(int(np.sum(cur_g == FIRE))))
-            cb.metric("🛡️ " + ("소화(약제)" if not is_en else "Extinguished"), str(int(np.sum(cur_g == SUPPRESSED))))
+            cb.metric("🛡️ " + ("화염 억제 중" if not is_en else "Knockdown"), str(int(np.sum(cur_g == SUPPRESSED))))
             cc.metric("⬛ " + ("소진" if not is_en else "Burned out"), str(int(np.sum(cur_g == BURNED_OUT))))
             cd.metric("🌡️ " + ("가열" if not is_en else "Heat"),
                       str(int(np.sum(cur_g == HEATING)) + int(np.sum(cur_g == THERMAL_RUNAWAY))))
 
     # ── Tab 2: Area Over Time ─────────────────────────────────────────────────
     with tab2:
-        fire_lbl = "화재 랙" if not is_en else "Fire Racks"
-        ext_lbl  = "소화 랙 (약제)" if not is_en else "Extinguished Racks"
+        fire_lbl = "화재 랙 (자유연소)" if not is_en else "Fire Racks (free-burning)"
+        ext_lbl  = "화염 억제 랙 (TR 지속)" if not is_en else "Knockdown Racks (TR ongoing)"
         burn_lbl = "소진 랙 (연소완료)" if not is_en else "Burned-out Racks"
 
         df = pd.DataFrame({
@@ -435,7 +437,7 @@ def run_fire_spread_module():
         fig_area = px.line(
             df, x=t("p10_time_ax"), y=[fire_lbl, ext_lbl, burn_lbl],
             title=t("p10_area_title"),
-            color_discrete_map={fire_lbl: "#c0392b", ext_lbl: "#2ecc71", burn_lbl: "#6e7681"},
+            color_discrete_map={fire_lbl: "#c0392b", ext_lbl: "#3498db", burn_lbl: "#6e7681"},
             markers=True,
         )
         # 약제 미선택(None) 시에는 '소화 시스템 작동' 기준선 자체가 무의미 — 표시 안 함
@@ -502,9 +504,10 @@ def run_fire_spread_module():
                 "- **열폭주 개시:** T ≥ T_onset (화학종별 대표값 — LFP 230 / NMC 170 / NCA 150 / LTO 280 °C). "
                 "실제 설계에는 UL 9540A 셀/모듈/유닛 시험값 적용 필수\n"
                 "- **연소 지속:** 랙 방출에너지(MJ)를 HRR로 나눈 시간 동안 연소 후 소진\n"
-                "- **소화:** 반응시간 이후 화염 HRR을 (1−η)로 저감, η/90초 노출 후 진화 — 단 진화 후에도 "
-                "15 % 잔여 발열(벤트가스 스몰더링) 유지. 가스계 소화제(FM-200/Novec)는 표면 냉각 없음, "
-                "워터미스트는 피폭 랙에 20 kW 직접 냉각\n"
+                "- **소화 (UL 9540A 실증 정합, 2026-07 갱신):** 약제는 반응시간 이후 '개방 화염 복사'만 (1−η)로 "
+                "저감합니다. **셀 내부 연쇄 열폭주는 약제로 멈출 수 없어 에너지 방출은 전속으로 계속** — "
+                "'진화' 전이 없음, 랙은 소진(에너지 고갈)까지 연소. 가스계(FM-200/Novec)는 표면 냉각 없음, "
+                "워터미스트는 인접(비연소) 랙에 20 kW 표면 냉각\n"
                 "- **NFPA 855:** 유닛 간 0.914 m (3 ft) 이격 기준 — q″ ∝ 1/d² 이므로 기준 이상 이격 시 "
                 "전파가 차단되는 효과를 본 모델에서 직접 확인 가능\n\n"
                 "**한계:** 화염 충돌(직접 접염), 벤트가스 제트화염, 천장열기류 재복사, 배연 영향은 미반영. "
@@ -519,9 +522,11 @@ def run_fire_spread_module():
                 "- **TR onset:** T ≥ T_onset (representative per chemistry — LFP 230 / NMC 170 / NCA 150 / LTO 280 °C). "
                 "Project designs MUST use UL 9540A cell/module/unit test data\n"
                 "- **Burn duration:** releasable rack energy (MJ) divided by HRR; rack burns out when exhausted\n"
-                "- **Suppression:** after response time, open-flame HRR knocked down by (1−η); extinguished after "
-                "~90/η s exposure — but 15 % residual heat release (vent-gas smoldering) persists. Gaseous agents "
-                "(FM-200/Novec) provide no surface cooling; water mist adds 20 kW direct cooling to exposed racks\n"
+                "- **Suppression (UL 9540A-consistent, updated 2026-07):** after the response time the agent knocks "
+                "down OPEN-FLAME radiation only, by (1−η). **In-cell cascading runaway cannot be stopped by agents — "
+                "internal energy release continues at full rate** (no 'extinguished' transition; racks burn to "
+                "energy exhaustion). Gaseous agents give no surface cooling; water mist adds 20 kW surface cooling "
+                "to exposed (non-burning) racks\n"
                 "- **NFPA 855:** 0.914 m (3 ft) unit separation — since q″ ∝ 1/d², the model directly demonstrates "
                 "propagation arrest at or above this spacing\n\n"
                 "**Limitations:** direct flame impingement, vent-gas jet flames, ceiling-layer re-radiation and "
