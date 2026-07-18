@@ -352,7 +352,8 @@ def airflow_trajectories(T_floor, exhaust_xy, intake_xy, Lx, Ly, H,
 #                     extinguished after ~90/η s exposure (then 15 % smolder)
 # ═══════════════════════════════════════════════════════════════════════════
 # state codes (match page 10)
-S_NORMAL, S_HEATING, S_RUNAWAY, S_FIRE, S_SUPPRESSED = 0, 1, 2, 3, 4
+# 4=소화(약제로 진화, 스몰더 잔존) / 5=소진(방출에너지 전부 연소 — 약제와 무관)
+S_NORMAL, S_HEATING, S_RUNAWAY, S_FIRE, S_SUPPRESSED, S_BURNOUT = 0, 1, 2, 3, 4, 5
 
 CHI_R   = 0.30        # radiative fraction of HRR (SFPE typical 0.2–0.4)
 A_EXP   = 4.0         # exposed face area of target rack [m²]
@@ -407,10 +408,13 @@ def simulate_runaway(rows, cols, origin_rc, hrr_MW, onset_C, energy_MJ,
         g[T >= T_amb + 20.0] = S_HEATING
         g[T >= onset_C - 15.0] = S_RUNAWAY
         g[burning] = S_FIRE
-        g[extinguished | burned_out] = S_SUPPRESSED
+        # 소화(약제)와 소진(연소 완료)을 구분 — 약제 미선택 시 소화 상태는 나올 수 없음
+        g[extinguished] = S_SUPPRESSED
+        g[burned_out] = S_BURNOUT
         return g
 
-    times, T_frames, state_frames, fire_counts, supp_counts = [], [], [], [], []
+    times, T_frames, state_frames = [], [], []
+    fire_counts, supp_counts, ext_counts, burnout_counts = [], [], [], []
 
     def _record(tk):
         times.append(round(tk, 1))
@@ -418,7 +422,9 @@ def simulate_runaway(rows, cols, origin_rc, hrr_MW, onset_C, energy_MJ,
         g = _state_grid()
         state_frames.append(g)
         fire_counts.append(int(np.sum(g == S_FIRE)))
-        supp_counts.append(int(np.sum(g == S_SUPPRESSED)))
+        ext_counts.append(int(np.sum(g == S_SUPPRESSED)))
+        burnout_counts.append(int(np.sum(g == S_BURNOUT)))
+        supp_counts.append(ext_counts[-1] + burnout_counts[-1])   # 하위호환: 소화+소진 합계
 
     _record(0.0)
     t = 0.0
@@ -478,6 +484,7 @@ def simulate_runaway(rows, cols, origin_rc, hrr_MW, onset_C, energy_MJ,
     return {
         "times": times, "T_frames": T_frames, "state_frames": state_frames,
         "fire_counts": fire_counts, "supp_counts": supp_counts,
+        "ext_counts": ext_counts, "burnout_counts": burnout_counts,
     }
 
 

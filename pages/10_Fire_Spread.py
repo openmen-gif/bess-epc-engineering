@@ -30,14 +30,16 @@ NORMAL          = 0
 HEATING         = 1
 THERMAL_RUNAWAY = 2
 FIRE            = 3
-SUPPRESSED      = 4   # extinguished by agent OR burned out (energy exhausted)
+SUPPRESSED      = 4   # 약제로 진화(스몰더 잔존) — 약제 미선택 시 나올 수 없음
+BURNED_OUT      = 5   # 방출에너지 전부 연소(소진) — 약제와 무관
 
 STATE_COLORS = {
     NORMAL:          "#1f4e79",
     HEATING:         "#f4a234",
     THERMAL_RUNAWAY: "#e05c1a",
     FIRE:            "#c0392b",
-    SUPPRESSED:      "#2ecc71",
+    SUPPRESSED:      "#2ecc71",   # 녹색 = 약제 소화 성공만
+    BURNED_OUT:      "#6e7681",   # 회색 = 연소 완료(소진)
 }
 
 # Representative physics parameters per chemistry.
@@ -233,18 +235,23 @@ def run_fire_spread_module():
     frames   = res["state_frames"]
     fire_cnt = res["fire_counts"]
     supp_cnt = res["supp_counts"]
+    # 구 세션 결과(상태 4·5 미분리) 하위호환
+    ext_cnt  = res.get("ext_counts", supp_cnt)
+    burn_cnt = res.get("burnout_counts", [0] * len(supp_cnt))
     n_steps  = len(frames)
     onset_C  = CHEM_PARAMS[cfg["chem"]]["onset_C"]
 
     # racks that EVER ignited (cumulative spread extent)
-    ever_fire = int(np.sum(np.maximum.reduce([(g == FIRE).astype(int) | (g == SUPPRESSED).astype(int)
-                                              for g in frames])))
+    ever_fire = int(np.sum(np.maximum.reduce([
+        (g == FIRE).astype(int) | (g == SUPPRESSED).astype(int) | (g == BURNED_OUT).astype(int)
+        for g in frames])))
     max_supp  = supp_cnt[-1]
 
-    km1, km2, km3 = st.columns(3)
+    km1, km2, km3, km4 = st.columns(4)
     km1.metric(t("p10_total_t"),    fmt_time(times[-1]))
     km2.metric(t("p10_max_racks"),  f"{ever_fire} racks")
-    km3.metric(t("p10_suppressed"), f"{max_supp} racks")
+    km3.metric("🛡️ " + ("약제 소화" if not is_en else "Extinguished"), f"{ext_cnt[-1]} racks")
+    km4.metric("⬛ " + ("소진(연소완료)" if not is_en else "Burned Out"), f"{burn_cnt[-1]} racks")
 
     # 결과 해석 배너 — "왜 이런 결과인지" 명시(전파 없음이 정상인지 설명, 고장 오해 방지)
     _chem = cfg["chem"]; _sp = float(cfg["spacing"])
@@ -283,15 +290,15 @@ def run_fire_spread_module():
         "⚖️ " + ("방화 시스템 비교"           if not is_en else "Suppression Comparison"),
     ])
 
-    _fire_cs = [
-        [0.00, STATE_COLORS[NORMAL]],
-        [0.25, STATE_COLORS[HEATING]],
-        [0.50, STATE_COLORS[THERMAL_RUNAWAY]],
-        [0.75, STATE_COLORS[FIRE]],
-        [1.00, STATE_COLORS[SUPPRESSED]],
-    ]
-    _state_labels = [t("p10_state0"), t("p10_state1"), t("p10_state2"),
-                     t("p10_state3"), t("p10_state4")]
+    # 6단계 이산 컬러스케일 (0~5): 각 상태가 정확히 자기 색 구간에 떨어지도록 계단형 구성
+    _cs_states = [NORMAL, HEATING, THERMAL_RUNAWAY, FIRE, SUPPRESSED, BURNED_OUT]
+    _fire_cs = []
+    for _i, _s in enumerate(_cs_states):
+        _fire_cs.append([_i / 6.0, STATE_COLORS[_s]])
+        _fire_cs.append([(_i + 1) / 6.0, STATE_COLORS[_s]])
+    _state_labels = [t("p10_state0"), t("p10_state1"), t("p10_state2"), t("p10_state3"),
+                     ("소화(약제)" if not is_en else "Extinguished"),
+                     ("소진(연소완료)" if not is_en else "Burned out")]
     _dark = dict(
         paper_bgcolor="rgba(0,0,0,0)",
         font_color="#c9d1d9",
@@ -370,8 +377,8 @@ def run_fire_spread_module():
             def _2d_hmap(grid):
                 return go.Heatmap(
                     z=grid.astype(float),
-                    colorscale=_fire_cs, zmin=0, zmax=4, showscale=True,
-                    colorbar=dict(tickvals=[0, 1, 2, 3, 4], ticktext=_state_labels,
+                    colorscale=_fire_cs, zmin=0, zmax=5, showscale=True,
+                    colorbar=dict(tickvals=[0, 1, 2, 3, 4, 5], ticktext=_state_labels,
                                   title="상태" if not is_en else "State", **CBAR),
                     hovertemplate=("행: %{y} · 열: %{x}<extra></extra>" if not is_en
                                    else "Row: %{y} · Col: %{x}<extra></extra>"),
@@ -380,8 +387,8 @@ def run_fire_spread_module():
             layout_2d = dict(
                 **_dark, height=520,
                 margin=dict(l=0, r=10, t=50, b=60),
-                title=("상태 전이 (정상→가열→열폭주→화재→소화/소진)" if not is_en
-                       else "State Transitions (Normal→Heating→TR→Fire→Supp.)"),
+                title=("상태 전이 (정상→가열→열폭주→화재→소화 또는 소진)" if not is_en
+                       else "State Transitions (Normal→Heating→TR→Fire→Ext. or Burnout)"),
                 xaxis=dict(title="열 (Col)" if not is_en else "Col",
                            tickmode='linear', tick0=0, dtick=1,
                            gridcolor='rgba(0,0,0,0)', zeroline=False),
@@ -406,29 +413,33 @@ def run_fire_spread_module():
 
         with st.expander("📊 " + ("최종 상태 요약" if not is_en else "Final State Summary"), expanded=False):
             cur_g = frames[-1]
-            ca, cb, cc = st.columns(3)
+            ca, cb, cc, cd = st.columns(4)
             ca.metric("🔥 " + ("화재" if not is_en else "Fire"),  str(int(np.sum(cur_g == FIRE))))
-            cb.metric("💨 " + ("소화/소진" if not is_en else "Supp./Burned"), str(int(np.sum(cur_g == SUPPRESSED))))
-            cc.metric("🌡️ " + ("가열" if not is_en else "Heat"),
+            cb.metric("🛡️ " + ("소화(약제)" if not is_en else "Extinguished"), str(int(np.sum(cur_g == SUPPRESSED))))
+            cc.metric("⬛ " + ("소진" if not is_en else "Burned out"), str(int(np.sum(cur_g == BURNED_OUT))))
+            cd.metric("🌡️ " + ("가열" if not is_en else "Heat"),
                       str(int(np.sum(cur_g == HEATING)) + int(np.sum(cur_g == THERMAL_RUNAWAY))))
 
     # ── Tab 2: Area Over Time ─────────────────────────────────────────────────
     with tab2:
         fire_lbl = "화재 랙" if not is_en else "Fire Racks"
-        supp_lbl = "소화/소진 랙"  if not is_en else "Suppressed/Burned Racks"
+        ext_lbl  = "소화 랙 (약제)" if not is_en else "Extinguished Racks"
+        burn_lbl = "소진 랙 (연소완료)" if not is_en else "Burned-out Racks"
 
         df = pd.DataFrame({
             t("p10_time_ax"): times,
             fire_lbl: fire_cnt,
-            supp_lbl: supp_cnt,
+            ext_lbl: ext_cnt,
+            burn_lbl: burn_cnt,
         })
         fig_area = px.line(
-            df, x=t("p10_time_ax"), y=[fire_lbl, supp_lbl],
+            df, x=t("p10_time_ax"), y=[fire_lbl, ext_lbl, burn_lbl],
             title=t("p10_area_title"),
-            color_discrete_map={fire_lbl: "#c0392b", supp_lbl: "#2ecc71"},
+            color_discrete_map={fire_lbl: "#c0392b", ext_lbl: "#2ecc71", burn_lbl: "#6e7681"},
             markers=True,
         )
-        if cfg["response"] < times[-1]:
+        # 약제 미선택(None) 시에는 '소화 시스템 작동' 기준선 자체가 무의미 — 표시 안 함
+        if cfg["response"] < times[-1] and cfg.get("agent", "None") != "None":
             fig_area.add_vline(
                 x=cfg["response"], line_dash="dash", line_color="#3498db",
                 annotation_text="소화 시스템 작동" if not is_en else "Suppression Activated",
@@ -461,7 +472,8 @@ def run_fire_spread_module():
                 cfg["chem"], ag, cfg["spacing"], cfg["response"], cfg["t_max"],
             )
             ever2 = int(np.sum(np.maximum.reduce(
-                [(g == FIRE).astype(int) | (g == SUPPRESSED).astype(int) for g in r2["state_frames"]])))
+                [(g == FIRE).astype(int) | (g == SUPPRESSED).astype(int) | (g == BURNED_OUT).astype(int)
+                 for g in r2["state_frames"]])))
             cmp_results.append({
                 sys_lbl:  ap["label_ko" if not is_en else "label_en"],
                 rack_lbl: ever2,
