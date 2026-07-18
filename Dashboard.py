@@ -57,11 +57,14 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
+# 라벨은 언어 중립 고정 + key 고정 — 라벨이 언어를 따라 바뀌면 위젯 정체성이 리셋되어
+# EN→KO 복귀가 불가능해지는 버그가 있었음 (클릭 값이 새 위젯 ID로 승계되지 않음)
 lang_choice = st.sidebar.radio(
-    t("lang_label"),
+    "🌐 언어 / Language",
     options=["🇰🇷 한국어", "🇺🇸 English"],
     index=0 if st.session_state.lang == "KO" else 1,
     horizontal=True,
+    key="lang_radio",
 )
 st.session_state.lang = "KO" if "한국어" in lang_choice else "EN"
 
@@ -181,25 +184,34 @@ def _home():
 
 
 # ── Dynamic navigation based on role ─────────────────────────────────────────
+# 메뉴 제목은 언어 선택(사이드바 라디오 — nav 구성보다 먼저 실행됨)을 따라간다.
+# st.Page의 URL 경로는 파일명에서 파생되므로 title 변경은 링크를 깨지 않는다.
 
-_login_pg = st.Page("pages/00_Login.py",             title="Login / 계정관리",    icon="🔑")
-_home_pg  = st.Page(_home,                            title="Dashboard",            icon="🏠")
-_p01 = st.Page("pages/01_Project_Setup.py",           title="01 Project Setup",     icon="📋")
-_p02 = st.Page("pages/02_System_Engineering.py",      title="02 System Engineering",icon="⚙️")
-_p03 = st.Page("pages/03_3D_Simulation.py",           title="03 3D Simulation",     icon="🏗️")
-_p04 = st.Page("pages/04_EBOP_Engineer.py",           title="04 EBOP Engineer",     icon="⚡")
-_p05 = st.Page("pages/05_CBOP_Engineer.py",           title="05 CBOP Engineer",     icon="🏗️")
-_p06 = st.Page("pages/06_Data_Analyst.py",            title="06 Data Analyst",      icon="📊")
-_p07 = st.Page("pages/07_IPO_Checklists.py",          title="07 IPO Checklists",    icon="✅")
-_p08 = st.Page("pages/08_Tool_Launcher.py",           title="08 Tool Launcher",     icon="🚀")
-_p09 = st.Page("pages/09_Container_Thermal.py",       title="09 Container Thermal", icon="🌡️")
-_p10 = st.Page("pages/10_Fire_Spread.py",             title="10 Fire Spread",       icon="🔥")
-_p11 = st.Page("pages/11_Cyber_Security.py",          title="11 Cyber Security",    icon="🔒")
-_p12 = st.Page("pages/12_Project_Schedule.py",        title="12 Project Schedule",  icon="📅")
-_p_market = st.Page("pages/00_Market_Dashboard.py",  title="Dashboard: Market",    icon="📈")
+_ko = st.session_state.get("lang", "KO") == "KO"
+
+def _pt(ko, en):
+    return ko if _ko else en
+
+_login_pg = st.Page("pages/00_Login.py",             title=_pt("로그인 / 계정관리", "Login / Account"),  icon="🔑")
+_home_pg  = st.Page(_home,                            title=_pt("홈 대시보드", "Dashboard"),               icon="🏠")
+_p01 = st.Page("pages/01_Project_Setup.py",           title=_pt("01 프로젝트 설정", "01 Project Setup"),      icon="📋")
+_p02 = st.Page("pages/02_System_Engineering.py",      title=_pt("02 시스템 설계", "02 System Engineering"),   icon="⚙️")
+_p03 = st.Page("pages/03_3D_Simulation.py",           title=_pt("03 3D 시뮬레이션", "03 3D Simulation"),      icon="🏗️")
+_p04 = st.Page("pages/04_EBOP_Engineer.py",           title=_pt("04 전기 BOP 설계", "04 EBOP Engineer"),      icon="⚡")
+_p05 = st.Page("pages/05_CBOP_Engineer.py",           title=_pt("05 토목 BOP 설계", "05 CBOP Engineer"),      icon="🏗️")
+_p06 = st.Page("pages/06_Data_Analyst.py",            title=_pt("06 데이터 분석", "06 Data Analyst"),         icon="📊")
+_p07 = st.Page("pages/07_IPO_Checklists.py",          title=_pt("07 IPO 체크리스트", "07 IPO Checklists"),    icon="✅")
+_p08 = st.Page("pages/08_Tool_Launcher.py",           title=_pt("08 도구 런처", "08 Tool Launcher"),          icon="🚀")
+_p09 = st.Page("pages/09_Container_Thermal.py",       title=_pt("09 컨테이너 열해석", "09 Container Thermal"),icon="🌡️")
+_p10 = st.Page("pages/10_Fire_Spread.py",             title=_pt("10 화재 확산", "10 Fire Spread"),            icon="🔥")
+_p11 = st.Page("pages/11_Cyber_Security.py",          title=_pt("11 사이버 보안", "11 Cyber Security"),       icon="🔒")
+_p12 = st.Page("pages/12_Project_Schedule.py",        title=_pt("12 프로젝트 공정", "12 Project Schedule"),   icon="📅")
+_p_market = st.Page("pages/00_Market_Dashboard.py",  title=_pt("마켓 대시보드", "Dashboard: Market"),        icon="📈")
 
 _viewer_pages   = [_p01, _p02, _p03, _p04, _p05, _p06]
 _engineer_pages = [_p07, _p08, _p09, _p10, _p11, _p12]
+_sec_basic = _pt("📋 도구 01~06", "📋 Tools 01~06")
+_sec_adv   = _pt("🔧 도구 07~12", "🔧 Tools 07~12")
 
 role   = st.session_state.get("auth_role", "")
 authed = is_authenticated()
@@ -208,20 +220,20 @@ if not authed:
     nav = st.navigation([_login_pg])
 elif role == "admin":
     nav = st.navigation({
-        "":               [_home_pg, _p_market, _login_pg],
-        "📋 Tools 01~06": _viewer_pages,
-        "🔧 Tools 07~11": _engineer_pages,
+        "":         [_home_pg, _p_market, _login_pg],
+        _sec_basic: _viewer_pages,
+        _sec_adv:   _engineer_pages,
     })
 elif role == "engineer":
     nav = st.navigation({
-        "":               [_home_pg, _p_market],
-        "📋 Tools 01~06": _viewer_pages,
-        "🔧 Tools 07~11": _engineer_pages,
+        "":         [_home_pg, _p_market],
+        _sec_basic: _viewer_pages,
+        _sec_adv:   _engineer_pages,
     })
 elif role == "viewer":
     nav = st.navigation({
-        "":               [_home_pg, _p_market],
-        "📋 Tools 01~06": _viewer_pages,
+        "":         [_home_pg, _p_market],
+        _sec_basic: _viewer_pages,
     })
 else:
     nav = st.navigation([_home_pg, _p_market, _login_pg])

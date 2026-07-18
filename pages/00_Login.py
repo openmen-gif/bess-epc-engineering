@@ -118,8 +118,8 @@ def _register_form(is_en: bool) -> None:
     )
 
     SELF_ROLES = ["viewer", "engineer"]
-    role_labels_ko = {"viewer": "🟢 뷰어 — 기본 조회 (01~06)", "engineer": "🟡 엔지니어 — 전체 도구 (01~11)"}
-    role_labels_en = {"viewer": "🟢 Viewer — Basic access (01~06)", "engineer": "🟡 Engineer — All tools (01~11)"}
+    role_labels_ko = {"viewer": "🟢 뷰어 — 기본 조회 (01~06)", "engineer": "🟡 엔지니어 — 전체 도구 (01~12)"}
+    role_labels_en = {"viewer": "🟢 Viewer — Basic access (01~06)", "engineer": "🟡 Engineer — All tools (01~12)"}
     role_labels = role_labels_en if is_en else role_labels_ko
 
     with st.form("register_form", clear_on_submit=True):
