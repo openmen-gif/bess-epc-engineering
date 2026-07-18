@@ -505,7 +505,15 @@ def add_play_controls(fig, frame_names, time_labels, duration_ms=250,
 
     이전 버전은 버튼을 y=1.15(플롯 상단 위)에 둬 타이틀 텍스트와 겹쳤다.
     버튼·슬라이더를 모두 하단 여백으로 내리고 하단 마진을 확보해 충돌을 제거한다.
+
+    uirevision 고정: ▶ Play 시 frame redraw가 사용자가 돌려놓은 3D 카메라를
+    기본 시점으로 리셋하던 문제 방지 — 상수 revision이면 카메라·줌이 보존된다.
     """
+    fig.update_layout(uirevision="bess-keep")
+    try:
+        fig.update_scenes(uirevision="bess-keep")
+    except Exception:
+        pass
     fig.update_layout(
         margin_b=96,  # 하단 컨트롤 공간 확보 (l/r/t 는 보존 — magic underscore)
         updatemenus=[dict(
