@@ -18,7 +18,7 @@ from utils.auth_helper import require_auth, sidebar_user_info
 from utils.theme import PALETTE
 from utils.sim_physics import (
     heat2d_transient, stratification_profile,
-    build_animation, fmt_time,
+    airflow_trajectories, build_animation, fmt_time,
 )
 
 # Display grid for HVAC vent selector (columns × rows)
@@ -122,6 +122,14 @@ def scale_vents_to_sim(hvac_vents, NX, NY):
 
 
 @st.cache_data(show_spinner=False)
+def _airflow_traj_cached(T_floor, exhaust_xy, intake_xy, Lx, Ly, H, T_amb):
+    """퍼텐셜 유동+부력 파티클 궤적 사전 계산 (동일 결과 재사용)."""
+    return airflow_trajectories(T_floor, list(exhaust_xy), list(intake_xy),
+                                Lx, Ly, H, n_particles=150, n_frames=60,
+                                dt=0.35, T_amb=T_amb)
+
+
+@st.cache_data(show_spinner=False)
 def vent_airflow_vectors(T_floor, sim_exhaust_cells, sim_intake_cells, NX, NY):
     """Return U, V arrays. Exhaust: flow toward duct. Intake: flow away from duct."""
     all_cells = list(sim_exhaust_cells) + list(sim_intake_cells)
@@ -189,16 +197,16 @@ def run_container_thermal_module():
             value=min(max(float(st.session_state.get('site_temp_max', 35.0)), -10.0), 55.0),
             step=1.0,
         )
+        # 기본값은 '단일 컨테이너' 대표값 — 3.44 MWh급 0.5C 발열 ≈ 50 kW.
+        # (기존 플랜트 총량 ×50 kW/MW 기본은 단일 컨테이너 형상에 2,500 kW를 넣어 항상 과열 판정)
         bat_kw = st.number_input(
             t("p9_bat_heat"), min_value=1.0, max_value=5000.0,
-            value=min(float(max(st.session_state.get('capacity_mw', 50.0), 1.0) * 50.0), 5000.0),
-            step=10.0,
+            value=50.0, step=10.0,
         )
-        # 기본값 60 kW/MW — 발열 기본(50 kW/MW)을 상회하도록 (30이면 기본 조합이 항상 과열 판정)
+        # HVAC 기본 60 kW — 발열 기본(50 kW)을 상회하는 적정 설계 출발점
         hvac_kw = st.number_input(
             t("p9_hvac_cap"), min_value=1.0, max_value=3000.0,
-            value=min(float(max(st.session_state.get('capacity_mw', 50.0), 1.0) * 60.0), 3000.0),
-            step=5.0,
+            value=60.0, step=5.0,
         )
     with c2:
         con_l = st.number_input(t("p9_con_l"), min_value=3.0,  max_value=30.0, value=12.19, step=0.5)
@@ -518,38 +526,12 @@ def run_container_thermal_module():
                 camera=dict(eye=dict(x=1.8, y=-1.6, z=1.5)),
             )
 
-            # 정지 상태에서는 run_every=None — 유휴 시 0.4초 무한 재렌더 루프 차단.
-            # 재생 상태 전환은 st.rerun(scope="app")으로 전체 rerun하여 타이머를 재장전한다.
-            _sl_every = 0.4 if st.session_state.get("sl_playing", False) else None
-
-            @st.fragment(run_every=_sl_every)
-            def _slice_anim():
-                zi = int(st.session_state.get("sl_frame", 0)) % n_z
-                playing = st.session_state.get("sl_playing", False)
-
-                _t2_sc1, _t2_sc2 = st.columns([6, 2])
-                with _t2_sc1:
-                    _step = st.slider(
-                        "높이 슬라이더 (m):" if not is_en else "Height Slider (m):",
-                        0, n_z - 1, zi,
-                        format="%d",
-                        key="sl_step_slider",
-                    )
-                with _t2_sc2:
-                    if st.button("▶ 시작" if not is_en else "▶ Start", key="sl_play_btn", type="primary", use_container_width=True):
-                        st.session_state["sl_playing"] = True
-                        st.session_state["sl_frame"] = 0
-                        st.rerun(scope="app")
-                    if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="sl_pause_btn", type="secondary", use_container_width=True):
-                        st.session_state["sl_playing"] = False
-                        st.rerun(scope="app")
-                if _step != zi and not playing:
-                    zi = _step
-                    st.session_state["sl_frame"] = zi
-
-                z_val   = float(z_vals[zi])
+            # go.Frames 클라이언트 애니메이션 — 서버 폴링(fragment) 없이 브라우저에서
+            # 부드럽게 재생. 바닥→천장 단면 스캔 (▶ 재생 / 슬라이더 스크럽)
+            def _slice_surf(zi):
+                z_val = float(z_vals[zi])
                 T_slice = T_3d[zi]
-                surf = go.Surface(
+                return go.Surface(
                     x=x_c, y=y_c,
                     z=np.full_like(T_slice, z_val),
                     surfacecolor=T_slice,
@@ -564,82 +546,40 @@ def run_container_thermal_module():
                         f"<b>%{{customdata:.1f}}°C</b><extra></extra>"
                     ),
                 )
-                
-                fig_s = go.Figure(data=[surf] + wire_data)
-                fig_s.update_layout(
-                    **dark_layout,
-                    title=f"3D 수평 단면 온도 — {z_val:.2f}m" if not is_en
-                          else f"3D Horizontal Temp Slice — {z_val:.2f}m",
-                    scene=_scene_t2,
-                )
-                st.plotly_chart(fig_s, use_container_width=True, key="sl_chart")
 
-                if playing:
-                    if zi < n_z - 1:
-                        st.session_state["sl_frame"] = zi + 1
-                    else:
-                        st.session_state["sl_playing"] = False
-                        st.rerun(scope="app")   # 재생 종료 — 타이머 해제
-
-            _slice_anim()
+            _t2_layout = dict(
+                **dark_layout,
+                title=("3D 수평 단면 온도 — 바닥→천장 스캔" if not is_en
+                       else "3D Horizontal Temp Slice — floor→ceiling scan"),
+                scene=_scene_t2,
+                margin=dict(l=0, r=0, t=60, b=60),
+            )
+            fig_s = build_animation(
+                base_traces=[_slice_surf(0)] + wire_data,
+                frame_traces_list=[[_slice_surf(zi)] for zi in range(n_z)],
+                frame_names=[f"z{zi}" for zi in range(n_z)],
+                time_labels=[f"{float(z_vals[zi]):.2f}m" for zi in range(n_z)],
+                animated_trace_idx=[0],
+                layout=_t2_layout,
+                duration_ms=220,
+                prefix="z = ",
+            )
+            st.plotly_chart(fig_s, use_container_width=True, key="sl_chart")
             st.caption(
                 "▶ 재생으로 바닥→천장 단면 스캔 | 슬라이더로 높이 선택 | 청록 선 = HVAC 덕트" if not is_en
                 else "▶ Play scans floor→ceiling | Slider selects height | Cyan = HVAC ducts"
             )
-        # ── Tab 3: 3D Airflow — fragment-based particle animation ──────────────
+        # ── Tab 3: 3D Airflow — 퍼텐셜 유동+부력 파티클, go.Frames 클라이언트 재생 ──
         with tab3:
-            U, V = vent_airflow_vectors(T_floor, sim_exhaust, sim_intake, NX, NY)
-
-            N_FRAMES = 48
-            N_COLS, N_ROWS = 8, 5
-            N_P = N_COLS * N_ROWS
-            TAIL_LEN = 6
-
-            gx_arr = np.linspace(con_l * 0.07, con_l * 0.93, N_COLS)
-            gy_arr = np.linspace(con_w * 0.10, con_w * 0.90, N_ROWS)
-            G_X, G_Y = np.meshgrid(gx_arr, gy_arr)
-            p0x = G_X.flatten()
-            p0y = G_Y.flatten()
-
-            base_z = np.array([
-                con_h * (0.10 + 0.80 * (i / (N_P - 1))) for i in range(N_P)
-            ])
-            step_x = con_l * 0.07
-            step_y = con_w * 0.07
-
-            # Pre-compute trajectories once per simulation result
-            # 캐시 키: id() 대신 결과 시그니처 — 재실행마다 세션에 쌓이는 누수·오매칭 방지
-            _traj_sig = (round(float(T_floor.sum()), 3), tuple(sim_exhaust), tuple(sim_intake),
-                         round(float(con_l), 3), round(float(con_w), 3))
-            traj_key = "af_traj"
-            if st.session_state.get("af_traj_sig") != _traj_sig:
-                st.session_state.pop(traj_key, None)
-                st.session_state["af_traj_sig"] = _traj_sig
-            if traj_key not in st.session_state:
-                traj_x_b = [p0x.copy()]
-                traj_y_b = [p0y.copy()]
-                px_c, py_c = p0x.copy(), p0y.copy()
-                for _ in range(N_FRAMES - 1):
-                    nx_a = np.empty_like(px_c)
-                    ny_a = np.empty_like(py_c)
-                    for i in range(N_P):
-                        gxi = max(0, min(NX - 1, int(px_c[i] / dx)))
-                        gyi = max(0, min(NY - 1, int(py_c[i] / dy)))
-                        ux  = float(U[gyi, gxi])
-                        vy_ = float(V[gyi, gxi])
-                        mag = max(np.sqrt(ux ** 2 + vy_ ** 2), 1e-6)
-                        nx_a[i] = (px_c[i] + ux  / mag * step_x) % con_l
-                        ny_a[i] = (py_c[i] + vy_ / mag * step_y) % con_w
-                    px_c, py_c = nx_a, ny_a
-                    traj_x_b.append(px_c.copy())
-                    traj_y_b.append(py_c.copy())
-                st.session_state[traj_key] = (traj_x_b, traj_y_b)
-            traj_x, traj_y = st.session_state[traj_key]
-
-            # Speed stored in session state; fragment reads it on each run
-            # 정지 상태에서는 run_every=None — 유휴 시 0.3초 무한 재렌더 루프 차단
-            _af_iv = (st.session_state.get("af_interval", 0.3)
-                      if st.session_state.get("af_playing", False) else None)
+            # 물리 기반 유동장: 흡기=소스 / 배기=싱크 퍼텐셜 유동 + 온도 부력 상승 + OU 난류
+            exhaust_xy = tuple((round(float(v[0]) * dx, 3), round(float(v[1]) * dy, 3)) for v in sim_exhaust)
+            intake_xy  = tuple((round(float(v[0]) * dx, 3), round(float(v[1]) * dy, 3)) for v in sim_intake)
+            traj = _airflow_traj_cached(T_floor, exhaust_xy, intake_xy,
+                                        float(con_l), float(con_w), float(con_h), float(amb))
+            N_FRAMES = traj["x"].shape[0]
+            AF_DT = 0.35                      # airflow_trajectories dt와 동일 (라벨용)
+            TAIL = 4
+            sp_max = 1.2
 
             _scene_c = dict(
                 **_base_scene,
@@ -649,129 +589,92 @@ def run_container_thermal_module():
                 camera=dict(eye=dict(x=1.6, y=-1.8, z=1.5)),
             )
 
-            @st.fragment(run_every=_af_iv)
-            def _airflow_anim():
-                fi = int(st.session_state.get("af_frame", 0)) % N_FRAMES
-                playing = st.session_state.get("af_playing", False)
-                phase = fi / N_FRAMES * 2 * np.pi
-
-                # Controls inside fragment — prevents full page rerun / tab reset
-                _af_c1, _af_c2, _af_c3 = st.columns([3, 1, 1])
-                with _af_c1:
-                    _new_iv = st.select_slider(
-                        "속도 (초/프레임)" if not is_en else "Speed (sec/frame)",
-                        options=[0.1, 0.15, 0.2, 0.3, 0.5, 0.8, 1.0],
-                        value=st.session_state.get("af_interval", 0.3),
-                        key="af_speed_sel",
-                    )
-                    _iv_changed = st.session_state.get("af_interval") != _new_iv
-                    st.session_state["af_interval"] = _new_iv
-                    if _iv_changed and playing:
-                        st.rerun(scope="app")   # 재생 중 속도 변경 — 새 간격으로 타이머 재장전
-                with _af_c2:
-                    if st.button("▶ 시작" if not is_en else "▶ Start", key="af_play_btn",
-                                 type="primary", use_container_width=True):
-                        st.session_state["af_playing"] = True
-                        st.session_state["af_frame"] = 0
-                        st.rerun(scope="app")   # 타이머 장전 (run_every 재평가)
-                with _af_c3:
-                    if st.button("⏸ 정지" if not is_en else "⏸ Pause", key="af_pause_btn",
-                                 type="secondary", use_container_width=True):
-                        st.session_state["af_playing"] = False
-                        st.rerun(scope="app")   # 타이머 해제
-
-                traces = []
-                # Tail traces (fading)
-                for tb in range(min(TAIL_LEN, fi), 0, -1):
-                    alpha = (1.0 - tb / TAIL_LEN) * 0.45
-                    fi_b = fi - tb
-                    ph_b = fi_b / N_FRAMES * 2 * np.pi
-                    tz = np.array([
-                        base_z[i] + con_h * 0.04 * np.sin(ph_b + i * 0.42)
-                        for i in range(N_P)
-                    ])
-                    traces.append(go.Scatter3d(
-                        x=traj_x[fi_b], y=traj_y[fi_b], z=tz,
-                        mode='markers',
-                        marker=dict(size=3, color=f'rgba(0,180,216,{alpha:.2f})'),
-                        showlegend=False, hoverinfo='skip',
-                    ))
-
-                # Current frame — bright particles coloured by height
-                cur_z = np.array([
-                    base_z[i] + con_h * 0.06 * np.sin(phase + i * 0.42)
-                    for i in range(N_P)
-                ])
-                traces.append(go.Scatter3d(
-                    x=traj_x[fi], y=traj_y[fi], z=cur_z,
-                    mode='markers',
+            def _air_traces(k):
+                # 잔상 트레일: 직전 TAIL 프레임 위치 (반투명 페이드)
+                t0 = max(k - TAIL, 0)
+                if k > t0:
+                    tx = traj["x"][t0:k].ravel(); ty = traj["y"][t0:k].ravel()
+                    tz = traj["z"][t0:k].ravel()
+                else:
+                    tx = ty = tz = np.array([])
+                tail = go.Scatter3d(
+                    x=tx, y=ty, z=tz, mode='markers',
+                    marker=dict(size=2.5, color='rgba(88,166,255,0.20)'),
+                    showlegend=False, hoverinfo='skip',
+                )
+                # 본체: 속도 크기 컬러 (유속이 빠른 덕트 근처가 밝게)
+                main = go.Scatter3d(
+                    x=traj["x"][k], y=traj["y"][k], z=traj["z"][k], mode='markers',
                     marker=dict(
-                        size=6, color=cur_z, colorscale='Blues',
-                        cmin=0, cmax=con_h, opacity=0.95,
+                        size=4.5, color=traj["speed"][k], colorscale='Turbo',
+                        cmin=0.0, cmax=sp_max, opacity=0.9,
+                        colorbar=dict(title=("유속 (m/s)" if not is_en else "Speed (m/s)"),
+                                      x=1.02, thickness=12),
                     ),
                     name="공기 파티클" if not is_en else "Air Particles",
                     hovertemplate="X=%{x:.1f}m Y=%{y:.1f}m Z=%{z:.2f}m<extra></extra>",
-                ))
-
-                # Floor temperature surface
-                traces.append(go.Surface(
-                    x=x_c, y=y_c, z=np.zeros_like(T_floor),
-                    surfacecolor=T_floor,
-                    colorscale="RdYlBu_r", cmin=amb, cmax=max(peak, amb + 1),
-                    showscale=False, opacity=0.35,
-                    name="Floor Temp", hoverinfo='skip',
-                ))
-
-                # Exhaust duct markers (cyan)
-                if sim_exhaust:
-                    traces.append(go.Scatter3d(
-                        x=[float(v[0]) * dx for v in sim_exhaust],
-                        y=[float(v[1]) * dy for v in sim_exhaust],
-                        z=[con_h * 0.95] * len(sim_exhaust),
-                        mode='markers+text',
-                        marker=dict(size=6, color='#00b4d8', symbol='diamond', opacity=0.9),
-                        text=["💨"] * len(sim_exhaust),
-                        textposition="bottom center",
-                        textfont=dict(size=9, color='#00b4d8'),
-                        name="배기 덕트" if not is_en else "Exhaust Duct",
-                        hovertemplate=("배기 X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>" if not is_en
-                                       else "Exhaust X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>"),
-                    ))
-                # Intake duct markers (orange)
-                if sim_intake:
-                    traces.append(go.Scatter3d(
-                        x=[float(v[0]) * dx for v in sim_intake],
-                        y=[float(v[1]) * dy for v in sim_intake],
-                        z=[con_h * 0.95] * len(sim_intake),
-                        mode='markers+text',
-                        marker=dict(size=6, color='#ff7f0e', symbol='diamond', opacity=0.9),
-                        text=["🔵"] * len(sim_intake),
-                        textposition="bottom center",
-                        textfont=dict(size=9, color='#ff7f0e'),
-                        name="흡기 덕트" if not is_en else "Intake Duct",
-                        hovertemplate=("흡기 X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>" if not is_en
-                                       else "Intake X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>"),
-                    ))
-
-                fig_c = go.Figure(data=traces)
-                fig_c.update_layout(
-                    **dark_layout,
-                    title=(
-                        f"3D 공기 흐름 — {'▶ 재생 중' if playing else '⏸ 정지'} (프레임 {fi + 1}/{N_FRAMES})"
-                        if not is_en else
-                        f"3D Airflow — {'▶ Playing' if playing else '⏸ Paused'} (Frame {fi + 1}/{N_FRAMES})"
-                    ),
-                    scene=_scene_c,
                 )
-                st.plotly_chart(fig_c, use_container_width=True, key="af_chart")
+                return [tail, main]
 
-                if playing:
-                    st.session_state["af_frame"] = (fi + 1) % N_FRAMES
+            static_traces = [go.Surface(
+                x=x_c, y=y_c, z=np.zeros_like(T_floor),
+                surfacecolor=T_floor,
+                colorscale="RdYlBu_r", cmin=amb, cmax=max(peak, amb + 1),
+                showscale=False, opacity=0.35,
+                name="Floor Temp", hoverinfo='skip',
+            )]
+            if sim_exhaust:
+                static_traces.append(go.Scatter3d(
+                    x=[float(v[0]) * dx for v in sim_exhaust],
+                    y=[float(v[1]) * dy for v in sim_exhaust],
+                    z=[con_h * 0.95] * len(sim_exhaust),
+                    mode='markers+text',
+                    marker=dict(size=6, color='#00b4d8', symbol='diamond', opacity=0.9),
+                    text=["💨"] * len(sim_exhaust),
+                    textposition="bottom center",
+                    textfont=dict(size=9, color='#00b4d8'),
+                    name="배기 덕트" if not is_en else "Exhaust Duct",
+                    hovertemplate=("배기 X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>" if not is_en
+                                   else "Exhaust X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>"),
+                ))
+            if sim_intake:
+                static_traces.append(go.Scatter3d(
+                    x=[float(v[0]) * dx for v in sim_intake],
+                    y=[float(v[1]) * dy for v in sim_intake],
+                    z=[con_h * 0.95] * len(sim_intake),
+                    mode='markers+text',
+                    marker=dict(size=6, color='#ff7f0e', symbol='diamond', opacity=0.9),
+                    text=["🔵"] * len(sim_intake),
+                    textposition="bottom center",
+                    textfont=dict(size=9, color='#ff7f0e'),
+                    name="흡기 덕트" if not is_en else "Intake Duct",
+                    hovertemplate=("흡기 X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>" if not is_en
+                                   else "Intake X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>"),
+                ))
 
-            _airflow_anim()
+            _c_layout = dict(
+                **dark_layout,
+                title=("3D 공기 흐름 — 흡기→배기 순환 (퍼텐셜 유동 + 부력)" if not is_en
+                       else "3D Airflow — intake→exhaust circulation (potential flow + buoyancy)"),
+                scene=_scene_c,
+                margin=dict(l=0, r=0, t=60, b=60),
+            )
+            fig_c = build_animation(
+                base_traces=_air_traces(0) + static_traces,
+                frame_traces_list=[_air_traces(k) for k in range(N_FRAMES)],
+                frame_names=[f"a{k}" for k in range(N_FRAMES)],
+                time_labels=[f"{k * AF_DT:.1f}s" for k in range(N_FRAMES)],
+                animated_trace_idx=[0, 1],
+                layout=_c_layout,
+                duration_ms=80,               # 브라우저 클라이언트 재생 — 부드러운 12.5fps
+                prefix="t = ",
+            )
+            st.plotly_chart(fig_c, use_container_width=True, key="af_chart")
             st.caption(
-                "파란 점 = 공기 파티클 | 💨(청록) = 배기 덕트 (공기 흡입) | 🔵(주황) = 흡기 덕트 (공기 공급) | ▶ 시작 / ⏸ 정지" if not is_en
-                else "Blue dots = air particles | 💨(cyan) = Exhaust duct (air out) | 🔵(orange) = Intake duct (air in) | ▶ Start / ⏸ Pause"
+                "점 색 = 유속(m/s), 꼬리 = 잔상 | 흐름: 🔵 흡기(급기, 하강·발산) → 부력 상승 → 💨 배기(수렴·포집) | "
+                "퍼텐셜 유동 + 부력 + 난류 섭동의 운동학 모델 (모멘텀 CFD 아님)" if not is_en
+                else "Dot color = speed (m/s), tails = motion trails | Flow: 🔵 intake (supply, descending·diverging) → "
+                     "buoyant rise → 💨 exhaust (converging·captured) | Kinematic potential-flow + buoyancy + turbulence model (not momentum CFD)"
             )
 
         with st.expander("📐 " + ("해석 방법론 & 가정" if not is_en else "Methodology & Assumptions")):
@@ -784,7 +687,8 @@ def run_container_thermal_module():
                     "35 %는 선택한 덕트 셀에 집중 → 덕트 주변이 국부적으로 더 차가움. 냉각량은 (T − T_supply)에 비례(자기제한적)\n"
                     "- **혼합:** 유효 난류 확산계수 α_eff = 0.08 m²/s | **외피:** U_env = 2.5 W/m²K (지붕+벽)\n"
                     "- **수직 분포(탭 2):** 깊이평균 결과에 선형 성층 프로파일 적용 — 천장 초과온도 ≈ 바닥의 2배 (부력 성층 근사)\n"
-                    "- **공기 흐름(탭 3):** 최근접 덕트 방향의 단순 운동학적 벡터장 — 모멘텀 해석 아님(시각화 보조)\n\n"
+                    "- **공기 흐름(탭 3):** 흡기=소스·배기=싱크 퍼텐셜 유동 중첩 + 바닥 온도 부력 상승류 + "
+                    "OU(Ornstein–Uhlenbeck) 난류 섭동의 운동학 모델 — 유선 위상(흡기→배기 순환)은 물리적, 모멘텀 해석 아님\n\n"
                     "⚠️ **축소차수 해석 모델** — 파라미터 스크리닝/덕트 배치 비교 용도입니다. 운동량·부력장을 직접 풀지 않으므로 "
                     "제트 충돌, 급기 단락, 국부 재순환은 반영되지 않습니다. 설계 검증은 OpenFOAM / ANSYS Fluent CFD가 필요합니다."
                 ) if not is_en else (
@@ -798,7 +702,9 @@ def run_container_thermal_module():
                     "- **Mixing:** effective turbulent diffusivity α_eff = 0.08 m²/s | **Envelope:** U_env = 2.5 W/m²K (roof + walls)\n"
                     "- **Vertical field (Tab 2):** linear stratification profile applied to the depth-averaged result — "
                     "ceiling excess temp ≈ 2× floor (buoyant stratification surrogate)\n"
-                    "- **Airflow (Tab 3):** kinematic nearest-duct vector field — NOT a momentum solution (visual aid only)\n\n"
+                    "- **Airflow (Tab 3):** kinematic model — superposed potential flow (intakes as sources, exhausts as sinks) "
+                    "+ floor-temperature buoyant updraft + OU turbulence perturbation. Streamline topology (intake→exhaust "
+                    "circulation) is physical; NOT a momentum solution\n\n"
                     "⚠️ **Reduced-order analytical model** — for parametric screening and duct-layout comparison. "
                     "Momentum/buoyancy fields are not resolved, so jet impingement, supply short-circuiting and local "
                     "recirculation are not captured. Use OpenFOAM / ANSYS Fluent CFD for design verification."

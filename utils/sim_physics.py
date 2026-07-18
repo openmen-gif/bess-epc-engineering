@@ -249,6 +249,99 @@ def plume_particles(z_layer, T_layer_C, Q_MW, H, dom_x=20.0, dom_y=20.0,
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 3b. Duct-driven airflow particle advection (potential flow + buoyancy)
+#
+#    수평면: 흡기 덕트 = 소스(+S), 배기 덕트 = 싱크(−S)의 퍼텐셜 유동 중첩
+#      u(x) = Σ S·(x−x_src)/(2π r²) − Σ S·(x−x_snk)/(2π r²)   (r ≥ r_core 클램프)
+#    연직: 바닥 온도 초과에 비례한 부력 상승류 + 흡기 급기류 하강 성분
+#    난류: OU(Ornstein–Uhlenbeck) 유사 랜덤 섭동으로 실측 유동의 요동 재현
+#    배기 포획 시 흡기에서 재주입 — 파티클 순환(모듈로 텔레포트 없음)
+# ═══════════════════════════════════════════════════════════════════════════
+def airflow_trajectories(T_floor, exhaust_xy, intake_xy, Lx, Ly, H,
+                         n_particles=150, n_frames=60, dt=0.35,
+                         T_amb=25.0, u_ref=0.55, seed=7):
+    """파티클 궤적 사전 계산 — 반환 dict(x, y, z, speed): 각 (n_frames, N) 배열.
+
+    exhaust_xy / intake_xy : [(x, y), ...] 물리 좌표 [m] (배기/흡기 덕트 위치)
+    u_ref : 덕트 1개당 대표 유속 스케일 [m/s]
+    시각화용 운동학 모델 — 모멘텀 해석(CFD)이 아님. 유선 위상(흡기→배기),
+    부력 상승, 요동의 '방향성'만 물리적으로 재현한다."""
+    rng = np.random.default_rng(seed)
+    ny, nx = T_floor.shape
+    dxg, dyg = Lx / nx, Ly / ny
+    dT_max = max(float(T_floor.max()) - T_amb, 1.0)
+
+    ex = np.array([p[0] for p in exhaust_xy], dtype=float)
+    ey = np.array([p[1] for p in exhaust_xy], dtype=float)
+    ix_ = np.array([p[0] for p in intake_xy], dtype=float)
+    iy_ = np.array([p[1] for p in intake_xy], dtype=float)
+    S = u_ref * 2.0 * np.pi * 0.5 ** 2          # r=0.5 m에서 u_ref가 되는 강도
+    r_core2 = 0.35 ** 2
+
+    def _uv(px, py):
+        u = np.zeros_like(px); v = np.zeros_like(py)
+        for sx, sy in zip(ix_, iy_):             # 소스(흡기): 바깥으로 발산
+            rx, ry = px - sx, py - sy
+            r2 = np.maximum(rx * rx + ry * ry, r_core2)
+            u += S * rx / (2.0 * np.pi * r2); v += S * ry / (2.0 * np.pi * r2)
+        for sx, sy in zip(ex, ey):               # 싱크(배기): 안으로 수렴
+            rx, ry = px - sx, py - sy
+            r2 = np.maximum(rx * rx + ry * ry, r_core2)
+            u -= S * rx / (2.0 * np.pi * r2); v -= S * ry / (2.0 * np.pi * r2)
+        return u, v
+
+    def _t_local(px, py):
+        gx = np.clip((px / dxg).astype(int), 0, nx - 1)
+        gy = np.clip((py / dyg).astype(int), 0, ny - 1)
+        return T_floor[gy, gx]
+
+    # 초기 분포: 흡기 주변 + 실내 랜덤 혼합
+    px = rng.uniform(0.05 * Lx, 0.95 * Lx, n_particles)
+    py = rng.uniform(0.08 * Ly, 0.92 * Ly, n_particles)
+    pz = rng.uniform(0.15 * H, 0.9 * H, n_particles)
+    tu = np.zeros(n_particles); tv = np.zeros(n_particles); tw = np.zeros(n_particles)
+
+    X = np.empty((n_frames, n_particles)); Y = np.empty_like(X)
+    Z = np.empty_like(X); SP = np.empty_like(X)
+    w_buoy = 0.28                                # 부력 상승 최대 [m/s]
+    sigma = 0.10                                 # 난류 섭동 강도
+    for k in range(n_frames):
+        u, v = _uv(px, py)
+        # 부력: 뜨거운 바닥 위 상승 / 흡기 급기(차가움)는 하강
+        w = w_buoy * (_t_local(px, py) - T_amb) / dT_max - 0.06
+        # OU 난류 섭동 (관성 있는 요동 — 백색잡음보다 자연스러움)
+        tu = 0.82 * tu + sigma * rng.normal(0, 1, n_particles)
+        tv = 0.82 * tv + sigma * rng.normal(0, 1, n_particles)
+        tw = 0.82 * tw + 0.5 * sigma * rng.normal(0, 1, n_particles)
+        vx, vy, vz = u + tu, v + tv, w + tw
+        spd = np.sqrt(vx * vx + vy * vy + vz * vz)
+        # 속도 상한(시각적 안정) 후 전진
+        cap = np.minimum(1.0, 1.2 / np.maximum(spd, 1e-9))
+        px = px + vx * cap * dt; py = py + vy * cap * dt; pz = pz + vz * cap * dt
+        # 벽·천장·바닥 소프트 반사
+        px = np.clip(px, 0.02 * Lx, 0.98 * Lx); py = np.clip(py, 0.02 * Ly, 0.98 * Ly)
+        pz = np.where(pz > 0.96 * H, 0.96 * H - (pz - 0.96 * H), pz)
+        pz = np.clip(pz, 0.06 * H, 0.96 * H)
+        # 배기 포획 → 흡기(없으면 랜덤 위치)에서 재주입
+        if len(ex):
+            for sx, sy in zip(ex, ey):
+                caught = ((px - sx) ** 2 + (py - sy) ** 2 < 0.55 ** 2) & (pz > 0.55 * H)
+                n_c = int(caught.sum())
+                if n_c:
+                    if len(ix_):
+                        j = rng.integers(0, len(ix_), n_c)
+                        px[caught] = ix_[j] + rng.normal(0, 0.25, n_c)
+                        py[caught] = iy_[j] + rng.normal(0, 0.25, n_c)
+                        pz[caught] = rng.uniform(0.75 * H, 0.92 * H, n_c)
+                    else:
+                        px[caught] = rng.uniform(0.1 * Lx, 0.9 * Lx, n_c)
+                        py[caught] = rng.uniform(0.1 * Ly, 0.9 * Ly, n_c)
+                        pz[caught] = rng.uniform(0.2 * H, 0.9 * H, n_c)
+        X[k], Y[k], Z[k], SP[k] = px, py, pz, spd
+    return {"x": X, "y": Y, "z": Z, "speed": SP}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 4. Cell-to-cell thermal-runaway propagation (lumped rack model)
 #
 #    Incident flux (SFPE point-source): q″ = χr·Q_eff / (4π·d²)
