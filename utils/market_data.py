@@ -509,12 +509,15 @@ DATA_SNAPSHOT_AS_OF = "2026-07-19"
 #   SolarPower Europe(EU 2025 27.1GWh), Energy-Storage.News(UK 4GWh), pv-mag(호주 11.4GWh),
 #   IEEFA(일본 0.62GW 연계), Utility Dive/BNEF(미국 18GW/54.6GWh), TradingEconomics(리튬 ~$24.2k/t).
 
-# 최근 분기 실적 — 월간/분기 공개 트래커(현재 시점 앵커). 월간 갱신 시 함께 업데이트.
+# 최근 분기 실적 — 월간/분기 공개 트래커(현재 시점 앵커). 분기가 바뀌면 반드시 갱신할 것
+# (report_local.py의 경과일 경고 로직이 이 period를 기준으로 자동 판정함).
 RECENT_QUARTER = {
     "period": "2026 Q1",
-    "global_gwh": 126.4,          # 전년동기 +54% (SEIA/ESS-news, 2026-05)
-    "us_gwh": 9.7,                # 역대 최대 Q1, +32% YoY (SEIA Energy Storage Outlook Q2 2026)
-    "lfp_cell_low_usd_kwh": 47,   # CEEC 7GWh 조달 최저가 (ess-news, 2026-05)
+    "global_gwh": 126.4,
+    "global_yoy_pct": 54,          # 전년동기 대비 (SEIA/ESS-news, 2026-05)
+    "us_gwh": 9.7,
+    "us_yoy_pct": 32,              # 전년동기 대비, 역대 최대 Q1 (SEIA Energy Storage Outlook Q2 2026)
+    "lfp_cell_low_usd_kwh": 47,    # CEEC 7GWh 조달 최저가 (ess-news, 2026-05)
     "source": "SEIA Energy Storage Market Outlook Q2 2026 (2026-05) · ESS-News/CEEC",
 }
 

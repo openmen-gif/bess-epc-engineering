@@ -32,7 +32,18 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+import re
+
 import utils.market_data as md
+
+# 표 데이터 셀 자동 정렬용 — 숫자/통화/퍼센트/N/A 표기는 우측 정렬, 그 외 텍스트는 좌측 정렬.
+_NUMERIC_CELL_RE = re.compile(r"^[+\-]?\$?[\d,]+(\.\d+)?\s*%?$")
+
+def _is_numeric_cell(val: str) -> bool:
+    s = val.strip()
+    if s in ("—", "N/A", ""):
+        return True
+    return bool(_NUMERIC_CELL_RE.match(s))
 
 try:
     from fpdf import FPDF
@@ -493,9 +504,11 @@ def _styled_table(doc, headers, rows, col_widths_mm=None):
             cell = tbl.cell(ri + 1, ci)
             cell.text = ""
             p = cell.paragraphs[0]
-            r = p.add_run(str(val))
+            _val_str = str(val)
+            r = p.add_run(_val_str)
             r.font.size = Pt(9)
             r.font.name = FONT
+            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT if _is_numeric_cell(_val_str) else WD_ALIGN_PARAGRAPH.LEFT
             p.paragraph_format.space_before = Pt(1)
             p.paragraph_format.space_after = Pt(1)
             if ri % 2 == 1:
@@ -887,8 +900,11 @@ def generate_word_report():
         [f"글로벌 {_yr}년 도입 (최신 실적)", f"{md.GLOBAL_CAPACITY_GWH.get(_yr, 'N/A')} GWh"],
         [f"글로벌 {_cy2}년 도입 (E·전망)", f"{md.GLOBAL_CAPACITY_GWH.get(_cy2, 'N/A')} GWh"],
         [f"LFP 셀 가격 ({_yr})", f"${md.LFP_CELL_PRICE.get(_yr, 'N/A')}/kWh"],
+        [f"LFP 셀 가격 ({_cy2}, E·전망)", f"${md.LFP_CELL_PRICE.get(_cy2, 'N/A')}/kWh"],
         [f"NMC 셀 가격 ({_yr})", f"${md.NMC_CELL_PRICE.get(_yr, 'N/A')}/kWh"],
+        [f"NMC 셀 가격 ({_cy2}, E·전망)", f"${md.NMC_CELL_PRICE.get(_cy2, 'N/A')}/kWh"],
         [f"시스템 CAPEX ({_yr})", f"${md.SYSTEM_CAPEX.get(_yr, 'N/A')}/kWh"],
+        [f"시스템 CAPEX ({_cy2}, E·전망)", f"${md.SYSTEM_CAPEX.get(_cy2, 'N/A')}/kWh"],
         ["분석 시점", now_str],
         ["데이터 스냅샷 기준", md.DATA_SNAPSHOT_AS_OF],
     ]
@@ -913,7 +929,7 @@ def generate_word_report():
         doc,
         ["섹션", "기준일", "유형", "출처"],
         _freshness_rows,
-        col_widths_mm=[55, 22, 22, 71],
+        col_widths_mm=[50, 20, 20, 70],
     )
 
     # Section 1 interpretation
@@ -946,17 +962,41 @@ def generate_word_report():
         _r.font.size = Pt(10); _r.font.name = FONT
 
     # 최근 분기 실적 콜아웃 — 현재 시점(분기 트래커) 앵커. 연간 스냅샷보다 신선한 공개치.
+    # 분기 종료 후 150일(약 1개 분기+발표 유예) 초과 시 경과 경고로 전환 — RECENT_QUARTER가
+    # 다음 분기로 갱신되지 않은 채 방치되는 것을 리포트 단계에서 스스로 감지한다.
     _rq = getattr(md, "RECENT_QUARTER", None)
     if _rq:
+        _rq_age_days = None
+        try:
+            _rq_y_str, _rq_q_str = _rq["period"].split(" Q")
+            _rq_end_month = int(_rq_q_str) * 3
+            _rq_end = datetime.date(int(_rq_y_str), _rq_end_month, 1)
+            _rq_next_month = _rq_end.replace(day=28) + datetime.timedelta(days=4)
+            _rq_end = _rq_next_month - datetime.timedelta(days=_rq_next_month.day)
+            _rq_age_days = (now.date() - _rq_end).days
+        except Exception:
+            pass
+        _rq_stale = _rq_age_days is not None and _rq_age_days > 150
+        _rq_global_yoy = _rq.get("global_yoy_pct")
+        _rq_us_yoy = _rq.get("us_yoy_pct")
+        _rq_prefix = "⚠️ [최근 분기 실적 · 경과] " if _rq_stale else "[최근 분기 실적] "
+        _rq_stale_note = (
+            f" 분기 종료 후 {_rq_age_days}일 경과 — market_data.RECENT_QUARTER를 다음 분기로 갱신 권장."
+            if _rq_stale else ""
+        )
         _p_rq = doc.add_paragraph(
-            f"[최근 분기 실적 · {_rq['period']}] 글로벌 약 {_rq['global_gwh']} GWh 도입(전년동기 +54%), "
-            f"미국 약 {_rq['us_gwh']} GWh(역대 최대 분기), LFP 셀 최저 ${_rq['lfp_cell_low_usd_kwh']}/kWh 조달가. "
-            f"출처: {_rq['source']}. 연간 스냅샷보다 신선한 분기 트래커로, 현재 시장이 전망 경로 상에 있음을 확인."
+            f"{_rq_prefix}{_rq['period']} 글로벌 약 {_rq['global_gwh']} GWh 도입"
+            f"{f'(전년동기 +{_rq_global_yoy}%)' if _rq_global_yoy is not None else ''}, "
+            f"미국 약 {_rq['us_gwh']} GWh"
+            f"{f'(전년동기 +{_rq_us_yoy}%)' if _rq_us_yoy is not None else ''}, "
+            f"LFP 셀 최저 ${_rq['lfp_cell_low_usd_kwh']}/kWh 조달가. "
+            f"출처: {_rq['source']}. 연간 스냅샷보다 신선한 분기 트래커로, 현재 시장이 전망 경로 상에 있음을 확인.{_rq_stale_note}"
         )
         _p_rq.paragraph_format.space_before = Pt(2)
         for _r in _p_rq.runs:
             _r.font.size = Pt(9); _r.font.name = FONT
-            _r.font.color.rgb = RGBColor(0x2E, 0x75, 0xB6)
+            _r.font.bold = _rq_stale
+            _r.font.color.rgb = RGBColor(0xC6, 0x28, 0x28) if _rq_stale else RGBColor(0x2E, 0x75, 0xB6)
 
     # 최신 기사 기반 시장 신호 — 생성 시점에 산업 뉴스 RSS를 fetch→수치 자동 추출(LLM/키 불필요).
     # "보고서 버튼 클릭 = 그 시점 공개 기사 분석"을 배포 런타임에서 구현하는 부분.
@@ -1065,8 +1105,11 @@ def generate_word_report():
         for _r in _p_ov.runs:
             _r.font.size = Pt(10); _r.font.name = FONT
 
+        _cy_r = datetime.datetime.now().year
+        _cur_r_cy = r_data["installed_gwh"].get(_cy_r, 0)
         detail_rows = [
             [f"설치 용량 ({_yr}, 추정)", f"~{_cur_r} GWh"],
+            [f"설치 용량 ({_cy_r}, E·전망)", f"~{_cur_r_cy} GWh" if _cur_r_cy else "N/A"],
             [f"YoY 성장률 ({_yr - 1}→{_yr}, 추정)", f"+{_yoy_r}%"],
             ["중기 연간 성장률", f"{r_data['growth_rate_pct']}%"],
             ["파이프라인 (허가/계획)", f"{r_data['pipeline_gwh']} GWh"],
@@ -1114,7 +1157,9 @@ def generate_word_report():
             f"${md.NMC_CELL_PRICE.get(_yr, 'N/A')}/kWh입니다. "
             "중국 제조사의 규모의 경제가 가격 하락을 주도하고 있으며, "
             f"시스템 CAPEX({_yr}: ${md.SYSTEM_CAPEX.get(_yr, 'N/A')}/kWh)는 "
-            f"{_capex_cat_outlook}"
+            f"{_capex_cat_outlook} "
+            "벤더 계층별로도 가격 격차가 뚜렷합니다 — 중국 Tier 1(CATL 글로벌 점유율 약 37%, BYD)이 "
+            "가격 경쟁력을 주도하고, Tier 2(Hithium 등)는 ESS 전용 특화로 최저가 구간을 형성합니다."
         ),
         "프로젝트": (
             "글로벌 BESS 프로젝트는 대형화·장시간화 추세로 4시간 이상 장기저장 비중이 확대되고 있습니다. "
@@ -1125,6 +1170,8 @@ def generate_word_report():
         "경쟁사": (
             "글로벌 BESS 시장은 CATL, BYD 등 중국 제조사와 Tesla Megapack, Fluence, Wärtsilä 등 "
             "통합 솔루션 공급자 간 경쟁이 심화되고 있습니다. "
+            "CATL은 가격 경쟁력과 글로벌 점유율(약 37%)로, BYD는 수직 통합과 Blade Battery 기반 안전성으로 "
+            "차별화하며, Hithium 등 중국 Tier 2 벤더는 ESS 전용 특화로 빠르게 시장을 확대하고 있습니다. "
             "EPC 관점에서는 시스템 통합 역량과 O&M 서비스 패키지가 핵심 차별화 요소이며, "
             "현지화 전략 및 프로젝트 파이낸싱 조달 역량이 수주 경쟁력을 결정합니다."
         ),
@@ -1144,6 +1191,16 @@ def generate_word_report():
     }
     for c in ["배터리 가격", "프로젝트", "경쟁사", "공급망", "정책·규제"]:
         _add_news_section(doc, c, 5, analysis=_CAT_ANALYSIS.get(c, ""))
+
+    _p_skillref = doc.add_paragraph(
+        "※ 위 카테고리 해설은 실시간 뉴스 신호와 함께, 플랫폼 내 전문 스킬 문서 "
+        "(skill_md/bess-battery-expert.md, skill_md/bess-marketer.md)의 벤더 계층·가격 프레임워크를 "
+        "정적으로 반영합니다. 스킬 문서 갱신 시 본 섹션도 함께 재검토가 필요합니다."
+    )
+    for _r in _p_skillref.runs:
+        _r.font.size = Pt(8); _r.font.name = FONT
+        _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+        _r.italic = True
 
     # 3.X Recent Market Commentary (RSS에서 자동 추출된 시장 인용 수치)
     doc.add_heading("📊 최근 시장 인용 수치 (RSS 자동 추출)", level=2)
@@ -1257,7 +1314,7 @@ def generate_word_report():
         trend_rows.append([str(yr), str(cap), cap_yoy, f"${mkt}", mkt_yoy,
                            f"${lfp}", lfp_chg, f"${capex}", capex_chg])
     _styled_table(doc, trend_headers, trend_rows,
-                  col_widths_mm=[18, 18, 14, 18, 14, 18, 14, 22, 14])
+                  col_widths_mm=[18, 18, 14, 18, 14, 18, 14, 32, 14])
 
     # CAGR calculations
     _first_yr, _last_yr = md.YEARS[0], md.YEARS[-1]
@@ -1341,7 +1398,7 @@ def generate_word_report():
             f"{c['market_share_pct']}%", f"${c['revenue_b_usd']}",
             str(c["capacity_gwh"])
         ])
-    _styled_table(doc, comp_headers, comp_rows, col_widths_mm=[28, 16, 22, 20, 18, 18])
+    _styled_table(doc, comp_headers, comp_rows, col_widths_mm=[46, 16, 22, 20, 28, 28])
 
     # 6.2 경쟁사 포지셔닝 차트
     doc.add_heading("6.2 경쟁사 포지셔닝 맵", level=2)
@@ -1394,7 +1451,7 @@ def generate_word_report():
             str(p["capacity_mwh"]), p["status"], p["developer"], str(p["year"])
         ])
     _styled_table(doc, pipe_headers, pipe_rows,
-                  col_widths_mm=[32, 14, 14, 14, 14, 24, 12])
+                  col_widths_mm=[50, 14, 14, 14, 14, 36, 18])
 
     # 7.2 파이프라인 통계
     doc.add_heading("7.2 파이프라인 통계 분석", level=2)
@@ -1437,7 +1494,9 @@ def generate_word_report():
     )
 
     # Try to fetch live data
-    _FX_FALLBACK_DATE = "2026-Q1"
+    # 최후 폴백값 — market_data.fetch_commodity_prices()의 자체 참조값과 반드시 동기화할 것
+    # (2026-07 재검증 기준. 갱신 시 market_data.py의 _FALLBACK/_COMMODITY_REF_DATE도 함께 갱신)
+    _FX_FALLBACK_DATE = "2026-07"
     try:
         _fx = md.fetch_exchange_rates()
         _cmd = md.fetch_commodity_prices()
@@ -1447,7 +1506,7 @@ def generate_word_report():
                "error": "offline",
                "source": f"reference (as of {_FX_FALLBACK_DATE}, offline)"}
         _cmd = {"brent_crude_usd": 72.5, "wti_crude_usd": 68.8,
-                "lithium_carbonate_usd_ton": 11500, "copper_usd_ton": 9200,
+                "lithium_carbonate_usd_ton": 23000, "copper_usd_ton": 9200,
                 "nickel_usd_ton": 16800,
                 "source": f"reference (as of {_FX_FALLBACK_DATE}, offline)"}
 
@@ -1564,7 +1623,7 @@ def generate_word_report():
         base = md.SCENARIOS["기본 (Base)"]["capacity_gwh"].get(yr, 0)
         opti = md.SCENARIOS["낙관적 (Optimistic)"]["capacity_gwh"].get(yr, 0)
         scen_rows.append([str(yr), f"{cons} GWh", f"{base} GWh", f"{opti} GWh"])
-    _styled_table(doc, scen_rows[0], scen_rows[1:], col_widths_mm=[30, 40, 40, 40])
+    _styled_table(doc, scen_rows[0], scen_rows[1:], col_widths_mm=[40, 40, 40, 40])
 
     # Section 9 interpretation
     _sb = md.SCENARIOS["기본 (Base)"]
@@ -1743,7 +1802,7 @@ def generate_word_report():
     for oyr in sorted(om.keys()):
         od = om[oyr]
         om_rows.append([str(oyr), str(od["fixed_per_kw_yr"]), str(od["variable_per_mwh"]), str(od["total_per_kwh_yr"])])
-    _styled_table(doc, om_headers, om_rows, col_widths_mm=[20, 30, 30, 30])
+    _styled_table(doc, om_headers, om_rows, col_widths_mm=[22, 46, 46, 46])
     _first_om = list(sorted(om.keys()))[0]
     _last_om = list(sorted(om.keys()))[-1]
     _om_drop = round((1 - om[_last_om]["total_per_kwh_yr"] / om[_first_om]["total_per_kwh_yr"]) * 100)
