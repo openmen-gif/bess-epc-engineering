@@ -500,7 +500,13 @@ YEAR_LABELS = _build_year_labels(YEARS)
 # 각 카테고리의 마지막 큐레이션 시점과 1차 출처를 명시.
 # 갱신 시 이 dict와 해당 상수를 함께 수정.
 # ============================================================
-DATA_SNAPSHOT_AS_OF = "2026-07-19"
+DATA_SNAPSHOT_AS_OF = "2026-07-21"
+# 2026-07-21 갱신: 전체 카테고리 재검증(WebSearch, BNEF/SEIA/ess-news/CnEVPost/공식 정부발표).
+#   글로벌 용량·시장가치·셀가·CAPEX: BNEF 최신 공개치와 일치 재확인(무변경) — 2025 실적
+#   112GW/307GWh, 2026F 158GW/459GWh(2026-05 BNEF 재확인), LFP 최저 $36/kWh(2025 실적) 그대로.
+#   변경분: COMPETITORS 전면 개편(2026-07-14 ess-news 첫 공식 BESS 통합업체 랭킹 — Sungrow #1
+#   신규 등극, BYD 2025 실적 1위 60GWh 반영, CATL 셀 출하 121GWh로 갱신, Honeywell→Envision 교체).
+#   호주 pipeline_gwh 97.3→121.3(CIS Tender 7+8 신규 확정분, 2026-05~06).
 # 2026-07-19 갱신: 핵심 지표 웹 재검증 — BNEF 1H2026(2026F 158GW/459GWh)·턴키 $117/kWh·
 #   미국 Q1 9.7GWh 최신치와 일치 확인(무변경), 리튬 $24k→$23k (TradingEconomics 2026-07-13).
 # 2026-06-11 갱신: 글로벌 연간도입·CAPEX·셀가·리튬·지역 2025 실적을 최신 공개통계로 재추정.
@@ -809,23 +815,27 @@ REGIONAL_DATA = {
     },
     "호주": {
         "name_en": "Australia",
+        # 2026-07-21 재검증: CIS Tender 7(2026-05-23, 2.0GW/7.9GWh, 19개 프로젝트) +
+        # Tender 8(2026-06-24, 4.2GW/16.1GWh, 15개 프로젝트, 역대 최대 단일 조달) 신규 확정분
+        # 반영해 97.3 → 121.3GWh로 갱신. NEM 계통연계 대기 중인 용량은 45GW(2026년 초 기준,
+        # infrastructureaustralia.gov.au)로 별도 지표(파이프라인보다 넓은 선행 지표).
         "installed_gwh": {2022: 3.2, 2023: 5.5, 2024: 8.3, 2025: 11.4, 2026: 12.9, 2027: 16.0, 2028: 20.0, 2029: 25.0, 2030: 30.0},
-        "pipeline_gwh": 97.3,
+        "pipeline_gwh": 121.3,
         "market_share_pct": 3.7,
         "key_drivers": [
             "석탄발전 퇴출 가속화",
             "NEM(National Electricity Market) 변동성",
             "대규모 VPP(Virtual Power Plant)",
-            "주택용 태양광+ESS 보급",
+            "주택용 태양광+ESS 보급 (2026년 가정용 배터리 12GWh+ 누적)",
             "2030 재생에너지 82% 목표",
         ],
         "revenue_model": "FCAS(주파수조정), 에너지 차익거래, 용량결제, VPP, 네트워크 지원",
         "policy": [
-            "Capacity Investment Scheme",
+            "Capacity Investment Scheme — Tender 8(2026-06) 역대 최대 4.2GW/16.1GWh 낙찰, Tender 10 진행 중(2026-08-18 마감)",
             "ARENA 보조금 프로그램",
             "NEM 용량시장 도입 논의",
             "각 주별 재생에너지 목표",
-            "가정용 배터리 보조금",
+            "가정용 배터리 보조금(연방 정부, 2026년 42만+ 가구 설치)",
         ],
         "key_players": ["Neoen", "AGL Energy", "Origin Energy", "Tesla", "Sungrow"],
         "avg_project_size_mwh": 300,
@@ -967,16 +977,20 @@ PROJECT_PIPELINE = [
 ]
 
 # ---- 경쟁사 데이터 ----
+# 2026-07-21 재검증: 2025 실적(시스템 출하량 기준, ~460GWh 글로벌 시장, ess-news/electrek)과
+# 2026 신규 발표된 첫 공식 BESS 통합업체 랭킹(Sungrow #1·Tesla #2·CATL #3·BYD #4·Envision/Trina 공동5위,
+# ess-news 2026-07-14)으로 순위·수치 갱신. CATL capacity_gwh는 셀 출하량 기준(121GWh, 5년 연속 1위,
+# 글로벌 셀 점유율 약 39%, CnEVPost) — 시스템 통합 순위(3위)와 다른 지표이므로 strength에 별도 표기.
 COMPETITORS = [
-    {"name": "CATL", "country": "중국", "type": "셀/시스템", "market_share_pct": 28.0, "revenue_b_usd": 12.5, "capacity_gwh": 55, "strength": "LFP 원가 경쟁력, 대규모 생산능력", "weakness": "지정학적 리스크, 서비스 네트워크"},
-    {"name": "BYD", "country": "중국", "type": "셀/시스템", "market_share_pct": 18.0, "revenue_b_usd": 8.2, "capacity_gwh": 35, "strength": "수직 계열화, Blade Battery 안전성", "weakness": "미국 시장 진입 장벽"},
+    {"name": "Sungrow", "country": "중국", "type": "PCS/시스템", "market_share_pct": 9.0, "revenue_b_usd": 4.2, "capacity_gwh": 43, "strength": "2026 글로벌 BESS 통합업체 1위(ess-news 첫 공식 랭킹), PCS 기술·가격 경쟁력", "weakness": "브랜드 인지도(서방)"},
+    {"name": "BYD", "country": "중국", "type": "셀/시스템", "market_share_pct": 13.0, "revenue_b_usd": 9.5, "capacity_gwh": 60, "strength": "2025 시스템 출하 1위(60GWh, Tesla 추월), 수직 계열화, Blade Battery 안전성", "weakness": "미국 시장 진입 장벽, 2026 랭킹 4위로 하락"},
+    {"name": "Tesla (Megapack)", "country": "미국", "type": "시스템", "market_share_pct": 10.2, "revenue_b_usd": 7.5, "capacity_gwh": 47, "strength": "2025 출하 +49%YoY, 브랜드·SW 통합(Autobidder), 2026 랭킹 2위", "weakness": "높은 가격, 납기 지연"},
+    {"name": "CATL", "country": "중국", "type": "셀/시스템", "market_share_pct": 22.0, "revenue_b_usd": 14.0, "capacity_gwh": 121, "strength": "셀 출하 5년 연속 1위(121GWh, 글로벌 셀 점유율 약 39%), 2026 시스템 통합 랭킹 3위 신규 진입", "weakness": "지정학적 리스크, 셀·시스템 이중 포지셔닝"},
     {"name": "Samsung SDI", "country": "한국", "type": "셀", "market_share_pct": 6.5, "revenue_b_usd": 3.8, "capacity_gwh": 12, "strength": "NMC 기술력, 미국/유럽 공장", "weakness": "LFP 라인업 후발"},
-    {"name": "LG Energy Solution", "country": "한국", "type": "셀", "market_share_pct": 5.5, "revenue_b_usd": 3.2, "capacity_gwh": 10, "strength": "글로벌 생산 네트워크, 기술 다양성", "weakness": "ESS 전용 투자 제한적"},
-    {"name": "Tesla (Megapack)", "country": "미국", "type": "시스템", "market_share_pct": 12.0, "revenue_b_usd": 6.0, "capacity_gwh": 25, "strength": "브랜드, 소프트웨어 통합, Autobidder", "weakness": "높은 가격, 납기 지연"},
-    {"name": "Fluence", "country": "미국", "type": "시스템", "market_share_pct": 8.0, "revenue_b_usd": 3.5, "capacity_gwh": 16, "strength": "SW 플랫폼(Mosaic), Siemens/AES 백업", "weakness": "수익성 미확보"},
-    {"name": "Sungrow", "country": "중국", "type": "PCS/시스템", "market_share_pct": 7.0, "revenue_b_usd": 2.8, "capacity_gwh": 14, "strength": "PCS 기술, 가격 경쟁력", "weakness": "브랜드 인지도 (서방)"},
-    {"name": "Wärtsilä", "country": "핀란드", "type": "시스템", "market_share_pct": 3.5, "revenue_b_usd": 1.5, "capacity_gwh": 7, "strength": "EPC 경험, GEMS 플랫폼", "weakness": "셀 외부 조달 의존"},
-    {"name": "Honeywell", "country": "미국", "type": "시스템/SW", "market_share_pct": 2.0, "revenue_b_usd": 0.9, "capacity_gwh": 4, "strength": "산업용 제어 기술, 브랜드 신뢰", "weakness": "ESS 전문성 후발"},
+    {"name": "LG Energy Solution", "country": "한국", "type": "셀", "market_share_pct": 5.5, "revenue_b_usd": 3.2, "capacity_gwh": 10, "strength": "글로벌 생산 네트워크, 2026 통합업체 톱10 진입", "weakness": "ESS 전용 투자 제한적"},
+    {"name": "Fluence", "country": "미국", "type": "시스템", "market_share_pct": 7.0, "revenue_b_usd": 3.5, "capacity_gwh": 16, "strength": "SW 플랫폼(Mosaic), Siemens/AES 백업", "weakness": "수익성 미확보"},
+    {"name": "Wärtsilä", "country": "핀란드", "type": "시스템", "market_share_pct": 3.0, "revenue_b_usd": 1.5, "capacity_gwh": 7, "strength": "EPC 경험, GEMS 플랫폼", "weakness": "셀 외부 조달 의존"},
+    {"name": "Envision", "country": "중국", "type": "셀/시스템", "market_share_pct": 4.0, "revenue_b_usd": 2.0, "capacity_gwh": 9, "strength": "2026 통합업체 랭킹 공동 5위 신규 진입, 재생에너지 통합 역량", "weakness": "서방 트랙레코드 제한적"},
     {"name": "EVE Energy", "country": "중국", "type": "셀", "market_share_pct": 5.0, "revenue_b_usd": 2.2, "capacity_gwh": 10, "strength": "LFP 대형셀 경쟁력, 가격", "weakness": "글로벌 트랙레코드"},
 ]
 
