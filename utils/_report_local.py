@@ -337,13 +337,16 @@ def add_toc(doc, levels: str = "1-3"):
     # 2레벨 목차: level 1(장)은 toc1 스타일·10pt·들여쓰기 없음,
     # level 2(절, N.M)는 toc2 스타일·9pt·6mm 들여쓰기로 하위 항목임을 시각적으로 구분.
     for level, bm_name, title, est_page in _TOC_SECTIONS:
+        # w:tab pos는 문단 들여쓰기와 무관하게 페이지 여백 기준 절대 위치이므로,
+        # 레벨1·레벨2 모두 같은 150mm을 써야 우측 끝(점선·페이지번호)이 정확히 맞음
+        # (레벨2에 들여쓰기만큼 뺀 값을 썼더니 그만큼 왼쪽에서 끝나던 실사고 수정).
         if level == 1:
             p = doc.add_paragraph(style=toc1_style)
             font_size, color, tab_pos = 10, CLR_H1, 150
         else:
             p = doc.add_paragraph(style=toc2_style)
             p.paragraph_format.left_indent = Mm(6)
-            font_size, color, tab_pos = 9, CLR_H2, 144
+            font_size, color, tab_pos = 9, CLR_H2, 150
         p.paragraph_format.space_before = Pt(1)
         p.paragraph_format.space_after = Pt(1)
         _add_dotted_tab_stop(p, tab_pos)
@@ -874,7 +877,10 @@ def _chart_eia_us_monthly():
 
 # ================= Main Generator =================
 
-def generate_word_report():
+def generate_word_report(skip_field_resolve: bool = False):
+    """skip_field_resolve=True: DOCX 왕복 변환(필드 사전 계산) 생략 — generate_pdf_report()가
+    호출할 때 사용. PDF 변환 자체가 이미 필드를 완전히 해석하므로, 그 전에 별도로 한 번 더
+    LibreOffice를 돌리는 건 시간만 잡아먹는 중복(LibreOffice 2회 구동 → 로딩 지연 원인)."""
     """Generates a BESS Deep Analysis Word (.docx) report."""
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))  # KST
     now_str = now.strftime("%Y-%m-%d")
@@ -2278,6 +2284,30 @@ def generate_word_report():
         _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
 
     doc.save(out_path)
+
+    # Linux(HF Space) 배포 환경에서는 LibreOffice로 즉시 왕복 변환해 PAGEREF 필드
+    # (목차 페이지번호)를 미리 계산·내장한다 — w:updateFields=true만으로는 Word의
+    # 신뢰 설정에 따라 열자마자 자동 갱신되지 않는 경우가 있어, 다운로드 시점에
+    # 이미 실제 값이 채워진 파일을 제공하기 위함. 실패해도 원본(예상치 placeholder
+    # 포함) 파일은 그대로 유효하므로 조용히 넘어간다. Windows 로컬 개발 환경에는
+    # LibreOffice가 없을 수 있어 건너뛴다.
+    if not skip_field_resolve and platform.system() != "Windows":
+        try:
+            import shutil
+            import subprocess
+            tmp_dir = tempfile.gettempdir()
+            result = subprocess.run(
+                ["libreoffice", "--headless", "--convert-to", "docx",
+                 "--outdir", tmp_dir, out_path],
+                capture_output=True, text=True, timeout=90,
+            )
+            converted = os.path.join(tmp_dir, os.path.basename(out_path))
+            if result.returncode == 0 and os.path.exists(converted):
+                shutil.copy2(converted, out_path)
+                os.unlink(converted)
+        except Exception:
+            pass
+
     return out_path
 
 def generate_pdf_report():
@@ -2285,7 +2315,7 @@ def generate_pdf_report():
     import shutil
     import subprocess
 
-    word_path = generate_word_report()
+    word_path = generate_word_report(skip_field_resolve=True)
     pdf_path = word_path.replace('.docx', '.pdf')
     tmp_dir = tempfile.gettempdir()
 
