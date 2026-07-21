@@ -1046,11 +1046,13 @@ DOCX 필수 3종 세트
 □ part.relate_to() 로 r:id 생성
 □ w:hyperlink 요소 안에 w:r 직접 생성 (paragraph.add_run() 사용 금지)
 □ w:rPr 안에 color/u/sz/szCs 모두 삽입
-TOC 검증
-□ instrText = ' TOC \o "1-2" \h \z \u ' (공백 포함)
-□ w:updateFields val="true" → settings 요소에 추가
-□ TOC 1/2 스타일: 10pt, space 0pt, line_spacing 11pt (최소 간격)
-□ 문서 열 때 자동 갱신 확인 (최초 저장 후 재열기로 확인)
+TOC 검증 (raw `{ TOC \o "1-2" }` 필드 금지 — LibreOffice PDF 목차 누락 실사고, 위 ② 참조)
+□ 각 heading에 _add_bookmark()로 고유 앵커 삽입됨?
+□ TOC 항목이 "제목(일반 텍스트) + 점선 탭 + PAGEREF 필드"로 구성됨? (TOC 필드 스캔 아님)
+□ w:hyperlink 런에 w:u val="none" 삽입됨? (밑줄 억제 — 웹링크처럼 안 보이게)
+□ w:updateFields val="true" → settings 요소에 추가 (F9 수동 갱신도 여전히 가능)
+□ TOC 1/2 스타일: 10pt/9pt, space 1pt, 레벨2는 6mm 들여쓰기
+□ PDF 산출물에서 목차 항목(제목 텍스트)이 실제로 보이는지 확인 (필드 갱신 여부와 무관하게 항상 보여야 함)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 ---

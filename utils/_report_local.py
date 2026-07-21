@@ -908,6 +908,14 @@ def generate_word_report():
     basis_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     basis_r.font.name = FONT
 
+    # 여백 옵션은 산출물에 명시 (bess-output-generator.md 원칙: "옵션은 산출물 metadata에 명시")
+    margin_p = doc.add_paragraph()
+    margin_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    margin_r = margin_p.add_run("출력 옵션: A (단면 대칭, 25mm 4-방향 — 디지털 배포용)")
+    margin_r.font.size = Pt(9)
+    margin_r.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+    margin_r.italic = True
+
     fresh_p = doc.add_paragraph()
     fresh_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     _fresh_summary = md.get_data_freshness_summary()
