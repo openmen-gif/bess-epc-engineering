@@ -234,52 +234,51 @@ def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_siz
         hl.append(field_el)
     paragraph._p.append(hl)
 
+# 목차 항목 — 본문 섹션 heading과 반드시 동기화할 것 (bookmark명은 _add_bookmark(_hN, "_secN")과 일치)
+_TOC_SECTIONS = [
+    ("_sec1", "1. Executive Summary", 3),
+    ("_sec2", "2. 시장별 심층 분석", 5),
+    ("_sec3", "3. 전문 카테고리 분석", 10),
+    ("_sec4", "4. 시각화 분석", 14),
+    ("_sec5", "5. 글로벌 트렌드 통계 및 YoY 분석", 17),
+    ("_sec6", "6. 경쟁사 심층 분석", 19),
+    ("_sec7", "7. 프로젝트 파이프라인 현황", 21),
+    ("_sec8", "8. 환율 및 원자재 시장 영향 분석", 23),
+    ("_sec9", "9. 시나리오 분석", 26),
+    ("_sec10", "10. BESS 사업 개발 및 투자 분석", 28),
+    ("_sec11", "11. 전력시장 및 거래 동향", 30),
+    ("_sec12", "12. BESS 운영 및 자산관리", 32),
+    ("_sec13", "13. 안전·화재 및 규제 기준", 34),
+    ("_sec14", "14. 배터리 기술 동향 및 차세대 기술", 36),
+    ("_sec15", "15. 인허가 및 사업 개발 프로세스", 38),
+    ("_sec16", "16. 프로젝트 파이낸싱", 40),
+    ("_sec17", "17. EPC 계약 구조", 42),
+    ("_sec18", "18. 전문가 종합 의견 및 전략적 시사점", 44),
+]
+
 def add_toc(doc, levels: str = "1-3"):
-    """표준 Word TOC 필드 삽입.
+    """정적 목차 — 섹션별 PAGEREF 하이퍼링크 항목으로 직접 구성.
 
-    Word/LibreOffice가 Heading 스타일에서 자동으로 항목·페이지번호를 채워주는
-    표준 형식. 사용자는 목차 위 우클릭 → '필드 업데이트' / 'Update Field' 로
-    실제 페이지 번호를 갱신한다(전체 표 vs 페이지번호만 옵션 제공).
-
-    levels: "1-3" → Heading 1·2·3 모두 포함. "1-2"면 H1·H2만.
+    이전 방식(Word `{ TOC }` 자동생성 필드)은 Word가 문서를 열어 필드를
+    갱신하기 전까지 항목 자체가 비어 있고, LibreOffice headless PDF 변환
+    (HF Space의 PDF 생성 경로)은 이 자동 스캔을 수행하지 않아 목차가
+    통째로 누락되는 문제가 있었다. PAGEREF는 북마크 하나만 단순 조회하면
+    되므로 훨씬 안정적으로 해석되며, 설령 필드가 갱신되지 않아도 각 줄의
+    제목 텍스트(및 예상 페이지 번호 placeholder)는 일반 텍스트로 항상 표시된다.
     """
-    p = doc.add_paragraph()
-    p.paragraph_format.space_before = Pt(2)
-    p.paragraph_format.space_after = Pt(2)
-    run = p.add_run()
-    r = run._r
-
-    # 1) fldChar BEGIN — dirty=true로 표시하여 Word가 열 때 갱신 권유
-    fld_begin = OxmlElement("w:fldChar")
-    fld_begin.set(qn("w:fldCharType"), "begin")
-    fld_begin.set(qn("w:dirty"), "true")
-    r.append(fld_begin)
-
-    # 2) instrText — 표준 TOC 스위치
-    #    \o "1-3" : Heading 1~3 포함
-    #    \h        : 하이퍼링크
-    #    \z        : 웹 뷰에서 페이지번호 숨김
-    #    \u        : 아웃라인 수준 사용
-    instr = OxmlElement("w:instrText")
-    instr.set(qn("xml:space"), "preserve")
-    instr.text = f' TOC \\o "{levels}" \\h \\z \\u '
-    r.append(instr)
-
-    # 3) fldChar SEPARATE
-    fld_sep = OxmlElement("w:fldChar")
-    fld_sep.set(qn("w:fldCharType"), "separate")
-    r.append(fld_sep)
-
-    # 4) Placeholder (필드 갱신 전 표시 문구) — 한·영 안내
-    placeholder = OxmlElement("w:t")
-    placeholder.set(qn("xml:space"), "preserve")
-    placeholder.text = "[목차] 우클릭 → '필드 업데이트' / Right-click → 'Update Field' 로 갱신하세요."
-    r.append(placeholder)
-
-    # 5) fldChar END
-    fld_end = OxmlElement("w:fldChar")
-    fld_end.set(qn("w:fldCharType"), "end")
-    r.append(fld_end)
+    try:
+        toc1_style = doc.styles["toc 1"]
+    except KeyError:
+        toc1_style = None
+    for bm_name, title, est_page in _TOC_SECTIONS:
+        p = doc.add_paragraph(style=toc1_style)
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
+        _add_dotted_tab_stop(p, 150)
+        _add_toc_hyperlink(
+            p, bm_name, title, str(est_page),
+            font_size=10, font_name=FONT, color=CLR_H1, bold=False,
+        )
 
     # 목차 끝 구분선
     p_sep = doc.add_paragraph()
@@ -288,6 +287,13 @@ def add_toc(doc, levels: str = "1-3"):
     run_sep = p_sep.add_run("─" * 60)
     run_sep.font.size = Pt(8)
     run_sep.font.color.rgb = RGBColor(0xCC, 0xCC, 0xCC)
+    p_note = doc.add_paragraph()
+    note_r = p_note.add_run(
+        "※ 페이지 번호는 예상치이며, Word에서 열람 시 Ctrl+A → F9로 실제 값 갱신 가능합니다."
+    )
+    note_r.font.size = Pt(8); note_r.font.name = FONT
+    note_r.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+    note_r.italic = True
 
 def add_page_number(section):
     footer = section.footer
