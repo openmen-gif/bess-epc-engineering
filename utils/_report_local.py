@@ -277,7 +277,12 @@ _TOC_SECTIONS = [
     (2, "_sec10_2", "10.2 프로젝트 유형별 투자 경제성 비교", 45),
     (2, "_sec10_3", "10.3 Offtake 및 PPA 계약 구조 비교", 46),
     (1, "_sec11", "11. 전력시장 및 거래 동향", 48),
-    (2, "_sec11_6", "11.6 BESS 전력 거래 전략 시사점", 49),
+    (2, "_sec11_1", "11.1 미국 전력시장", 49),
+    (2, "_sec11_2", "11.2 영국 전력시장", 50),
+    (2, "_sec11_3", "11.3 호주 전력시장", 51),
+    (2, "_sec11_4", "11.4 한국 전력시장", 52),
+    (2, "_sec11_5", "11.5 EU 전력시장", 53),
+    (2, "_sec11_6", "11.6 BESS 전력 거래 전략 시사점", 54),
     (1, "_sec12", "12. BESS 운영 및 자산관리", 51),
     (2, "_sec12_1", "12.1 핵심 성능 지표(KPI)", 52),
     (2, "_sec12_2", "12.2 O&M 비용 추이", 53),
@@ -292,6 +297,11 @@ _TOC_SECTIONS = [
     (2, "_sec14_2", "14.2 기술별 상세 분석", 64),
     (2, "_sec14_3", "14.3 장기 에너지 저장(LDES) 시장 전망", 65),
     (1, "_sec15", "15. 인허가 및 사업 개발 프로세스", 67),
+    (2, "_sec15_1", "15.1 미국", 68),
+    (2, "_sec15_2", "15.2 영국", 69),
+    (2, "_sec15_3", "15.3 호주", 70),
+    (2, "_sec15_4", "15.4 한국", 71),
+    (2, "_sec15_5", "15.5 EU", 72),
     (1, "_sec16", "16. 프로젝트 파이낸싱", 69),
     (2, "_sec16_1", "16.1 자금 조달 구조 비교", 70),
     (2, "_sec16_2", "16.2 Bankability 요건 (금융기관 심사 핵심)", 71),
@@ -1833,8 +1843,9 @@ def generate_word_report():
         "각국 전력시장 설계(Market Design)의 차이가 BESS 사업성에 미치는 영향을 심층 조망합니다."
     )
 
-    for pm_name, pm_data in md.POWER_MARKET_STRUCTURES.items():
-        doc.add_heading(f"11.{list(md.POWER_MARKET_STRUCTURES.keys()).index(pm_name)+1} {pm_name} 전력시장", level=2)
+    for _pm_i, (pm_name, pm_data) in enumerate(md.POWER_MARKET_STRUCTURES.items()):
+        _h2b = doc.add_heading(f"11.{_pm_i+1} {pm_name} 전력시장", level=2)
+        _add_bookmark(_h2b, f"_sec11_{_pm_i+1}")
         pm_rows = [
             ["시장 유형", pm_data["market_type"]],
             ["주요 시장/플랫폼", ", ".join(pm_data["key_markets"])],
@@ -2039,7 +2050,8 @@ def generate_word_report():
     )
 
     for pm_idx, (pm_name, pm_data) in enumerate(md.PERMITTING_DATA.items()):
-        doc.add_heading(f"15.{pm_idx+1} {pm_name}", level=2)
+        _h2b = doc.add_heading(f"15.{pm_idx+1} {pm_name}", level=2)
+        _add_bookmark(_h2b, f"_sec15_{pm_idx+1}")
         pm_rows = [
             ["총 인허가 기간", f"{pm_data['total_timeline_months']}개월"],
             ["그리드 연결 대기", f"{pm_data['grid_connection_wait_months']}개월"],
