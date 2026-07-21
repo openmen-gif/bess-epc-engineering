@@ -700,7 +700,7 @@ def _chart_price_trend():
     lfp = [md.LFP_CELL_PRICE[y] for y in years]
     nmc = [md.NMC_CELL_PRICE[y] for y in years]
     capex = [md.SYSTEM_CAPEX[y] for y in years]
-    fig, ax1 = plt.subplots(figsize=(8, 4.5))
+    fig, ax1 = plt.subplots(figsize=(9, 5))
     ax1.plot(years, lfp, "o-", color="#2196F3", linewidth=2, markersize=7, label="LFP Cell ($/kWh)")
     ax1.plot(years, nmc, "s-", color="#FF5722", linewidth=2, markersize=7, label="NMC Cell ($/kWh)")
     ax2 = ax1.twinx()
@@ -708,12 +708,19 @@ def _chart_price_trend():
     ax1.set_xlabel("Year")
     ax1.set_ylabel("Cell Price ($/kWh)")
     ax2.set_ylabel("System CAPEX ($/kWh)")
-    for y, v in zip(years, lfp):
-        ax1.annotate(f"${v}", (y, v), textcoords="offset points", xytext=(0, 10), ha="center", fontsize=8, color="#2196F3")
-    for y, v in zip(years, nmc):
-        ax1.annotate(f"${v}", (y, v), textcoords="offset points", xytext=(0, -14), ha="center", fontsize=8, color="#FF5722")
-    for y, v in zip(years, capex):
-        ax2.annotate(f"${v}", (y, v), textcoords="offset points", xytext=(0, 10), ha="center", fontsize=8, color="#4CAF50")
+    ax1.margins(y=0.2)
+    ax2.margins(y=0.2)
+    # 라벨 과밀 방지: 9개년 전 지점 대신 시작·중간·끝 3개 지점만 표기(선이 전체 추세 전달) +
+    # 계열별 좌/우/상/하 오프셋 분리로 이중축 간 우연한 높이 일치 시에도 겹치지 않게 함.
+    label_idx = sorted({0, len(years) // 2, len(years) - 1})
+    for i in label_idx:
+        y = years[i]
+        ax1.annotate(f"${lfp[i]}", (y, lfp[i]), textcoords="offset points",
+                     xytext=(-15, 9), ha="center", fontsize=8, color="#2196F3", fontweight="bold")
+        ax1.annotate(f"${nmc[i]}", (y, nmc[i]), textcoords="offset points",
+                     xytext=(0, -16), ha="center", fontsize=8, color="#FF5722", fontweight="bold")
+        ax2.annotate(f"${capex[i]}", (y, capex[i]), textcoords="offset points",
+                     xytext=(15, 11), ha="center", fontsize=8, color="#4CAF50", fontweight="bold")
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper right", fontsize=9)
@@ -870,8 +877,11 @@ def _chart_eia_us_monthly():
     ax.set_title(f"US BESS Operating Capacity — EIA Monthly (as of {ts['as_of']})", fontsize=14, fontweight="bold")
     ax.grid(axis="y", alpha=0.3)
     if gwh:
+        # 마지막 포인트가 y축 최댓값 부근이라 라벨이 제목과 겹치는 문제 방지:
+        # 상단 여백 확보 + 라벨을 포인트 왼쪽으로 이동(우측 끝 잘림도 함께 방지)
+        ax.set_ylim(top=max(gwh) * 1.2)
         ax.annotate(f"{gwh[-1]:,.1f} GWh", (x[-1], gwh[-1]), textcoords="offset points",
-                    xytext=(0, 9), ha="center", fontsize=8, color="#2E75B6", fontweight="bold")
+                    xytext=(-8, 10), ha="right", fontsize=8, color="#2E75B6", fontweight="bold")
     fig.tight_layout()
     return fig, None
 
