@@ -219,13 +219,13 @@ def _make_pageref_field(bookmark_name, font_size, font_name, placeholder="…"):
 
 
 def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_size, font_name, color, bold=False):
-    """Add a TOC entry as a single internal hyperlink: title + tab + dynamic PAGEREF page number.
-    page_text: 예상 페이지 번호 — PAGEREF 필드의 placeholder로 사용 (필드 업데이트 전 표시값).
+    """TOC 항목 1줄: 제목 + 탭 + PAGEREF 페이지 번호. 일반 문단 텍스트로 직접 추가하며
+    w:hyperlink로 감싸지 않는다 — 인쇄물 스타일 표준 목차는 클릭 가능한 링크가 아니라
+    일반 텍스트여야 한다는 요구사항 반영(우클릭 시 "하이퍼링크 편집/열기/제거" 메뉴가
+    뜨면 안 됨). 함수명은 호환성을 위해 유지하되 실제로는 하이퍼링크를 생성하지 않는다.
     """
-    hl = OxmlElement("w:hyperlink")
-    hl.set(qn("w:anchor"), bookmark_name)
-    # Run 1: title text
-    hl.append(_make_hl_run(font_size, font_name, color, bold, title_text))
+    # Run 1: title text (일반 run, paragraph에 직접 추가)
+    paragraph._p.append(_make_hl_run(font_size, font_name, color, bold, title_text))
     # Run 2: tab character
     tab_run = OxmlElement("w:r")
     tab_rPr = OxmlElement("w:rPr")
@@ -233,11 +233,10 @@ def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_siz
     tab_run.append(tab_rPr)
     tab_el = OxmlElement("w:tab")
     tab_run.append(tab_el)
-    hl.append(tab_run)
+    paragraph._p.append(tab_run)
     # Run 3+: PAGEREF field (dynamic page number), placeholder = 예상 페이지 번호
     for field_el in _make_pageref_field(bookmark_name, 10, font_name, placeholder=page_text):
-        hl.append(field_el)
-    paragraph._p.append(hl)
+        paragraph._p.append(field_el)
 
 # 목차 항목 — 본문 섹션 heading과 반드시 동기화할 것 (bookmark명은 _add_bookmark(_hN, "_secN")과 일치)
 _TOC_SECTIONS = [
