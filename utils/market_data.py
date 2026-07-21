@@ -767,6 +767,9 @@ REGIONAL_DATA = {
     },
     "일본": {
         "name_en": "Japan",
+        # 2026-07-21 재검증: 2026년 연간 도입 전망 2.5~3.5GWh(시장조사기관, BNEF급 공신력은
+        # 아님) 범위 내 하단에 위치 — 현재값(2.5) 유지, 그리드스케일 연 1GW+ 목표(2026~)는
+        # policy에 반영.
         "installed_gwh": {2022: 0.15, 2023: 0.2, 2024: 0.3, 2025: 1.2, 2026: 2.5, 2027: 4.5, 2028: 7.0, 2029: 10.0, 2030: 14.0},
         "pipeline_gwh": 30.0,
         "market_share_pct": 0.4,
@@ -791,6 +794,10 @@ REGIONAL_DATA = {
     },
     "미국": {
         "name_en": "United States",
+        # 2026-07-21 재검증(SEIA/Benchmark Mineral Intelligence): 2025 실적 55.0GWh(18GW)
+        # BNEF·Utility Dive 교차치와 일치, Q1 2026 9.7GWh(+32%YoY, 역대 최대 분기)도
+        # RECENT_QUARTER와 일치 — 연도별 궤적 무변경. SEIA는 2030 누적 610GWh+ 를
+        # "상향 조정"이라 발표(본 표 누적합 725GWh로 이미 상회 — 과소평가 아님, 무변경 유지).
         "installed_gwh": {2022: 18.0, 2023: 26.0, 2024: 37.0, 2025: 55.0, 2026: 73.0, 2027: 93.0, 2028: 115.0, 2029: 140.0, 2030: 168.0},
         "pipeline_gwh": 180.0,
         "market_share_pct": 18.0,
@@ -853,13 +860,17 @@ REGIONAL_DATA = {
             "Cap & Floor 수익 안정 메커니즘",
             "EFR/DC/DM/FFR 시장 성장",
         ],
+        # 2026-07-21 재검증: Q1 2026 기준 GB 전체 7.2GW 가동(소스별 11.8~18GWh로 상이 —
+        # 방법론 차이로 단일 수치 확정 어려워 연도별 궤적은 보수적으로 유지, 정책만 갱신).
+        # Clean Power 2030 목표 23~27GW로 상향, 단 grid 연결 대기열(221GW)이 목표 대비
+        # 과잉이라 NESO가 2026년 중 Gate 2 확정 오퍼로 대대적 정리 진행 중.
         "revenue_model": "Dynamic Containment, FFR, T-4 용량시장, 에너지 차익거래, Balancing Mechanism",
         "policy": [
             "Net Zero Strategy 2050",
             "Contracts for Difference (CfD)",
             "용량시장 (Capacity Market T-4)",
             "REMA (전력시장개혁) 검토",
-            "그리드 연결 대기시간 개선",
+            "그리드 연결 대기열 정리(NESO Gate 2, 2026년 중 확정 오퍼 발급) — Clean Power 2030 목표 23~27GW",
         ],
         "key_players": ["Gresham House", "Gore Street", "Harmony Energy", "Zenobe", "EDF"],
         "avg_project_size_mwh": 100,
@@ -867,7 +878,10 @@ REGIONAL_DATA = {
     },
     "EU": {
         "name_en": "European Union",
-        "installed_gwh": {2022: 7.0, 2023: 12.0, 2024: 18.7, 2025: 27.1, 2026: 37.0, 2027: 49.0, 2028: 62.0, 2029: 76.0, 2030: 92.0},
+        # 2026-07-21 재검증(SolarPower Europe): 2025 실적 27.1GWh 정확히 일치(무변경).
+        # 2026 전망은 기존 37.0 → 50.0으로 상향(SolarPower Europe "2026년 50GWh 초과 전망"),
+        # 2030 138GWh 목표치에 맞춰 2027~2029 보간 재추정.
+        "installed_gwh": {2022: 7.0, 2023: 12.0, 2024: 18.7, 2025: 27.1, 2026: 50.0, 2027: 68.0, 2028: 88.0, 2029: 112.0, 2030: 138.0},
         "pipeline_gwh": 80.0,
         "market_share_pct": 9.0,
         "key_drivers": [
@@ -892,18 +906,23 @@ REGIONAL_DATA = {
     "중동": {
         "name_en": "Middle East",
         "installed_gwh": {2022: 0.5, 2023: 1.2, 2024: 3.0, 2025: 6.0, 2026: 9.5, 2027: 14.0, 2028: 19.0, 2029: 25.0, 2030: 32.0},
-        "pipeline_gwh": 35.0,
+        # 2026-07-21 재검증: 사우디 BESS 프로그램 Group 2(3GW/12GWh, 27개 개발사 예비심사
+        # 통과, 2026-07-03) + UAE Masdar 태양광 5.2GW 연계 19GWh BESS(세계 최초급) 신규
+        # 확정분 반영해 35.0 → 45.0으로 상향. 사우디 자체 2030 대형 BESS 목표만 48GWh로,
+        # 지역 전체 installed_gwh 2030(32.0)을 이미 상회 — 연도별 궤적은 지역 통합
+        # 공신력 있는 소스(BNEF/IEA 등) 확보 전까지 보수적으로 유지, 파이프라인만 우선 갱신.
+        "pipeline_gwh": 45.0,
         "market_share_pct": 2.0,
         "key_drivers": [
             "사우디 Vision 2030 (50% RE 목표)",
             "UAE Net Zero 2050",
-            "대규모 태양광+ESS 프로젝트",
+            "대규모 태양광+ESS 프로젝트 (Masdar 19GWh 세계 최초급 등)",
             "피크 수요 관리 (냉방 부하)",
             "석유 의존도 탈피 전략",
         ],
         "revenue_model": "PPA/BOO 모델, 피크 저감, 태양광+ESS 하이브리드, 정부 프로젝트 입찰",
         "policy": [
-            "사우디 NREP (재생에너지 프로그램)",
+            "사우디 NREP (재생에너지 프로그램) — BESS 대형 입찰 Group 2(3GW/12GWh) 2026-07 예비심사 완료",
             "UAE IRENA 협력 프레임워크",
             "카타르 National Vision 2030",
             "오만 Green Hydrogen 전략",
