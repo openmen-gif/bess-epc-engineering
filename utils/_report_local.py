@@ -1427,7 +1427,7 @@ def generate_word_report():
         trend_rows.append([str(yr), str(cap), cap_yoy, f"${mkt}", mkt_yoy,
                            f"${lfp}", lfp_chg, f"${capex}", capex_chg])
     _styled_table(doc, trend_headers, trend_rows,
-                  col_widths_mm=[18, 18, 14, 18, 14, 18, 14, 32, 14])
+                  col_widths_mm=[16, 18, 16, 20, 16, 20, 14, 26, 14])
 
     # CAGR calculations
     _first_yr, _last_yr = md.YEARS[0], md.YEARS[-1]
@@ -1516,7 +1516,7 @@ def generate_word_report():
             f"{c['market_share_pct']}%", f"${c['revenue_b_usd']}",
             str(c["capacity_gwh"])
         ])
-    _styled_table(doc, comp_headers, comp_rows, col_widths_mm=[46, 16, 22, 20, 28, 28])
+    _styled_table(doc, comp_headers, comp_rows, col_widths_mm=[40, 14, 30, 26, 24, 26])
 
     # 6.2 경쟁사 포지셔닝 차트
     _h2b = doc.add_heading("6.2 경쟁사 포지셔닝 맵", level=2)
@@ -1809,7 +1809,7 @@ def generate_word_report():
                 _val["desc"][:120] + "…" if len(_val["desc"]) > 120 else _val["desc"],
             ])
             total_rev += _val["avg_revenue_kwh_yr"] * _val["share_pct"] / 100
-        _styled_table(doc, rs_headers, rs_rows, col_widths_mm=[24, 12, 18, 10, 96])
+        _styled_table(doc, rs_headers, rs_rows, col_widths_mm=[22, 16, 28, 12, 82])
         _p_rs = doc.add_paragraph(
             f"→ {mkt_name} 시장 가중평균 예상 수익: ${total_rev:.0f}/kWh/yr (Revenue Stacking 기준)"
         )
@@ -1834,7 +1834,7 @@ def generate_word_report():
             str(_v["project_life_years"]),
             f"${_v['lcoe_kwh']:.2f}",
         ])
-    _styled_table(doc, inv_headers, inv_rows, col_widths_mm=[36, 16, 16, 14, 14, 14, 12, 38])
+    _styled_table(doc, inv_headers, inv_rows, col_widths_mm=[32, 16, 22, 14, 14, 16, 12, 34])
     _p_inv = doc.add_paragraph(
         "유틸리티급 4시간 BESS는 Base Case IRR 12.5%로 안정적이며, 2시간 피크 대응형은 "
         "짧은 duration에도 불구하고 높은 보조서비스 수익으로 14.0% IRR 달성이 가능합니다. "
@@ -1855,7 +1855,7 @@ def generate_word_report():
             _o["revenue_certainty"], _o["typical_market"],
             _o["desc"][:100] + "…" if len(_o["desc"]) > 100 else _o["desc"],
         ])
-    _styled_table(doc, oft_headers, oft_rows, col_widths_mm=[24, 14, 12, 14, 18, 78])
+    _styled_table(doc, oft_headers, oft_rows, col_widths_mm=[20, 18, 14, 20, 18, 70])
     _p_oft = doc.add_paragraph(
         "프로젝트 파이낸싱 관점에서 Tolling Agreement와 PPA가 가장 유리하며, "
         "비소구금융(Non-recourse Project Finance) 조달 시 장기 계약(10년+)이 필수적입니다. "
@@ -1929,7 +1929,7 @@ def generate_word_report():
     perf_rows = []
     for pk, pv in perf.items():
         perf_rows.append([pk.replace("_", " ").title(), pv["value"], pv["trend"], pv["desc"]])
-    _styled_table(doc, ["지표", "기준값", "추세", "설명"], perf_rows, col_widths_mm=[26, 16, 10, 108])
+    _styled_table(doc, ["지표", "기준값", "추세", "설명"], perf_rows, col_widths_mm=[24, 14, 14, 108])
 
     # 12.2 O&M 비용 추이
     _h2b = doc.add_heading("12.2 O&M 비용 추이", level=2)
@@ -1997,7 +1997,7 @@ def generate_word_report():
     _add_bookmark(_h2b, "_sec13_2")
     fi_headers = ["연도", "위치", "원인", "피해", "교훈"]
     fi_rows = [[str(f["year"]), f["location"], f["cause"], f["damage"], f["lesson"]] for f in md.FIRE_INCIDENTS]
-    _styled_table(doc, fi_headers, fi_rows, col_widths_mm=[10, 20, 24, 24, 82])
+    _styled_table(doc, fi_headers, fi_rows, col_widths_mm=[14, 20, 22, 22, 82])
     _p_fi = doc.add_paragraph(
         "ESS 화재 사고는 산업 전체의 안전 규제 강화를 촉발하고 있습니다. "
         "열폭주 전파 방지 설계(셀 간/모듈 간 방화벽), 가스 감지 및 자동 소화 시스템, "
@@ -2038,7 +2038,7 @@ def generate_word_report():
     _battery_techs = md.get_battery_technologies()
     bt_headers = ["기술", "에너지밀도\n(Wh/kg)", "사이클수명", "비용\n($/kWh)", "상용화 단계"]
     bt_rows = [[b["tech"], b["energy_density_wh_kg"], b["cycle_life"], b["cost_per_kwh"], b["status"]] for b in _battery_techs]
-    _styled_table(doc, bt_headers, bt_rows, col_widths_mm=[24, 20, 20, 18, 78])
+    _styled_table(doc, bt_headers, bt_rows, col_widths_mm=[18, 24, 28, 18, 72])
 
     _h2b = doc.add_heading("14.2 기술별 상세 분석", level=2)
     _add_bookmark(_h2b, "_sec14_2")
@@ -2118,7 +2118,7 @@ def generate_word_report():
     for pfs in md.PROJECT_FINANCING["structures"]:
         pf_rows.append([pfs["type"], pfs["leverage"], pfs["tenor_yr"],
                         pfs["min_dscr"], pfs["key_lenders"][:70] + "…" if len(pfs["key_lenders"]) > 70 else pfs["key_lenders"]])
-    _styled_table(doc, pf_headers, pf_rows, col_widths_mm=[28, 14, 12, 16, 90])
+    _styled_table(doc, pf_headers, pf_rows, col_widths_mm=[22, 20, 16, 20, 82])
 
     for pfs in md.PROJECT_FINANCING["structures"]:
         _p_pfs = doc.add_paragraph(f"■ {pfs['type']}: {pfs['desc']}")
@@ -2158,7 +2158,7 @@ def generate_word_report():
         epc_rows.append([ec["type"], ec["risk_owner"], ec["price_structure"],
                          ec["pros"][:70] + "…" if len(ec["pros"]) > 70 else ec["pros"],
                          ec["cons"][:70] + "…" if len(ec["cons"]) > 70 else ec["cons"]])
-    _styled_table(doc, epc_headers, epc_rows, col_widths_mm=[24, 18, 20, 49, 49])
+    _styled_table(doc, epc_headers, epc_rows, col_widths_mm=[22, 26, 22, 45, 45])
 
     for ec in md.EPC_CONTRACT_DATA["contract_types"]:
         _p_ec = doc.add_paragraph(f"■ {ec['type']}: {ec['desc']}")
