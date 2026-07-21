@@ -24,9 +24,9 @@ def _download_report(report_type: str) -> str:
     if cd and "filename=" in cd:
         filename = cd.split("filename=")[1].strip('"\'')
     else:
-        now_str = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        now_str = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         ext = "docx" if report_type == "word" else "pdf"
-        filename = f"BESS_DeepAnalysis_{now_str}.{ext}"
+        filename = f"BESS_MarketReport_v1_{now_str}.{ext}"
 
     if os.path.isdir("/data"):
         out_dir = "/data/output_reports"

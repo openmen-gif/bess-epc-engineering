@@ -636,7 +636,11 @@ def _add_news_section(doc, category, max_items=5, analysis: str = ""):
             r.font.name = FONT
     return news
 
-def _add_chart_to_doc(doc, fig, width_inches=5.8):
+def _add_chart_to_doc(doc, fig, width_inches=5.8, fig_num=None, desc=None, source=None):
+    """차트 이미지 삽입. fig_num/desc/source가 모두 주어지면 표준 캡션
+    "[Figure N] 설명 (Source: 출처명)"을 이미지 바로 아래 추가한다
+    (bess-output-generator.md "필수 포함 요소" 규정).
+    """
     tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
     tmp.close()
     try:
@@ -650,6 +654,16 @@ def _add_chart_to_doc(doc, fig, width_inches=5.8):
             os.unlink(tmp.name)
         except Exception:
             pass
+    if fig_num is not None and desc and source:
+        cap_p = doc.add_paragraph()
+        cap_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap_p.paragraph_format.space_before = Pt(2)
+        cap_p.paragraph_format.space_after = Pt(6)
+        cap_r = cap_p.add_run(f"[Figure {fig_num}] {desc} (Source: {source})")
+        cap_r.font.size = Pt(9)
+        cap_r.font.name = FONT
+        cap_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+        cap_r.italic = True
 
 def _chart_growth():
     yr = md.LATEST_ACTUAL_YEAR
@@ -658,7 +672,7 @@ def _chart_growth():
     fig, ax = plt.subplots(figsize=(8, 4))
     bars = ax.bar(names, gwh, color=["#1F4E79", "#2E75B6", "#5B9BD5", "#A5C8E1", "#D6E4F0", "#F0C27B", "#E8856C"])
     ax.set_ylabel("Installed Capacity (GWh)")
-    ax.set_title(f"BESS Installed Capacity by Market ({yr})", fontsize=13, fontweight="bold")
+    ax.set_title(f"BESS Installed Capacity by Market ({yr})", fontsize=14, fontweight="bold")
     for bar, val in zip(bars, gwh):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3, f"{val}", ha="center", fontsize=9)
     ax.grid(axis="y", alpha=0.3)
@@ -672,7 +686,7 @@ def _chart_region():
     fig, ax = plt.subplots(figsize=(7, 5))
     colors = ["#1F4E79", "#2E75B6", "#5B9BD5", "#A5C8E1", "#D6E4F0", "#F0C27B", "#E8856C"]
     ax.pie(gwh, labels=names, autopct="%1.1f%%", colors=colors, startangle=90)
-    ax.set_title(f"BESS Market Share by Region ({yr})", fontsize=13, fontweight="bold")
+    ax.set_title(f"BESS Market Share by Region ({yr})", fontsize=14, fontweight="bold")
     fig.tight_layout()
     return fig
 
@@ -700,7 +714,7 @@ def _chart_price_trend():
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper right", fontsize=9)
-    ax1.set_title("Battery Cell Price & System CAPEX Trend", fontsize=13, fontweight="bold")
+    ax1.set_title("Battery Cell Price & System CAPEX Trend", fontsize=14, fontweight="bold")
     ax1.grid(axis="y", alpha=0.3)
     fig.tight_layout()
     return fig
@@ -731,7 +745,7 @@ def _chart_capacity_growth():
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper left", fontsize=9)
-    ax1.set_title("Global BESS Capacity Growth & YoY Rate", fontsize=13, fontweight="bold")
+    ax1.set_title("Global BESS Capacity Growth & YoY Rate", fontsize=14, fontweight="bold")
     ax1.grid(axis="y", alpha=0.3)
     fig.tight_layout()
     return fig
@@ -758,7 +772,7 @@ def _chart_competitors():
     ax.legend(loc="lower right", fontsize=9)
     ax.set_xlabel("Market Share (%)")
     ax.set_ylabel("Production Capacity (GWh)")
-    ax.set_title("BESS Competitor Positioning Map", fontsize=13, fontweight="bold")
+    ax.set_title("BESS Competitor Positioning Map", fontsize=14, fontweight="bold")
     ax.grid(alpha=0.3)
     fig.tight_layout()
     return fig
@@ -788,7 +802,7 @@ def _chart_scenario_comparison():
                         xytext=(5, 5), fontsize=8, color=clr)
     ax.set_xlabel("Year")
     ax.set_ylabel("Capacity (GWh)")
-    ax.set_title(f"BESS Capacity Scenario Comparison ({years[0]}-{years[-1]})", fontsize=13, fontweight="bold")
+    ax.set_title(f"BESS Capacity Scenario Comparison ({years[0]}-{years[-1]})", fontsize=14, fontweight="bold")
     ax.legend(fontsize=9)
     ax.grid(alpha=0.3)
     fig.tight_layout()
@@ -822,7 +836,7 @@ def _chart_fx_trend():
     if krw:
         ax1.annotate(f"{krw[-1]:,.0f}", (x[-1], krw[-1]), textcoords="offset points",
                      xytext=(0, 9), ha="center", fontsize=8, color="#1F4E79", fontweight="bold")
-    ax1.set_title(f"USD/KRW·JPY Monthly Trend — ECB (as of {ts['as_of']})", fontsize=12, fontweight="bold")
+    ax1.set_title(f"USD/KRW·JPY Monthly Trend — ECB (as of {ts['as_of']})", fontsize=14, fontweight="bold")
     ax1.grid(axis="y", alpha=0.3)
     l1, lab1 = ax1.get_legend_handles_labels()
     l2, lab2 = ax2.get_legend_handles_labels()
@@ -850,7 +864,7 @@ def _chart_eia_us_monthly():
     ax.set_xticks(x[::step])
     ax.set_xticklabels([periods[i] for i in x[::step]], rotation=45, ha="right", fontsize=7)
     ax.set_ylabel("US Operating BESS (GWh, est. @4h)")
-    ax.set_title(f"US BESS Operating Capacity — EIA Monthly (as of {ts['as_of']})", fontsize=12, fontweight="bold")
+    ax.set_title(f"US BESS Operating Capacity — EIA Monthly (as of {ts['as_of']})", fontsize=14, fontweight="bold")
     ax.grid(axis="y", alpha=0.3)
     if gwh:
         ax.annotate(f"{gwh[-1]:,.1f} GWh", (x[-1], gwh[-1]), textcoords="offset points",
@@ -871,7 +885,10 @@ def generate_word_report():
     else:
         out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output_reports"))
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, f"BESS_DeepAnalysis_{now.strftime('%Y%m%d%H%M%S')}.docx")
+    # 파일명 표준: [문서유형]_v[버전]_[YYYYMMDD] (bess-output-generator.md). 프로젝트 코드는
+    # 없음(특정 프로젝트에 속하지 않는 정기 산출물) — 대신 같은 날 여러 번 생성돼도 파일이
+    # 서로 덮어쓰지 않도록 시각(HHMMSS)까지 붙여 유일성을 보장한다.
+    out_path = os.path.join(out_dir, f"BESS_MarketReport_v1_{now.strftime('%Y%m%d_%H%M%S')}.docx")
 
     doc = _setup_doc()
     sec0 = doc.sections[0]
@@ -1345,7 +1362,8 @@ def generate_word_report():
 
     _h2b = doc.add_heading("4.1 시장별 설치 용량", level=2)
     _add_bookmark(_h2b, "_sec4_1")
-    _add_chart_to_doc(doc, _chart_growth())
+    _add_chart_to_doc(doc, _chart_growth(), fig_num=1,
+                       desc="시장별 설치 용량", source="BNEF Energy Storage Market Outlook")
     _p_bar = doc.add_paragraph(
         f"[그림 분석] {_yr4}년 글로벌 설치 용량 합계 {_total4:.1f} GWh 중, "
         f"{_bars_sorted[0][1]}({_bars_sorted[0][2]} GWh)이 1위를 차지합니다. "
@@ -1364,7 +1382,8 @@ def generate_word_report():
 
     _h2b = doc.add_heading("4.2 지역별 시장 점유율", level=2)
     _add_bookmark(_h2b, "_sec4_2")
-    _add_chart_to_doc(doc, _chart_region())
+    _add_chart_to_doc(doc, _chart_region(), fig_num=2,
+                       desc="지역별 시장 점유율", source="BNEF Energy Storage Market Outlook")
     _p_pie = doc.add_paragraph(
         f"[그림 분석] {_shares4[0][0]}이 {_shares4[0][1]}%로 압도적 1위이며, "
         f"{_shares4[1][0]} {_shares4[1][1]}%, {_shares4[2][0]} {_shares4[2][1]}%가 뒤를 잇습니다. "
@@ -1437,7 +1456,8 @@ def generate_word_report():
     # 5.2 가격 트렌드 차트
     _h2b = doc.add_heading("5.2 배터리 셀 가격 및 시스템 CAPEX 추이", level=2)
     _add_bookmark(_h2b, "_sec5_2")
-    _add_chart_to_doc(doc, _chart_price_trend())
+    _add_chart_to_doc(doc, _chart_price_trend(), fig_num=3,
+                       desc="배터리 셀 가격 및 시스템 CAPEX 추이", source="BNEF Lithium-Ion Battery Price Survey")
     _capex_threshold = 150
     _capex_cross_yr = next(
         (y for y in md.YEARS if md.SYSTEM_CAPEX.get(y, 999) <= _capex_threshold), None
@@ -1463,7 +1483,8 @@ def generate_word_report():
     # 5.3 용량 성장 추이 차트
     _h2b = doc.add_heading("5.3 글로벌 설치 용량 성장 추이", level=2)
     _add_bookmark(_h2b, "_sec5_3")
-    _add_chart_to_doc(doc, _chart_capacity_growth())
+    _add_chart_to_doc(doc, _chart_capacity_growth(), fig_num=4,
+                       desc="글로벌 설치 용량 성장 추이", source="BNEF Energy Storage Market Outlook")
     _p_cap_g = doc.add_paragraph(
         f"[그림 분석] 글로벌 BESS 설치 용량은 {_first_yr}년 {md.GLOBAL_CAPACITY_GWH[_first_yr]} GWh에서 "
         f"{_last_yr}년 {md.GLOBAL_CAPACITY_GWH[_last_yr]} GWh로 약 "
@@ -1500,7 +1521,8 @@ def generate_word_report():
     # 6.2 경쟁사 포지셔닝 차트
     _h2b = doc.add_heading("6.2 경쟁사 포지셔닝 맵", level=2)
     _add_bookmark(_h2b, "_sec6_2")
-    _add_chart_to_doc(doc, _chart_competitors())
+    _add_chart_to_doc(doc, _chart_competitors(), fig_num=5,
+                       desc="경쟁사 포지셔닝 맵", source="업계 공개 발표 종합 (ess-news/CnEVPost 등)")
 
     # Top 3 competitor analysis
     _sorted_comp = sorted(md.COMPETITORS, key=lambda x: x["market_share_pct"], reverse=True)
@@ -1630,7 +1652,8 @@ def generate_word_report():
     # 라이브 환율 추이 차트 (매월 변하는 실시간 시계열)
     _fig_fx, _err_fx = _chart_fx_trend()
     if _fig_fx is not None:
-        _add_chart_to_doc(doc, _fig_fx)
+        _add_chart_to_doc(doc, _fig_fx, fig_num=6,
+                           desc="USD 환율 월별 추이", source="Frankfurter (ECB 기준환율, 생성 시점 실시간 수집)")
         _p_fxnote = doc.add_paragraph(
             "※ 위 환율 추이는 보고서 생성 시점에 ECB(유럽중앙은행) 기준환율에서 실시간 수집한 "
             "월별 시계열입니다. 스냅샷 상수가 아니므로 매월 보고서를 생성할 때마다 갱신됩니다."
@@ -1691,7 +1714,8 @@ def generate_word_report():
     _add_bookmark(_h2b, "_sec8_3")
     _fig_eia, _err_eia = _chart_eia_us_monthly()
     if _fig_eia is not None:
-        _add_chart_to_doc(doc, _fig_eia)
+        _add_chart_to_doc(doc, _fig_eia, fig_num=7,
+                           desc="미국 BESS 운영용량 월별 추이", source="U.S. EIA Form EIA-860M (생성 시점 실시간 수집)")
         _p_eianote = doc.add_paragraph(
             "※ 미국 EIA Form EIA-860M(월별 운영 배터리 저장 설문)에서 실시간 수집한 월별 운영용량 "
             "추이입니다. GWh는 평균 4시간 duration 가정의 추정치이며, 매월 신규 데이터로 갱신됩니다."
@@ -1717,7 +1741,8 @@ def generate_word_report():
     # Scenario comparison chart
     _h2b = doc.add_heading("9.1 시나리오별 용량 전망 비교", level=2)
     _add_bookmark(_h2b, "_sec9_1")
-    _add_chart_to_doc(doc, _chart_scenario_comparison())
+    _add_chart_to_doc(doc, _chart_scenario_comparison(), fig_num=8,
+                       desc="시나리오별 용량 전망 비교", source="자체 시나리오 모델링 (BNEF 기준선 활용)")
 
     # Scenario table
     _h2b = doc.add_heading("9.2 시나리오별 수치 비교", level=2)
