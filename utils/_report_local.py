@@ -146,6 +146,10 @@ def _make_hl_run(font_size, font_name, color, bold, text):
     clr = OxmlElement("w:color"); clr.set(qn("w:val"), color_hex); rPr.append(clr)
     if bold:
         b = OxmlElement("w:b"); b.set(qn("w:val"), "true"); rPr.append(b)
+    # w:hyperlink 내부 run은 Word가 기본 "Hyperlink" 문자 스타일(파란색+밑줄)을
+    # 암묵 적용하는 경우가 있어, 밑줄을 명시적으로 꺼서 일반 TOC 항목처럼(필드
+    # 업데이트가 끝난 완성된 표 형태로) 보이게 한다 — 웹링크처럼 보인다는 지적 반영.
+    u = OxmlElement("w:u"); u.set(qn("w:val"), "none"); rPr.append(u)
     run.append(rPr)
     t = OxmlElement("w:t")
     t.set(qn("xml:space"), "preserve")
@@ -197,6 +201,7 @@ def _make_pageref_field(bookmark_name, font_size, font_name, placeholder="…"):
     for tag in ("w:sz", "w:szCs"):
         el = OxmlElement(tag); el.set(qn("w:val"), str(int(font_size * 2))); fc_text_rPr.append(el)
     clr3 = OxmlElement("w:color"); clr3.set(qn("w:val"), "808080"); fc_text_rPr.append(clr3)
+    u3 = OxmlElement("w:u"); u3.set(qn("w:val"), "none"); fc_text_rPr.append(u3)
     fc_text.append(fc_text_rPr)
     t_el = OxmlElement("w:t"); t_el.text = str(placeholder)
     fc_text.append(t_el)
@@ -236,24 +241,70 @@ def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_siz
 
 # 목차 항목 — 본문 섹션 heading과 반드시 동기화할 것 (bookmark명은 _add_bookmark(_hN, "_secN")과 일치)
 _TOC_SECTIONS = [
-    ("_sec1", "1. Executive Summary", 3),
-    ("_sec2", "2. 시장별 심층 분석", 5),
-    ("_sec3", "3. 전문 카테고리 분석", 10),
-    ("_sec4", "4. 시각화 분석", 14),
-    ("_sec5", "5. 글로벌 트렌드 통계 및 YoY 분석", 17),
-    ("_sec6", "6. 경쟁사 심층 분석", 19),
-    ("_sec7", "7. 프로젝트 파이프라인 현황", 21),
-    ("_sec8", "8. 환율 및 원자재 시장 영향 분석", 23),
-    ("_sec9", "9. 시나리오 분석", 26),
-    ("_sec10", "10. BESS 사업 개발 및 투자 분석", 28),
-    ("_sec11", "11. 전력시장 및 거래 동향", 30),
-    ("_sec12", "12. BESS 운영 및 자산관리", 32),
-    ("_sec13", "13. 안전·화재 및 규제 기준", 34),
-    ("_sec14", "14. 배터리 기술 동향 및 차세대 기술", 36),
-    ("_sec15", "15. 인허가 및 사업 개발 프로세스", 38),
-    ("_sec16", "16. 프로젝트 파이낸싱", 40),
-    ("_sec17", "17. EPC 계약 구조", 42),
-    ("_sec18", "18. 전문가 종합 의견 및 전략적 시사점", 44),
+    (1, "_sec1", "1. Executive Summary", 3),
+    (1, "_sec2", "2. 시장별 심층 분석", 5),
+    (2, "_sec2_1", "2.1 한국 (South Korea)", 6),
+    (2, "_sec2_2", "2.2 일본 (Japan)", 7),
+    (2, "_sec2_3", "2.3 미국 (United States)", 8),
+    (2, "_sec2_4", "2.4 호주 (Australia)", 9),
+    (2, "_sec2_5", "2.5 영국 (United Kingdom)", 10),
+    (2, "_sec2_6", "2.6 EU (European Union)", 11),
+    (2, "_sec2_7", "2.7 중동 (Middle East)", 12),
+    (1, "_sec3", "3. 전문 카테고리 분석", 14),
+    (1, "_sec4", "4. 시각화 분석", 16),
+    (2, "_sec4_1", "4.1 시장별 설치 용량", 17),
+    (2, "_sec4_2", "4.2 지역별 시장 점유율", 18),
+    (1, "_sec5", "5. 글로벌 트렌드 통계 및 YoY 분석", 20),
+    (2, "_sec5_1", "5.1 연도별 핵심 지표 종합", 21),
+    (2, "_sec5_2", "5.2 배터리 셀 가격 및 시스템 CAPEX 추이", 22),
+    (2, "_sec5_3", "5.3 글로벌 설치 용량 성장 추이", 23),
+    (1, "_sec6", "6. 경쟁사 심층 분석", 25),
+    (2, "_sec6_1", "6.1 주요 경쟁사 비교", 26),
+    (2, "_sec6_2", "6.2 경쟁사 포지셔닝 맵", 27),
+    (2, "_sec6_3", "6.3 유형별 SWOT 분석", 28),
+    (1, "_sec7", "7. 프로젝트 파이프라인 현황", 30),
+    (2, "_sec7_1", "7.1 주요 프로젝트 목록", 31),
+    (2, "_sec7_2", "7.2 파이프라인 통계 분석", 32),
+    (1, "_sec8", "8. 환율 및 원자재 시장 영향 분석", 34),
+    (2, "_sec8_1", "8.1 주요 환율 현황", 35),
+    (2, "_sec8_2", "8.2 원자재 가격 현황", 36),
+    (2, "_sec8_3", "8.3 미국 BESS 운영용량 (EIA 라이브 추이)", 37),
+    (1, "_sec9", "9. 시나리오 분석", 39),
+    (2, "_sec9_1", "9.1 시나리오별 용량 전망 비교", 40),
+    (2, "_sec9_2", "9.2 시나리오별 수치 비교", 41),
+    (1, "_sec10", "10. BESS 사업 개발 및 투자 분석", 43),
+    (2, "_sec10_1", "10.1 시장별 수익 스태킹(Revenue Stacking) 분석", 44),
+    (2, "_sec10_2", "10.2 프로젝트 유형별 투자 경제성 비교", 45),
+    (2, "_sec10_3", "10.3 Offtake 및 PPA 계약 구조 비교", 46),
+    (1, "_sec11", "11. 전력시장 및 거래 동향", 48),
+    (2, "_sec11_6", "11.6 BESS 전력 거래 전략 시사점", 49),
+    (1, "_sec12", "12. BESS 운영 및 자산관리", 51),
+    (2, "_sec12_1", "12.1 핵심 성능 지표(KPI)", 52),
+    (2, "_sec12_2", "12.2 O&M 비용 추이", 53),
+    (2, "_sec12_3", "12.3 에너지관리시스템(EMS) 플랫폼 비교", 54),
+    (2, "_sec12_4", "12.4 배터리 열화 관리 및 수명 연장 전략", 55),
+    (1, "_sec13", "13. 안전·화재 및 규제 기준", 57),
+    (2, "_sec13_1", "13.1 글로벌 ESS 안전 규격 비교", 58),
+    (2, "_sec13_2", "13.2 주요 ESS 화재 사고 사례 및 교훈", 59),
+    (2, "_sec13_3", "13.3 안전 설계 체크리스트", 60),
+    (1, "_sec14", "14. 배터리 기술 동향 및 차세대 기술", 62),
+    (2, "_sec14_1", "14.1 배터리 기술 비교표", 63),
+    (2, "_sec14_2", "14.2 기술별 상세 분석", 64),
+    (2, "_sec14_3", "14.3 장기 에너지 저장(LDES) 시장 전망", 65),
+    (1, "_sec15", "15. 인허가 및 사업 개발 프로세스", 67),
+    (1, "_sec16", "16. 프로젝트 파이낸싱", 69),
+    (2, "_sec16_1", "16.1 자금 조달 구조 비교", 70),
+    (2, "_sec16_2", "16.2 Bankability 요건 (금융기관 심사 핵심)", 71),
+    (2, "_sec16_3", "16.3 보험 요건", 72),
+    (1, "_sec17", "17. EPC 계약 구조", 74),
+    (2, "_sec17_1", "17.1 EPC 계약 유형 비교", 75),
+    (2, "_sec17_2", "17.2 핵심 상업 조건", 76),
+    (2, "_sec17_3", "17.3 BESS 프로젝트 비용 구조(Cost Breakdown)", 77),
+    (1, "_sec18", "18. 전문가 종합 의견 및 전략적 시사점", 79),
+    (2, "_sec18_1", "18.1 시장 전망 종합", 80),
+    (2, "_sec18_2", "18.2 가격 전망 및 경제성 분석", 81),
+    (2, "_sec18_3", "18.3 EPC 사업 전략 시사점", 82),
+    (2, "_sec18_4", "18.4 핵심 리스크 요인", 83),
 ]
 
 def add_toc(doc, levels: str = "1-3"):
@@ -270,14 +321,26 @@ def add_toc(doc, levels: str = "1-3"):
         toc1_style = doc.styles["toc 1"]
     except KeyError:
         toc1_style = None
-    for bm_name, title, est_page in _TOC_SECTIONS:
-        p = doc.add_paragraph(style=toc1_style)
+    try:
+        toc2_style = doc.styles["toc 2"]
+    except KeyError:
+        toc2_style = None
+    # 2레벨 목차: level 1(장)은 toc1 스타일·10pt·들여쓰기 없음,
+    # level 2(절, N.M)는 toc2 스타일·9pt·6mm 들여쓰기로 하위 항목임을 시각적으로 구분.
+    for level, bm_name, title, est_page in _TOC_SECTIONS:
+        if level == 1:
+            p = doc.add_paragraph(style=toc1_style)
+            font_size, color, tab_pos = 10, CLR_H1, 150
+        else:
+            p = doc.add_paragraph(style=toc2_style)
+            p.paragraph_format.left_indent = Mm(6)
+            font_size, color, tab_pos = 9, CLR_H2, 144
         p.paragraph_format.space_before = Pt(1)
         p.paragraph_format.space_after = Pt(1)
-        _add_dotted_tab_stop(p, 150)
+        _add_dotted_tab_stop(p, tab_pos)
         _add_toc_hyperlink(
             p, bm_name, title, str(est_page),
-            font_size=10, font_name=FONT, color=CLR_H1, bold=False,
+            font_size=font_size, font_name=FONT, color=color, bold=(level == 1),
         )
 
     # 목차 끝 구분선
@@ -493,7 +556,7 @@ def _styled_table(doc, headers, rows, col_widths_mm=None):
         p = cell.paragraphs[0]
         r = p.add_run(str(h))
         r.bold = True
-        r.font.size = Pt(9)
+        r.font.size = Pt(12)
         r.font.name = FONT
         r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -515,7 +578,7 @@ def _styled_table(doc, headers, rows, col_widths_mm=None):
             p = cell.paragraphs[0]
             _val_str = str(val)
             r = p.add_run(_val_str)
-            r.font.size = Pt(9)
+            r.font.size = Pt(12)
             r.font.name = FONT
             p.alignment = WD_ALIGN_PARAGRAPH.RIGHT if _is_numeric_cell(_val_str) else WD_ALIGN_PARAGRAPH.LEFT
             p.paragraph_format.space_before = Pt(1)
@@ -543,7 +606,7 @@ def _add_news_section(doc, category, max_items=5, analysis: str = ""):
         p.paragraph_format.space_before = Pt(2)
         p.paragraph_format.space_after = Pt(6)
         for run in p.runs:
-            run.font.size = Pt(10)
+            run.font.size = Pt(12)
             run.font.name = FONT
     if not news:
         doc.add_paragraph(
@@ -831,7 +894,7 @@ def generate_word_report():
         f"전망 범위: {md.YEARS[0]}~{md.YEARS[-1]}년 / "
         f"스냅샷 시점: {md.DATA_SNAPSHOT_AS_OF}"
     )
-    basis_r.font.size = Pt(10)
+    basis_r.font.size = Pt(12)
     basis_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     basis_r.font.name = FONT
 
@@ -968,7 +1031,7 @@ def generate_word_report():
     )
     _p_interp.paragraph_format.space_before = Pt(4)
     for _r in _p_interp.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 최근 분기 실적 콜아웃 — 현재 시점(분기 트래커) 앵커. 연간 스냅샷보다 신선한 공개치.
     # 분기 종료 후 150일(약 1개 분기+발표 유예) 초과 시 경과 경고로 전환 — RECENT_QUARTER가
@@ -1096,7 +1159,8 @@ def generate_word_report():
         _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     for idx, r_name in enumerate(md.REGIONS):
         r_data = md.REGIONAL_DATA[r_name]
-        doc.add_heading(f"2.{idx+1} {r_name} ({r_data['name_en']})", level=2)
+        _h2b = doc.add_heading(f"2.{idx+1} {r_name} ({r_data['name_en']})", level=2)
+        _add_bookmark(_h2b, f"_sec2_{idx+1}")
 
         _cur_r  = r_data["installed_gwh"].get(_yr, 0)
         _prev_r = r_data["installed_gwh"].get(_yr - 1, 0)
@@ -1112,7 +1176,7 @@ def generate_word_report():
         )
         _p_ov.paragraph_format.space_after = Pt(4)
         for _r in _p_ov.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
         _cy_r = datetime.datetime.now().year
         _cur_r_cy = r_data["installed_gwh"].get(_cy_r, 0)
@@ -1231,13 +1295,13 @@ def generate_word_report():
             _p_h = doc.add_paragraph(style="List Bullet")
             _h_run = _p_h.add_run(f"[{_fig_str}] ")
             _h_run.font.bold = True
-            _h_run.font.size = Pt(10)
+            _h_run.font.size = Pt(12)
             _h_run.font.name = FONT
             if _c.get("url"):
                 add_hyperlink(_p_h, _c["url"], _c["title"])
             else:
                 _t_run = _p_h.add_run(_c["title"])
-                _t_run.font.size = Pt(10)
+                _t_run.font.size = Pt(12)
                 _t_run.font.name = FONT
             _p_meta = doc.add_paragraph()
             _m_run = _p_meta.add_run(
@@ -1261,7 +1325,8 @@ def generate_word_report():
     _top3_pct4   = round(_top3_sum4 / _total4 * 100) if _total4 else 0
     _fastest4    = sorted(_bars, key=lambda x: x[3], reverse=True)[0]
 
-    doc.add_heading("4.1 시장별 설치 용량", level=2)
+    _h2b = doc.add_heading("4.1 시장별 설치 용량", level=2)
+    _add_bookmark(_h2b, "_sec4_1")
     _add_chart_to_doc(doc, _chart_growth())
     _p_bar = doc.add_paragraph(
         f"[그림 분석] {_yr4}년 글로벌 설치 용량 합계 {_total4:.1f} GWh 중, "
@@ -1273,13 +1338,14 @@ def generate_word_report():
     )
     _p_bar.paragraph_format.space_before = Pt(4)
     for _r in _p_bar.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     _pie_sorted = sorted(_bars, key=lambda x: x[2], reverse=True)
     _shares4    = [(x[1], round(x[2] / _total4 * 100, 1)) for x in _pie_sorted]
     _top3_sh    = round(sum(s[1] for s in _shares4[:3]), 1)
 
-    doc.add_heading("4.2 지역별 시장 점유율", level=2)
+    _h2b = doc.add_heading("4.2 지역별 시장 점유율", level=2)
+    _add_bookmark(_h2b, "_sec4_2")
     _add_chart_to_doc(doc, _chart_region())
     _p_pie = doc.add_paragraph(
         f"[그림 분석] {_shares4[0][0]}이 {_shares4[0][1]}%로 압도적 1위이며, "
@@ -1290,7 +1356,7 @@ def generate_word_report():
     )
     _p_pie.paragraph_format.space_before = Pt(4)
     for _r in _p_pie.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 5. 글로벌 트렌드 통계 및 YoY 분석
     _h5 = doc.add_heading("5. 글로벌 트렌드 통계 및 YoY 분석", level=1)
@@ -1303,7 +1369,8 @@ def generate_word_report():
     )
 
     # 5.1 연도별 핵심 지표 종합 테이블
-    doc.add_heading("5.1 연도별 핵심 지표 종합", level=2)
+    _h2b = doc.add_heading("5.1 연도별 핵심 지표 종합", level=2)
+    _add_bookmark(_h2b, "_sec5_1")
     trend_headers = ["연도", "용량(GWh)", "YoY(%)", "시장규모($B)", "YoY(%)",
                      "LFP($/kWh)", "변동(%)", "CAPEX($/kWh)", "변동(%)"]
     trend_rows = []
@@ -1347,10 +1414,11 @@ def generate_word_report():
     )
     _p_cagr.paragraph_format.space_before = Pt(4)
     for _r in _p_cagr.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 5.2 가격 트렌드 차트
-    doc.add_heading("5.2 배터리 셀 가격 및 시스템 CAPEX 추이", level=2)
+    _h2b = doc.add_heading("5.2 배터리 셀 가격 및 시스템 CAPEX 추이", level=2)
+    _add_bookmark(_h2b, "_sec5_2")
     _add_chart_to_doc(doc, _chart_price_trend())
     _capex_threshold = 150
     _capex_cross_yr = next(
@@ -1372,10 +1440,11 @@ def generate_word_report():
     )
     _p_price.paragraph_format.space_before = Pt(4)
     for _r in _p_price.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 5.3 용량 성장 추이 차트
-    doc.add_heading("5.3 글로벌 설치 용량 성장 추이", level=2)
+    _h2b = doc.add_heading("5.3 글로벌 설치 용량 성장 추이", level=2)
+    _add_bookmark(_h2b, "_sec5_3")
     _add_chart_to_doc(doc, _chart_capacity_growth())
     _p_cap_g = doc.add_paragraph(
         f"[그림 분석] 글로벌 BESS 설치 용량은 {_first_yr}년 {md.GLOBAL_CAPACITY_GWH[_first_yr]} GWh에서 "
@@ -1386,7 +1455,7 @@ def generate_word_report():
     )
     _p_cap_g.paragraph_format.space_before = Pt(4)
     for _r in _p_cap_g.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 6. 경쟁사 심층 분석
     _h6 = doc.add_heading("6. 경쟁사 심층 분석", level=1)
@@ -1398,7 +1467,8 @@ def generate_word_report():
     )
 
     # 6.1 시장 점유율 테이블
-    doc.add_heading("6.1 주요 경쟁사 비교", level=2)
+    _h2b = doc.add_heading("6.1 주요 경쟁사 비교", level=2)
+    _add_bookmark(_h2b, "_sec6_1")
     comp_headers = ["기업", "국가", "유형", "점유율(%)", "매출($B)", "생산(GWh)"]
     comp_rows = []
     for c in md.COMPETITORS:
@@ -1410,7 +1480,8 @@ def generate_word_report():
     _styled_table(doc, comp_headers, comp_rows, col_widths_mm=[46, 16, 22, 20, 28, 28])
 
     # 6.2 경쟁사 포지셔닝 차트
-    doc.add_heading("6.2 경쟁사 포지셔닝 맵", level=2)
+    _h2b = doc.add_heading("6.2 경쟁사 포지셔닝 맵", level=2)
+    _add_bookmark(_h2b, "_sec6_2")
     _add_chart_to_doc(doc, _chart_competitors())
 
     # Top 3 competitor analysis
@@ -1428,17 +1499,18 @@ def generate_word_report():
     )
     _p_comp.paragraph_format.space_before = Pt(4)
     for _r in _p_comp.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 6.3 SWOT by player type
-    doc.add_heading("6.3 유형별 SWOT 분석", level=2)
+    _h2b = doc.add_heading("6.3 유형별 SWOT 분석", level=2)
+    _add_bookmark(_h2b, "_sec6_3")
     for c in _sorted_comp[:5]:
         _p_sw = doc.add_paragraph()
         _r_name = _p_sw.add_run(f"{c['name']} ({c['country']}, {c['type']}): ")
         _r_name.bold = True
-        _r_name.font.size = Pt(10); _r_name.font.name = FONT
+        _r_name.font.size = Pt(12); _r_name.font.name = FONT
         _r_body = _p_sw.add_run(f"강점 — {c['strength']}  |  약점 — {c['weakness']}")
-        _r_body.font.size = Pt(10); _r_body.font.name = FONT
+        _r_body.font.size = Pt(12); _r_body.font.name = FONT
 
     # 7. 프로젝트 파이프라인 현황
     _h7 = doc.add_heading("7. 프로젝트 파이프라인 현황", level=1)
@@ -1450,7 +1522,8 @@ def generate_word_report():
     )
 
     # 7.1 파이프라인 테이블
-    doc.add_heading("7.1 주요 프로젝트 목록", level=2)
+    _h2b = doc.add_heading("7.1 주요 프로젝트 목록", level=2)
+    _add_bookmark(_h2b, "_sec7_1")
     _pipeline = md.project_pipeline_with_status()
     pipe_headers = ["프로젝트명", "지역", "MW", "MWh", "상태", "개발사", "연도"]
     pipe_rows = []
@@ -1463,7 +1536,8 @@ def generate_word_report():
                   col_widths_mm=[50, 14, 14, 14, 14, 36, 18])
 
     # 7.2 파이프라인 통계
-    doc.add_heading("7.2 파이프라인 통계 분석", level=2)
+    _h2b = doc.add_heading("7.2 파이프라인 통계 분석", level=2)
+    _add_bookmark(_h2b, "_sec7_2")
     _total_mw = sum(p["capacity_mw"] for p in _pipeline)
     _total_mwh = sum(p["capacity_mwh"] for p in _pipeline)
     _avg_mwh = round(_total_mwh / len(_pipeline))
@@ -1492,7 +1566,7 @@ def generate_word_report():
     )
     _p_pipe.paragraph_format.space_before = Pt(4)
     for _r in _p_pipe.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 8. 환율 및 원자재 시장 영향 분석
     _h8 = doc.add_heading("8. 환율 및 원자재 시장 영향 분석", level=1)
@@ -1519,7 +1593,8 @@ def generate_word_report():
                 "nickel_usd_ton": 16800,
                 "source": f"reference (as of {_FX_FALLBACK_DATE}, offline)"}
 
-    doc.add_heading("8.1 주요 환율 현황", level=2)
+    _h2b = doc.add_heading("8.1 주요 환율 현황", level=2)
+    _add_bookmark(_h2b, "_sec8_1")
     fx_rows = [
         ["USD/KRW", f"{_fx.get('USD_KRW', 'N/A'):,.1f}" if isinstance(_fx.get('USD_KRW'), (int, float)) else "N/A",
          "한국 시장 원가에 직접 영향"],
@@ -1553,7 +1628,8 @@ def generate_word_report():
         for _r in _p_fxerr.runs:
             _r.font.size = Pt(9); _r.font.name = FONT
 
-    doc.add_heading("8.2 원자재 가격 현황", level=2)
+    _h2b = doc.add_heading("8.2 원자재 가격 현황", level=2)
+    _add_bookmark(_h2b, "_sec8_2")
     cmd_rows = [
         ["브렌트유 (Brent)",
          f"${_cmd.get('brent_crude_usd', 'N/A')}/bbl",
@@ -1580,7 +1656,7 @@ def generate_word_report():
     )
     _p_fx.paragraph_format.space_before = Pt(4)
     for _r in _p_fx.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     _cmd_src = _cmd.get("metals_source") or _cmd.get("source") or "reference"
     _p_cmdsrc = doc.add_paragraph(
@@ -1593,7 +1669,8 @@ def generate_word_report():
         _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
 
     # 8.3 미국 BESS 운영용량 — EIA 라이브 월별 추이
-    doc.add_heading("8.3 미국 BESS 운영용량 (EIA 라이브 추이)", level=2)
+    _h2b = doc.add_heading("8.3 미국 BESS 운영용량 (EIA 라이브 추이)", level=2)
+    _add_bookmark(_h2b, "_sec8_3")
     _fig_eia, _err_eia = _chart_eia_us_monthly()
     if _fig_eia is not None:
         _add_chart_to_doc(doc, _fig_eia)
@@ -1620,11 +1697,13 @@ def generate_word_report():
     doc.add_paragraph("각국 시장 및 거시경제 상황에 따른 BESS 확산 중장기 시나리오 전망입니다.")
 
     # Scenario comparison chart
-    doc.add_heading("9.1 시나리오별 용량 전망 비교", level=2)
+    _h2b = doc.add_heading("9.1 시나리오별 용량 전망 비교", level=2)
+    _add_bookmark(_h2b, "_sec9_1")
     _add_chart_to_doc(doc, _chart_scenario_comparison())
 
     # Scenario table
-    doc.add_heading("9.2 시나리오별 수치 비교", level=2)
+    _h2b = doc.add_heading("9.2 시나리오별 수치 비교", level=2)
+    _add_bookmark(_h2b, "_sec9_2")
     scen_rows = []
     scen_rows.append(["연도", "보수적", "기준", "낙관적"])
     for yr in md.YEARS:
@@ -1654,7 +1733,7 @@ def generate_word_report():
     )
     _p_scen.paragraph_format.space_before = Pt(4)
     for _r in _p_scen.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # ============================================================
     # 10. BESS 사업 개발 및 투자 분석
@@ -1668,7 +1747,8 @@ def generate_word_report():
     )
 
     # 10.1 시장별 수익 스태킹 분석
-    doc.add_heading("10.1 시장별 수익 스태킹(Revenue Stacking) 분석", level=2)
+    _h2b = doc.add_heading("10.1 시장별 수익 스태킹(Revenue Stacking) 분석", level=2)
+    _add_bookmark(_h2b, "_sec10_1")
     for mkt_name in ["미국", "영국", "호주", "한국", "EU"]:
         mkt_rs = md.REVENUE_STACKING.get(mkt_name, {})
         if not mkt_rs:
@@ -1695,7 +1775,8 @@ def generate_word_report():
             _r.font.size = Pt(9); _r.font.name = FONT; _r.bold = True
 
     # 10.2 투자 경제성 비교
-    doc.add_heading("10.2 프로젝트 유형별 투자 경제성 비교", level=2)
+    _h2b = doc.add_heading("10.2 프로젝트 유형별 투자 경제성 비교", level=2)
+    _add_bookmark(_h2b, "_sec10_2")
     inv_headers = ["프로젝트 유형", "CAPEX\n($/kWh)", "OPEX\n($/kWh/yr)", "IRR\n(Base)", "IRR\n(Opt.)",
                    "Payback\n(년)", "수명\n(년)", "LCOS\n($/kWh)"]
     inv_rows = []
@@ -1718,10 +1799,11 @@ def generate_word_report():
         "IRA ITC 적용 시 경쟁력이 극대화됩니다."
     )
     for _r in _p_inv.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 10.3 Offtake / PPA 구조 비교
-    doc.add_heading("10.3 Offtake 및 PPA 계약 구조 비교", level=2)
+    _h2b = doc.add_heading("10.3 Offtake 및 PPA 계약 구조 비교", level=2)
+    _add_bookmark(_h2b, "_sec10_3")
     oft_headers = ["계약 유형", "계약기간", "리스크", "수익 확실성", "주요 시장", "설명"]
     oft_rows = []
     for _o in md.OFFTAKE_STRUCTURES:
@@ -1738,7 +1820,7 @@ def generate_word_report():
         "한국은 전력시장 구조상 한전/KPX 기반 계약이 중심이나, 전력시장 개편 시 다양한 계약 구조 도입이 예상됩니다."
     )
     for _r in _p_oft.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # ============================================================
     # 11. 전력시장 및 거래 동향
@@ -1764,10 +1846,11 @@ def generate_word_report():
         _p_pm = doc.add_paragraph(f"[동향] {pm_data['key_trend']}")
         _p_pm.paragraph_format.space_before = Pt(4)
         for _r in _p_pm.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT; _r.italic = True
+            _r.font.size = Pt(12); _r.font.name = FONT; _r.italic = True
 
     # 전력 거래 전략 시사점
-    doc.add_heading("11.6 BESS 전력 거래 전략 시사점", level=2)
+    _h2b = doc.add_heading("11.6 BESS 전력 거래 전략 시사점", level=2)
+    _add_bookmark(_h2b, "_sec11_6")
     _trading_insights = [
         "Revenue Stacking 필수화: 단일 수익원 의존은 수익성 리스크가 높아 복수 시장 동시 참여(에너지+보조서비스+용량) 전략이 표준화되고 있습니다.",
         "AI/ML 기반 입찰 최적화: Tesla Autobidder, Fluence Mosaic 등 AI 기반 EMS가 수동 입찰 대비 15-25% 수익 향상을 달성하고 있어, "
@@ -1781,7 +1864,7 @@ def generate_word_report():
     for _ti in _trading_insights:
         _p_ti = doc.add_paragraph(_ti, style="List Bullet")
         for _r in _p_ti.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
     # ============================================================
     # 12. BESS 운영 및 자산관리
@@ -1796,7 +1879,8 @@ def generate_word_report():
     )
 
     # 12.1 핵심 성능 지표
-    doc.add_heading("12.1 핵심 성능 지표(KPI)", level=2)
+    _h2b = doc.add_heading("12.1 핵심 성능 지표(KPI)", level=2)
+    _add_bookmark(_h2b, "_sec12_1")
     perf = md.OPERATIONS_DATA["performance_metrics"]
     perf_rows = []
     for pk, pv in perf.items():
@@ -1804,7 +1888,8 @@ def generate_word_report():
     _styled_table(doc, ["지표", "기준값", "추세", "설명"], perf_rows, col_widths_mm=[26, 16, 10, 108])
 
     # 12.2 O&M 비용 추이
-    doc.add_heading("12.2 O&M 비용 추이", level=2)
+    _h2b = doc.add_heading("12.2 O&M 비용 추이", level=2)
+    _add_bookmark(_h2b, "_sec12_2")
     om = md.OPERATIONS_DATA["om_cost_trends"]
     om_headers = ["연도", "고정비($/kW/yr)", "변동비($/MWh)", "총 O&M($/kWh/yr)"]
     om_rows = []
@@ -1821,21 +1906,23 @@ def generate_word_report():
         "원격 모니터링 확대, 예측정비(Predictive Maintenance) 도입, 규모의 경제가 주요 원인입니다."
     )
     for _r in _p_om.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # 12.3 EMS 플랫폼 비교
-    doc.add_heading("12.3 에너지관리시스템(EMS) 플랫폼 비교", level=2)
+    _h2b = doc.add_heading("12.3 에너지관리시스템(EMS) 플랫폼 비교", level=2)
+    _add_bookmark(_h2b, "_sec12_3")
     ems = md.OPERATIONS_DATA["ems_platforms"]
     ems_headers = ["플랫폼", "벤더", "핵심 기능", "주요 시장"]
     ems_rows = [[e["name"], e["vendor"], e["feature"], e["market"]] for e in ems]
     _styled_table(doc, ems_headers, ems_rows, col_widths_mm=[24, 22, 78, 36])
 
     # 12.4 배터리 열화 관리 전략
-    doc.add_heading("12.4 배터리 열화 관리 및 수명 연장 전략", level=2)
+    _h2b = doc.add_heading("12.4 배터리 열화 관리 및 수명 연장 전략", level=2)
+    _add_bookmark(_h2b, "_sec12_4")
     for _dm in md.OPERATIONS_DATA["degradation_mgmt"]:
         _p_dm = doc.add_paragraph(_dm, style="List Bullet")
         for _r in _p_dm.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
     _p_dm_sum = doc.add_paragraph(
         "체계적인 열화 관리는 BESS 프로젝트의 20년 수명 동안 누적 수익을 15-25% 향상시킬 수 있습니다. "
@@ -1843,7 +1930,7 @@ def generate_word_report():
         "초기 설계 단계에서 증설 공간(Bay) 확보가 필수적입니다."
     )
     for _r in _p_dm_sum.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # ============================================================
     # 13. 안전·화재 및 규제 기준
@@ -1856,12 +1943,14 @@ def generate_word_report():
         "주요국 안전 규격, 화재 사고 사례 및 교훈, 설계 반영 사항을 분석합니다."
     )
 
-    doc.add_heading("13.1 글로벌 ESS 안전 규격 비교", level=2)
+    _h2b = doc.add_heading("13.1 글로벌 ESS 안전 규격 비교", level=2)
+    _add_bookmark(_h2b, "_sec13_1")
     sf_headers = ["규격", "적용 지역", "범위", "핵심 요구사항"]
     sf_rows = [[s["standard"], s["region"], s["scope"], s["key_req"]] for s in md.SAFETY_STANDARDS]
     _styled_table(doc, sf_headers, sf_rows, col_widths_mm=[20, 18, 26, 96])
 
-    doc.add_heading("13.2 주요 ESS 화재 사고 사례 및 교훈", level=2)
+    _h2b = doc.add_heading("13.2 주요 ESS 화재 사고 사례 및 교훈", level=2)
+    _add_bookmark(_h2b, "_sec13_2")
     fi_headers = ["연도", "위치", "원인", "피해", "교훈"]
     fi_rows = [[str(f["year"]), f["location"], f["cause"], f["damage"], f["lesson"]] for f in md.FIRE_INCIDENTS]
     _styled_table(doc, fi_headers, fi_rows, col_widths_mm=[10, 20, 24, 24, 82])
@@ -1872,9 +1961,10 @@ def generate_word_report():
         "보험사들도 UL 9540A 시험 결과 및 소방 설계 도면을 대출/보험 심사 필수 서류로 요구하는 추세입니다."
     )
     for _r in _p_fi.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
-    doc.add_heading("13.3 안전 설계 체크리스트", level=2)
+    _h2b = doc.add_heading("13.3 안전 설계 체크리스트", level=2)
+    _add_bookmark(_h2b, "_sec13_3")
     _safety_checklist = [
         "셀 레벨: UL 9540A 열폭주 시험 통과, IEC 62619 인증, 셀 간 방열 패드/에어갭",
         "모듈/랙 레벨: 모듈 간 방화벽, 열폭주 전파 방지 설계, 가스 벤트 경로 확보",
@@ -1886,7 +1976,7 @@ def generate_word_report():
     for _sc in _safety_checklist:
         _p_sc = doc.add_paragraph(_sc, style="List Bullet")
         for _r in _p_sc.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
     # ============================================================
     # 14. 배터리 기술 동향 및 차세대 기술
@@ -1899,13 +1989,15 @@ def generate_word_report():
         "성능·비용·상용화 전망을 비교 분석합니다. 장기 에너지 저장(LDES) 시장 동향도 포함합니다."
     )
 
-    doc.add_heading("14.1 배터리 기술 비교표", level=2)
+    _h2b = doc.add_heading("14.1 배터리 기술 비교표", level=2)
+    _add_bookmark(_h2b, "_sec14_1")
     _battery_techs = md.get_battery_technologies()
     bt_headers = ["기술", "에너지밀도\n(Wh/kg)", "사이클수명", "비용\n($/kWh)", "상용화 단계"]
     bt_rows = [[b["tech"], b["energy_density_wh_kg"], b["cycle_life"], b["cost_per_kwh"], b["status"]] for b in _battery_techs]
     _styled_table(doc, bt_headers, bt_rows, col_widths_mm=[24, 20, 20, 18, 78])
 
-    doc.add_heading("14.2 기술별 상세 분석", level=2)
+    _h2b = doc.add_heading("14.2 기술별 상세 분석", level=2)
+    _add_bookmark(_h2b, "_sec14_2")
     for bt in _battery_techs:
         doc.add_heading(f"  ■ {bt['tech']}", level=3)
         bt_detail = [
@@ -1916,7 +2008,8 @@ def generate_word_report():
         ]
         _styled_table(doc, ["항목", "내용"], bt_detail, col_widths_mm=[25, 135])
 
-    doc.add_heading("14.3 장기 에너지 저장(LDES) 시장 전망", level=2)
+    _h2b = doc.add_heading("14.3 장기 에너지 저장(LDES) 시장 전망", level=2)
+    _add_bookmark(_h2b, "_sec14_3")
     _ldes = md.LDES_MARKET
     _p_ldes = doc.add_paragraph(
         f"LDES 시장은 {_ldes['base_size_gwh']} GWh({_ldes['base_year']}) → "
@@ -1925,11 +2018,11 @@ def generate_word_report():
         f"정의: {_ldes['definition']}."
     )
     for _r in _p_ldes.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT; _r.bold = True
+        _r.font.size = Pt(12); _r.font.name = FONT; _r.bold = True
     for _d in _ldes["key_drivers"]:
         _p_ld = doc.add_paragraph(_d, style="List Bullet")
         for _r in _p_ld.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
     ldes_headers = ["기술", "시장 점유율(%)", "핵심 장점"]
     ldes_rows = [[t["tech"], str(t["share_pct"]), t["advantage"]] for t in _ldes["competing_techs"]]
     _styled_table(doc, ldes_headers, ldes_rows, col_widths_mm=[35, 25, 100])
@@ -1957,10 +2050,10 @@ def generate_word_report():
         _p_gc = doc.add_paragraph(f"[그리드 연결 현황] {pm_data['grid_challenge']}")
         _p_gc.paragraph_format.space_before = Pt(4)
         for _r in _p_gc.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT; _r.italic = True
+            _r.font.size = Pt(12); _r.font.name = FONT; _r.italic = True
         _p_tip = doc.add_paragraph(f"[실무 Tip] {pm_data['tips']}")
         for _r in _p_tip.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT; _r.bold = True
+            _r.font.size = Pt(12); _r.font.name = FONT; _r.bold = True
 
     # ============================================================
     # 16. 프로젝트 파이낸싱
@@ -1973,7 +2066,8 @@ def generate_word_report():
         "보험 요건을 분석합니다. 프로젝트 파이낸스(PF) 시장의 최신 동향을 반영합니다."
     )
 
-    doc.add_heading("16.1 자금 조달 구조 비교", level=2)
+    _h2b = doc.add_heading("16.1 자금 조달 구조 비교", level=2)
+    _add_bookmark(_h2b, "_sec16_1")
     pf_headers = ["유형", "레버리지", "기간(년)", "최소 DSCR", "주요 대출기관"]
     pf_rows = []
     for pfs in md.PROJECT_FINANCING["structures"]:
@@ -1985,15 +2079,17 @@ def generate_word_report():
         _p_pfs = doc.add_paragraph(f"■ {pfs['type']}: {pfs['desc']}")
         _p_pfs.paragraph_format.space_before = Pt(4)
         for _r in _p_pfs.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
-    doc.add_heading("16.2 Bankability 요건 (금융기관 심사 핵심)", level=2)
+    _h2b = doc.add_heading("16.2 Bankability 요건 (금융기관 심사 핵심)", level=2)
+    _add_bookmark(_h2b, "_sec16_2")
     for _bk in md.PROJECT_FINANCING["bankability_requirements"]:
         _p_bk = doc.add_paragraph(_bk, style="List Bullet")
         for _r in _p_bk.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
-    doc.add_heading("16.3 보험 요건", level=2)
+    _h2b = doc.add_heading("16.3 보험 요건", level=2)
+    _add_bookmark(_h2b, "_sec16_3")
     ins_headers = ["보험 유형", "보장 내용", "요율/한도"]
     ins_rows = [[i["type"], i["desc"], i["rate"]] for i in md.PROJECT_FINANCING["insurance_coverage"]]
     _styled_table(doc, ins_headers, ins_rows, col_widths_mm=[28, 88, 44])
@@ -2009,7 +2105,8 @@ def generate_word_report():
         "핵심 상업 조건(Performance Guarantee, LD, Warranty), 비용 구조를 분석합니다."
     )
 
-    doc.add_heading("17.1 EPC 계약 유형 비교", level=2)
+    _h2b = doc.add_heading("17.1 EPC 계약 유형 비교", level=2)
+    _add_bookmark(_h2b, "_sec17_1")
     epc_headers = ["계약 유형", "리스크 부담", "가격 구조", "장점", "단점"]
     epc_rows = []
     for ec in md.EPC_CONTRACT_DATA["contract_types"]:
@@ -2022,14 +2119,16 @@ def generate_word_report():
         _p_ec = doc.add_paragraph(f"■ {ec['type']}: {ec['desc']}")
         _p_ec.paragraph_format.space_before = Pt(4)
         for _r in _p_ec.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
-    doc.add_heading("17.2 핵심 상업 조건", level=2)
+    _h2b = doc.add_heading("17.2 핵심 상업 조건", level=2)
+    _add_bookmark(_h2b, "_sec17_2")
     ct_headers = ["조건", "상세 내용"]
     ct_rows = [[ct["term"], ct["desc"]] for ct in md.EPC_CONTRACT_DATA["key_commercial_terms"]]
     _styled_table(doc, ct_headers, ct_rows, col_widths_mm=[35, 125])
 
-    doc.add_heading("17.3 BESS 프로젝트 비용 구조(Cost Breakdown)", level=2)
+    _h2b = doc.add_heading("17.3 BESS 프로젝트 비용 구조(Cost Breakdown)", level=2)
+    _add_bookmark(_h2b, "_sec17_3")
     cb = md.EPC_CONTRACT_DATA["cost_breakdown"]
     cb_headers = ["항목", "비중(%)", "포함 내용"]
     cb_rows = sorted(
@@ -2042,7 +2141,7 @@ def generate_word_report():
         "EPC 마진 10%는 Full Turnkey 기준이며, EPCM/Split 방식 시 5-8%로 절감 가능합니다."
     )
     for _r in _p_cb.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
     # ============================================================
     # 18. 전문가 종합 의견 및 전략적 시사점 (기존 13장 → 18장)
@@ -2051,7 +2150,8 @@ def generate_word_report():
     _h18.paragraph_format.page_break_before = True
     _add_bookmark(_h18, "_sec18")
 
-    doc.add_heading("18.1 시장 전망 종합", level=2)
+    _h2b = doc.add_heading("18.1 시장 전망 종합", level=2)
+    _add_bookmark(_h2b, "_sec18_1")
     _p_exp1 = doc.add_paragraph(
         f"글로벌 BESS 시장은 {_yr}년 기준 {md.GLOBAL_CAPACITY_GWH.get(_yr, 0)} GWh 규모로 "
         f"{_yr - 1}년 대비 {_yoy_g}% 성장하였으며, {md.YEARS[-1]}년 "
@@ -2062,9 +2162,10 @@ def generate_word_report():
         "BESS 투자의 확실성을 높이고 있습니다."
     )
     for _r in _p_exp1.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
-    doc.add_heading("18.2 가격 전망 및 경제성 분석", level=2)
+    _h2b = doc.add_heading("18.2 가격 전망 및 경제성 분석", level=2)
+    _add_bookmark(_h2b, "_sec18_2")
     # LFP $30 이하 진입 연도 동적 추출
     _lfp_30_yr = next((y for y in md.YEARS if md.LFP_CELL_PRICE.get(y, 999) <= 30), None)
     _lfp_final_price = md.LFP_CELL_PRICE[_last_yr]
@@ -2087,9 +2188,10 @@ def generate_word_report():
         "다만 리튬 가격 바닥 도달, 공급망 재편 비용, 인플레이션 등 하방 리스크에도 주의해야 합니다."
     )
     for _r in _p_exp2.runs:
-        _r.font.size = Pt(10); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
 
-    doc.add_heading("18.3 EPC 사업 전략 시사점", level=2)
+    _h2b = doc.add_heading("18.3 EPC 사업 전략 시사점", level=2)
+    _add_bookmark(_h2b, "_sec18_3")
     _epc_insights = [
         "셀 소싱 전략: LFP 중심의 멀티 공급사 전략으로 리스크 분산 및 원가 경쟁력 확보가 필수입니다. "
         "CATL/BYD/EVE 등 중국 Tier 1과 Samsung SDI/LG 등 한국 제조사의 이중 소싱을 권장합니다.",
@@ -2106,9 +2208,10 @@ def generate_word_report():
     for insight in _epc_insights:
         _p_ins = doc.add_paragraph(insight, style="List Bullet")
         for _r in _p_ins.runs:
-            _r.font.size = Pt(10); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
-    doc.add_heading("18.4 핵심 리스크 요인", level=2)
+    _h2b = doc.add_heading("18.4 핵심 리스크 요인", level=2)
+    _add_bookmark(_h2b, "_sec18_4")
     _risks = [
         ("지정학적 리스크", "미·중 기술 갈등, 수출 통제, 관세 부과 → 셀 공급 다변화 필수"),
         ("정책 불확실성", "IRA 지속 여부, EU 보조금 변경 → 시나리오별 수익 모델링 강화"),
