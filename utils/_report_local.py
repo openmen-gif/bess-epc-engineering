@@ -421,13 +421,16 @@ def _setup_doc(title=None):
             _ind.set(qn("w:left"), str(int(_indent_mm / 25.4 * 1440)))  # mm → twips
             _pPr.append(_ind)
 
+    # 여백 옵션 A(단면 대칭, bess-output-generator.md 결정트리: "디지털 배포·화면 검토용")
+    # — 본 보고서는 웹 대시보드에서 다운로드하는 디지털 산출물이며 제본 계획이 없어
+    # 옵션 B(좌측 제본 여유, 좌30/우20)가 아닌 옵션 A가 맞음. 좌우 비대칭 민원(2026-07-21) 반영.
     sec = doc.sections[0]
     sec.page_width = Mm(210)
     sec.page_height = Mm(297)
     sec.top_margin = Mm(25)
     sec.bottom_margin = Mm(25)
-    sec.left_margin = Mm(30)
-    sec.right_margin = Mm(20)
+    sec.left_margin = Mm(25)
+    sec.right_margin = Mm(25)
     sec.header_distance = Mm(12)
     sec.footer_distance = Mm(12)
     if title:
