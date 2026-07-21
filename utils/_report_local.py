@@ -235,7 +235,7 @@ def _add_toc_hyperlink(paragraph, bookmark_name, title_text, page_text, font_siz
     tab_run.append(tab_el)
     paragraph._p.append(tab_run)
     # Run 3+: PAGEREF field (dynamic page number), placeholder = 예상 페이지 번호
-    for field_el in _make_pageref_field(bookmark_name, 10, font_name, placeholder=page_text):
+    for field_el in _make_pageref_field(bookmark_name, font_size, font_name, placeholder=page_text):
         paragraph._p.append(field_el)
 
 # 목차 항목 — 본문 섹션 heading과 반드시 동기화할 것 (bookmark명은 _add_bookmark(_hN, "_secN")과 일치)
@@ -342,11 +342,11 @@ def add_toc(doc, levels: str = "1-3"):
         # (레벨2에 들여쓰기만큼 뺀 값을 썼더니 그만큼 왼쪽에서 끝나던 실사고 수정).
         if level == 1:
             p = doc.add_paragraph(style=toc1_style)
-            font_size, color, tab_pos = 10, CLR_H1, 150
+            font_size, color, tab_pos = 12, CLR_H1, 150
         else:
             p = doc.add_paragraph(style=toc2_style)
             p.paragraph_format.left_indent = Mm(6)
-            font_size, color, tab_pos = 9, CLR_H2, 150
+            font_size, color, tab_pos = 12, CLR_H2, 150
         p.paragraph_format.space_before = Pt(1)
         p.paragraph_format.space_after = Pt(1)
         _add_dotted_tab_stop(p, tab_pos)
@@ -360,13 +360,13 @@ def add_toc(doc, levels: str = "1-3"):
     p_sep.paragraph_format.space_before = Pt(6)
     p_sep.paragraph_format.space_after = Pt(6)
     run_sep = p_sep.add_run("─" * 60)
-    run_sep.font.size = Pt(8)
+    run_sep.font.size = Pt(12)
     run_sep.font.color.rgb = RGBColor(0xCC, 0xCC, 0xCC)
     p_note = doc.add_paragraph()
     note_r = p_note.add_run(
         "※ 페이지 번호는 예상치이며, Word에서 열람 시 Ctrl+A → F9로 실제 값 갱신 가능합니다."
     )
-    note_r.font.size = Pt(8); note_r.font.name = FONT
+    note_r.font.size = Pt(12); note_r.font.name = FONT
     note_r.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
     note_r.italic = True
 
@@ -441,10 +441,11 @@ def _setup_doc(title=None):
     from docx.enum.style import WD_STYLE_TYPE as _WST
     _TOC_STYLE_SPEC = [
         # (style_id, name_lower, font_size_pt, indent_mm, bold, color, line_pt)
-        # line_pt = 폰트 + 2pt, space_after 1pt — 컴팩트하지만 가독성 확보
-        ("TOC1", "toc 1", 10, 0,  True,  CLR_H1, 12),
-        ("TOC2", "toc 2", 9,  6,  False, CLR_H2, 11),
-        ("TOC3", "toc 3", 9,  12, False, None,   11),
+        # 본문(12pt)과 완전히 통일 — 목차만 9/10pt로 작게 남아있던 게 "글자 크기
+        # 일정하지 않음" 지적의 원인이었음. 레벨 구분은 굵기·들여쓰기·색상으로만.
+        ("TOC1", "toc 1", 12, 0,  True,  CLR_H1, 14),
+        ("TOC2", "toc 2", 12, 6,  False, CLR_H2, 14),
+        ("TOC3", "toc 3", 12, 12, False, None,   14),
     ]
     for _sid, _name_lower, _size, _indent_mm, _bold, _color, _line_pt in _TOC_STYLE_SPEC:
         # python-docx의 styles는 display name으로 접근 — built-in이 있으면 그것을 가져옴
@@ -513,7 +514,7 @@ def _setup_doc(title=None):
         hp = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
         hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         hr = hp.add_run(title)
-        hr.font.size = Pt(8)
+        hr.font.size = Pt(12)
         hr.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
         hr.font.name = FONT
     return doc
@@ -622,7 +623,7 @@ def _add_news_section(doc, category, max_items=5, analysis: str = ""):
             run.font.name = FONT
     if not news:
         doc.add_paragraph(
-            "⚠️ 실시간 뉴스를 가져오지 못했습니다. (네트워크 접근 제한 또는 일시적 오류일 수 있습니다.)",
+            "실시간 뉴스를 가져오지 못했습니다. (네트워크 접근 제한 또는 일시적 오류일 수 있습니다.)",
             style="Normal"
         )
         return []
@@ -662,7 +663,7 @@ def _add_chart_to_doc(doc, fig, width_inches=5.8, fig_num=None, desc=None, sourc
         cap_p.paragraph_format.space_before = Pt(2)
         cap_p.paragraph_format.space_after = Pt(6)
         cap_r = cap_p.add_run(f"[Figure {fig_num}] {desc} (Source: {source})")
-        cap_r.font.size = Pt(9)
+        cap_r.font.size = Pt(12)
         cap_r.font.name = FONT
         cap_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
         cap_r.italic = True
@@ -934,7 +935,7 @@ def generate_word_report(skip_field_resolve: bool = False):
     margin_p = doc.add_paragraph()
     margin_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     margin_r = margin_p.add_run("출력 옵션: A (단면 대칭, 25mm 4-방향 — 디지털 배포용)")
-    margin_r.font.size = Pt(9)
+    margin_r.font.size = Pt(12)
     margin_r.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
     margin_r.italic = True
 
@@ -946,7 +947,7 @@ def generate_word_report(skip_field_resolve: bool = False):
     fresh_r = fresh_p.add_run(
         f"실시간 갱신: {_live_n}개 섹션 · 스냅샷: {_snap_n}개 섹션 (분기별 큐레이션)"
     )
-    fresh_r.font.size = Pt(9)
+    fresh_r.font.size = Pt(12)
     fresh_r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     fresh_r.font.name = FONT
 
@@ -963,15 +964,15 @@ def generate_word_report(skip_field_resolve: bool = False):
         _age_txt = f"생성 시각 {now_str} · 시장 스냅샷 기준일 확인 불가"
         _age_clr = RGBColor(0x80, 0x80, 0x80)
     elif _age_days <= 35:
-        _age_txt = (f"✅ 생성 시각 {now_str} 기준 — 라이브 항목(환율·미국 EIA·뉴스) 실시간 수집, "
+        _age_txt = (f"생성 시각 {now_str} 기준 — 라이브 항목(환율·미국 EIA·뉴스) 실시간 수집, "
                     f"시장 스냅샷 {_age_days}일 전(최신)")
         _age_clr = RGBColor(0x2E, 0x7D, 0x32)
     else:
-        _age_txt = (f"⚠️ 생성 시각 {now_str} 기준 — 시장 스냅샷이 {_age_days}일 경과(월간 갱신 권장). "
+        _age_txt = (f"생성 시각 {now_str} 기준 — 시장 스냅샷이 {_age_days}일 경과(월간 갱신 권장). "
                     f"라이브 항목(환율·미국 EIA·뉴스)만 실시간 반영됨.")
         _age_clr = RGBColor(0xC6, 0x28, 0x28)
     _age_r = _age_p.add_run(_age_txt)
-    _age_r.font.size = Pt(9)
+    _age_r.font.size = Pt(12)
     _age_r.font.bold = True
     _age_r.font.color.rgb = _age_clr
     _age_r.font.name = FONT
@@ -1091,7 +1092,7 @@ def generate_word_report(skip_field_resolve: bool = False):
         _rq_stale = _rq_age_days is not None and _rq_age_days > 150
         _rq_global_yoy = _rq.get("global_yoy_pct")
         _rq_us_yoy = _rq.get("us_yoy_pct")
-        _rq_prefix = "⚠️ [최근 분기 실적 · 경과] " if _rq_stale else "[최근 분기 실적] "
+        _rq_prefix = "[최근 분기 실적 · 경과] " if _rq_stale else "[최근 분기 실적] "
         _rq_stale_note = (
             f" 분기 종료 후 {_rq_age_days}일 경과 — market_data.RECENT_QUARTER를 다음 분기로 갱신 권장."
             if _rq_stale else ""
@@ -1106,7 +1107,7 @@ def generate_word_report(skip_field_resolve: bool = False):
         )
         _p_rq.paragraph_format.space_before = Pt(2)
         for _r in _p_rq.runs:
-            _r.font.size = Pt(9); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
             _r.font.bold = _rq_stale
             _r.font.color.rgb = RGBColor(0xC6, 0x28, 0x28) if _rq_stale else RGBColor(0x2E, 0x75, 0xB6)
 
@@ -1124,27 +1125,27 @@ def generate_word_report(skip_field_resolve: bool = False):
             "각 원문 링크로 검증하십시오. (스냅샷 큐레이션값과 교차 확인용)"
         )
         for _r in _p_cdesc.runs:
-            _r.font.size = Pt(9); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
         for _c in _commentary[:8]:
             _figs = ", ".join(_c.get("figures", [])[:5])
             _p = doc.add_paragraph(style="List Bullet")
             if _figs:
                 _rf = _p.add_run(f"[{_figs}] ")
-                _rf.bold = True; _rf.font.size = Pt(9); _rf.font.name = FONT
+                _rf.bold = True; _rf.font.size = Pt(12); _rf.font.name = FONT
                 _rf.font.color.rgb = CLR_H2
             _title = (_c.get("title", "") or "")[:130]
             _url = _c.get("url", "")
             if _url:
                 add_hyperlink(_p, _url, _title, size_pt=9)
             else:
-                _rt = _p.add_run(_title); _rt.font.size = Pt(9); _rt.font.name = FONT
+                _rt = _p.add_run(_title); _rt.font.size = Pt(12); _rt.font.name = FONT
     else:
         _p_cnone = doc.add_paragraph(
             "ℹ️ 생성 시점에 추출된 기사 수치가 없습니다(네트워크 제한 또는 일시적 오류). "
             "환율·미국 EIA 등 다른 라이브 항목은 정상 수집됩니다."
         )
         for _r in _p_cnone.runs:
-            _r.font.size = Pt(9); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
     # 라이브 지표 스냅샷 — 보고서 생성 시각 기준 실시간 수집값 (매 생성마다 갱신)
     doc.add_heading("실시간 지표 스냅샷 (생성 시각 기준)", level=2)
@@ -1190,12 +1191,12 @@ def generate_word_report(skip_field_resolve: bool = False):
     _h2.paragraph_format.page_break_before = True
     _add_bookmark(_h2, "_sec2")
     _p_sec2note = doc.add_paragraph(
-        f"⚠️ 본 장의 용량·성장률·파이프라인 수치는 {_snap_basis()}입니다. "
+        f"본 장의 용량·성장률·파이프라인 수치는 {_snap_basis()}입니다. "
         "연도 표기: (추정)=스냅샷 추정, (E)=당해연도 추정, (F)=전망. "
         "환율·미국(EIA) 운영용량 등 실시간 갱신 항목은 1장 '실시간 지표 스냅샷'과 8장을 참조하십시오."
     )
     for _r in _p_sec2note.runs:
-        _r.font.size = Pt(9); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
         _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     for idx, r_name in enumerate(md.REGIONS):
         r_data = md.REGIONAL_DATA[r_name]
@@ -1311,12 +1312,12 @@ def generate_word_report(skip_field_resolve: bool = False):
         "정적으로 반영합니다. 스킬 문서 갱신 시 본 섹션도 함께 재검토가 필요합니다."
     )
     for _r in _p_skillref.runs:
-        _r.font.size = Pt(8); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
         _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
         _r.italic = True
 
     # 3.X Recent Market Commentary (RSS에서 자동 추출된 시장 인용 수치)
-    doc.add_heading("📊 최근 시장 인용 수치 (RSS 자동 추출)", level=2)
+    doc.add_heading("최근 시장 인용 수치 (RSS 자동 추출)", level=2)
     doc.add_paragraph(
         "보고서 생성 시점에 fetch된 RSS 피드에서 BESS 시장 관련 수치 인용 "
         "(예: $/kWh 가격, GWh 용량, MW 출력, % 성장률) 을 자동으로 추출한 결과입니다. "
@@ -1326,7 +1327,7 @@ def generate_word_report(skip_field_resolve: bool = False):
         _commentary = md.extract_market_commentary(max_items=10)
     except Exception as _ce:
         _commentary = []
-        doc.add_paragraph(f"⚠️ 인용 추출 중 오류: {_ce}")
+        doc.add_paragraph(f"인용 추출 중 오류: {_ce}")
     if not _commentary:
         doc.add_paragraph("최근 fetch한 RSS에서 추출 가능한 수치 인용이 없습니다.")
     else:
@@ -1347,7 +1348,7 @@ def generate_word_report(skip_field_resolve: bool = False):
             _m_run = _p_meta.add_run(
                 f"  └ {_c.get('source', '')} · {_c.get('pub_date', '')}"
             )
-            _m_run.font.size = Pt(9)
+            _m_run.font.size = Pt(12)
             _m_run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
             _m_run.font.name = FONT
 
@@ -1664,15 +1665,15 @@ def generate_word_report(skip_field_resolve: bool = False):
             "월별 시계열입니다. 스냅샷 상수가 아니므로 매월 보고서를 생성할 때마다 갱신됩니다."
         )
         for _r in _p_fxnote.runs:
-            _r.font.size = Pt(8); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
             _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     else:
         _p_fxerr = doc.add_paragraph(
-            f"⚠️ 실시간 환율 추이 차트를 가져오지 못했습니다 ({_err_fx}). "
+            f"실시간 환율 추이 차트를 가져오지 못했습니다 ({_err_fx}). "
             "네트워크 제한 또는 일시적 오류일 수 있으며, 위 표의 현재값을 참고하십시오."
         )
         for _r in _p_fxerr.runs:
-            _r.font.size = Pt(9); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
     _h2b = doc.add_heading("8.2 원자재 가격 현황", level=2)
     _add_bookmark(_h2b, "_sec8_2")
@@ -1711,7 +1712,7 @@ def generate_word_report(skip_field_resolve: bool = False):
         "따라서 금속 가격은 월별로 변하지 않을 수 있습니다(데이터 신선도 표 참조)."
     )
     for _r in _p_cmdsrc.runs:
-        _r.font.size = Pt(8); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
         _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
 
     # 8.3 미국 BESS 운영용량 — EIA 라이브 월별 추이
@@ -1726,7 +1727,7 @@ def generate_word_report(skip_field_resolve: bool = False):
             "추이입니다. GWh는 평균 4시간 duration 가정의 추정치이며, 매월 신규 데이터로 갱신됩니다."
         )
         for _r in _p_eianote.runs:
-            _r.font.size = Pt(8); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
             _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
     else:
         _p_eiaerr = doc.add_paragraph(
@@ -1735,7 +1736,7 @@ def generate_word_report(skip_field_resolve: bool = False):
             "본 보고서 2장(시장별 심층 분석)의 스냅샷 용량 수치를 참고하십시오."
         )
         for _r in _p_eiaerr.runs:
-            _r.font.size = Pt(9); _r.font.name = FONT
+            _r.font.size = Pt(12); _r.font.name = FONT
 
     # 9. 시나리오 분석
     _h9 = doc.add_heading("9. 시나리오 분석", level=1)
@@ -1820,7 +1821,7 @@ def generate_word_report(skip_field_resolve: bool = False):
         )
         _p_rs.paragraph_format.space_before = Pt(2)
         for _r in _p_rs.runs:
-            _r.font.size = Pt(9); _r.font.name = FONT; _r.bold = True
+            _r.font.size = Pt(12); _r.font.name = FONT; _r.bold = True
 
     # 10.2 투자 경제성 비교
     _h2b = doc.add_heading("10.2 프로젝트 유형별 투자 경제성 비교", level=2)
@@ -2280,7 +2281,7 @@ def generate_word_report(skip_field_resolve: bool = False):
     )
     _p_disc.paragraph_format.space_before = Pt(12)
     for _r in _p_disc.runs:
-        _r.font.size = Pt(9); _r.font.name = FONT
+        _r.font.size = Pt(12); _r.font.name = FONT
         _r.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
 
     doc.save(out_path)
