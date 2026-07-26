@@ -249,23 +249,31 @@ def plume_particles(z_layer, T_layer_C, Q_MW, H, dom_x=20.0, dom_y=20.0,
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 3b. Duct-driven airflow particle advection (potential flow + buoyancy)
+# 3b. Duct-driven airflow particle advection (potential flow + buoyancy + rack wake)
 #
 #    수평면: 흡기 덕트 = 소스(+S), 배기 덕트 = 싱크(−S)의 퍼텐셜 유동 중첩
 #      u(x) = Σ S·(x−x_src)/(2π r²) − Σ S·(x−x_snk)/(2π r²)   (r ≥ r_core 클램프)
+#    배터리 랙 = 유동 장애물 — 국소 유동 방향에 정렬한 2D 다이폴(원기둥 회절) 보정
+#      (하이퍼카 공기흐름 레퍼런스의 3D 타원체 다이폴 식을 랙 단면에 2D로 적용)
+#      u_local = U_amb·(1 − k·(2X²−Y²)/(2r⁵)), v_local = −U_amb·k·(3XY)/(2r⁵), k=0.52
+#      r<1(랙 표면 근접) 반발 + r>0.6(하류) 후류 결손·와류 이탈 진동 추가
 #    연직: 바닥 온도 초과에 비례한 부력 상승류 + 흡기 급기류 하강 성분
 #    난류: OU(Ornstein–Uhlenbeck) 유사 랜덤 섭동으로 실측 유동의 요동 재현
 #    배기 포획 시 흡기에서 재주입 — 파티클 순환(모듈로 텔레포트 없음)
 # ═══════════════════════════════════════════════════════════════════════════
 def airflow_trajectories(T_floor, exhaust_xy, intake_xy, Lx, Ly, H,
+                         rack_xy=(), rack_r=0.35, wake_gain=1.0,
                          n_particles=150, n_frames=60, dt=0.35,
                          T_amb=25.0, u_ref=0.55, seed=7):
     """파티클 궤적 사전 계산 — 반환 dict(x, y, z, speed): 각 (n_frames, N) 배열.
 
     exhaust_xy / intake_xy : [(x, y), ...] 물리 좌표 [m] (배기/흡기 덕트 위치)
+    rack_xy  : [(x, y), ...] 배터리 랙 중심 좌표 [m] — 유동 장애물(다이폴 회절 + 후류)
+    rack_r   : 랙 등가 반경 [m] (기본 0.35 m ≈ 랙 폭 0.6~0.7 m의 절반)
+    wake_gain: 후류(박리) 강도 배율 — 0 = 후류 없음, 1.0 = 기본, 클수록 재순환 강조
     u_ref : 덕트 1개당 대표 유속 스케일 [m/s]
     시각화용 운동학 모델 — 모멘텀 해석(CFD)이 아님. 유선 위상(흡기→배기),
-    부력 상승, 요동의 '방향성'만 물리적으로 재현한다."""
+    랙 주변 회절·후류, 부력 상승, 요동의 '방향성'만 물리적으로 재현한다."""
     rng = np.random.default_rng(seed)
     ny, nx = T_floor.shape
     dxg, dyg = Lx / nx, Ly / ny
@@ -275,6 +283,8 @@ def airflow_trajectories(T_floor, exhaust_xy, intake_xy, Lx, Ly, H,
     ey = np.array([p[1] for p in exhaust_xy], dtype=float)
     ix_ = np.array([p[0] for p in intake_xy], dtype=float)
     iy_ = np.array([p[1] for p in intake_xy], dtype=float)
+    rx_ = np.array([p[0] for p in rack_xy], dtype=float)
+    ry_ = np.array([p[1] for p in rack_xy], dtype=float)
     S = u_ref * 2.0 * np.pi * 0.5 ** 2          # r=0.5 m에서 u_ref가 되는 강도
     r_core2 = 0.35 ** 2
 
@@ -289,6 +299,42 @@ def airflow_trajectories(T_floor, exhaust_xy, intake_xy, Lx, Ly, H,
             r2 = np.maximum(rx * rx + ry * ry, r_core2)
             u -= S * rx / (2.0 * np.pi * r2); v -= S * ry / (2.0 * np.pi * r2)
         return u, v
+
+    def _rack_deflect(px, py, u0, v0, tt):
+        """랙 장애물 보정(du, dv) — 레퍼런스(car-airflow-3d-v4.html)의 3D 다이폴+후류
+        식을 국소 유동 방향에 정렬한 2D 형태로 적용, 다중 랙에 대해 선형 중첩."""
+        du = np.zeros_like(px); dv = np.zeros_like(py)
+        if rx_.size == 0:
+            return du, dv
+        Uamb = np.hypot(u0, v0)
+        theta = np.arctan2(v0, u0)
+        cosT, sinT = np.cos(theta), np.sin(theta)
+        push_scale = np.maximum(Uamb, 0.15)      # 정체 구역에서도 최소 반발은 유지
+        for j, (cx, cy) in enumerate(zip(rx_, ry_)):
+            Xg = (px - cx) / rack_r; Yg = (py - cy) / rack_r
+            Xr = Xg * cosT + Yg * sinT           # 국소 유동 방향 정렬 좌표계
+            Yr = -Xg * sinT + Yg * cosT
+            r2 = np.maximum(Xr * Xr + Yr * Yr, 0.02)
+            r5 = r2 ** 2.5
+            k = 0.52                             # 레퍼런스와 동일한 다이폴 강도 상수
+            du_r = -Uamb * k * (2.0 * Xr * Xr - Yr * Yr) / (2.0 * r5)
+            dv_r = -Uamb * k * (3.0 * Xr * Yr) / (2.0 * r5)
+
+            near = r2 < 1.0                      # 랙 표면 근접 반발(내부 침투 방지)
+            rn = np.sqrt(r2)
+            push = push_scale * (1.05 - rn) * 3.0
+            du_r += np.where(near, push * Xr / np.maximum(rn, 1e-6), 0.0)
+            dv_r += np.where(near, push * Yr / np.maximum(rn, 1e-6), 0.0)
+
+            decay = np.exp(-np.maximum(Xr - 0.6, 0.0) / 2.2)   # 하류 후류 결손·이탈진동
+            s = np.clip(1.0 - np.abs(Yr), 0.0, None) * decay * wake_gain
+            s = np.where(Xr > 0.6, s, 0.0)
+            du_r += -0.55 * s * Uamb
+            dv_r += 0.20 * s * Uamb * np.sin(3.1 * tt + Xr * 1.3 + j * 1.7)
+
+            du += du_r * cosT - dv_r * sinT      # 전역 좌표계로 역회전
+            dv += du_r * sinT + dv_r * cosT
+        return du, dv
 
     def _t_local(px, py):
         gx = np.clip((px / dxg).astype(int), 0, nx - 1)
@@ -307,6 +353,8 @@ def airflow_trajectories(T_floor, exhaust_xy, intake_xy, Lx, Ly, H,
     sigma = 0.10                                 # 난류 섭동 강도
     for k in range(n_frames):
         u, v = _uv(px, py)
+        du, dv = _rack_deflect(px, py, u, v, k * dt)
+        u = u + du; v = v + dv
         # 부력: 뜨거운 바닥 위 상승 / 흡기 급기(차가움)는 하강
         w = w_buoy * (_t_local(px, py) - T_amb) / dT_max - 0.06
         # OU 난류 섭동 (관성 있는 요동 — 백색잡음보다 자연스러움)
@@ -337,6 +385,8 @@ def airflow_trajectories(T_floor, exhaust_xy, intake_xy, Lx, Ly, H,
                         px[caught] = rng.uniform(0.1 * Lx, 0.9 * Lx, n_c)
                         py[caught] = rng.uniform(0.1 * Ly, 0.9 * Ly, n_c)
                         pz[caught] = rng.uniform(0.2 * H, 0.9 * H, n_c)
+            # 재주입 지터가 경계를 벗어날 수 있어 재클램프(위 벽·바닥 클립과 동일 범위)
+            px = np.clip(px, 0.02 * Lx, 0.98 * Lx); py = np.clip(py, 0.02 * Ly, 0.98 * Ly)
         X[k], Y[k], Z[k], SP[k] = px, py, pz, spd
     return {"x": X, "y": Y, "z": Z, "speed": SP}
 

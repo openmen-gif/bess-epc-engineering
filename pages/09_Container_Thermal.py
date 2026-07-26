@@ -27,6 +27,16 @@ HVAC_NX, HVAC_NY = 10, 4
 # Physical snapshot times for the heat-up transient animation [s]
 SNAP_TIMES_S = list(range(0, 1801, 60))   # 0~30분, 60초 균일 31프레임(부드러운 재생/스크럽)
 
+# 공기 흐름(Tab 3) — 랙 유동 장애물 반경 [m] ≈ 랙 폭 0.6~0.7 m의 절반
+RACK_R_M = 0.35
+# airflow_trajectories() 기본 u_ref와 동일 — 파티클 색상을 유속비 V/V∞로 정규화하는 기준
+AF_U_REF = 0.55
+# 하이퍼카 공기흐름 레퍼런스 범례(파랑→시안→녹→노랑→빨강)와 동일한 HSL 계열 색상축
+AIRFLOW_HSL = [
+    [0.00, "#2255ff"], [0.25, "#22ccdd"], [0.50, "#a8e05f"],
+    [0.75, "#ffd23f"], [1.00, "#ff5a4e"],
+]
+
 
 # ── Solvers ───────────────────────────────────────────────────────────────────
 from utils.config import IS_API_MODE, API_BASE_URL
@@ -122,11 +132,12 @@ def scale_vents_to_sim(hvac_vents, NX, NY):
 
 
 @st.cache_data(show_spinner=False)
-def _airflow_traj_cached(T_floor, exhaust_xy, intake_xy, Lx, Ly, H, T_amb):
-    """퍼텐셜 유동+부력 파티클 궤적 사전 계산 (동일 결과 재사용)."""
+def _airflow_traj_cached(T_floor, exhaust_xy, intake_xy, rack_xy, Lx, Ly, H, T_amb, wake_gain=1.0):
+    """퍼텐셜 유동+랙 다이폴 회절/후류+부력 파티클 궤적 사전 계산 (동일 결과 재사용)."""
     return airflow_trajectories(T_floor, list(exhaust_xy), list(intake_xy),
-                                Lx, Ly, H, n_particles=150, n_frames=60,
-                                dt=0.35, T_amb=T_amb)
+                                Lx, Ly, H, rack_xy=list(rack_xy), rack_r=RACK_R_M,
+                                wake_gain=wake_gain, n_particles=150, n_frames=60,
+                                dt=0.35, T_amb=T_amb, u_ref=AF_U_REF)
 
 
 @st.cache_data(show_spinner=False)
@@ -569,17 +580,24 @@ def run_container_thermal_module():
                 "▶ 재생으로 바닥→천장 단면 스캔 | 슬라이더로 높이 선택 | 청록 선 = HVAC 덕트" if not is_en
                 else "▶ Play scans floor→ceiling | Slider selects height | Cyan = HVAC ducts"
             )
-        # ── Tab 3: 3D Airflow — 퍼텐셜 유동+부력 파티클, go.Frames 클라이언트 재생 ──
+        # ── Tab 3: 3D Airflow — 다이폴 회절/후류+부력 파티클, go.Frames 클라이언트 재생 ──
         with tab3:
-            # 물리 기반 유동장: 흡기=소스 / 배기=싱크 퍼텐셜 유동 + 온도 부력 상승 + OU 난류
+            # 물리 기반 유동장: 흡기=소스/배기=싱크 퍼텐셜 유동 + 랙=유동 장애물(다이폴 회절+후류) + 온도 부력 상승 + OU 난류
+            wake_gain = st.slider(
+                "💨 " + ("후류(박리) 강도" if not is_en else "Wake Intensity"),
+                min_value=0.0, max_value=2.0, value=1.0, step=0.1,
+                help=("랙 뒤편 재순환·와류 이탈 진동의 세기 — 하이퍼카 공기흐름 레퍼런스의 '후류 강도' 슬라이더와 동일 개념" if not is_en
+                      else "Strength of the recirculation/vortex-shedding wake behind each rack"),
+                key="af_wake_gain",
+            )
             exhaust_xy = tuple((round(float(v[0]) * dx, 3), round(float(v[1]) * dy, 3)) for v in sim_exhaust)
             intake_xy  = tuple((round(float(v[0]) * dx, 3), round(float(v[1]) * dy, 3)) for v in sim_intake)
-            traj = _airflow_traj_cached(T_floor, exhaust_xy, intake_xy,
-                                        float(con_l), float(con_w), float(con_h), float(amb))
+            rack_xy    = tuple((round(float(s[0]) * dx, 3), round(float(s[1]) * dy, 3)) for s in sources)
+            traj = _airflow_traj_cached(T_floor, exhaust_xy, intake_xy, rack_xy,
+                                        float(con_l), float(con_w), float(con_h), float(amb), wake_gain)
             N_FRAMES = traj["x"].shape[0]
             AF_DT = 0.35                      # airflow_trajectories dt와 동일 (라벨용)
-            TAIL = 4
-            sp_max = 1.2
+            TAIL = 6
 
             _scene_c = dict(
                 **_base_scene,
@@ -590,29 +608,35 @@ def run_container_thermal_module():
             )
 
             def _air_traces(k):
-                # 잔상 트레일: 직전 TAIL 프레임 위치 (반투명 페이드)
+                # 잔상 트레일: 직전 TAIL 프레임의 연속 선분(레퍼런스의 파티클 유선 트레일과 동일한 표현)
                 t0 = max(k - TAIL, 0)
+                ratio_now = traj["speed"][k] / AF_U_REF     # 국소 유속비 V/V∞ (파티클별)
                 if k > t0:
-                    tx = traj["x"][t0:k].ravel(); ty = traj["y"][t0:k].ravel()
-                    tz = traj["z"][t0:k].ravel()
+                    n_p = traj["x"].shape[1]
+                    tx, ty, tz, tc = [], [], [], []
+                    for p in range(n_p):
+                        tx += list(traj["x"][t0:k + 1, p]) + [None]
+                        ty += list(traj["y"][t0:k + 1, p]) + [None]
+                        tz += list(traj["z"][t0:k + 1, p]) + [None]
+                        tc += [float(ratio_now[p])] * (k + 1 - t0) + [0.0]
                 else:
-                    tx = ty = tz = np.array([])
+                    tx = ty = tz = tc = []
                 tail = go.Scatter3d(
-                    x=tx, y=ty, z=tz, mode='markers',
-                    marker=dict(size=2.5, color='rgba(88,166,255,0.20)'),
-                    showlegend=False, hoverinfo='skip',
+                    x=tx, y=ty, z=tz, mode='lines',
+                    line=dict(color=tc, colorscale=AIRFLOW_HSL, cmin=0.3, cmax=1.6, width=3),
+                    opacity=0.38, showlegend=False, hoverinfo='skip',
                 )
-                # 본체: 속도 크기 컬러 (유속이 빠른 덕트 근처가 밝게)
+                # 본체: 국소 유속비 V/V∞ 컬러 (레퍼런스 범례와 동일한 blue→cyan→green→yellow→red)
                 main = go.Scatter3d(
                     x=traj["x"][k], y=traj["y"][k], z=traj["z"][k], mode='markers',
                     marker=dict(
-                        size=4.5, color=traj["speed"][k], colorscale='Turbo',
-                        cmin=0.0, cmax=sp_max, opacity=0.9,
-                        colorbar=dict(title=("유속 (m/s)" if not is_en else "Speed (m/s)"),
-                                      **CBAR),
+                        size=4.5, color=ratio_now, colorscale=AIRFLOW_HSL,
+                        cmin=0.3, cmax=1.6, opacity=0.9,
+                        colorbar=dict(title=("유속비<br>V/V∞" if not is_en else "Speed ratio<br>V/V∞"),
+                                      tickvals=[0.3, 0.75, 1.0, 1.3, 1.6], **CBAR),
                     ),
                     name="공기 파티클" if not is_en else "Air Particles",
-                    hovertemplate="X=%{x:.1f}m Y=%{y:.1f}m Z=%{z:.2f}m<extra></extra>",
+                    hovertemplate="X=%{x:.1f}m Y=%{y:.1f}m Z=%{z:.2f}m<br>V/V∞=%{marker.color:.2f}<extra></extra>",
                 )
                 return [tail, main]
 
@@ -623,6 +647,15 @@ def run_container_thermal_module():
                 showscale=False, opacity=0.35,
                 name="Floor Temp", hoverinfo='skip',
             )]
+            if rack_xy:
+                static_traces.append(go.Scatter3d(
+                    x=[p[0] for p in rack_xy], y=[p[1] for p in rack_xy], z=[0.15] * len(rack_xy),
+                    mode='markers',
+                    marker=dict(size=7, color='#111111', symbol='square', opacity=0.9),
+                    name="배터리 랙(유동 장애물)" if not is_en else "Battery Rack (flow obstacle)",
+                    hovertemplate=("랙(장애물) X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>" if not is_en
+                                   else "Rack (obstacle) X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>"),
+                ))
             if sim_exhaust:
                 static_traces.append(go.Scatter3d(
                     x=[float(v[0]) * dx for v in sim_exhaust],
@@ -654,8 +687,8 @@ def run_container_thermal_module():
 
             _c_layout = dict(
                 **dark_layout,
-                title=("3D 공기 흐름 — 흡기→배기 순환 (퍼텐셜 유동 + 부력)" if not is_en
-                       else "3D Airflow — intake→exhaust circulation (potential flow + buoyancy)"),
+                title=("3D 공기 흐름 — 흡기→배기 순환 (퍼텐셜 유동 + 랙 회절·후류 + 부력)" if not is_en
+                       else "3D Airflow — intake→exhaust circulation (potential flow + rack deflection/wake + buoyancy)"),
                 scene=_scene_c,
                 margin=dict(l=0, r=0, t=60, b=60),
             )
@@ -671,10 +704,13 @@ def run_container_thermal_module():
             )
             st.plotly_chart(fig_c, use_container_width=True, key="af_chart")
             st.caption(
-                "점 색 = 유속(m/s), 꼬리 = 잔상 | 흐름: 🔵 흡기(급기, 하강·발산) → 부력 상승 → 💨 배기(수렴·포집) | "
-                "퍼텐셜 유동 + 부력 + 난류 섭동의 운동학 모델 (모멘텀 CFD 아님)" if not is_en
-                else "Dot color = speed (m/s), tails = motion trails | Flow: 🔵 intake (supply, descending·diverging) → "
-                     "buoyant rise → 💨 exhaust (converging·captured) | Kinematic potential-flow + buoyancy + turbulence model (not momentum CFD)"
+                "점 색·꼬리 색 = 국소 유속비 V/V∞(파랑→시안→녹→노랑→빨강) | ■ = 배터리 랙(유동 장애물 — 주변 유선이 휘어지고 뒤편에 후류 재순환 발생) | "
+                "흐름: 🔵 흡기(급기, 하강·발산) → 랙 회절/후류 → 부력 상승 → 💨 배기(수렴·포집) | "
+                "퍼텐셜 유동(다이폴 회절 포함) + 부력 + 난류 섭동의 운동학 모델 (모멘텀 CFD 아님)" if not is_en
+                else "Dot/tail color = local speed ratio V/V∞ (blue→cyan→green→yellow→red) | ■ = Battery rack (flow obstacle — "
+                     "streamlines bend around it, a recirculating wake forms downstream) | Flow: 🔵 intake (supply, descending·"
+                     "diverging) → rack deflection/wake → buoyant rise → 💨 exhaust (converging·captured) | "
+                     "Kinematic potential-flow (incl. dipole deflection) + buoyancy + turbulence model (not momentum CFD)"
             )
 
         with st.expander("📐 " + ("해석 방법론 & 가정" if not is_en else "Methodology & Assumptions")):
@@ -687,8 +723,11 @@ def run_container_thermal_module():
                     "35 %는 선택한 덕트 셀에 집중 → 덕트 주변이 국부적으로 더 차가움. 냉각량은 (T − T_supply)에 비례(자기제한적)\n"
                     "- **혼합:** 유효 난류 확산계수 α_eff = 0.08 m²/s | **외피:** U_env = 2.5 W/m²K (지붕+벽)\n"
                     "- **수직 분포(탭 2):** 깊이평균 결과에 선형 성층 프로파일 적용 — 천장 초과온도 ≈ 바닥의 2배 (부력 성층 근사)\n"
-                    "- **공기 흐름(탭 3):** 흡기=소스·배기=싱크 퍼텐셜 유동 중첩 + 바닥 온도 부력 상승류 + "
-                    "OU(Ornstein–Uhlenbeck) 난류 섭동의 운동학 모델 — 유선 위상(흡기→배기 순환)은 물리적, 모멘텀 해석 아님\n\n"
+                    "- **공기 흐름(탭 3):** 흡기=소스·배기=싱크 퍼텐셜 유동 중첩 + **배터리 랙=유동 장애물** "
+                    "(국소 유동 방향에 정렬한 2D 다이폴 회절, k=0.52 — 하이퍼카 공기흐름 레퍼런스의 3D 타원체 다이폴 식을 랙 단면에 적용) "
+                    "+ 랙 하류 후류 결손·와류 이탈 진동(후류 강도 슬라이더로 조절) + 바닥 온도 부력 상승류 + "
+                    "OU(Ornstein–Uhlenbeck) 난류 섭동의 운동학 모델 — 유선 위상(흡기→배기 순환, 랙 주변 회절)은 물리적, 모멘텀 해석 아님. "
+                    "색상은 국소 유속비 V/V∞로 정규화(레퍼런스와 동일한 blue→cyan→green→yellow→red 범례)\n\n"
                     "⚠️ **축소차수 해석 모델** — 파라미터 스크리닝/덕트 배치 비교 용도입니다. 운동량·부력장을 직접 풀지 않으므로 "
                     "제트 충돌, 급기 단락, 국부 재순환은 반영되지 않습니다. 설계 검증은 OpenFOAM / ANSYS Fluent CFD가 필요합니다."
                 ) if not is_en else (
@@ -703,8 +742,12 @@ def run_container_thermal_module():
                     "- **Vertical field (Tab 2):** linear stratification profile applied to the depth-averaged result — "
                     "ceiling excess temp ≈ 2× floor (buoyant stratification surrogate)\n"
                     "- **Airflow (Tab 3):** kinematic model — superposed potential flow (intakes as sources, exhausts as sinks) "
-                    "+ floor-temperature buoyant updraft + OU turbulence perturbation. Streamline topology (intake→exhaust "
-                    "circulation) is physical; NOT a momentum solution\n\n"
+                    "+ **battery racks as flow obstacles** (2D dipole deflection aligned to the local flow direction, k=0.52 — "
+                    "the same 3D ellipsoid-dipole formula from the hypercar airflow reference, applied to the rack cross-section) "
+                    "+ a downstream wake deficit/vortex-shedding oscillation behind each rack (adjustable via the Wake Intensity "
+                    "slider) + floor-temperature buoyant updraft + OU turbulence perturbation. Streamline topology (intake→exhaust "
+                    "circulation, deflection around racks) is physical; NOT a momentum solution. Color is normalized as the local "
+                    "speed ratio V/V∞ (same blue→cyan→green→yellow→red legend as the reference)\n\n"
                     "⚠️ **Reduced-order analytical model** — for parametric screening and duct-layout comparison. "
                     "Momentum/buoyancy fields are not resolved, so jet impingement, supply short-circuiting and local "
                     "recirculation are not captured. Use OpenFOAM / ANSYS Fluent CFD for design verification."
