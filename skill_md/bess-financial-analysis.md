@@ -1,6 +1,12 @@
 ---
 name: bess-financial-analysis
-description: "NPV, IRR, MIRR, 몬테카를로, LCOE, 현금흐름, WACC, 열화, 배터리교체 재무분석"
+id: "FIN-001"
+description: NPV, IRR, MIRR, 몬테카를로, LCOE, 현금흐름, WACC, 열화, 배터리교체 재무분석
+department: "재무본부 (CFO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -143,6 +149,36 @@ BD(사업개발) ──사업성 검토 요청──▶ 재무분석가 ──XI
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 핵심 재무지표 세트 XIRR(기준)/IRR/MIRR/NPV/LCOE 항상 병기. 기준 시나리오 XIRR 12.4% / NPV +$150M(할인율 8%) / LCOE $0.15/kWh / Hurdle Rate = WACC+2%p(WACC 8%→10%) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 민감도 표준: SMP ±20%→NPV ±10%, CAPEX ±15%→NPV ±15%, 배터리 교체주기 ±5년→NPV ±5% — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 자본구조 디폴트 가정: 부채 40% / 자본 60%(단·장기 부채 분리, 정부보조금 포함) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 신흥시장 PF(IFC/ADB) 불규칙 현금흐름 → IRR이 XIRR보다 과대평가, XIRR 사용. 디폴트 가정 CAPEX $50M / WACC 8% / 운영 10년 / OPEX 5% / 배터리 교체 10년 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
+- BMS 비용 단가: 고급 BMS $50/kWh(LFP) + SW $10/kWh, 유지보수 $0.05/kWh/년 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
+- 배터리 수명 벤치마크: LFP 사이클 3,000~5,000회·캘린더 5~10년에 용량 10~20% 감소 / NMC 사이클 1,000~2,000회·캘린더 5~8년에 유사 감소. 권장 DOD는 LFP 80%·NMC 70% — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
+- MIRR ≈ XIRR 성립 조건: 재투자수익률 = WACC(8%)로 가정할 때 MIRR이 XIRR에 수렴(예: XIRR 10.5% → MIRR ≈ 10.5%). 재투자율을 WACC와 다르게 두지 않으면 두 지표 병기 의미가 약해짐 — 근거: `sessions/2026-06-22T18-24-27/bess-financial-analysis.md`
+- 신흥시장(인도) 재무 디폴트 확장: 세율 30%·법인세, SMP 초기 $0.15/kWh에 연 3% 인플레 조정, 전력수요 성장 연 7%, 정부보조금 초기 5년 연 $1M, 운전기간 20년 — 근거: `sessions/2026-06-20T00-12-00/bess-financial-analysis.md`
+- FIDIC Silver(턴키) 계약 기반 재무 디폴트: LFP 시스템 CAPEX $50~60M(±15%), 연 OPEX = CAPEX의 5~8%, REC 추가수익 $20/MWh[가정]. 3-시나리오는 SOH 열화율(보수 0.05 / 기준 0.10 / 낙관 0.15)·배터리 교체주기(10/10/5년) 조합으로 파라미터화 — 근거: `sessions/2026-06-25T11-05-47/bess-financial-analysis.md`
+- NCA(니켈 코발트 알루미늄) 배터리 재무 디폴트 확장: 셀 단가 $500~700/kWh(LFP·NMC 대비 최고가), 사이클 수명 2,000회 이상·캘린더 수명 8년 이상, 열화율 0.05~0.10%/년(NMC와 유사하게 낮음)로 LFP(저비용·장수명) vs NCA(고비용·고성능) 트레이드오프 분석에 사용 — 근거: `sessions/2026-07-21T20-07-17/bess-financial-analysis.md`
+- 재평가 시 변경 파라미터는 `[요확인]`/`[가정]` 태그와 함께 변경 전후 값을 병기(예: 배터리 교체주기 10년 → `[가정]` 12년, OPEX 비율 5% → `[가정]` 4.5%, WACC `[가정]` 8%) — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
+- 신흥시장 PF 자금조달 채널 3축: ①국제금융기구(World Bank·ADB·IFC) 저리 대출 ②현지 정부 보조금·인센티브 ③민간·ESG 투자 — 각 채널의 승인 프로세스·조건은 확인 전까지 `[요확인]` 유지 — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 인도 재생에너지 세제 근거로 "**Section 80CCB**", 지원 프로그램으로 "**National Renewable Energy Mission India(NREMA)**"를 인용 → ✅ 80CCB는 개인 대상 구(舊) 조항이고 NREMA는 실재 미확인 명칭이다. 인도 지원 수단은 **MNRE/SECI 입찰·VGF·PLI·주별 RPO**이며 가속상각은 소득세법 Section 32. 미확인 조항·기관명은 `[요확인]`(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+- ❌ **SMP**를 "계통전력시장가격"으로 풀어 씀 → ✅ SMP = **System Marginal Price(계통한계가격)** — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+- ❌ 재무 산출물에서 인도 현지 세제·보조금 적격성을 직접 확정 → ✅ 신흥시장 제도 판단은 emerging-markets·tax 도메인 결과를 인용하고, 재무는 그 값을 입력으로 받은 NPV/IRR/민감도까지 담당(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+- ❌ CAPEX를 "$500/kWh → $450/kWh"로 제시(가드레일 §3.3 시스템 기준 $300~400/kWh 초과 드리프트) → ✅ 기준표를 벗어난 단가는 벤더 견적·시장 리포트 링크와 기준일을 붙여야 하며, 근거 없으면 기준표 값을 사용 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
+- ❌ **XIRR**을 "정기적 현금흐름 고려"로 설명 → ✅ XIRR은 **비정기(불규칙 일자) 현금흐름**용 수익률 함수이고, 정기 현금흐름은 IRR을 사용 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
+- ❌ 저장용량 1 MWh에 8,760 h/년을 곱해 연간 매출 산출(저장용량 MWh를 출력 MW로 취급, 이용률·사이클 무시) → ✅ 매출 = 출력(MW) × 일일 사이클 수 × 방전시간(h) × 가동일수 × 단가, 저장용량(MWh)과 출력(MW)을 분리 입력 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
+- ❌ 1 MWh LFP CAPEX를 $550,000(=$550/kWh, HW $500+SW $50)로 제시 → ✅ 셀 단가($300~400/kWh)와 시스템 turnkey CAPEX(BOP·PCS·EPC 포함, 통상 $200~300/kWh, 2025)를 구분, cost-analyst·tax-incentive와 정렬 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
+- ❌ 로드맵에 "2023년/2024-2026년" 과거 연도 하드코딩(작성일 2026-06) → ✅ 상대 연도(T+0/T+1)로 표기 — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- ❌ NPV 코드에서 초기 투자를 `cashflows[0]` 합산 후 다시 차감하는 이중처리 → ✅ 초기 투자 1회만 반영하도록 검산 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
+- ❌ LCOE를 `$150/kWh`로 제시(정답의 1000배, $/MWh 혼동) → ✅ LCOE는 $0.15/kWh(=$150/MWh) 스케일 유지, kWh 단위 시 소수점 확인 — 근거: `sessions/2026-06-28T15-48-59/bess-financial-analysis.md`
+- ❌ 시스템 turnkey CAPEX를 LFP $500/kWh·NMC $600/kWh로 제시 → ✅ 2025 시스템 turnkey는 $200~300/kWh, $500~600/kWh는 셀+설치 과대계상이므로 셀 단가($300~400/kWh)와 분리 검증 — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
+- ❌ Hurdle Rate를 WACC 8% 기준 10.5% 또는 12%로 혼용(=WACC+2.5%p/+4%p) → ✅ Hurdle=WACC+2%p 규칙 고정 시 8%→정확히 10% — 근거: `sessions/2026-06-17T13-18-45/bess-financial-analysis.md`
 
 ## 핵심 역량 및 업무 범위 (Process / 수행 절차)
 
@@ -636,24 +672,3 @@ Break-even 한계치 (Hurdle Rate=[X]% 기준):
 [요확인] SMP 최신 단가 / 배터리 교체 날짜 특정 / RTE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 핵심 재무지표 세트 XIRR(기준)/IRR/MIRR/NPV/LCOE 항상 병기. 기준 시나리오 XIRR 12.4% / NPV +$150M(할인율 8%) / LCOE $0.15/kWh / Hurdle Rate = WACC+2%p(WACC 8%→10%) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
-- 민감도 표준: SMP ±20%→NPV ±10%, CAPEX ±15%→NPV ±15%, 배터리 교체주기 ±5년→NPV ±5% — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
-- 자본구조 디폴트 가정: 부채 40% / 자본 60%(단·장기 부채 분리, 정부보조금 포함) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
-- 신흥시장 PF(IFC/ADB) 불규칙 현금흐름 → IRR이 XIRR보다 과대평가, XIRR 사용. 디폴트 가정 CAPEX $50M / WACC 8% / 운영 10년 / OPEX 5% / 배터리 교체 10년 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
-- BMS 비용 단가: 고급 BMS $50/kWh(LFP) + SW $10/kWh, 유지보수 $0.05/kWh/년 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
-- 배터리 수명 벤치마크: LFP 사이클 3,000~5,000회·캘린더 5~10년에 용량 10~20% 감소 / NMC 사이클 1,000~2,000회·캘린더 5~8년에 유사 감소. 권장 DOD는 LFP 80%·NMC 70% — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
-- MIRR ≈ XIRR 성립 조건: 재투자수익률 = WACC(8%)로 가정할 때 MIRR이 XIRR에 수렴(예: XIRR 10.5% → MIRR ≈ 10.5%). 재투자율을 WACC와 다르게 두지 않으면 두 지표 병기 의미가 약해짐 — 근거: `sessions/2026-06-22T18-24-27/bess-financial-analysis.md`
-- 신흥시장(인도) 재무 디폴트 확장: 세율 30%·법인세, SMP 초기 $0.15/kWh에 연 3% 인플레 조정, 전력수요 성장 연 7%, 정부보조금 초기 5년 연 $1M, 운전기간 20년 — 근거: `sessions/2026-06-20T00-12-00/bess-financial-analysis.md`
-- FIDIC Silver(턴키) 계약 기반 재무 디폴트: LFP 시스템 CAPEX $50~60M(±15%), 연 OPEX = CAPEX의 5~8%, REC 추가수익 $20/MWh[가정]. 3-시나리오는 SOH 열화율(보수 0.05 / 기준 0.10 / 낙관 0.15)·배터리 교체주기(10/10/5년) 조합으로 파라미터화 — 근거: `sessions/2026-06-25T11-05-47/bess-financial-analysis.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 1 MWh LFP CAPEX를 $550,000(=$550/kWh, HW $500+SW $50)로 제시 → ✅ 셀 단가($300~400/kWh)와 시스템 turnkey CAPEX(BOP·PCS·EPC 포함, 통상 $200~300/kWh, 2025)를 구분, cost-analyst·tax-incentive와 정렬 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
-- ❌ 로드맵에 "2023년/2024-2026년" 과거 연도 하드코딩(작성일 2026-06) → ✅ 상대 연도(T+0/T+1)로 표기 — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
-- ❌ NPV 코드에서 초기 투자를 `cashflows[0]` 합산 후 다시 차감하는 이중처리 → ✅ 초기 투자 1회만 반영하도록 검산 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
-- ❌ LCOE를 `$150/kWh`로 제시(정답의 1000배, $/MWh 혼동) → ✅ LCOE는 $0.15/kWh(=$150/MWh) 스케일 유지, kWh 단위 시 소수점 확인 — 근거: `sessions/2026-06-28T15-48-59/bess-financial-analysis.md`
-- ❌ 시스템 turnkey CAPEX를 LFP $500/kWh·NMC $600/kWh로 제시 → ✅ 2025 시스템 turnkey는 $200~300/kWh, $500~600/kWh는 셀+설치 과대계상이므로 셀 단가($300~400/kWh)와 분리 검증 — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
-- ❌ Hurdle Rate를 WACC 8% 기준 10.5% 또는 12%로 혼용(=WACC+2.5%p/+4%p) → ✅ Hurdle=WACC+2%p 규칙 고정 시 8%→정확히 10% — 근거: `sessions/2026-06-17T13-18-45/bess-financial-analysis.md`

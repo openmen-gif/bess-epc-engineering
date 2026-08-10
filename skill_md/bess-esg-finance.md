@@ -1,6 +1,12 @@
 ---
 name: bess-esg-finance
-description: "TCFD, ISSB IFRS S1/S2, 그린본드, 지속가능연계대출(SLL), EU 택소노미, CBAM, 그린프리미엄, ESG 자본조달"
+id: "ESG-001"
+description: TCFD, ISSB IFRS S1/S2, 그린본드, 지속가능연계대출(SLL), EU 택소노미, CBAM, 그린프리미엄, ESG 자본조달
+department: "재무본부 (CFO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -123,6 +129,31 @@ bess-esg-finance
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 공시 표준: TCFD 4대 축(Governance/Strategy/Risk Mgmt/Metrics&Targets) + ISSB(IFRS S1/S2) 통합. Scope 1/2/3 LCA(셀제조 Scope3 Cat.1, 운송 Cat.4, 운영 Scope2, EoL Cat.12) — 근거: `sessions/2026-06-03T15-56-55/bess-esg-finance.md`, `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
+- 그린본드: Use of Proceeds 연간 공시, 그린프리미엄(greenium) 5~15bp(시장·등급 의존), 제3자 인증(CBI/CICERO/Sustainalytics SPO) — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
+- EU 택소노미 적격성 = 활동 4.10 Substantial Contribution + DNSH 6목표 + Minimum Safeguards 충족 검토; CBAM 영향 분석; EoL 배터리 회수율 90% 목표 — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
+- 탄소중립 목표 구조: 단기 5년 / 중기 5~10년 / 장기 10년+, 예: Scope 1 2030년까지 50% 감축 — 근거: `sessions/2026-06-03T15-56-55/bess-esg-finance.md`
+- SLL(지속가능성연계대출)은 UoP 그린본드와 별개: 자금사용처 제한 없이 KPI 미달 시 금리 가산(스텝업), 그린본드는 UoP 100% 사용처 명시 — 근거: `sessions/2026-06-15T10-51-08/bess-esg-finance.md`
+- ISSB(IFRS S2)는 기후 외 물 리스크도 별도 축: 배터리 셀 제조 공정 물 사용량·물부족지역 운영 리스크 지표 설정 필요 — 근거: `sessions/2026-06-20T01-59-18/bess-esg-finance.md`
+- 그린프리미엄은 시장·기업신용등급별로 차등이며 과거 그린본드/SLL 금리 시계열로 변동성(bp) 백테스트 필요, 단일 고정값 금지 — 근거: `sessions/2026-06-23T11-07-59/bess-esg-finance.md`
+- ESG 등급 체계 3종(모회사 등급 확인용): **MSCI** AAA~CCC, **Sustainalytics** Risk Score 0~40+, **S&P Global ESG** 0~100 — 미확인 시 `[요확인]` 발행 — 근거: `sessions/2026-07-31T14-37-28/bess-esg-finance.md`
+- 감축 목표 설정 틀: 단기(5년)/중기(5~10년)/장기(10년+) 구간별로 Scope 1·2·3 목표와 Baseline·KPI를 각각 명시 — 근거: `sessions/2026-07-31T14-37-28/bess-esg-finance.md`
+- EU 택소노미 적격성은 **활동 4.10(전기 저장)** Substantial Contribution + **DNSH 6개 환경목표** 충족 여부로 판정 — 근거: `sessions/2026-07-31T14-37-28/bess-esg-finance.md`
+- TCFD/ISSB 리스크 평가 4분류(BESS): 시장(출하량·원자재 변동성) / 신용(PF 조달·입찰 불확실성) / 운영(제조·운영비 변동) / 환경(Scope 1·2·3 배출, 택소노미 적격성, 원자재 공급) — 각 항목에 가능성×영향 등급과 완화책을 부착 — 근거: `sessions/2026-08-05T01-47-03/bess-esg-finance.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 리스크 등급을 "**高 / 中**" 등 한자로 표기 → ✅ 산출물은 한국어 표기 원칙에 따라 **높음 / 중간 / 낮음**(또는 Critical·High·Medium·Low)으로 통일한다. 중국어·일본식 한자 혼입 금지(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-05T01-47-03/bess-esg-finance.md`
+- ❌ 물(水) 관련 재무정보를 "**IFRS S2**" 항목으로 분류 → ✅ **IFRS S2는 기후 관련 공시 전용**이며, 물·기타 지속가능성 주제는 **IFRS S1**(일반 요구사항) 또는 향후 주제별 기준에 따른다 — 근거: `sessions/2026-07-31T14-37-28/bess-esg-finance.md`
+- ❌ 그린본드 자금사용처를 "셀 제조시설 = Scope 3-1 / 효율개선 = Scope 2 / 기술 업그레이드 = Scope 1"로 매핑 → ✅ Scope 분류는 배출원(emission source) 기준이지 자금사용처 기준이 아님, 라벨 혼동 금지 — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
+- ❌ "모회사 ESG 등급 MSCI AAA(예시)"를 가정값으로 사용 → ✅ 실제 등급 미확인 시 [요확인] 필수(그린프리미엄·발행조건에 직결) — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
+- ❌ EU 택소노미 "적격(eligible)"과 "정합(aligned)"을 혼동 → ✅ eligible(활동이 목록에 포함)과 aligned(SC+DNSH+MS 전부 충족)는 다름, 그린본드 정합 산입은 aligned만 가능 — 근거: 표준 정의(EU 2020/852)
+- ❌ greenium을 5~25bp로 확대 표기(기존 재사용지식 5~15bp와 불일치) → ✅ 무근거 확대 금지, 등급·시장별 근거 없으면 5~15bp 유지 + [요확인] — 근거: `sessions/2026-06-20T01-59-18/bess-esg-finance.md`
+- ❌ DNSH 6목표에 SC 활동 목표(기후변화 완화)를 중복 포함해 열거 → ✅ SC(완화)와 나머지 DNSH 5목표(적응·수자원·순환경제·오염방지·생물다양성)를 구분 — 근거: `sessions/2026-06-15T10-51-08/bess-esg-finance.md`
+- ❌ SLL을 그린본드처럼 자금사용처 명시형으로 혼용 발행 서술 → ✅ SLL=KPI연동, 그린본드=UoP로 상품 구분 — 근거: `sessions/2026-06-15T10-51-08/bess-esg-finance.md`
+
 ## ESG 공시 표준 매핑
 
 | 표준 | 적용 범위 | 적용 시점 | 핵심 요구 |
@@ -221,22 +252,3 @@ BESS 자재 영향 (EU向 수입 시):
 - EU 택소노미: DNSH 6/6 충족 = Aligned, 5/6 이하 = Not Aligned (부분 합격 없음).
 - Scope 1/2 데이터 품질: 1차 데이터 비율 목표 ≥ 90%, 불확도 ≤ 10%.
 - CBAM: BOP 강재·알루미늄 내재배출량 데이터 확보율 목표 100% (미확보분은 기본값 + [가정] 태그).
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 공시 표준: TCFD 4대 축(Governance/Strategy/Risk Mgmt/Metrics&Targets) + ISSB(IFRS S1/S2) 통합. Scope 1/2/3 LCA(셀제조 Scope3 Cat.1, 운송 Cat.4, 운영 Scope2, EoL Cat.12) — 근거: `sessions/2026-06-03T15-56-55/bess-esg-finance.md`, `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
-- 그린본드: Use of Proceeds 연간 공시, 그린프리미엄(greenium) 5~15bp(시장·등급 의존), 제3자 인증(CBI/CICERO/Sustainalytics SPO) — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
-- EU 택소노미 적격성 = 활동 4.10 Substantial Contribution + DNSH 6목표 + Minimum Safeguards 충족 검토; CBAM 영향 분석; EoL 배터리 회수율 90% 목표 — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
-- 탄소중립 목표 구조: 단기 5년 / 중기 5~10년 / 장기 10년+, 예: Scope 1 2030년까지 50% 감축 — 근거: `sessions/2026-06-03T15-56-55/bess-esg-finance.md`
-- SLL(지속가능성연계대출)은 UoP 그린본드와 별개: 자금사용처 제한 없이 KPI 미달 시 금리 가산(스텝업), 그린본드는 UoP 100% 사용처 명시 — 근거: `sessions/2026-06-15T10-51-08/bess-esg-finance.md`
-- ISSB(IFRS S2)는 기후 외 물 리스크도 별도 축: 배터리 셀 제조 공정 물 사용량·물부족지역 운영 리스크 지표 설정 필요 — 근거: `sessions/2026-06-20T01-59-18/bess-esg-finance.md`
-- 그린프리미엄은 시장·기업신용등급별로 차등이며 과거 그린본드/SLL 금리 시계열로 변동성(bp) 백테스트 필요, 단일 고정값 금지 — 근거: `sessions/2026-06-23T11-07-59/bess-esg-finance.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 그린본드 자금사용처를 "셀 제조시설 = Scope 3-1 / 효율개선 = Scope 2 / 기술 업그레이드 = Scope 1"로 매핑 → ✅ Scope 분류는 배출원(emission source) 기준이지 자금사용처 기준이 아님, 라벨 혼동 금지 — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
-- ❌ "모회사 ESG 등급 MSCI AAA(예시)"를 가정값으로 사용 → ✅ 실제 등급 미확인 시 [요확인] 필수(그린프리미엄·발행조건에 직결) — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
-- ❌ EU 택소노미 "적격(eligible)"과 "정합(aligned)"을 혼동 → ✅ eligible(활동이 목록에 포함)과 aligned(SC+DNSH+MS 전부 충족)는 다름, 그린본드 정합 산입은 aligned만 가능 — 근거: 표준 정의(EU 2020/852)
-- ❌ greenium을 5~25bp로 확대 표기(기존 재사용지식 5~15bp와 불일치) → ✅ 무근거 확대 금지, 등급·시장별 근거 없으면 5~15bp 유지 + [요확인] — 근거: `sessions/2026-06-20T01-59-18/bess-esg-finance.md`
-- ❌ DNSH 6목표에 SC 활동 목표(기후변화 완화)를 중복 포함해 열거 → ✅ SC(완화)와 나머지 DNSH 5목표(적응·수자원·순환경제·오염방지·생물다양성)를 구분 — 근거: `sessions/2026-06-15T10-51-08/bess-esg-finance.md`
-- ❌ SLL을 그린본드처럼 자금사용처 명시형으로 혼용 발행 서술 → ✅ SLL=KPI연동, 그린본드=UoP로 상품 구분 — 근거: `sessions/2026-06-15T10-51-08/bess-esg-finance.md`

@@ -1,6 +1,12 @@
 ---
 name: bess-fit-procedure
-description: "시운전(EMS/FIT) (COM-002)"
+id: "COM-002"
+description: 시운전(EMS/FIT) (COM-002)
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -131,6 +137,28 @@ BMS시뮬레이터, 통신경로, 이상상황시나리오, End-to-End, E2E
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- FIT = EMS 통합시험(Factory/Field Integration Test). 8개 카테고리: 연결성/프로토콜핸드셰이크/명령지연/스케줄/시간동기/패킷로그/이상시나리오/E2E — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
+- 시험 ID 체계: FIT-CON-001~004, FIT-HSK-001~005, FIT-LAT-001~006, FIT-SCH-001~005, FIT-NTP-001~003, FIT-PKT-001~005, FIT-ERR-001~006, FIT-E2E-001~003 (합계 37건) — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
+- 프로토콜: Modbus TCP, IEC 61850 MMS/GOOSE, REST API; 시간동기 NTP/PTP; 패킷분석 Wireshark/tcpdump — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
+- FIT 착수 전 HW 사전조건(precom 인계 확인): 절연저항 ≥1MΩ, 접지저항 ≤10Ω 확인 후 통신 경로(EMS↔PCS/BMS/SCADA) 테스트 진입 — 근거: `sessions/2026-06-16T01-11-29/bess-fit-procedure.md`
+- 통신 경로 검증 대상 4계층: Aggregator↔EMS↔PCS↔BMS 프로토콜 호환성 + 명령-응답 시간차 측정, 이종 프로토콜 공존(Modbus↔DNP3) 상호운용성 테스트 포함 — 근거: `sessions/2026-06-22T10-54-19/bess-fit-procedure.md`
+- FIT-CON(통신 경로 검증) 합격 기준: LAN Ping RTT <10 ms, 패킷 손실률 0%, 대상 포트 전부 OPEN — 측정도구 ping·Wireshark·tcpdump — 근거: `sessions/2026-07-31T10-59-41/bess-fit-procedure.md`
+- FIT 표준 포트 세트(network-engineer 소관값 인용): Modbus TCP **502**, IEC 61850 MMS **102**, DNP3 **20000**, OPC-UA **4840** — 근거: `sessions/2026-08-01T15-46-57/bess-network-engineer.md`
+- 시간 동기화는 NTP/PTP 정기 검증(FIT-NTP)으로 분리 항목화하고, 이상 상황 시나리오 모의시험을 병행 — 근거: `sessions/2026-07-31T10-59-41/bess-fit-procedure.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ DNP3 포트를 **23**(Telnet)으로 기재 → ✅ DNP3 표준 포트는 **20000/TCP·UDP**, 23은 Telnet. 포트 번호는 network-engineer 표준 세트와 대조 후 기재 — 근거: `sessions/2026-07-31T10-59-41/bess-fit-procedure.md`
+- ❌ "표준 준수가 과도하면 혁신을 제약한다"는 논리로 규격 요건을 선택 적용 → ✅ 계통연계·안전 규격은 면제 불가 요건이며, 신기술 도입은 규격 충족을 전제로 별도 트랙에서 검토 — 근거: `sessions/2026-07-31T00-46-34/bess-fit-procedure_critic.md`
+- ❌ FIT를 발전차액지원제도(Feed-in Tariff)로 오인 → ✅ 본 도메인 FIT = 시운전 EMS 통합시험(FIT ≠ Feed-in Tariff) — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
+- ❌ GOOSE 트립 지연을 단일 "<4 ms"로 단정 → ✅ IEC 61850-5 성능 클래스 기준 보호 트립 총 전송시간 P2/P3 ≤3 ms, P1 ≤10 ms로 구분 명시
+- ❌ "정상/양호"식 비정량 판정 → ✅ 모든 합격 기준은 수치 임계값 + 단위 + 측정 도구로 표기
+- ❌ 한국(KR) 시장 FIT 적용 규격에 JEAC 9701(일본 전용 계통연계 규격)을 혼용 적용 → ✅ KR은 송·배전용 전기설비 이용규정·계통연계기술기준 적용, JEAC 9701-2019는 JP 전용(시장별 규격 무단 혼용 금지 재확인) — 근거: `sessions/2026-07-18T11-27-31/bess-fit-procedure.md`
+- ❌ FIT 초기 시험 단계에 EMC/EMI 적합성 스캔(EMI 필터 성능 확인 등)까지 포함 → ✅ 초기 FIT은 통신 지연·패킷 손실 등 핵심 성능 지표에 집중, EMC 적합성 심층검증은 후속 단계에서 bess-emc-analyst가 전담 — 근거: `sessions/2026-07-15T10-30-34/bess-fit-procedure.md`
+- ❌ FIT 통신 경로 점검(FIT-CON)에 암호화 수준·인증 메커니즘 등 보안 취약점 스캔까지 포함 → ✅ 암호화·보안 취약점 검증은 보안전문가·사이버보안전문가(bess-security-expert/bess-cybersecurity-expert) 영역, FIT는 프로토콜 연결성·핸드셰이크·레이턴시만 검증(역할 경계 유지) — 근거: `sessions/2026-07-26T02-44-02/bess-fit-procedure.md`
 
 ## 시스템 아키텍처 (FIT 대상 범위)
 
@@ -352,17 +380,3 @@ or 모의) or 모의)  or 모의)
 | Wireshark PC | 패킷 캡처 | 미러(SPAN) 포트 or 네트워크 TAP 연결 |
 | Aggregator 모의 | 상위 명령 발생 | REST API 목업 서버 |
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- FIT = EMS 통합시험(Factory/Field Integration Test). 8개 카테고리: 연결성/프로토콜핸드셰이크/명령지연/스케줄/시간동기/패킷로그/이상시나리오/E2E — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
-- 시험 ID 체계: FIT-CON-001~004, FIT-HSK-001~005, FIT-LAT-001~006, FIT-SCH-001~005, FIT-NTP-001~003, FIT-PKT-001~005, FIT-ERR-001~006, FIT-E2E-001~003 (합계 37건) — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
-- 프로토콜: Modbus TCP, IEC 61850 MMS/GOOSE, REST API; 시간동기 NTP/PTP; 패킷분석 Wireshark/tcpdump — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
-- FIT 착수 전 HW 사전조건(precom 인계 확인): 절연저항 ≥1MΩ, 접지저항 ≤10Ω 확인 후 통신 경로(EMS↔PCS/BMS/SCADA) 테스트 진입 — 근거: `sessions/2026-06-16T01-11-29/bess-fit-procedure.md`
-- 통신 경로 검증 대상 4계층: Aggregator↔EMS↔PCS↔BMS 프로토콜 호환성 + 명령-응답 시간차 측정, 이종 프로토콜 공존(Modbus↔DNP3) 상호운용성 테스트 포함 — 근거: `sessions/2026-06-22T10-54-19/bess-fit-procedure.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ FIT를 발전차액지원제도(Feed-in Tariff)로 오인 → ✅ 본 도메인 FIT = 시운전 EMS 통합시험(FIT ≠ Feed-in Tariff) — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
-- ❌ GOOSE 트립 지연을 단일 "<4 ms"로 단정 → ✅ IEC 61850-5 성능 클래스 기준 보호 트립 총 전송시간 P2/P3 ≤3 ms, P1 ≤10 ms로 구분 명시
-- ❌ "정상/양호"식 비정량 판정 → ✅ 모든 합격 기준은 수치 임계값 + 단위 + 측정 도구로 표기

@@ -1,6 +1,12 @@
 ---
 name: bess-permit-europe
-description: "인허가 전문가(유럽). EU/RO/PL ENTSO-E, RfG, ANRE, URE, PSE, TGE, CBAM, EIA"
+id: "PRM-003"
+description: 인허가 전문가(유럽). EU/RO/PL ENTSO-E, RfG, ANRE, URE, PSE, TGE, CBAM, EIA
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -130,6 +136,20 @@ Transelectrica, 건설허가, 계통연계, CBAM, EIA, 소방허가, 경매, 그
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- EU 2016/631(RfG) Type 분류, 국가별 Type 경계값 차이, 폴란드 인허가 플로우가 스킬에 정리됨 — 근거: `00_Skill_MD/bess-permit-europe.md`
+- EU 관세는 TARIC 체계와 연계(HS 상위 + EU 하위) — 근거: `sessions/2026-05-20T13-36-03/bess-permit-europe.md`
+- 유럽 인허가 단축 사례(디지털화 효과): **DE** 평균 6개월 → 3개월(EnWG + VDE-AR-N 4110/4120 온라인 플랫폼), **PL** 8개월 → 5개월(PSE IRiESP + 용량시장법·도시계획법 통합), **RO** 10개월 → 6개월(ANRE 온라인 신청·추적) — 근거: `sessions/2026-07-20T07-40-14/bess-permit-europe.md`
+- 규제 동향 3축: **CBAM**(탄소 배출량 분석을 인허가 단계에 통합), **RED III**(재생에너지 연계성·보조금 적합성 사전 검토), **EIA 강화**(보고서 범위·심도 확대) — 근거: `sessions/2026-07-20T07-40-14/bess-permit-europe.md`
+- EU는 디지털 인허가가 이미 보편화되어 있어 차별화 포인트는 플랫폼 도입이 아니라 **GDPR 등 데이터 보호 준수**와 국가 간 규제 조화 — 근거: `sessions/2026-07-20T07-40-14/bess-permit-europe.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 2026년 세션 산출물에 과거 일정(예: "2023년 10월 15일 워크숍")을 실행 계획으로 기재 → ✅ 일정은 세션 기준일 이후 날짜로 산출하고, 날짜는 시스템 시각 기준으로 계산 — 근거: `sessions/2026-07-20T07-40-14/bess-permit-europe.md`
+- ❌ RO 계통연계 근거를 **ANRE Order 20/2025** 단독으로 갱신 인용(§1 마스터 표는 Order 59/2013·11/2023) → ✅ 신규 Order 인용 시 관보 링크와 시행일을 확인하고, 기존 조항의 대체/병존 여부를 명시(미확인 시 `[요확인]`) — 근거: `sessions/2026-07-20T07-40-14/bess-permit-europe.md`
+- ❌ "JCFC (Joint Committee on Tariff Classification)" → ✅ asia 정의(Fire Code)와 모순, 동일 토론서 "화재안전 기구" vs "관세분류" 충돌 → 환각 확정, 사용 금지 — 근거: `sessions/2026-05-20T13-36-03/bess-permit-europe.md`
 
 ## ENTSO-E Grid Code 적합성 상세
 
@@ -550,12 +570,3 @@ NIS 2 사이버보안 요건         ★★       보안 설계 사전 반영
 법령 변경 빈도               ★★       현지 법률 자문사 모니터링
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- EU 2016/631(RfG) Type 분류, 국가별 Type 경계값 차이, 폴란드 인허가 플로우가 스킬에 정리됨 — 근거: `00_Skill_MD/bess-permit-europe.md`
-- EU 관세는 TARIC 체계와 연계(HS 상위 + EU 하위) — 근거: `sessions/2026-05-20T13-36-03/bess-permit-europe.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ "JCFC (Joint Committee on Tariff Classification)" → ✅ asia 정의(Fire Code)와 모순, 동일 토론서 "화재안전 기구" vs "관세분류" 충돌 → 환각 확정, 사용 금지 — 근거: `sessions/2026-05-20T13-36-03/bess-permit-europe.md`

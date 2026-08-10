@@ -1,6 +1,12 @@
 ---
 name: bess-standards-uk
-description: "BESS EPC 영국(UK) 규격·표준·인허가 상세"
+id: "STD-006"
+description: BESS EPC 영국(UK) 규격·표준·인허가 상세
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -108,6 +114,21 @@ bess-standards-uk
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- ENA G99 Issue 6(2024): §6 전압, §7 주파수 ±0.5Hz, §12 LVRT/HVRT, §16 계량·통신; G100(≤50kW 소규모); ER P2/8 보안 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-uk.md`
+- Energy Act 2023: ESS 독립 라이선스 도입(2025 이후 예정, [요확인]); Electricity Act 1989 기본틀 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-uk.md`
+- 기관: Ofgem(라이선스), NESO(구 National Grid ESO, 연계·용량시장), DNO(UK Power Networks 등), Elexon(BSC 정산) — 근거: `sessions/2026-05-25T04-45-20/bess-standards-uk.md`
+- 세제·인센티브는 4개 구성국(England/Scotland/Wales/Northern Ireland)별 상이: 잉글랜드 Capital/Investment Allowances, 스코틀랜드 Saltire Energy Accelerator Fund·R&D 세액공제, 웨일스·북아일랜드 RHI 중심 — 지역별 확인 필수 — 근거: `sessions/2026-06-28T17-36-54/bess-standards-uk.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ **UK 도메인에서 인도·UAE·사우디 접지 설계**를 주 분석 대상으로 수행 → ✅ standards-uk는 UK만 담당하고, 신흥시장(IN/UAE/SA)은 **emerging-markets** 소관. 타 시장 언급 시 "(참고용, UK 적용 아님)" 명시(가드레일 §1.1) — 근거: `sessions/2026-07-26T23-00-40/bess-standards-uk.md`
+- ❌ "IEC 60364 및 **ENA G99** 에 따르면 접지저항 1 Ω 이하" → ✅ **G99는 계통연계(연계 기술요건) 규정**으로 접지저항 값을 규정하지 않는다. UK 접지는 **BS 7430**, 변전소는 **IEEE 80**, 피뢰는 **BS EN 62305** — 근거: `sessions/2026-07-26T23-00-40/bess-standards-uk.md`
+- ❌ 과전압 보호장치를 "**81O, 81U**"로 표기 → ✅ ANSI 81은 **주파수 계전기**(81O/81U = 과/부족 주파수). 과전압·부족전압은 **59/27** (가드레일 §2 OVR/UVR·OFR/UFR 구분) — 근거: `sessions/2026-07-26T23-00-40/bess-standards-uk.md`
+- ❌ 검증 불가 기관명("UAE ESC", "사우디 KACI") 인용 → ✅ 인증·규제 기관명은 공식 사이트로 확인 후 표기, 미확인은 `[요확인]`(가드레일 §4 환각 출처 차단) — 근거: `sessions/2026-07-26T23-00-40/bess-standards-uk.md`
+- ❌ BS EN 62933-5-2를 UK 고유 표준으로 서술 → ✅ EN(유럽)의 BS 채택본, EU와 동일 표준 계열 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-uk.md`
+
 ## 🇬🇧 영국 (United Kingdom)
 
 ### 관할 기관
@@ -169,14 +190,3 @@ Elexon                                        — BSC (Balancing and Settlement 
 - [ ] **Capacity Market·밸런싱** — Elexon BSC 정산, 보조서비스 참여 자격 확인.
 - [ ] **라이선스** — Energy Act 2023 ESS 전용 라이선스(2025 이후 시행 예정) [요확인] vs 기존 발전/공급 면허. 실무 인허가는 `bess-permit-english` 담당.
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- ENA G99 Issue 6(2024): §6 전압, §7 주파수 ±0.5Hz, §12 LVRT/HVRT, §16 계량·통신; G100(≤50kW 소규모); ER P2/8 보안 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-uk.md`
-- Energy Act 2023: ESS 독립 라이선스 도입(2025 이후 예정, [요확인]); Electricity Act 1989 기본틀 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-uk.md`
-- 기관: Ofgem(라이선스), NESO(구 National Grid ESO, 연계·용량시장), DNO(UK Power Networks 등), Elexon(BSC 정산) — 근거: `sessions/2026-05-25T04-45-20/bess-standards-uk.md`
-- 세제·인센티브는 4개 구성국(England/Scotland/Wales/Northern Ireland)별 상이: 잉글랜드 Capital/Investment Allowances, 스코틀랜드 Saltire Energy Accelerator Fund·R&D 세액공제, 웨일스·북아일랜드 RHI 중심 — 지역별 확인 필수 — 근거: `sessions/2026-06-28T17-36-54/bess-standards-uk.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ BS EN 62933-5-2를 UK 고유 표준으로 서술 → ✅ EN(유럽)의 BS 채택본, EU와 동일 표준 계열 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-uk.md`

@@ -1,6 +1,12 @@
 ---
 name: bess-cable-engineer
-description: "케이블 사이징·루팅, Ampacity 계산, IEC60502/IEC60287, 전압강하, 종단접속, 트레이, 포설"
+id: "CAB-001"
+description: 케이블 사이징·루팅, Ampacity 계산, IEC60502/IEC60287, 전압강하, 종단접속, 트레이, 포설
+department: "기술본부 (CTO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -123,6 +129,28 @@ IEC 60502, IEC 60287, IEC 60840, IEC 62067, IEC 60228, NEC 310, BS 7671, AS/NZS 
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- Ampacity 계산: IEC 60287(열적), IEC 60502(케이블 규격), KR은 KEPCO 허용전류표/KEPCO ES-6120 — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
+- 전압강하 ≤2% 유지(HV 기준; MV ≤3%, LV ≤5%) — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
+- 화재안전: 난연 LSZH, IEC 60754(할로겐프리/산가스), IEC 61034(연기밀도), IEC 60364(전기설비), KEC 준수 — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
+- 예시 사이징: 22.9kV MV, I_rated 500A → 350mm² (IEC 60287), 길이≤100m — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
+- JP 시장: JCS(日本電線(전선)工業会規格(일본전선공업회규격), CV/EM 케이블)는 50Hz/60Hz 계통 주파수 차이에 따른 Ampacity 영향을 반영해야 함(전압강하·유전손실 상이); 미국은 NEC Art.310 + IEEE 835, 호주는 AS/NZS 3008(토양온도 보정) — 근거: `sessions/2026-06-18T23-38-46/bess-cable-engineer.md`
+- 인도(IN) 시장: BIS 표준 체계 — IS 640(IEC 60502 기반, LV/MV 케이블), IS 1173(IEC 60287 기반, Ampacity 계산 방법론), IS 1058(IEC 60364 기반, 전기설비 설치기준) — 근거: `sessions/2026-07-03T20-48-45/bess-cable-engineer.md`
+- 디레이팅 기준조건 명시 원칙: 주위온도 25°C, 토양 열저항 1.0 K·m/W(IEC 60287 기준), k1~k4 각각 1.0을 "기준값"으로 쓸 때는 실제 현장조건 미확인임을 [가정] 태그로 표기 — 근거: `sessions/2026-08-01T13-40-09/bess-cable-engineer.md`
+- LV 분기회로 전압강하는 정상운전분과 기동(돌입)분을 합산 검토(HV ≤2% / MV ≤3% / LV ≤5% 한계는 합산 후 판정) — 근거: `sessions/2026-08-01T13-40-09/bess-cable-engineer.md`
+- 포설·설계 여유 기준: 직매 포설 깊이 **0.8~1.0 m**(IEC 60364-5-52), Ampacity 설계 여유 **≥1.25배** 확보, KR 허용전류는 KEPCO ES-6120 표와 교차 검증 — 근거: `sessions/2026-08-03T15-41-34/bess-cable-engineer.md`
+- 케이블 트레이·관통부 설계 시 벤딩 반경(외경 8~12배)과 트레이 간격을 함께 확정해야 열적 성능과 시공 효율을 동시에 만족 — 근거: `sessions/2026-08-03T15-41-34/bess-cable-engineer.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 이용률 식 `U = I_load/(I_base×∏k)`를 `I_ampacity`(허용전류 값)로 라벨링 → ✅ U는 무차원 이용률(≤1.0 판정), 허용전류는 `I_base×∏k` [A]로 기호·단위를 분리 표기 — 근거: `sessions/2026-08-01T13-40-09/bess-cable-engineer.md`
+- ❌ 케이블 열적 성능을 재생에너지 변동성·기후 시나리오까지 확장해 단정 → ✅ 케이블 도메인은 Ampacity·전압강하·단락내량으로 한정하고, 계통 변동성 영향은 power-system-analyst 결과를 인용 — 근거: `sessions/2026-07-26T19-35-05/bess-cable-engineer_critic.md`
+- ❌ 전압강하식 ΔV=I×(2×L×Rcable)를 회로 구분 없이 적용(단상/DC 왕복 2L 식) → ✅ 3상 MV는 ΔV=√3·I·L·(Rcosφ+Xsinφ), 적용 회로 명시 — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
+- ❌ 연기밀도·산가스를 IEC 60754로 혼용 → ✅ 연기밀도는 IEC 61034, 산가스(할로겐프리)는 IEC 60754로 구분 — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
+- ❌ 허용전류를 디레이팅 미적용 베이스값으로 판정 → ✅ 주위온도·그룹·토양열저항·매설깊이(k1~k4) 곱을 적용한 보정값으로 이용률 U 판정 — 근거: IEC 60287/60364-5-52 적용 정합
+- ❌ 비표준 약식 Ampacity 공식(예: I=k·A^0.5/θ 류)으로 계산해 240mm² 케이블에 464,700A(안전마진 후 371,760A)처럼 물리적으로 불가능한 자릿수 결과를 산출 → ✅ IEC 60287-1-1 열적 평형 방정식 또는 시장별 공인 테이블 방법론만 사용하고, 결과값이 해당 단면적의 통상 범위(수백 A대)에 있는지 자릿수 검산 — 근거: `sessions/2026-07-09T16-45-26/bess-cable-engineer.md`
 
 ## 핵심 역량 및 업무 범위
 
@@ -289,17 +317,3 @@ PN-EN 50575 (CPR)              케이블 화재 반응 등급             PKN
          15kV/20kV/30kV 배전 클래스 (PL 배전사 사양)
          [요확인] 배전사(PGE/Tauron/Enea/Energa)별 사양 차이
 ```
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- Ampacity 계산: IEC 60287(열적), IEC 60502(케이블 규격), KR은 KEPCO 허용전류표/KEPCO ES-6120 — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
-- 전압강하 ≤2% 유지(HV 기준; MV ≤3%, LV ≤5%) — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
-- 화재안전: 난연 LSZH, IEC 60754(할로겐프리/산가스), IEC 61034(연기밀도), IEC 60364(전기설비), KEC 준수 — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
-- 예시 사이징: 22.9kV MV, I_rated 500A → 350mm² (IEC 60287), 길이≤100m — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
-- JP 시장: JCS(日本電線(전선)工業会規格(일본전선공업회규격), CV/EM 케이블)는 50Hz/60Hz 계통 주파수 차이에 따른 Ampacity 영향을 반영해야 함(전압강하·유전손실 상이); 미국은 NEC Art.310 + IEEE 835, 호주는 AS/NZS 3008(토양온도 보정) — 근거: `sessions/2026-06-18T23-38-46/bess-cable-engineer.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 전압강하식 ΔV=I×(2×L×Rcable)를 회로 구분 없이 적용(단상/DC 왕복 2L 식) → ✅ 3상 MV는 ΔV=√3·I·L·(Rcosφ+Xsinφ), 적용 회로 명시 — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
-- ❌ 연기밀도·산가스를 IEC 60754로 혼용 → ✅ 연기밀도는 IEC 61034, 산가스(할로겐프리)는 IEC 60754로 구분 — 근거: `sessions/2026-06-08T04-48-19/bess-cable-engineer.md`
-- ❌ 허용전류를 디레이팅 미적용 베이스값으로 판정 → ✅ 주위온도·그룹·토양열저항·매설깊이(k1~k4) 곱을 적용한 보정값으로 이용률 U 판정 — 근거: IEC 60287/60364-5-52 적용 정합

@@ -1,6 +1,12 @@
 ---
 name: bess-standards-eu
-description: "BESS EPC EU(일반) 규격·표준·인허가 상세"
+id: "STD-004"
+description: BESS EPC EU(일반) 규격·표준·인허가 상세
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -138,6 +144,29 @@ bess-standards-eu
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 표준: EN IEC 62933-5-2:2020(ESS 안전), EN IEC 62619:2022(산업 리튬이온), CE 마킹 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-eu.md`
+- 규제: EU Battery Regulation 2023/1542(탄소발자국·배터리여권·공급망실사), Electricity Directive 2019/944, REACH 1907/2006, NIS2/CRA — 근거: `sessions/2026-06-05T16-47-22/bess-standards-eu.md`
+- 환경: EIA Directive 2014/52/EU(Screening→Scoping→EIS→공공참여→결정), Habitats 92/43/EEC(Natura2000 AA), Birds 2009/147/EC(SPA), EU Taxonomy DNSH 6목표 — 근거: `sessions/2026-06-04T14-51-22/bess-standards-eu.md`
+- 연계: RfG(2016/631) Type 분류, 회원국 NIP별 경계값 차이 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-eu.md`
+- EMC/기계류: EMC Directive 2014/30/EU + IEC 61800-3(전력전자 EMC 시험), Machinery Regulation (EU) 2023/1230(적합성선언 DoC 포함); REACH (EC) 1907/2006; DoC·Technical File 최소 10년 보관 — 근거: `sessions/2026-06-25T04-52-44/bess-standards-eu.md`
+- 차단기 표준: 저압 EN 60947-2, 고압 IEC/EN 62271-100(성능·차단용량·시험절차); 케이블 IEC 60502(LV ≤1kV / MV 1~35kV) — 근거: `sessions/2026-06-22T12-42-52/bess-standards-eu.md`
+- EU 주요국 연간 전력시장 규모(참고치, 연도별 변동 확인 필요): 독일 700 TWh 이상, 프랑스 550 TWh 이상, 이탈리아 250 TWh 이상, 폴란드 150 TWh 이상, 네덜란드 120 TWh 이상, 루마니아 60 TWh 이상 — 근거: `sessions/2026-07-23T05-49-05/bess-standards-eu.md`
+- EU BESS 규제 세트: **NIS2**(Directive 2022/2555, 중요 인프라 사이버보안), **Battery Regulation 2023/1542**, **Electricity Directive 2019/944**, REACH, **EIA Directive 2014/52/EU** + Habitats Directive 92/43/EEC(Natura 2000) — 회원국 NIP에 따라 세부 요건 상이 → `[요확인]` — 근거: `sessions/2026-08-01T15-46-57/bess-standards-eu.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ **IEC 62443-5-0**("보안 프로파일링")을 실재 규격처럼 인용 → ✅ IEC 62443 시리즈는 **1-x(개념)·2-x(정책/절차)·3-x(시스템)·4-x(구성요소)** 로 구성되며 **5-x 파트는 존재하지 않는다**. 미확인 파트번호는 사용 금지 — 근거: `sessions/2026-08-01T15-46-57/bess-standards-eu.md`
+- ❌ 62443-3-3을 "보안 요구사항 및 아키텍처", 62443-4-2를 "네트워크 및 시스템 보안"으로 설명 → ✅ **3-3 = 시스템 보안 요구사항 및 보안수준(SL)**, **4-2 = 구성요소(component) 보안 요구사항**, Zone/Conduit 설계는 **3-2** — 근거: `sessions/2026-08-01T15-46-57/bess-standards-eu.md`
+- ❌ NiMH HS "8507.50"·알칼라인 "8507.40"(KR세션은 8507.41/8507.49) → ✅ 도메인 간 HS 하위코드 불일치, 단일 기준표 사용. (리튬이온 BESS는 HS 8507.60) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-eu.md`
+- ❌ "ENER(유럽에너지안전청)" 등 비표준 기관명 → ✅ 실제 EU 기관(ACER/ENTSO-E/ECHA/ENISA) 확인 후 사용 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-korea.md`
+- ❌ RfG 보호값을 단일 EU 고정값(예 LVRT 150ms·UFR 47.5Hz)으로 확정 → ✅ RfG는 범위만 규정, 회원국 NIP/그리드코드가 확정값 결정 → [요확인] 후 인용 — 근거: 본 세션 정합성 검토(2026-06-08)
+- ❌ IEC 61850 약어 오역 "GOOSE=Guided Open Oriented Signaling·SV=Safety Variable" → ✅ GOOSE=Generic Object Oriented Substation Event, SV=Sampled Values — 근거: `sessions/2026-06-25T04-52-44/bess-standards-eu.md`
+- ❌ 실재하지 않는 유럽 차단기 표준 "EN 50948·EN 50650"으로 확정 → ✅ 저압은 EN 60947-2, 고압은 IEC/EN 62271-100; 미확인 규격번호는 [요확인] 부착 — 근거: `sessions/2026-06-22T12-42-52/bess-standards-eu.md`
+- ❌ EU 분석에 국내 법규(KEC·KEPCO 고시·정보통신망법·KC 인증) 혼용 → ✅ EU는 EMC Directive/CE·EN/IEC·ENISA(NIS2) 체계, 국내 규정 배제 — 근거: `sessions/2026-06-25T04-52-44/bess-standards-eu.md`
+- ❌ RfG Type A/B/C/D를 "중앙집중식/분산형/혼합형/특정조건" 전력시장 유형 분류로 오인 → ✅ RfG Type A/B/C/D는 Regulation (EU) 2016/631 §5의 발전기 정격출력(P[MW])·연계전압 기준 계통연계 요건 분류이며 전력시장 구조 분류와 무관 — 근거: `sessions/2026-07-23T05-49-05/bess-standards-eu.md`
 
 ## 받는 입력 / 필요 정보 (INPUT)
 
@@ -397,21 +426,3 @@ EU Taxonomy 환경 기준 (DNSH 6개 목표):
 └── + 최소 사회적 보호 조치 (인권, 노동권)
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 표준: EN IEC 62933-5-2:2020(ESS 안전), EN IEC 62619:2022(산업 리튬이온), CE 마킹 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-eu.md`
-- 규제: EU Battery Regulation 2023/1542(탄소발자국·배터리여권·공급망실사), Electricity Directive 2019/944, REACH 1907/2006, NIS2/CRA — 근거: `sessions/2026-06-05T16-47-22/bess-standards-eu.md`
-- 환경: EIA Directive 2014/52/EU(Screening→Scoping→EIS→공공참여→결정), Habitats 92/43/EEC(Natura2000 AA), Birds 2009/147/EC(SPA), EU Taxonomy DNSH 6목표 — 근거: `sessions/2026-06-04T14-51-22/bess-standards-eu.md`
-- 연계: RfG(2016/631) Type 분류, 회원국 NIP별 경계값 차이 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-eu.md`
-- EMC/기계류: EMC Directive 2014/30/EU + IEC 61800-3(전력전자 EMC 시험), Machinery Regulation (EU) 2023/1230(적합성선언 DoC 포함); REACH (EC) 1907/2006; DoC·Technical File 최소 10년 보관 — 근거: `sessions/2026-06-25T04-52-44/bess-standards-eu.md`
-- 차단기 표준: 저압 EN 60947-2, 고압 IEC/EN 62271-100(성능·차단용량·시험절차); 케이블 IEC 60502(LV ≤1kV / MV 1~35kV) — 근거: `sessions/2026-06-22T12-42-52/bess-standards-eu.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ NiMH HS "8507.50"·알칼라인 "8507.40"(KR세션은 8507.41/8507.49) → ✅ 도메인 간 HS 하위코드 불일치, 단일 기준표 사용. (리튬이온 BESS는 HS 8507.60) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-eu.md`
-- ❌ "ENER(유럽에너지안전청)" 등 비표준 기관명 → ✅ 실제 EU 기관(ACER/ENTSO-E/ECHA/ENISA) 확인 후 사용 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-korea.md`
-- ❌ RfG 보호값을 단일 EU 고정값(예 LVRT 150ms·UFR 47.5Hz)으로 확정 → ✅ RfG는 범위만 규정, 회원국 NIP/그리드코드가 확정값 결정 → [요확인] 후 인용 — 근거: 본 세션 정합성 검토(2026-06-08)
-- ❌ IEC 61850 약어 오역 "GOOSE=Guided Open Oriented Signaling·SV=Safety Variable" → ✅ GOOSE=Generic Object Oriented Substation Event, SV=Sampled Values — 근거: `sessions/2026-06-25T04-52-44/bess-standards-eu.md`
-- ❌ 실재하지 않는 유럽 차단기 표준 "EN 50948·EN 50650"으로 확정 → ✅ 저압은 EN 60947-2, 고압은 IEC/EN 62271-100; 미확인 규격번호는 [요확인] 부착 — 근거: `sessions/2026-06-22T12-42-52/bess-standards-eu.md`
-- ❌ EU 분석에 국내 법규(KEC·KEPCO 고시·정보통신망법·KC 인증) 혼용 → ✅ EU는 EMC Directive/CE·EN/IEC·ENISA(NIS2) 체계, 국내 규정 배제 — 근거: `sessions/2026-06-25T04-52-44/bess-standards-eu.md`

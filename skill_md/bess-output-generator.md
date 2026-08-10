@@ -1,6 +1,12 @@
 ---
 name: bess-output-generator
-description: "전사 문서 표준화, 출력 형식 선택, A4/A3 인쇄, Excel/Word/PDF/Python 파일 생성"
+id: "SCV-500"
+description: 전사 문서 표준화, 출력 형식 선택, A4/A3 인쇄, Excel/Word/PDF/Python 파일 생성
+department: "Support / Document Team"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -115,6 +121,22 @@ bess-output-generator
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 견적서(Q)/BOM 필수항목 스키마: 부품명/부품번호/제조사/모델/단가/수량/총액/세금·운송 + 참고출처(URL+수집일) 의무 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- A4 인쇄 표준 "옵션 A": 단면 대칭, 25mm 4-방향 여백, 헤더/푸터/페이지번호/제목행 반복 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- 자동화 파이프라인 규약: CSV→pandas→FPDF/Excel 자동 생성, BOM↔견적 데이터 연계(변경 자동 반영), 계층 BOM 추적성 — 근거: `sessions/2026-05-21T06-28-02/bess-output-generator.md`
+- 출처 표기 규약: 모든 데이터에 [출처명]-[URL/문서참조]-[수집일] 3요소(CLAUDE.md 하이퍼링크 증거 원칙과 일치) — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- 견적서·BOM 출력 규약: 인쇄 옵션 **A(단면 대칭, 25 mm 4-방향 여백)**, 3페이지 이상이면 점선 TOC + 페이지 번호 필수, 계산·수식은 Excel(.xlsx)로 관리하고 최종 배포본은 PDF로 고정 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+- 견적서 필수 섹션: 요약(총 비용) / 부품 목록(부품명·부품번호·제조사·모델·단가·수량·총액·세금·운송비) / 총 비용 / **참고 출처** / `[요확인]` 항목 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 단가·수량을 공급업체 견적 기준으로만 표기하고 조회 기준일 누락 → ✅ 모든 금액 항목에 **기준일과 출처**를 병기하고, 환율 적용 시 적용일·환율값을 함께 기재 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+- ❌ frontmatter `department: "Support / Document Team"`(영문) vs 타 도메인 "운영본부(COO 산하)" 드리프트 → ✅ 부서명 "운영본부(COO 산하)" 한글 단일 표기 — 근거: `00_Skill_MD/bess-output-generator.md`
+- ❌ 예시 출처 placeholder 환각(examplebattery.com / 2023-04-15 등 가짜 URL·과거일자) → ✅ 실제 출처로 치환 강제, example.com·과거 placeholder 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-output-generator.md`
+- ❌ bess-output-generator 세션이 BOM 원가·물량산출·IRA 관세혜택 등 콘텐츠 분석까지 수행(역할경계 위반, 2026-07-05~07-13 배치 세션 다수 반복) → ✅ 콘텐츠(단가·수치·규정해석)는 bess-epc-bom/bess-cost-analyst/bess-tax-incentive 담당, output-generator는 형식·서식 표준화만 수행 — 근거: `sessions/2026-07-05T08-50-30/bess-output-generator.md`
 
 ## 출처(Sources) 포함 원칙 (모든 출력물 필수)
 
@@ -643,78 +665,61 @@ def add_hyperlink(paragraph, url: str, text: str, size_pt: float = 10):
     hl.append(run)
     paragraph._p.append(hl)
 ```
-#### ② add_toc — TOC 항목 삽입 (점선 + PAGEREF 페이지 번호, 2레벨)
-
-> [!WARNING]
-> **아래의 raw `{ TOC \o "1-2" }` 자동생성 필드 방식은 쓰지 말 것 — LibreOffice headless
-> PDF 변환(HF Space 등 Linux 배포 환경의 표준 변환 경로)이 이 필드가 요구하는 전체 문서
-> 스캔을 수행하지 않아 목차가 통째로 누락되는 실사고가 있었다(2026-07-21, 마켓 대시보드
-> 보고서). Word에서 열어 F9로 수동 갱신하는 것을 전제로 한 필드이며, PDF 산출물에서는
-> 신뢰할 수 없다.** 대신 각 heading에 `w:bookmarkStart`로 고유 앵커를 심고, TOC 항목은
-> "제목(일반 텍스트) + 점선 탭 + `PAGEREF` 필드(북마크 1개만 단순 조회)"로 직접 구성한다.
-> 제목 텍스트는 필드 해석 여부와 무관하게 항상 렌더링되고, PAGEREF는 전체 스캔형 TOC
-> 필드보다 훨씬 안정적으로 해석된다. 참고 구현: `bess-epc-engineering` 레포
-> `utils/_report_local.py`의 `_add_bookmark` / `_make_pageref_field` / `_add_toc_hyperlink`
-> / `add_toc`(정본, 2레벨 중첩 예시 포함).
-
-핵심 패턴:
+#### ② add_toc — TOC 필드 삽입 (점선 + 페이지 번호 + 자동 갱신)
 ```python
-from docx.shared import Pt, Mm, RGBColor
+from docx.shared import Pt, RGBColor
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-
-def _add_bookmark(paragraph, bm_name):
-    """heading 문단에 고유 앵커(북마크)를 심는다 — 각 heading 생성 직후 바로 호출."""
-    bm_start = OxmlElement("w:bookmarkStart")
-    bm_start.set(qn("w:id"), str(hash(bm_name) % 100000))
-    bm_start.set(qn("w:name"), bm_name)
-    bm_end = OxmlElement("w:bookmarkEnd")
-    bm_end.set(qn("w:id"), str(hash(bm_name) % 100000))
-    paragraph._p.insert(0, bm_start)
-    paragraph._p.append(bm_end)
-
-def _add_toc_entry(doc, level, bookmark_name, title, est_page, toc1_style, toc2_style):
+def add_toc(doc):
     """
-    level=1(장)·level=2(절, N.M) 2레벨 목차 항목 1줄 생성.
-    - 제목: w:hyperlink(anchor=bookmark_name)로 클릭 이동은 지원하되,
-      w:u val="none"으로 밑줄을 꺼서 일반 웹링크처럼 보이지 않게 한다
-      (Word가 w:hyperlink 런에 파란색+밑줄 Hyperlink 스타일을 암묵 적용하는 것을 상쇄).
-    - 페이지 번호: PAGEREF 필드, est_page는 필드 미갱신 시 보일 예상치일 뿐
-      (필드 업데이트 후 실제값으로 대체됨) — 완전 허구값이 아니라 합리적 추정치를 넣을 것.
+    Word TOC 필드 삽입.
+    - Heading 1~2 수집, 점선 dot-leader + 페이지 번호 + 하이퍼링크 자동 생성
+    - TOC 1/2 스타일: 10pt, space 0pt, line_spacing 11pt (최소 간격)
+    - 문서 열 때 w:updateFields = true → 자동 갱신
+    - 수동 갱신: Ctrl+A → F9
     """
-    style = toc1_style if level == 1 else toc2_style
-    p = doc.add_paragraph(style=style)
-    if level == 2:
-        p.paragraph_format.left_indent = Mm(6)
-    p.paragraph_format.space_before = Pt(1)
-    p.paragraph_format.space_after = Pt(1)
-    # 우측 정렬 + 점선 탭 스톱
-    pPr = p._p.get_or_add_pPr()
-    tabs = OxmlElement("w:tabs")
-    tab = OxmlElement("w:tab")
-    tab.set(qn("w:val"), "right"); tab.set(qn("w:leader"), "dot")
-    tab.set(qn("w:pos"), str(int((150 if level == 1 else 144) * 56.7)))
-    tabs.append(tab); pPr.append(tabs)
-    # ... 이하 w:hyperlink(anchor) + PAGEREF 필드 조립은 _add_toc_hyperlink 정본 참조
+    # ★ TOC 1/2 스타일 간격 축소 (기본값 너무 넓음)
+    from docx.shared import Mm as _Mm
+    for lvl, indent in [("TOC 1", _Mm(0)), ("TOC 2", _Mm(5))]:
+        try:
+            toc_style = doc.styles[lvl]
+        except KeyError:
+            toc_style = doc.styles.add_style(lvl, 1)  # 1 = PARAGRAPH
+        toc_style.font.size = Pt(10)
+        toc_style.font.name = "맑은 고딕"
+        toc_style.paragraph_format.space_before = Pt(0)
+        toc_style.paragraph_format.space_after  = Pt(0)
+        toc_style.paragraph_format.line_spacing = Pt(11)  # 고정 줄간격 11pt (단일)
+        toc_style.paragraph_format.left_indent  = indent
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after  = Pt(0)
+    def _fld_run(fld_type=None, instr=None):
+        r = p.add_run()
+        if fld_type:
+            fc = OxmlElement("w:fldChar")
+            fc.set(qn("w:fldCharType"), fld_type)
+            r._element.append(fc)
+        if instr:
+            it = OxmlElement("w:instrText")
+            it.set(qn("xml:space"), "preserve")
+            it.text = instr
+            r._element.append(it)
+        return r
+    _fld_run("begin")
+    _fld_run(instr=' TOC \\o "1-2" \\h \\z \\u ')
+    _fld_run("separate")
+    placeholder = p.add_run("목차 갱신: Ctrl+A → F9  (또는 우클릭 → 필드 업데이트)")
+    placeholder.italic = True
+    placeholder.font.size = Pt(9)
+    placeholder.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+    _fld_run("end")
+    # 문서 열 때 자동 갱신
+    settings = doc.settings.element
+    upd = OxmlElement("w:updateFields")
+    upd.set(qn("w:val"), "true")
+    settings.append(upd)
 ```
-
-문서 열 때 필드(PAGEREF·PAGE/NUMPAGES)를 자동 갱신하려면 `_setup_doc()`에서 아래를
-문서 settings에 1회 추가한다(F9 수동 갱신도 여전히 가능):
-```python
-settings = doc.settings.element
-upd = OxmlElement("w:updateFields")
-upd.set(qn("w:val"), "true")
-settings.append(upd)
-```
-
-**2레벨 표현 방법**: 장(H1) heading마다 `_add_bookmark(h, "_secN")`, 절(H2, "N.M 제목"
-형식) heading마다 `_add_bookmark(h, "_secN_M")`을 heading 생성 직후 호출해 앵커를 만들고,
-`add_toc()` 안에서 장 목록을 순회하며 그 장에 속한 절들을 바로 이어서 `_add_toc_entry(doc,
-2, ...)`로 들여쓰기 삽입한다. 정본 구현(`_report_local.py`)에서는 문서 전체를 미리
-정적 리스트(`_TOC_SECTIONS = [(level, bookmark, title, est_page), ...]`)로 선언해두고
-`add_toc()`가 이를 순회하는 방식을 쓴다 — heading 텍스트가 루프문으로 동적 생성되는
-구간(예: 지역별 반복문)은 반복 대상이 코드에서 이미 알려진 고정 리스트(국가명 등)라면
-그 리스트를 순회해 TOC 항목도 함께 만들면 된다.
 #### ③ add_page_number — 푸터 오른쪽 "Page X / Y"
 ```python
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -870,13 +875,6 @@ No(10) | 시험명(38) | 기준(28) | 합격기준(32) | 결과(20) | 판정(16)
   tblW.set(qn("w:w"), str(int(160 / 25.4 * 1440)))  # 160mm → twips
   tbl._tbl.tblPr.append(tblW)
 ★ 위반 시: 테이블이 페이지 경계를 넘거나 좌우 정렬이 깨짐 → 반려
-★ 셀 정렬 (필수, 2026-07-21 표준화): 숫자·통화·퍼센트·N/A(—) 값은 우측 정렬,
-  텍스트(기업명·항목명 등)는 좌측 정렬. 값 타입을 컬럼 위치가 아니라 값 자체로
-  판정할 것(정규식 `^[+\-]?\$?[\d,]+(\.\d+)?\s?%?$` 매칭 시 숫자로 간주) — 헤더만
-  CENTER 정렬하고 데이터 행 정렬을 아예 지정하지 않으면 전부 좌측 정렬로
-  렌더링돼 숫자 자릿수 비교가 어려워진다(과거 bess-epc-engineering 마켓
-  보고서에서 발견·수정된 실사고). 참고 구현: `_report_local.py`의
-  `_is_numeric_cell()` + `_styled_table()` 데이터 행 정렬 로직.
 ```
 ### [C] Python 코드 (.py)
 패턴 선택:
@@ -929,10 +927,7 @@ time.sleep(2)  # COM 해제 대기
 ### Word 문서 고급 패턴
 #### TOC (목차) 표준 필드코드 삽입
 > 📌 표준 TOC 삽입은 위 [검증된 필수 코드 패턴](#검증된-필수-코드-패턴-python-docx)의 `add_toc(doc)` 함수를 사용한다.
-> 해당 정본 함수는 TOC 1/2 스타일 간격 축소 + `w:updateFields`(문서 열 때 자동 갱신) + PAGEREF
-> 기반 안정적 항목 생성까지 포함한 완성형이므로, raw `{ TOC }` 자동생성 필드나 별도 간이
-> 변형(`add_toc_field`)은 사용하지 않는다 — 전자는 LibreOffice headless PDF 변환에서
-> 목차가 통째로 누락되는 실사고가 있었다(2026-07-21).
+> 해당 정본 함수는 TOC 1/2 스타일 간격 축소 + `w:updateFields`(문서 열 때 자동 갱신)까지 포함한 완성형이므로, 별도 간이 변형(`add_toc_field`)은 사용하지 않는다.
 #### 페이지 번호 (오른쪽 하단)
 ```python
 # 푸터에 PAGE / NUMPAGES 필드코드 삽입
@@ -1046,25 +1041,11 @@ DOCX 필수 3종 세트
 □ part.relate_to() 로 r:id 생성
 □ w:hyperlink 요소 안에 w:r 직접 생성 (paragraph.add_run() 사용 금지)
 □ w:rPr 안에 color/u/sz/szCs 모두 삽입
-TOC 검증 (raw `{ TOC \o "1-2" }` 필드 금지 — LibreOffice PDF 목차 누락 실사고, 위 ② 참조)
-□ 각 heading에 _add_bookmark()로 고유 앵커 삽입됨?
-□ TOC 항목이 "제목(일반 텍스트) + 점선 탭 + PAGEREF 필드"로 구성됨? (TOC 필드 스캔 아님)
-□ w:hyperlink 런에 w:u val="none" 삽입됨? (밑줄 억제 — 웹링크처럼 안 보이게)
-□ w:updateFields val="true" → settings 요소에 추가 (F9 수동 갱신도 여전히 가능)
-□ TOC 1/2 스타일: 10pt/9pt, space 1pt, 레벨2는 6mm 들여쓰기
-□ PDF 산출물에서 목차 항목(제목 텍스트)이 실제로 보이는지 확인 (필드 갱신 여부와 무관하게 항상 보여야 함)
+TOC 검증
+□ instrText = ' TOC \o "1-2" \h \z \u ' (공백 포함)
+□ w:updateFields val="true" → settings 요소에 추가
+□ TOC 1/2 스타일: 10pt, space 0pt, line_spacing 11pt (최소 간격)
+□ 문서 열 때 자동 갱신 확인 (최초 저장 후 재열기로 확인)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 견적서(Q)/BOM 필수항목 스키마: 부품명/부품번호/제조사/모델/단가/수량/총액/세금·운송 + 참고출처(URL+수집일) 의무 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-- A4 인쇄 표준 "옵션 A": 단면 대칭, 25mm 4-방향 여백, 헤더/푸터/페이지번호/제목행 반복 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-- 자동화 파이프라인 규약: CSV→pandas→FPDF/Excel 자동 생성, BOM↔견적 데이터 연계(변경 자동 반영), 계층 BOM 추적성 — 근거: `sessions/2026-05-21T06-28-02/bess-output-generator.md`
-- 출처 표기 규약: 모든 데이터에 [출처명]-[URL/문서참조]-[수집일] 3요소(CLAUDE.md 하이퍼링크 증거 원칙과 일치) — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ frontmatter `department: "Support / Document Team"`(영문) vs 타 도메인 "운영본부(COO 산하)" 드리프트 → ✅ 부서명 "운영본부(COO 산하)" 한글 단일 표기 — 근거: `00_Skill_MD/bess-output-generator.md`
-- ❌ 예시 출처 placeholder 환각(examplebattery.com / 2023-04-15 등 가짜 URL·과거일자) → ✅ 실제 출처로 치환 강제, example.com·과거 placeholder 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-output-generator.md`

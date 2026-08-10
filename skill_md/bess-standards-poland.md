@@ -1,6 +1,12 @@
 ---
 name: bess-standards-poland
-description: "BESS EPC 폴란드(PL) 규격·표준·인허가 상세"
+id: "STD-008"
+description: BESS EPC 폴란드(PL) 규격·표준·인허가 상세
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -116,6 +122,20 @@ bess-standards-poland
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 기관: URE(에너지규제청, ≥50MW Type D 면허), PSE(TSO, IRiESP), DSO 5사(PGE/Tauron/Energa/ENEA/E.ON Stoen[구 innogy Stoen, ~2022 리브랜딩]) — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`
+- 법령: Prawo Energetyczne, Ustawa OZE(재생에너지·ESS 정의), Ustawa o rynku mocy(용량시장); EU RfG 2016/631, SOGL 2017/1485 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`
+- 표준: EN 50549-2:2019(HV 연계), PN-EN 50160(전력품질), PN-EN 62271/60076 시리즈, IEC 62933-5-2 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`
+- PL 계통 운영 규정 2종 구분: **IRiESP**(송전계통 운영·이용 규정, PSE) / **IRiESD**(배전계통 운영·이용 규정, DSO) + 계통연계 조건 시행령(Rozporządzenie w sprawie warunków przyłączenia) — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 타 시장 비교 시 한국 전기설비규정을 "**KEEC**(Korean Electrical Equipment Code)"로 표기 → ✅ 한국 전기설비규정은 **KEC**이며 KEEC는 존재하지 않는 약어(가드레일 §2) — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`
+- ❌ 독일 비교열에 "**BDE**(Bundesvereinbarung für Elektrotechnik)", "**EnEV**(Elektrizitätsgesetz)" 기재 → ✅ 독일 전기기술 표준은 **VDE/DIN VDE**(예: VDE-AR-N 4110/4120), 에너지산업법은 **EnWG**. EnEV는 건물 에너지절약령으로 전력법이 아니다 — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`
+- ❌ 세션 1건뿐, 보호계전기 표 미완(110kV 과전압만) → ✅ 추가 세션 누적·검증 후 보호계전기 정정값 확정 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`
+- ❌ 폴란드 연간 전력소비량(~180 TWh)·ESS 시장 연평균성장률(15%+) 등을 출처·시점 없이 확정 수치로 제시 → ✅ 폴란드 통계청·Wood Mackenzie 등 공식 통계 인용 전까지 [요확인] 태그 유지, "시점 미상" 추정치를 확정 사실처럼 기재 금지 — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`
+
 ## 🇵🇱 폴란드 (Poland)
 
 ### 관할 기관
@@ -188,13 +208,3 @@ EU 규정 (상위 — 직접 적용)
 - [ ] **용량시장(Rynek Mocy)** — Ustawa o rynku mocy(2017) ESS 참여 자격·경매 일정 확인.
 - [ ] **면허·인허가** — URE 발전 면허(Koncesja), 환경(RDOŚ), 건설허가 로드맵. 실무 신청은 `bess-permit-europe` 담당.
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 기관: URE(에너지규제청, ≥50MW Type D 면허), PSE(TSO, IRiESP), DSO 5사(PGE/Tauron/Energa/ENEA/E.ON Stoen[구 innogy Stoen, ~2022 리브랜딩]) — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`
-- 법령: Prawo Energetyczne, Ustawa OZE(재생에너지·ESS 정의), Ustawa o rynku mocy(용량시장); EU RfG 2016/631, SOGL 2017/1485 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`
-- 표준: EN 50549-2:2019(HV 연계), PN-EN 50160(전력품질), PN-EN 62271/60076 시리즈, IEC 62933-5-2 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 세션 1건뿐, 보호계전기 표 미완(110kV 과전압만) → ✅ 추가 세션 누적·검증 후 보호계전기 정정값 확정 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`

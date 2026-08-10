@@ -1,6 +1,12 @@
 ---
 name: bess-pcs-expert
-description: "PCS 인버터, 토폴로지, IGBT, SiC, PWM, LCL필터, Grid-Forming, VRT제어, UL1741"
+id: "PCS-001"
+description: PCS 인버터, 토폴로지, IGBT, SiC, PWM, LCL필터, Grid-Forming, VRT제어, UL1741
+department: "기술본부 (CTO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -165,6 +171,36 @@ bess-pcs-expert
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 인버터 효율/스위칭: Si IGBT 2레벨 4~16kHz η97~98.5%; SiC MOSFET 멀티레벨 16~64kHz η98.5~99.2% — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
+- PCS 성능 지표: η≥97%, 응답시간 ≤50ms, THDi ≤3%, Ramp Rate 10~100%/s, 역률 0.95 lead~lag — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
+- 토폴로지: 2레벨(저비용/고고조파) vs 3레벨 NPC/MMC(고조파 저감/고비용); 소자 Si IGBT / SiC MOSFET / GaN HEMT 트레이드오프 — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
+- 제어: Droop + PLL 복합 제어(약계통 PLL 유리), Grid-Forming/Grid-Following 구분 — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
+- 약계통(Weak Grid) 판정: SCR(Short Circuit Ratio) <3 조건에서 Grid-Forming 모드의 전압·주파수 안정성, Synthetic Inertia 관성 응답, Black Start 시퀀스를 별도 검증 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
+- Grid-Forming 동기화는 PLL 단독이 아닌 VSG(Virtual Synchronous Generator)로 가상 관성 구현, Grid-Following과 하이브리드 모드 전환 설계 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
+- THDi ≤3% 달성: SVPWM(Space Vector PWM) 변조 + LCL 필터 공진주파수를 계통 주파수 범위 밖에 배치해 고조파 저감 — 근거: `sessions/2026-06-22T01-11-47/bess-pcs-expert.md`
+- SiC MOSFET 고주파(20~100kHz) EMI/CM 전류 대응: dV/dt 저감 게이트드라이버 + 기생 L/C 최소화 PCB 레이아웃 + 출력단 고주파 EMI 필터 세트 적용 — 근거: `sessions/2026-06-22T01-11-47/bess-pcs-expert.md`
+- PCS 인버터 EMC 준거 규격: 전력구동시스템 EMC = IEC 61800-3, 방사 방출 = CISPR 22 / EN 55022, 내성 = EN 55024, 지역 = FCC / CISPR — 방출·내성 시험 판정 소유권은 EMC분석가(emc-analyst), PCS는 필터·게이트드라이버 등 저감 설계만 담당 — 근거: `sessions/2026-06-20T19-30-32/bess-pcs-expert.md`
+- PV+BESS/Wind+BESS 하이브리드 시스템의 fsw 차등 적용: PV 계열 인버터 4~6kHz(고조파 저감 우선), Wind 계열 인버터 10~20kHz(고효율·빠른 응답 우선) — 에너지원별 변동성 특성에 맞춘 스위칭 주파수 분리 설계 — 근거: `sessions/2026-07-18T08-01-04/bess-pcs-expert.md`
+- 갈바닉 절연 게이트 드라이버(2026년 신제품군, 3 A 급) 도입 검토 시 평가 축: 전력변환 효율 기여분, EMI 방출 저감 효과, 기존 제어 플랫폼과의 호환성 — 성능 데이터 미확보 시 `[요확인]` 유지 — 근거: `sessions/2026-08-02T01-21-59/bess-pcs-expert.md`
+- LCL 필터 조정 지침: 공진주파수 f_res를 스위칭 주파수 대비 충분히 낮게(약 1/15 수준) 두고 감쇠비 ζ≈0.4로 설정 후 실측 검증 — 근거: `sessions/2026-07-31T10-59-41/bess-emc-analyst.md`
+- PCS 계약서에 명시할 기술 사양 축: 인버터 토폴로지, 스위칭 소자(IGBT/SiC MOSFET), 출력 필터(LCL) 설계, 형식시험 규격과 **판정 기준·허용오차**, 장기 기술지원·펌웨어 업데이트 보장 조항 — 근거: `sessions/2026-08-04T07-13-44/bess-pcs-expert.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ LCL 공진주파수를 "스위칭 3 kHz → 약 200 Hz"로 산정 → ✅ f_res는 **10·f_grid < f_res < f_sw/2** 범위를 만족해야 하며, 60 Hz 계통에서 200 Hz는 하한(600 Hz) 미달이다. "f_sw의 약 1/15" 경험식은 이 상·하한을 함께 만족할 때만 유효 — 근거: `sessions/2026-08-05T15-16-20/bess-emc-analyst.md`
+- ❌ SiC MOSFET 게이트 드라이버 준거 규격으로 "**IEC 61044**"를 인용 → ✅ IEC 61044는 납축전지 기회충전 규격으로 무관하다. PCS 형식시험·안전은 **IEC 62477-1 · IEC 62109 · UL 1741**을 인용하고, 미확인 규격번호는 `[요확인]`(가드레일 §4 환각 출처) — 근거: `sessions/2026-08-04T07-13-44/bess-pcs-expert.md`
+- ❌ "FIDIC Yellow는 소유자(발주자)가 더 큰 리스크를 부담하므로 설계 오류 책임을 발주자에 배분" → ✅ **Yellow Book(Plant & Design-Build)은 설계 책임이 시공자**에 있고, Silver Book(EPC/Turnkey)은 시공자 리스크가 가장 크다(발주자 설계는 Red Book). 계약 유형별 리스크 배분은 contract-specialist 값을 인용 — 근거: `sessions/2026-08-04T07-13-44/bess-pcs-expert.md`
+- ❌ Grid-Forming(GFM) 기술을 "모든 환경 조건에서 안정 동작"으로 평가 → ✅ 극한 기상·계통 불안정·장시간 부하변동 시나리오 시험 결과가 있어야 안정성 결론을 내고, 없으면 `[요확인]` — 근거: `sessions/2026-07-31T02-32-50/bess-pcs-expert_critic.md`
+- ❌ 신제품 도입 권고를 초기 투자비·장기 절감효과 비교 없이 제시 → ✅ TCO(초기 CAPEX + 운영 절감) 비교표를 cost-analyst와 함께 제시 — 근거: `sessions/2026-08-02T01-21-59/bess-pcs-expert.md`
+- ❌ VRT를 "Voltage Regulation Transformer(전압조정변압기)"로 오역 → ✅ "Voltage Ride-Through". PCS 맥락에서 VRT는 변압기가 아니라 인버터의 사고전압 통과 제어 — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
+- ❌ 효율 "97%→99% 향상" 등 알고리즘 효과 수치를 근거 없이 단정 → ✅ 벤더 시험성적 근거 태깅 필수 — 근거: `sessions/2026-06-07T22-47-16/bess-pcs-expert.md`
+- ❌ LCL 필터를 "Liquid Core inductor + Low-pass LC Filter"로 오역 → ✅ LCL = Inductor-Capacitor-Inductor 3소자(인버터측 L + 병렬 C + 계통측 L), 액체코어와 무관 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
+- ❌ 존재하지 않는 라이브러리("PyDatalog, PyElectromagneticField")를 PCS 시뮬 도구로 인용, SCR을 "System Capacity Ratio"로 오기 → ✅ 실재 도구(MATLAB/Simulink, PSCAD, GridLAB-D) 명시, SCR = Short Circuit Ratio(단락비)로 정정 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
+- ❌ SEL(Single Event Latchup)을 SiC MOSFET의 EMC 성능 저하 원인으로 오귀속 → ✅ SEL은 방사선(우주선·중성자)에 의한 래치업이며 EMC/EMI(스위칭 노이즈)와 무관, SiC 고주파 EMI 원인은 dV/dt·di/dt와 기생 성분 — 근거: `sessions/2026-06-20T19-30-32/bess-pcs-expert.md`
+- ❌ VRT를 "Variable Resistance Control(가변저항제어)"로 오역(무효전력 저항 제어 방식으로 서술) → ✅ "Voltage Ride-Through"(사고전압 통과 제어), 저항 제어 개념 아님 — 근거: `sessions/2026-07-17T22-10-59/bess-pcs-expert.md`
 
 ## 하드웨어 (H/W) 설계
 
@@ -434,23 +470,3 @@ PCS (Power Conversion System) 구성
 | VRT/FRT | 전압 Sag Generator 또는 계통 시험 | 규격 곡선 이내 |
 | 72h 연속 | 72시간 연속 운전 | 이상 없음, 온도 안정 |
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 인버터 효율/스위칭: Si IGBT 2레벨 4~16kHz η97~98.5%; SiC MOSFET 멀티레벨 16~64kHz η98.5~99.2% — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
-- PCS 성능 지표: η≥97%, 응답시간 ≤50ms, THDi ≤3%, Ramp Rate 10~100%/s, 역률 0.95 lead~lag — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
-- 토폴로지: 2레벨(저비용/고고조파) vs 3레벨 NPC/MMC(고조파 저감/고비용); 소자 Si IGBT / SiC MOSFET / GaN HEMT 트레이드오프 — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
-- 제어: Droop + PLL 복합 제어(약계통 PLL 유리), Grid-Forming/Grid-Following 구분 — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
-- 약계통(Weak Grid) 판정: SCR(Short Circuit Ratio) <3 조건에서 Grid-Forming 모드의 전압·주파수 안정성, Synthetic Inertia 관성 응답, Black Start 시퀀스를 별도 검증 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
-- Grid-Forming 동기화는 PLL 단독이 아닌 VSG(Virtual Synchronous Generator)로 가상 관성 구현, Grid-Following과 하이브리드 모드 전환 설계 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
-- THDi ≤3% 달성: SVPWM(Space Vector PWM) 변조 + LCL 필터 공진주파수를 계통 주파수 범위 밖에 배치해 고조파 저감 — 근거: `sessions/2026-06-22T01-11-47/bess-pcs-expert.md`
-- SiC MOSFET 고주파(20~100kHz) EMI/CM 전류 대응: dV/dt 저감 게이트드라이버 + 기생 L/C 최소화 PCB 레이아웃 + 출력단 고주파 EMI 필터 세트 적용 — 근거: `sessions/2026-06-22T01-11-47/bess-pcs-expert.md`
-- PCS 인버터 EMC 준거 규격: 전력구동시스템 EMC = IEC 61800-3, 방사 방출 = CISPR 22 / EN 55022, 내성 = EN 55024, 지역 = FCC / CISPR — 방출·내성 시험 판정 소유권은 EMC분석가(emc-analyst), PCS는 필터·게이트드라이버 등 저감 설계만 담당 — 근거: `sessions/2026-06-20T19-30-32/bess-pcs-expert.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ VRT를 "Voltage Regulation Transformer(전압조정변압기)"로 오역 → ✅ "Voltage Ride-Through". PCS 맥락에서 VRT는 변압기가 아니라 인버터의 사고전압 통과 제어 — 근거: `sessions/2026-06-08T20-24-13/bess-pcs-expert.md`
-- ❌ 효율 "97%→99% 향상" 등 알고리즘 효과 수치를 근거 없이 단정 → ✅ 벤더 시험성적 근거 태깅 필수 — 근거: `sessions/2026-06-07T22-47-16/bess-pcs-expert.md`
-- ❌ LCL 필터를 "Liquid Core inductor + Low-pass LC Filter"로 오역 → ✅ LCL = Inductor-Capacitor-Inductor 3소자(인버터측 L + 병렬 C + 계통측 L), 액체코어와 무관 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
-- ❌ 존재하지 않는 라이브러리("PyDatalog, PyElectromagneticField")를 PCS 시뮬 도구로 인용, SCR을 "System Capacity Ratio"로 오기 → ✅ 실재 도구(MATLAB/Simulink, PSCAD, GridLAB-D) 명시, SCR = Short Circuit Ratio(단락비)로 정정 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
-- ❌ SEL(Single Event Latchup)을 SiC MOSFET의 EMC 성능 저하 원인으로 오귀속 → ✅ SEL은 방사선(우주선·중성자)에 의한 래치업이며 EMC/EMI(스위칭 노이즈)와 무관, SiC 고주파 EMI 원인은 dV/dt·di/dt와 기생 성분 — 근거: `sessions/2026-06-20T19-30-32/bess-pcs-expert.md`

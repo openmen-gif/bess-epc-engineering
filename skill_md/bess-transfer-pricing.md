@@ -1,6 +1,12 @@
 ---
 name: bess-transfer-pricing
-description: "이전가격(TP), OECD TPG, BEPS Action 8-10·13, APA, CbCR, Master File·Local File, Pillar 2 GloBE(IIR/UTPR/QDMTT), TNMM·CUP·RPM·CPM, BESS 다국적 EPC 그룹사 거래 가격 설계"
+id: "TPS-001"
+description: 이전가격(TP), OECD TPG, BEPS Action 8-10·13, APA, CbCR, Master File·Local File, Pillar 2 GloBE(IIR/UTPR/QDMTT), TNMM·CUP·RPM·CPM, BESS 다국적 EPC 그룹사 거래 가격 설계
+department: "재무본부 (CFO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -114,6 +120,14 @@ bess-transfer-pricing
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 세션 미축적(직접 세션 0건) — 공통 가드레일 준수, 향후 세션 누적 시 갱신. 단 tax-korea·tax-epc-accounting 세션에서 TP가 부수 언급(외국 모법인 거래 이전가격 적정성, OECD BEPS 마스터/로컬파일 3-tier, TPS-001 협업) — 근거: `sessions/2026-06-08T07-19-19/bess-tax-korea.md`, `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
+### 정합성 가드레일 (반복 오류 차단)
+- 해당 없음
+
 ## BESS 다국적 EPC 거래 유형 매트릭스
 
 ### 1. 재화 거래 (Tangible Goods)
@@ -207,11 +221,3 @@ DEMPE = Development, Enhancement, Maintenance, Protection, Exploitation of IP
 | **Master File** | 그룹 전체 (조직·사업·IP·금융·세무) | 본사 | 세무당국 요청 시 |
 | **Local File** | 현지법인 (그룹 내 거래·기능·재무 분석) | 현지법인 | 신고 시점 |
 | **CbCR** | 그룹 전체 (국가별 요약) | 본사 → 자동 교환 | 회계연도 후 12개월 |
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 세션 미축적(직접 세션 0건) — 공통 가드레일 준수, 향후 세션 누적 시 갱신. 단 tax-korea·tax-epc-accounting 세션에서 TP가 부수 언급(외국 모법인 거래 이전가격 적정성, OECD BEPS 마스터/로컬파일 3-tier, TPS-001 협업) — 근거: `sessions/2026-06-08T07-19-19/bess-tax-korea.md`, `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
-### 정합성 가드레일 (반복 오류 차단)
-- 해당 없음

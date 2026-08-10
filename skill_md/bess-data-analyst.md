@@ -1,6 +1,12 @@
 ---
 name: bess-data-analyst
-description: "데이터분석, 운영데이터, KPI, 통계, 시각화, 이상탐지, 트렌드, 대시보드, 예측모델"
+id: "DAT-001"
+description: 데이터분석, 운영데이터, KPI, 통계, 시각화, 이상탐지, 트렌드, 대시보드, 예측모델
+department: "기술본부 (CTO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -166,6 +172,37 @@ bess-data-analyst
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 데이터 소스 표준 트리오 = SCADA + BMS + EMS, 핵심 항목 = SOC/SOH/셀온도·전압·전류/충방전 패턴/출력전력 — 근거: `sessions/2026-06-07T22-47-16/bess-data-analyst.md`
+- 전처리 파이프라인 정형: 결측치(선형보간/ffill) → 이상치(IQR / Isolation Forest / DBSCAN) → 정규화(Min-Max / z-score) — 근거: `sessions/2026-06-07T22-47-16/bess-data-analyst.md`
+- 운영 KPI 세트 = 가용률·RTE·Capacity Factor·응답시간, 정량 보고 의무(예: 가용률 97.5%, RTE 86.2%) — 근거: `sessions/2026-06-07T22-47-16/bess-data-analyst.md`
+- 열화 분석 정형: SOH 시계열(ARIMA), EFC = Σ|ΔEᵢ| / (2·E_rated), RUL 예측(RandomForest/선형회귀/Monte-Carlo) — 근거: `sessions/2026-06-05T14-55-57/bess-data-analyst.md`
+- 운영 KPI 정량 임계 세트: 가용률 ≥97%, RTE = LFP ≥85% / NMC ≥87%, 자가소비율(Self-Consumption) 3~5% 이하, 응답시간 = FFR ≤1초 / FCAS ≤6초 — 근거: `sessions/2026-06-19T14-20-40/bess-data-analyst.md`
+- 열화 모델 유형 4종+시계열: 선형(SOH=100−α·t) / 제곱근 캘린더열화(SOH=100−β·√t) / 다항식(비선형) / 반경험적(SOH=f(EFC,T_avg,DOD,C-rate)) + 장기트렌드 ARIMA·Prophet — 근거: `sessions/2026-06-25T23-35-51/bess-data-analyst.md`
+- 데이터 품질 수용기준(정량): 결측치 비율 ≤5%, 이상값 비율 ≤2% — 근거: `sessions/2026-06-22T10-54-19/bess-data-analyst.md`
+- 데이터 소스 4종 확장 = SCADA + BMS + EMS + PCS 로그(전력변환). 자동 모니터링 경고 임계 세트: SOH < 85% / 셀온도 > 40°C / 응답시간 FFR > 2초, 랙 단위 이상진단(예: 랙3 SOH 80% vs 랙1 95%, 랙5 온도 45°C vs 기준 35°C) — 근거: `sessions/2026-06-26T05-19-24/bess-data-analyst.md`
+- 열관리 효율 지표: 열전달효율(HTE) = Q제거/Q발생×100%(목표 ≥85%), 냉각효율지수(CEI) = (T입구−T출구)/(T입구−T기준)×100%(목표 ≥75%) — 근거: `sessions/2026-07-18T03-08-29/bess-data-analyst.md`
+- 모델 학습 데이터 분할 표준: 학습 70% / 검증 15% / 테스트 15% — 근거: `sessions/2026-07-15T09-25-10/bess-data-analyst.md`
+- 이상탐지 KPI 목표치: 이상 패턴 감지율 ≥90%, 이상 발생 후 대응 시간 ≤5초 — 근거: `sessions/2026-07-23T11-29-53/bess-data-analyst.md`
+- 셀 밸런싱 시간 제한(UL9540A 준수 검토 기준): 밸런싱 프로세스 최대 1시간 이내 완료 목표 — 근거: `sessions/2026-07-18T00-05-44/bess-data-analyst.md`
+- SOH 열화 구체 예시치: 월별 평균 SOH 감소율 약 0.5%, 셀온도 30°C 초과 시 감소율 가속화, 캘린더 열화로 연간 EFC 약 2% 감소(예시 사례) — 근거: `sessions/2026-07-06T16-45-48/bess-data-analyst.md`
+- 시운전 데이터 자동화 표준값: 수집주기 **1분**(필요 시 5/15분), 결측치 비율 **≤5%**, 이상값 비율 **≤2%**, 알림 임계 SOH <85% · 셀온도 >40°C — 근거: `sessions/2026-07-31T12-18-21/bess-data-analyst.md`
+- 분석 스택: 결측치=선형보간/Forward Fill, 이상탐지=IQR·Isolation Forest·DBSCAN, 트렌드=ARIMA·Prophet, 정규화=Min-Max 또는 Z-score — 근거: `sessions/2026-07-31T12-18-21/bess-data-analyst.md`
+- 시장별 통합시험 케이스 분리 필요(KPX 보조서비스 기술기준 vs PJM Manual 14D 등) — 통신 규격이 시장별로 달라 단일 테스트셋으로 대체 불가 — 근거: `sessions/2026-07-31T12-18-21/bess-data-analyst.md`
+- 예측 모델 학습 분할 표준: train **70%** / validation **15%** / test **15%**. 열화 모델은 선형(SOH = 100 − α·t)과 비선형(다항 회귀)을 병기해 비교하고, RUL은 Random Forest·GBM으로 추정 — 근거: `sessions/2026-08-03T20-48-35/bess-data-analyst.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ **EFC**를 "Energy Failure Curve"로 풀어 씀 → ✅ EFC = **Equivalent Full Cycle(등가 전 사이클)** — 열화 누적 지표이며 고장 곡선이 아니다 — 근거: `sessions/2026-08-03T20-48-35/bess-data-analyst.md`
+- ❌ 정규화 기법을 "**Z-스코팅**"으로 표기(한/영 깨진 토큰) → ✅ **Z-score 정규화(표준화)** 로 표기하고, 혼용 토큰은 산출물 발행 전 정정(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-03T20-48-35/bess-data-analyst.md`
+- ❌ 가용률 97% · RTE 85% 등 KPI 임계값을 계약·보증 조건 확인 없이 기본값으로 확정 → ✅ 계약 성능보증·시장 규정 값을 우선 적용하고, 미제공 시 `[가정]` 태그를 달아 출처를 명시 — 근거: `sessions/2026-07-31T12-18-21/bess-data-analyst.md`
+- ❌ 환경/탄소 LCA·ESG 그린본드 영향평가까지 주도(범위 일탈) → ✅ LCA·TCFD는 bess-esg-finance/bess-env-engineer 소유, data-analyst는 "데이터 수집·전처리·KPI" 경계 유지 — 근거: `sessions/2026-06-05T07-49-59/bess-data-analyst.md`
+- ❌ 전력시장 TP/EP "가격 상향 조정" 권고(동어반복·근거 수치 부재) → ✅ 시장 가격 전략은 bess-power-market-expert 소유, 분석가는 시장가 조정 불가 — 근거: `sessions/2026-05-08T02-40-01/bess-data-analyst.md`
+- ❌ placeholder 이미지 URL(`via.placeholder.com`)을 산출물 시각화로 삽입(환각성 산출물) → ✅ 실데이터 차트로 대체 — 근거: `sessions/2026-06-05T14-55-57/bess-data-analyst.md`
+- ❌ SECI를 "State Electricity Company"로 정의(약어 오역) → ✅ SECI = Solar Energy Corporation of India(인도 국영 태양광 공기업), CEA = Central Electricity Authority(인도)와 함께 모두 인도 기관 — 근거: `sessions/2026-06-28T15-48-59/bess-data-analyst.md`
+- ❌ RTE(왕복효율)를 "회귀 효율(Regression Efficiency)"로 오기(용어 드리프트, 후속 세션은 "Round-Trip Efficiency, 왕복 효율"로 정정) → ✅ RTE = Round-Trip Efficiency로 고정 표기 — 근거: `sessions/2026-06-14T21-46-15/bess-data-analyst.md`
 
 ## 핵심 역량 및 업무 범위 (Process — 핵심 역량·수행 단계)
 
@@ -408,22 +445,3 @@ BESS 데이터 분석 보고서 구조
 ---
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 데이터 소스 표준 트리오 = SCADA + BMS + EMS, 핵심 항목 = SOC/SOH/셀온도·전압·전류/충방전 패턴/출력전력 — 근거: `sessions/2026-06-07T22-47-16/bess-data-analyst.md`
-- 전처리 파이프라인 정형: 결측치(선형보간/ffill) → 이상치(IQR / Isolation Forest / DBSCAN) → 정규화(Min-Max / z-score) — 근거: `sessions/2026-06-07T22-47-16/bess-data-analyst.md`
-- 운영 KPI 세트 = 가용률·RTE·Capacity Factor·응답시간, 정량 보고 의무(예: 가용률 97.5%, RTE 86.2%) — 근거: `sessions/2026-06-07T22-47-16/bess-data-analyst.md`
-- 열화 분석 정형: SOH 시계열(ARIMA), EFC = Σ|ΔEᵢ| / (2·E_rated), RUL 예측(RandomForest/선형회귀/Monte-Carlo) — 근거: `sessions/2026-06-05T14-55-57/bess-data-analyst.md`
-- 운영 KPI 정량 임계 세트: 가용률 ≥97%, RTE = LFP ≥85% / NMC ≥87%, 자가소비율(Self-Consumption) 3~5% 이하, 응답시간 = FFR ≤1초 / FCAS ≤6초 — 근거: `sessions/2026-06-19T14-20-40/bess-data-analyst.md`
-- 열화 모델 유형 4종+시계열: 선형(SOH=100−α·t) / 제곱근 캘린더열화(SOH=100−β·√t) / 다항식(비선형) / 반경험적(SOH=f(EFC,T_avg,DOD,C-rate)) + 장기트렌드 ARIMA·Prophet — 근거: `sessions/2026-06-25T23-35-51/bess-data-analyst.md`
-- 데이터 품질 수용기준(정량): 결측치 비율 ≤5%, 이상값 비율 ≤2% — 근거: `sessions/2026-06-22T10-54-19/bess-data-analyst.md`
-- 데이터 소스 4종 확장 = SCADA + BMS + EMS + PCS 로그(전력변환). 자동 모니터링 경고 임계 세트: SOH < 85% / 셀온도 > 40°C / 응답시간 FFR > 2초, 랙 단위 이상진단(예: 랙3 SOH 80% vs 랙1 95%, 랙5 온도 45°C vs 기준 35°C) — 근거: `sessions/2026-06-26T05-19-24/bess-data-analyst.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 환경/탄소 LCA·ESG 그린본드 영향평가까지 주도(범위 일탈) → ✅ LCA·TCFD는 bess-esg-finance/bess-env-engineer 소유, data-analyst는 "데이터 수집·전처리·KPI" 경계 유지 — 근거: `sessions/2026-06-05T07-49-59/bess-data-analyst.md`
-- ❌ 전력시장 TP/EP "가격 상향 조정" 권고(동어반복·근거 수치 부재) → ✅ 시장 가격 전략은 bess-power-market-expert 소유, 분석가는 시장가 조정 불가 — 근거: `sessions/2026-05-08T02-40-01/bess-data-analyst.md`
-- ❌ placeholder 이미지 URL(`via.placeholder.com`)을 산출물 시각화로 삽입(환각성 산출물) → ✅ 실데이터 차트로 대체 — 근거: `sessions/2026-06-05T14-55-57/bess-data-analyst.md`
-- ❌ SECI를 "State Electricity Company"로 정의(약어 오역) → ✅ SECI = Solar Energy Corporation of India(인도 국영 태양광 공기업), CEA = Central Electricity Authority(인도)와 함께 모두 인도 기관 — 근거: `sessions/2026-06-28T15-48-59/bess-data-analyst.md`
-- ❌ RTE(왕복효율)를 "회귀 효율(Regression Efficiency)"로 오기(용어 드리프트, 후속 세션은 "Round-Trip Efficiency, 왕복 효율"로 정정) → ✅ RTE = Round-Trip Efficiency로 고정 표기 — 근거: `sessions/2026-06-14T21-46-15/bess-data-analyst.md`

@@ -1,6 +1,12 @@
 ---
 name: bess-standards-korea
-description: "BESS EPC 한국(KR) 규격·표준·인허가 상세"
+id: "STD-002"
+description: BESS EPC 한국(KR) 규격·표준·인허가 상세
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -130,6 +136,43 @@ bess-standards-korea
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 계통연계기술기준 VRT: LVRT 0.0pu 150ms 유지, HVRT 1.3pu 100ms 유지, 유효전력 복귀 ≤1초, ΔQ ≥ 2%×ΔV — 근거: `sessions/2026-06-08T20-24-13/bess-standards-korea.md`
+- KEC 2021: 배터리 설치 제241.2조, PCS 제241.3조, 안전장치 제241.4조; 배터리실 내화 2시간 방화벽 — 근거: `sessions/2026-06-05T14-55-57/bess-standards-korea.md`
+- KS C IEC 62619 과충전 시험: 1.2×Vmax에서 1시간; 시험기관 KERI/KESCO 인정 시험소 — 근거: `sessions/2026-06-05T14-55-57/bess-standards-korea.md`
+- 연계 리드타임: 22.9kV(사업소 개별 협의), 154kV(KEPCO 송전+KPX, 2~4개월), 환경영향평가 ≥100MW(3~6개월) — 근거: `sessions/2026-06-08T20-24-13/bess-standards-korea.md`
+- 리튬이온 HS 8507.62, 배터리팩 8507.63; KC 안전확인 인증 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-korea.md`
+- KEC 제241.2조 이격거리: 배터리 랙↔가연성 물질 최소 3m, 제241.3조: 전기설비(변압기 등) 최소 1m; ESS 화재안전기준: ESS↔건축물 최소 6m, 용량 600kWh 이상 스프링클러 의무 — 근거: `sessions/2026-06-25T20-04-37/bess-standards-korea.md`
+- 환경/입지 규제: EIA 대상 전기사업 ≥100MW(3~6개월), 소규모환경영향평가 ≥5,000㎡; 산업지역 소음 주간 65dB(A)/야간 60dB(A); 국토계획법 용도지역별(공업 허용·녹지 조건부·농업진흥구역 원칙 불허) — 근거: `sessions/2026-06-19T12-15-26/bess-standards-korea.md`
+- 케이블 설계: KEC 제241조 케이블 설치기준 + IEC 60287 Ampacity(도체 온도상승 70°C 이하 유지 권장, 안전마진 0.8 적용) — 근거: `sessions/2026-06-22T07-11-56/bess-standards-korea.md`
+- KEC 2021 변압기 세부조항: 제241.6조(변압기 절연등급·설계요건), 제241.7조(변압기 열관리·냉각시스템 요구사항) — 근거: `sessions/2026-07-05T18-16-11/bess-standards-korea.md`
+- 케이블 트레이 재료 규격(KS C IEC 60502 기반): 강철 트레이 KS D 3201, 알루미늄 트레이 KS D 3202, 플라스틱 트레이 KS D 3203 — 근거: `sessions/2026-07-09T16-45-26/bess-standards-korea.md`
+- 케이블 Ampacity·포설 관련 국내 표준: KS C IEC 60364-5-52(전류용량 계산), KS C IEC 60446(케이블트레이·포설 설계) — 근거: `sessions/2026-07-15T21-08-29/bess-standards-korea.md`
+- 접지설계용 토양저항률 관련 표준: KS F 2401(측정방법), KS F 2402(측정장비 정확도·정밀도 평가), KS D 1002(토양 물리적특성 시험방법), KS F 2403(토양 수분함량 측정방법) — 근거: `sessions/2026-07-16T13-37-19/bess-standards-korea.md`
+- 케이블 사이징 단면적 기준(KEC·KEPCO 고시): 154kV 연계 시 2400mm² 이상, 22kV 연계 시 600mm² 이상 — 근거: `sessions/2026-07-16T18-14-48/bess-standards-korea.md`
+- KC 인증·인허가 비용 범위(예시 산정): 배터리팩 KC 인증 ₩500만~1,000만원, PCS KC 인증 ₩1,000만~1,500만원, 테스트비용 ₩200만~500만원, 환경영향평가 ₩1,000만~2,000만원, 건축·개발행위 허가 ₩300만~500만원 — 근거: `sessions/2026-07-13T18-53-11/bess-standards-korea.md`
+- KS C IEC 62933 세부 파트: 62933-2(배터리 과충전 성능시험 방법), 62933-3(배터리 과방전 성능시험 방법) — 근거: `sessions/2026-07-21T21-25-14/bess-standards-korea.md`
+- 수소경제 육성 및 안전관리에 관한 법률: 수소 생산·저장·운송·사용 전주기 안전관리 체계 규정, 2023년 개정으로 수소충전소 안전성 강화(수소-BESS 하이브리드 인허가 시 참조) — 근거: `sessions/2026-07-18T10-11-38/bess-standards-korea.md`
+- 154 kV 송전 연계 인허가는 KEPCO 협의 경로가 주 경로이며, 연계 리드타임을 인허가 로드맵에 별도 마일스톤으로 반영 — 근거: `sessions/2026-08-02T03-24-37/bess-standards-korea.md`
+- 자동화 시스템 구축 시 KEC·KEPCO 고시 개정을 상시 추적하는 **규제 준수 모듈**을 포함해야 구축 후 드리프트를 막을 수 있다 — 근거: `sessions/2026-07-31T12-18-21/bess-standards-korea_critic.md`
+- KR EMC 인증 경로: **KC 인증**(전기용품 및 생활용품 안전관리법) 기준 시험·문서화를 주 경로로 두고 **IEC 61000 시리즈**를 병행 적용, PCS·배터리 시스템 모두 대상 — 근거: `sessions/2026-08-05T15-16-20/bess-standards-korea.md`
+- 관세·원산지 검토 시 도메인 경계: KR 규격 근거는 **KEC 2021 + 계통연계기술기준(KEPCO 고시) + ESS 화재안전기준(소방청·국토부 고시)** 까지이고, FTA 혜택률·RVC·원산지 판정은 customs-tariff 소관값을 인용 — 근거: `sessions/2026-08-04T13-03-35/bess-standards-korea.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ IEC 61000 파트 역할 오매핑("4-3 = 방사 제한", "5-2 = 애플리케이션별 방사 제한", "6-3 = 전력 품질 표준") → ✅ **4-3 = 방사 RF 내성 시험**, **5-2 = 설치·완화(접지·배선) 지침**, **6-3 = 주거·상업 환경 방출 일반규격**. 산업 환경 ESS/PCS 방출 한계는 **CISPR 11(EN 55011)** 소관 — 근거: `sessions/2026-08-05T15-16-20/bess-standards-korea.md`
+- ❌ "KEC 및 관련 고시가 22.9 kV·154 kV 전압 레벨별 EMI 제한을 명시"로 기술 → ✅ KEC는 **전기설비 시설기준**이며 EMI 방출 한계를 규정하지 않는다. EMI 한계는 KC 인증 기준·CISPR/IEC 61000 계열 소관 — 근거: `sessions/2026-08-05T15-16-20/bess-standards-korea.md`
+- ❌ 근거 경로를 `sessions/2026-07-31T12:09:00+09:00/...`처럼 콜론·오프셋 포함 형식으로 기재(실재하지 않는 디렉터리) → ✅ 세션 경로는 실제 디렉터리 형식 `sessions/YYYY-MM-DDTHH-MM-SS/<domain>.md`만 사용하고, 인용 전 파일 존재를 확인 — 근거: `sessions/2026-08-02T03-24-37/bess-standards-korea.md`
+- ❌ "KEC·KESCO 준수가 흑자 전환에 기여" 류의 인과를 수치 근거 없이 단정 → ✅ 규격 준수와 재무 성과의 인과는 정량 근거(인증 취득 비용·재작업 감소율 등) 없으면 상관 서술로 낮추고 `[요확인]` — 근거: `sessions/2026-08-02T03-24-37/bess-standards-korea.md`
+- ❌ "VRT (Voltage Regulation Transformer)" → ✅ VRT = Voltage Ride Through (전압 보상 변압기 아님) — 근거: `sessions/2026-06-08T20-24-13/bess-standards-korea.md`
+- ❌ "FRT (Frequency Response Test)" → ✅ FRT = Fault Ride Through (주파수 응답 시험 아님) — 근거: `sessions/2026-06-08T20-24-13/bess-standards-korea.md`
+- ❌ "한국 표준 IEEE 1547" → ✅ IEEE 1547은 미국 DER 연계 표준, 국내 기준은 KEPCO 계통연계기술기준/KEC(IEEE 1547은 참고용) — 근거: `sessions/2026-05-12T05-09-20/bess-standards-korea.md`
+- ❌ "IEEE 1547-2003(현행)" → ✅ 현행은 IEEE 1547-2018 — 근거: `sessions/2026-05-12T05-09-20/bess-standards-korea.md`
+- ❌ FIDIC 계약조건/HS코드 일반론으로 주제 이탈 → ✅ 도메인은 국내 표준·인허가에 한정 — 근거: `sessions/2026-06-08T01-43-37/bess-standards-korea.md`
+- ❌ PCS(전력변환장치) HS "8514.90" → ✅ 8514는 산업용 전기로(furnace), PCS/인버터는 8504.40 계열 — 근거: `sessions/2026-06-25T20-04-37/bess-standards-korea.md`
+- ❌ KEC ESS 조항을 "제241조·제351조·제362조"로 뭉뚱그림 → ✅ ESS 전용은 제241.x 세부조항(241.2 이격·241.3 전기설비), 351/362는 특고압수전·저압배선 일반조항 — 근거: `sessions/2026-06-20T19-30-32/bess-standards-korea.md`
 
 ## 🇰🇷 한국 (Korea)
 
@@ -361,24 +404,3 @@ ESS 화재안전기준 (국토부·소방청 고시):
 8. 상업 운전 개시 (COD)
    └── KPX 시장 참여 등록 → 전력거래 개시
 ```
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 계통연계기술기준 VRT: LVRT 0.0pu 150ms 유지, HVRT 1.3pu 100ms 유지, 유효전력 복귀 ≤1초, ΔQ ≥ 2%×ΔV — 근거: `sessions/2026-06-08T20-24-13/bess-standards-korea.md`
-- KEC 2021: 배터리 설치 제241.2조, PCS 제241.3조, 안전장치 제241.4조; 배터리실 내화 2시간 방화벽 — 근거: `sessions/2026-06-05T14-55-57/bess-standards-korea.md`
-- KS C IEC 62619 과충전 시험: 1.2×Vmax에서 1시간; 시험기관 KERI/KESCO 인정 시험소 — 근거: `sessions/2026-06-05T14-55-57/bess-standards-korea.md`
-- 연계 리드타임: 22.9kV(사업소 개별 협의), 154kV(KEPCO 송전+KPX, 2~4개월), 환경영향평가 ≥100MW(3~6개월) — 근거: `sessions/2026-06-08T20-24-13/bess-standards-korea.md`
-- 리튬이온 HS 8507.62, 배터리팩 8507.63; KC 안전확인 인증 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-korea.md`
-- KEC 제241.2조 이격거리: 배터리 랙↔가연성 물질 최소 3m, 제241.3조: 전기설비(변압기 등) 최소 1m; ESS 화재안전기준: ESS↔건축물 최소 6m, 용량 600kWh 이상 스프링클러 의무 — 근거: `sessions/2026-06-25T20-04-37/bess-standards-korea.md`
-- 환경/입지 규제: EIA 대상 전기사업 ≥100MW(3~6개월), 소규모환경영향평가 ≥5,000㎡; 산업지역 소음 주간 65dB(A)/야간 60dB(A); 국토계획법 용도지역별(공업 허용·녹지 조건부·농업진흥구역 원칙 불허) — 근거: `sessions/2026-06-19T12-15-26/bess-standards-korea.md`
-- 케이블 설계: KEC 제241조 케이블 설치기준 + IEC 60287 Ampacity(도체 온도상승 70°C 이하 유지 권장, 안전마진 0.8 적용) — 근거: `sessions/2026-06-22T07-11-56/bess-standards-korea.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ "VRT (Voltage Regulation Transformer)" → ✅ VRT = Voltage Ride Through (전압 보상 변압기 아님) — 근거: `sessions/2026-06-08T20-24-13/bess-standards-korea.md`
-- ❌ "FRT (Frequency Response Test)" → ✅ FRT = Fault Ride Through (주파수 응답 시험 아님) — 근거: `sessions/2026-06-08T20-24-13/bess-standards-korea.md`
-- ❌ "한국 표준 IEEE 1547" → ✅ IEEE 1547은 미국 DER 연계 표준, 국내 기준은 KEPCO 계통연계기술기준/KEC(IEEE 1547은 참고용) — 근거: `sessions/2026-05-12T05-09-20/bess-standards-korea.md`
-- ❌ "IEEE 1547-2003(현행)" → ✅ 현행은 IEEE 1547-2018 — 근거: `sessions/2026-05-12T05-09-20/bess-standards-korea.md`
-- ❌ FIDIC 계약조건/HS코드 일반론으로 주제 이탈 → ✅ 도메인은 국내 표준·인허가에 한정 — 근거: `sessions/2026-06-08T01-43-37/bess-standards-korea.md`
-- ❌ PCS(전력변환장치) HS "8514.90" → ✅ 8514는 산업용 전기로(furnace), PCS/인버터는 8504.40 계열 — 근거: `sessions/2026-06-25T20-04-37/bess-standards-korea.md`
-- ❌ KEC ESS 조항을 "제241조·제351조·제362조"로 뭉뚱그림 → ✅ ESS 전용은 제241.x 세부조항(241.2 이격·241.3 전기설비), 351/362는 특고압수전·저압배선 일반조항 — 근거: `sessions/2026-06-20T19-30-32/bess-standards-korea.md`

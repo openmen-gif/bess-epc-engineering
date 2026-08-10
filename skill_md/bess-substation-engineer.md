@@ -1,6 +1,12 @@
 ---
 name: bess-substation-engineer
-description: "변전소 레이아웃·SLD, GIS/AIS, 주변압기, 보호계전기, POI, IEC62271, IEC61850, 모선, 접지망"
+id: "SUB-001"
+description: 변전소 레이아웃·SLD, GIS/AIS, 주변압기, 보호계전기, POI, IEC62271, IEC61850, 모선, 접지망
+department: "기술본부 (CTO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -110,6 +116,28 @@ POI, 계통연계점, SCADA, 보호협조, TCC, 87T, 87B, RTU
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 변전소 표준 매핑: IEC 60076(변압기), IEC 62271(개폐장치), IEC 60071(절연협조), IEC 61850(자동화), IEC 62351(보안) — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- GIS(도심/공간효율) vs AIS 선정, 모선 배치 최적화로 케이블 길이↓ 전압강하↓ — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- 보호 검증 시 KEPCO/KPX 기술기준 + IEC 규격 동시 준수 확인 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- IEC 61850 자동화 서비스: GOOSE(고속 이벤트)·MMS(클라이언트-서버)·SV(Sampled Values); 통신 보안은 IEC 62351로 보강 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md`
+- GIS 전용 규격은 IEC 62271-203; SF6 차단기는 누출 감시·교체주기 준수가 신뢰성 핵심 요인 — 근거: `sessions/2026-06-24T02-17-24/bess-substation-engineer.md`
+- 변압기 여유용량 관례: KEPCO 22.9kV 배전 연계 변전소는 최소 10% 이상 여유용량 권장, 변압기 주변 최소 접근공간 1.5m 이상 확보 — 근거: `sessions/2026-07-05T06-47-53/bess-substation-engineer.md`
+- 정기점검 주기 관례: 변압기 절연성능검사 연 1회(또는 수명주기별), 접지저항 측정 최소 분기별 측정·기록 — 근거: `sessions/2026-07-09T18-40-01/bess-substation-engineer.md`
+- KPX 154kV 연계 변전소 케이블 관례치: 단면적 240~300mm²(부하분석 확정 전 참고치), 허용 전압강하 목표 통상 1% 이내, 케이블 온도상승 제한 70°C 이하 — 근거: `sessions/2026-07-17T01-44-18/bess-substation-engineer.md`
+- 변전소 Arc Flash 위험평가는 IEEE 1584(계산)와 NFPA 70E(PPE·안전거리 등급)를 함께 적용 — 근거: `sessions/2026-07-26T04-44-42/bess-substation-engineer.md`
+- 변전소 보조전원 통합: UPS + 디젤 발전기 + (선택)재생에너지 하이브리드 구성, SCADA 연동 자동 전환으로 신뢰성 확보. 변압기·보조전원 물리 배치를 최적화해 케이블 손실과 제어 신호 지연을 동시 저감 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 변압기 유형을 "ONAN(On-Load Tap Changer) 및 ONAN(Off-Load Tap Changer)"로 기재(냉각방식과 탭절환 혼동, 동일 약어 중복) → ✅ **ONAN/ONAF/OFAF는 냉각방식**(Oil Natural/Forced, Air Natural/Forced), **OLTC/DETC는 탭절환 방식**으로 축을 분리 표기 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
+- ❌ UPS·보조전원 근거로 **IEC 62340**(원전 I&C 공통원인고장) 인용 → ✅ UPS는 **IEC 62040** 계열, 변전소 전기설비는 IEC 61936-1을 인용 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
+- ❌ 변압기 효율 등급에 모터용 **IE3** 적용 → ✅ IEC 60076-20 / EU EcoDesign Tier 기준 사용(상세: transformer-expert 소관) — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
+- ❌ TCC를 "Transient Current Capability"로 풀이 → ✅ "Time-Current Curve(시간-전류 곡선)", 보호협조 곡선 의미 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- ❌ 전압강하 계산을 "IEC 60076 규격에 맞는 케이블"로 귀속 → ✅ IEC 60076은 변압기 규격, 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- ❌ 등전위 본딩·접지망 설계를 "IEC 60076"에 귀속 → ✅ IEC 60076은 변압기 규격; 변전소 접지는 IEEE 80/IEC 61936-1, 절연협조는 IEC 60071 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md`
 
 ## 시장별 변전소 설계 기준
 
@@ -367,17 +395,3 @@ BESS 연계 변전소 보호 체계 (단선도 상향):
   87T(TR 차동): 순시 (선택성 예외)
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 변전소 표준 매핑: IEC 60076(변압기), IEC 62271(개폐장치), IEC 60071(절연협조), IEC 61850(자동화), IEC 62351(보안) — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- GIS(도심/공간효율) vs AIS 선정, 모선 배치 최적화로 케이블 길이↓ 전압강하↓ — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- 보호 검증 시 KEPCO/KPX 기술기준 + IEC 규격 동시 준수 확인 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- IEC 61850 자동화 서비스: GOOSE(고속 이벤트)·MMS(클라이언트-서버)·SV(Sampled Values); 통신 보안은 IEC 62351로 보강 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md`
-- GIS 전용 규격은 IEC 62271-203; SF6 차단기는 누출 감시·교체주기 준수가 신뢰성 핵심 요인 — 근거: `sessions/2026-06-24T02-17-24/bess-substation-engineer.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ TCC를 "Transient Current Capability"로 풀이 → ✅ "Time-Current Curve(시간-전류 곡선)", 보호협조 곡선 의미 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- ❌ 전압강하 계산을 "IEC 60076 규격에 맞는 케이블"로 귀속 → ✅ IEC 60076은 변압기 규격, 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- ❌ 등전위 본딩·접지망 설계를 "IEC 60076"에 귀속 → ✅ IEC 60076은 변압기 규격; 변전소 접지는 IEEE 80/IEC 61936-1, 절연협조는 IEC 60071 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md`

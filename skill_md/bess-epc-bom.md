@@ -1,6 +1,12 @@
 ---
 name: bess-epc-bom
-description: "견적서, BOM, BOQ, 물량산출, DOR, IRA, 관세, UKCA, CE인증 문서 작성"
+id: "SCM-001"
+description: 견적서, BOM, BOQ, 물량산출, DOR, IRA, 관세, UKCA, CE인증 문서 작성
+department: "재무본부 (CFO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -136,6 +142,28 @@ bess-epc-bom
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 단가 DB(2024): LFP 셀 120~160 $/kWh, NMC 140~180, BMS 5~10 $/kWh, 컨테이너통합 All-in 180~250 $/kWh — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
+- PCS 단가 250kW 40~60 / 500kW 35~55 / 1MW 30~50 $/kW, US UL1741 SA·SB +5~10% — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
+- 변압기 2~5MVA 건식 80~120 $/kVA, 5~10MVA 유입 60~90 $/kVA; 프리미엄 JP66kV +20~30%, UK/AU132kV +15~25%, US115/230kV +20~35%(Buy America) — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
+- 공사비 비율(CAPEX): Engineering 5~8%, Installation 10~15%, T&C 3~5%, Logistics 3~8%, Contingency 5~10%; 필수 [요확인] = 시스템용량(MW/MWh)·연계전압(kV)·대상시장·통화, 미입력 시 BOM 수치화 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
+- 견적·BOM 리스크 5종 및 등급: 시장·정책 변동(중), 기술·인증 표준 미준수(높음), 공급망 불안정(높음), 환율 변동(중), 입찰 경쟁 환경(중) — 등급별 대응책을 견적 버퍼에 반영 — 근거: `sessions/2026-07-31T02-32-50/bess-epc-bom.md`
+- 시장별 인증 매핑(BOM 인증비 계상용): **KC**(KR) · **PSE**(JP) · **CEC 등재 + RCM**(AU) · **UKCA**(UK) · **CE-LVD/EMC**(EU) · UL 9540A·NFPA 855(US) — 시장 코드 확정 후 해당 인증만 계상 — 근거: `sessions/2026-08-04T18-36-55/bess-epc-bom.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ "한국의 세제 및 조달 규정(예: **Buy America, Davis-Bacon**)"으로 기재 → ✅ Buy America(n)·Davis-Bacon은 **미국 연방 조달·임금 법령**이다. KR 조달·세제는 조특법·국가계약법 계열로 귀속(가드레일 §1.1 시장 오귀속) — 근거: `sessions/2026-08-04T18-36-55/bess-epc-bom.md`
+- ❌ "호주와 같은 지역에서는 현지 인증(예: **CE, UKCA**)" → ✅ CE=EU, UKCA=UK 전용이며 **AU는 RCM 표시 + CEC 등재 + AS/NZS 5139·AS 4777** 이다. 시장↔인증 매핑을 복사 전파하지 않는다 — 근거: `sessions/2026-08-04T18-36-55/bess-epc-bom.md`
+- ❌ 국내 정책 이력을 "노무현 정부 시기부터 지원 시작"으로 기재(marketer·commissioning-coordinator 세션에서 동일 문구 전파) → ✅ 근거 없는 정권 귀속 서술은 사용하지 않고 **고시·법령 제정일과 소관 부처**로 특정. 타 도메인 산출물의 미검증 서술을 그대로 복사하지 않는다 — 근거: `sessions/2026-08-04T18-36-55/bess-epc-bom.md`
+- ❌ 환율 기준을 명시하지 않고 다통화(USD·EUR·GBP) 견적을 합산 → ✅ 적용 환율과 **적용일**을 표 머리에 고정 기재하고, 견적 유효기간을 함께 명시 — 근거: `sessions/2026-07-31T02-32-50/bess-epc-bom.md`
+- ❌ 공급 범위(기자재만 / 시공 포함 / 풀 턴키)를 확정하지 않은 채 총액 제시 → ✅ 공급 범위를 `[요확인]`으로 선확정한 뒤 BOM 경계를 그린다 — 근거: `sessions/2026-07-31T02-32-50/bess-epc-bom.md`
+- ❌ "KR 안전규제 = UL 9540A, NFPA 85 준수" → ✅ NFPA 85는 보일러/연소시스템 표준; BESS는 NFPA 855(번호 오기 85↔855) — 근거: `sessions/2026-06-02T23-41-46/bess-epc-bom.md`
+- ❌ UK 변압기만 £(파운드)·$ 혼합표기, 나머지 $ 통일 → ✅ 통화 일관성 규칙(다국통화 SCV 변환) 강제 적용 — 근거: `sessions/2026-06-02T23-41-46/bess-epc-bom.md`
+- ❌ "양호/적정가" 비정량 판정 → ✅ 정량 합격기준 적용 (SUM 오류 0개, 단가 미확인 0행, 0.25C≤P/E≤1.0C, 전압강하 ≤3%) — 본 최적화 반영
+- ❌ 변압기 용량을 kW로 직접 산정 → ✅ 변압기는 MVA(피상전력) 기준, 역률 명시 후 환산 — 본 최적화 반영
+- ❌ 배터리 HS코드를 8507.60 대분류로만 확인하고 관세율 적용 → ✅ 셀/모듈 세부 세번(예: 8507.60.10 vs 8507.60.20)까지 구분 확인 후 계상(오분류 시 관세율 오적용 리스크) — 근거: `sessions/2026-07-22T21-47-38/bess-epc-bom_critic.md`
 
 ## 핵심 역량 및 업무 범위 (수행 프로세스)
 
@@ -551,17 +579,3 @@ Sheet 5: Print Ready (A4 인쇄용)
 규격: IRiESP/IRiESD (PSE/OSD), RfG(2016/631), EN 50549-1/-2
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 단가 DB(2024): LFP 셀 120~160 $/kWh, NMC 140~180, BMS 5~10 $/kWh, 컨테이너통합 All-in 180~250 $/kWh — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
-- PCS 단가 250kW 40~60 / 500kW 35~55 / 1MW 30~50 $/kW, US UL1741 SA·SB +5~10% — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
-- 변압기 2~5MVA 건식 80~120 $/kVA, 5~10MVA 유입 60~90 $/kVA; 프리미엄 JP66kV +20~30%, UK/AU132kV +15~25%, US115/230kV +20~35%(Buy America) — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
-- 공사비 비율(CAPEX): Engineering 5~8%, Installation 10~15%, T&C 3~5%, Logistics 3~8%, Contingency 5~10%; 필수 [요확인] = 시스템용량(MW/MWh)·연계전압(kV)·대상시장·통화, 미입력 시 BOM 수치화 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-epc-bom.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ "KR 안전규제 = UL 9540A, NFPA 85 준수" → ✅ NFPA 85는 보일러/연소시스템 표준; BESS는 NFPA 855(번호 오기 85↔855) — 근거: `sessions/2026-06-02T23-41-46/bess-epc-bom.md`
-- ❌ UK 변압기만 £(파운드)·$ 혼합표기, 나머지 $ 통일 → ✅ 통화 일관성 규칙(다국통화 SCV 변환) 강제 적용 — 근거: `sessions/2026-06-02T23-41-46/bess-epc-bom.md`
-- ❌ "양호/적정가" 비정량 판정 → ✅ 정량 합격기준 적용 (SUM 오류 0개, 단가 미확인 0행, 0.25C≤P/E≤1.0C, 전압강하 ≤3%) — 본 최적화 반영
-- ❌ 변압기 용량을 kW로 직접 산정 → ✅ 변압기는 MVA(피상전력) 기준, 역률 명시 후 환산 — 본 최적화 반영

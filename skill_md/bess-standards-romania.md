@@ -1,6 +1,12 @@
 ---
 name: bess-standards-romania
-description: "BESS EPC 루마니아(RO) 규격·표준·인허가 상세"
+id: "STD-009"
+description: BESS EPC 루마니아(RO) 규격·표준·인허가 상세
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -110,6 +116,15 @@ bess-standards-romania
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 기관: ANRE(규제, Order 59/2013 연계허가, Order 11/2023 ESS), Transelectrica(TSO), 지역 DSO — 근거: `sessions/2026-05-25T04-45-20/bess-standards-romania.md`
+- 표준: EN 50549-2:2019, IEC 62933-5-2, IEC 61850, EN 50160 (PL과 동일 EU 표준 계열) — 근거: `sessions/2026-05-25T04-45-20/bess-standards-romania.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 세션 1건, Order 11/2023 최신 개정 [요확인] 미해소·보호계전기 정정값 미기재 → ✅ 추가 세션 누적·검증 후 확정 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-romania.md`
+
 ## 🇷🇴 루마니아 (Romania)
 
 ### 관할 기관
@@ -165,12 +180,3 @@ EU 규정 (상위 — 직접 적용)
 - [ ] **시장 참여** — OPCOM/밸런싱 시장 참여 자격, ANRE Order 11/2023(ESS) 적용 여부 [요확인 — 미검증].
 - [ ] **인허가** — ANRE 면허, ISU 소방, 건설허가, PNRR/NextGenerationEU 자금 연계. 실무 신청은 `bess-permit-europe` 담당.
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 기관: ANRE(규제, Order 59/2013 연계허가, Order 11/2023 ESS), Transelectrica(TSO), 지역 DSO — 근거: `sessions/2026-05-25T04-45-20/bess-standards-romania.md`
-- 표준: EN 50549-2:2019, IEC 62933-5-2, IEC 61850, EN 50160 (PL과 동일 EU 표준 계열) — 근거: `sessions/2026-05-25T04-45-20/bess-standards-romania.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 세션 1건, Order 11/2023 최신 개정 [요확인] 미해소·보호계전기 정정값 미기재 → ✅ 추가 세션 누적·검증 후 확정 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-romania.md`

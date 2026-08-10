@@ -1,6 +1,12 @@
 ---
 name: bess-precom-report
-description: "사전시운전, 절차서, FAT, SAT, 체크리스트, 절연시험, 접지시험, 계전기시험, 충방전시험"
+id: "COM-001"
+description: 사전시운전, 절차서, FAT, SAT, 체크리스트, 절연시험, 접지시험, 계전기시험, 충방전시험
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -135,6 +141,16 @@ bess-precom-report
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 세션 미축적 — 공통 가드레일 준수, 향후 세션 누적 시 갱신
+- 사전시운전 단계 구분(스케줄 기준): Pre-Com(절연·접지 시험) **2주** → 통합 시운전 **1주** → 성능시험(PAT) **1주** → 안정화 운전 **72~168시간** — 근거: `sessions/2026-07-31T12-18-21/bess-scheduler.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 사전시운전 절차서에 시험 합격 기준을 정성 서술("정상 작동 확인")로 기재 → ✅ 절연저항·접지저항·계전기 동작시간 등 **수치 + 단위 + 판정식**으로 합격 기준을 명시(전 스킬 공통 원칙) — 근거: `sessions/2026-07-31T12-18-21/bess-scheduler.md`
+- 해당 없음
 
 ## 시험 항목 생성 규칙
 
@@ -458,11 +474,3 @@ bess-precom-report
 - IEC 61850 GOOSE/MMS 전체 포인트 확인
 - 🇦🇺 AU: TNSP/DNSP 연계 기술 표준 적합성 확인
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 세션 미축적 — 공통 가드레일 준수, 향후 세션 누적 시 갱신
-### 정합성 가드레일 (반복 오류 차단)
-- 해당 없음

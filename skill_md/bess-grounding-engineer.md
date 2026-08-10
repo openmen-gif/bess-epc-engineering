@@ -1,6 +1,12 @@
 ---
 name: bess-grounding-engineer
-description: "접지망 설계, 피뢰, IEEE80, IEC62305, Step/Touch Voltage, GPR, SPD, LPS"
+id: "GRD-001"
+description: 접지망 설계, 피뢰, IEEE80, IEC62305, Step/Touch Voltage, GPR, SPD, LPS
+department: "기술본부 (CTO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -128,6 +134,33 @@ Step Voltage, Touch Voltage, GPR, 접지망, 접지봉, 피뢰침, SPD,
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- KR 접지: KEC 140 적용; KEPCO 변전소는 IEEE 80 + KEPCO 보완 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
+- 국제표준: IEEE 80(변전소 접지), IEC 62305(낙뢰보호 LPS), NEC Article 250 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
+- 토양 고유저항 기준값: 모래 ≥100Ω·m, 점토 10~100Ω·m, 암반 ≥1000Ω·m; 설계 목표 ≤30Ω(일반 기기접지)/≤10Ω(전극 증설) — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
+- Step/Touch Voltage 검증, 접지선 구리 ≥25mm², 다각형 전극 배치 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
+- 이격거리: 피뢰침 높이 ≥건물1.5배, 피뢰침-구조물 ≥3m, 변전소설비-지상 ≥1m, 구조물-피뢰침 ≥2m — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
+- EMI/EMC 필터 통합: 변압기-케이블 간 EMI 최소화 위해 공통모드(CM)·차동모드(DM) 필터를 접지 시스템과 통합 설계, KR은 KEPCO EMC 가이드라인 준수 — 근거: `sessions/2026-06-26T03-30-31/bess-grounding-engineer.md`
+- 접지 설계 기본값: 목표 접지저항 기기접지 ≤10 Ω / 변전소 ≤1 Ω, 접지봉 Cu-clad Steel Φ16 mm × 2,400 mm, 접지선 구리 ≥25 mm²(IEEE 80-2013 §11.3), 표면층 쇄석 ρs = 3,000 Ω·m · 두께 hs = 0.10 m로 감소계수 Cs 산정 — 근거: `sessions/2026-08-01T17-34-33/bess-grounding-engineer.md`
+- 대지 고유저항 ρ는 Wenner 4전극 실측이 원칙이며, 미측정 시 `[가정] ρ=100 Ω·m` + `[현장측정필요]` 태그를 함께 부착 — 근거: `sessions/2026-08-01T17-34-33/bess-grounding-engineer.md`
+- 계절 변동(동절기 동결)에 따른 토양 저항률 상승을 설계 여유에 반영 — 근거: `sessions/2026-08-01T17-34-33/bess-cbop-engineer.md`
+- SPD 선정 기준: 보호레벨 **Up < 0.8 × Uw**(피보호기기 임펄스 내전압) 조건을 만족하도록 선정하고, 낙뢰 보호등급은 LPL(Lightning Protection Level) I~IV로 명시 — 근거: `sessions/2026-08-04T04-33-36/bess-grounding-engineer.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 피뢰(LPS) 설계 근거로 "**IEEE 80-2013**"을 인용하고 IEC 62305-2와 병렬 배치 → ✅ **IEEE 80은 변전소 접지망**(Step/Touch, GPR) 규격이고, 피뢰 설계는 **IEC 62305-3**(물리적 손상·LPS), 위험평가는 62305-2다. 접지↔피뢰 규격을 상호 대체 금지 — 근거: `sessions/2026-08-04T04-33-36/bess-grounding-engineer.md`
+- ❌ SPD 유형을 "Type 1(Class D) / Type 2(Class C)"로 매핑 → ✅ IEC 61643-11 기준 **Type 1 = Class I(B급) / Type 2 = Class II(C급) / Type 3 = Class III(D급)** — Type↔Class 대응을 뒤바꿔 표기 금지 — 근거: `sessions/2026-08-04T04-33-36/bess-grounding-engineer.md`
+- ❌ 차단기 동작시간 요건의 근거로 "IEEE 80-2013 §11.3"을 인용 → ✅ §11.3은 **접지도체 열적 단면적 산정**(고장지속시간 tf는 그 입력값)이며 차단기 동작속도 요건이 아니다. 차단시간 요건은 IEC 62271-100·보호협조 결과를 인용 — 근거: `sessions/2026-08-04T04-33-36/bess-grounding-engineer.md`
+- ❌ "피뢰침-구조물 최소 2 m 이상, 피뢰침 높이 ≥건물 1.5배"를 고정 요건으로 **재기재**(2026-08-04 재발) → ✅ 분리거리 s는 `s = ki·kc·l/km`(IEC 62305-3) 산출값만 제시하고, "높이 1.5배"류 경험칙은 근거 규격 없이 사용하지 않는다 — 근거: `sessions/2026-08-04T04-33-36/bess-grounding-engineer.md`
+- ❌ 동일 목록에 "구조물과 피뢰침 사이 최소 3 m"와 "최소 2 m"를 동시 기재(내부 상충) → ✅ 피뢰 분리거리는 고정값이 아니라 IEC 62305-3 식 `s = ki·kc·l/km`로 산출하고, 단일 산출값만 제시 — 근거: `sessions/2026-08-01T17-34-33/bess-grounding-engineer.md`
+- ❌ 토양 저항률 측정을 Wenner 4전극 단일 기법에만 의존 → ✅ 지층이 복잡한 부지는 Schlumberger 등 보조 기법을 병행하고 측정 위치·심도를 기록 — 근거: `sessions/2026-07-26T23-00-40/bess-procurement-expert_critic.md`
+- ❌ KEC 140 "특별3종 ≤10Ω"(구 종별접지 용어) 사용 → ✅ KEC는 종별접지 폐지, 계통접지(TN/TT/IT)·보호접지 체계로 갱신 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
+- ❌ 접지저항 목표를 ≤10Ω/≤30Ω 혼재 표기 → ✅ 대상(기기접지 vs 변전소 GPR) 구분 명시 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
+- ❌ "양호/적정/정상" 비정량 판정 → ✅ `Em ≤ Etouch AND Es ≤ Estep` 수치 비교로 PASS/FAIL 명시 — 근거: 본 최적화(2026-06-10), IEEE 80-2013 §8.3/§16.5
+- ❌ IEEE 80 식 번호 임의 인용(Eq.8.9 등) → ✅ 실제 조항(§8.3 허용전위, §16.5 Em/Es, §7.4 Cs, §11.3 도체 열적식) 기준으로 표기 — 근거: 본 최적화(2026-06-10)
+- ❌ 도체 사이징을 단락전류로 본 직원이 직접 산정 → ✅ 계통해석/변전소가 제공한 If·tf·X/R 수신 후 열적식 적용 (역할 경계 준수) — 근거: 본 최적화(2026-06-10)
 
 ## 시장별 접지·피뢰 기준
 
@@ -294,20 +327,3 @@ T4   접지 연속성·본딩       본딩 접촉저항 측정; 판정 등전위
 T5   SPD 시험              누설전류·동작전압(MCOV/Uc)·방전용량 성적 대조
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- KR 접지: KEC 140 적용; KEPCO 변전소는 IEEE 80 + KEPCO 보완 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
-- 국제표준: IEEE 80(변전소 접지), IEC 62305(낙뢰보호 LPS), NEC Article 250 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
-- 토양 고유저항 기준값: 모래 ≥100Ω·m, 점토 10~100Ω·m, 암반 ≥1000Ω·m; 설계 목표 ≤30Ω(일반 기기접지)/≤10Ω(전극 증설) — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
-- Step/Touch Voltage 검증, 접지선 구리 ≥25mm², 다각형 전극 배치 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
-- 이격거리: 피뢰침 높이 ≥건물1.5배, 피뢰침-구조물 ≥3m, 변전소설비-지상 ≥1m, 구조물-피뢰침 ≥2m — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
-- EMI/EMC 필터 통합: 변압기-케이블 간 EMI 최소화 위해 공통모드(CM)·차동모드(DM) 필터를 접지 시스템과 통합 설계, KR은 KEPCO EMC 가이드라인 준수 — 근거: `sessions/2026-06-26T03-30-31/bess-grounding-engineer.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ KEC 140 "특별3종 ≤10Ω"(구 종별접지 용어) 사용 → ✅ KEC는 종별접지 폐지, 계통접지(TN/TT/IT)·보호접지 체계로 갱신 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
-- ❌ 접지저항 목표를 ≤10Ω/≤30Ω 혼재 표기 → ✅ 대상(기기접지 vs 변전소 GPR) 구분 명시 — 근거: `sessions/2026-06-05T09-44-43/bess-grounding-engineer.md`
-- ❌ "양호/적정/정상" 비정량 판정 → ✅ `Em ≤ Etouch AND Es ≤ Estep` 수치 비교로 PASS/FAIL 명시 — 근거: 본 최적화(2026-06-10), IEEE 80-2013 §8.3/§16.5
-- ❌ IEEE 80 식 번호 임의 인용(Eq.8.9 등) → ✅ 실제 조항(§8.3 허용전위, §16.5 Em/Es, §7.4 Cs, §11.3 도체 열적식) 기준으로 표기 — 근거: 본 최적화(2026-06-10)
-- ❌ 도체 사이징을 단락전류로 본 직원이 직접 산정 → ✅ 계통해석/변전소가 제공한 If·tf·X/R 수신 후 열적식 적용 (역할 경계 준수) — 근거: 본 최적화(2026-06-10)

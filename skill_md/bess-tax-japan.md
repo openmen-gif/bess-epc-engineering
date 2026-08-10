@@ -1,6 +1,12 @@
 ---
 name: bess-tax-japan
-description: "일본 税理士(Zeirishi) 실무. 法人税法(법인세법)·消費税法(소비세법)·地方税法(지방세법)·租税特別措置法(조세특별조치법), 償却資産税, 法人住民税(법인주민세), 事業税(사업세), 連結納税(연결납세)·グループ通算制度(통산제도), BESS FIT/FIP 세무, JCFC 외국자회사 합산과세, 国税庁(NTA) 세무조사"
+id: "JTX-001"
+description: 일본 税理士(Zeirishi) 실무. 法人税法(법인세법)·消費税法(소비세법)·地方税法(지방세법)·租税特別措置法(조세특별조치법), 償却資産税, 法人住民税(법인주민세), 事業税(사업세), 連結納税(연결납세)·グループ通算制度(통산제도), BESS FIT/FIP 세무, JCFC 외국자회사 합산과세, 国税庁(NTA) 세무조사
+department: "재무본부 (CFO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -123,6 +129,24 @@ bess-tax-japan
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 법인세(法人税): 대법인 23.2%(2024~), 중소법인 자본금 1억엔 이하·소득 800만엔 이하 15%. 주민세 법인세의 12.9~16.3%, 사업세 5~9.6% — 근거: `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
+- 환경관련 투자촉진세제: 특별상각 30% 또는 세액공제 7%; 카본뉴트럴 투자촉진세제(2024~): 특별상각 50% 또는 세액공제 10% — 근거: `sessions/2026-06-05T13-23-17/bess-tax-incentive.md`, `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
+- JCFC(외국자회사 합산과세) 회피 4요건: 사업기준·실체기준·관리지배기준·비관련자(소재지국)기준. 모법인 50% 초과 지배 시 대상 — 근거: `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
+- 소비세 10%(Li-ion 배터리 HS 8507.60 국내판매). FIT/FIP 발전매출 연계 — 근거: `sessions/2026-06-03T12-30-05/bess-tax-japan.md`
+- 償却資産税(고정자산세): BESS 설비는 상각자산 분류로 시정촌별 **1.4~1.7%** 부과([요확인] 지역 세율). FTA 활용경로 JKFTA·JEPA(일-EU EPA)·CPTPP로 원산지 판정 시 관세 감면 — 근거: `sessions/2026-06-28T17-36-54/bess-tax-japan.md`, `sessions/2026-06-21T08-31-05/bess-tax-japan.md`
+- JP 적용 가능 협정(BESS 기자재 기준): **일본-EU EPA(JEPA)**, **CPTPP**, **RCEP**. 한국↔일본 간 특혜관세는 **RCEP** 경로로만 검토 — 근거: `sessions/2026-07-27T17-19-43/bess-tax-japan.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ "한일 FTA(JEPA)"를 전제로 관세 감면 시나리오 작성 → ✅ **한일 양자 FTA는 체결되지 않았다**(협상 중단). **JEPA = Japan–EU EPA**의 약칭이며 한일 협정이 아니다. 한일 간 특혜세율은 RCEP 원산지 기준으로 재검토 — 근거: `sessions/2026-07-27T17-19-43/bess-tax-japan.md`
+- ❌ 원산지증명서를 "COA(Certificate of Origin)"로 표기 → ✅ 원산지증명서 약어는 **C/O**이며, COA는 통상 Certificate of Analysis(시험성적서) — 근거: `sessions/2026-07-27T17-19-43/bess-tax-japan.md`
+- ❌ 전선을 HS **8501.10**으로 분류 → ✅ 8501은 전동기·발전기, 절연전선·케이블은 **8544**. HS 분류는 customs-tariff 기준표를 인용 — 근거: `sessions/2026-07-27T17-19-43/bess-tax-japan.md`
+- ❌ HS 코드 혼용(Li-ion 8507.60 vs 8507.62, 동일 8507.60을 변압기·PCS로 매핑, 변압기 8501.10·PCS 8507.30 오기) → ✅ 표준 매핑: Li-ion cell/pack 8507.60.xx, 변압기 8504.xx — 근거: `sessions/2026-06-03T21-09-10/bess-tax-japan.md` vs `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
+- ❌ "특별법인세 약 37% 추가 적용" 표기 → ✅ 일본 실효세율(법인세+주민세+사업세 합산) 약 30%와 혼동 금지, 단일 "특별법인세 37%"는 부정확 — 근거: `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
+- ❌ 환경관련 투자촉진세제를 "특별상각 30%/공제 7%" vs "3년간 2/3 감면"으로 세션 간 상이 서술 → ✅ 제도 버전 정렬 후 단일 기준 적용 — 근거: `sessions/2026-06-05T13-23-17/bess-tax-incentive.md` vs `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
+
 ## 일본 세법 핵심 (BESS 사업 관점)
 
 ### 法人税 (Corporate Tax)
@@ -212,17 +236,3 @@ bess-tax-japan
 3. **요구 자료**: 帳簿(장부)·証憑(증빙)·契約書(계약서)·議事録(의사록)·이전가격 문서
 4. **修正申告(수정신고) vs 更正処分(경정처분)**: 修正申告(신고) 추천(연체세 인하)
 5. **불복**: 異議申立(이의신청) → 国税不服審判所(국세불복심판소) 審査請求(심사청구) → 訴訟(소송)
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 법인세(法人税): 대법인 23.2%(2024~), 중소법인 자본금 1억엔 이하·소득 800만엔 이하 15%. 주민세 법인세의 12.9~16.3%, 사업세 5~9.6% — 근거: `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
-- 환경관련 투자촉진세제: 특별상각 30% 또는 세액공제 7%; 카본뉴트럴 투자촉진세제(2024~): 특별상각 50% 또는 세액공제 10% — 근거: `sessions/2026-06-05T13-23-17/bess-tax-incentive.md`, `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
-- JCFC(외국자회사 합산과세) 회피 4요건: 사업기준·실체기준·관리지배기준·비관련자(소재지국)기준. 모법인 50% 초과 지배 시 대상 — 근거: `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
-- 소비세 10%(Li-ion 배터리 HS 8507.60 국내판매). FIT/FIP 발전매출 연계 — 근거: `sessions/2026-06-03T12-30-05/bess-tax-japan.md`
-- 償却資産税(고정자산세): BESS 설비는 상각자산 분류로 시정촌별 **1.4~1.7%** 부과([요확인] 지역 세율). FTA 활용경로 JKFTA·JEPA(일-EU EPA)·CPTPP로 원산지 판정 시 관세 감면 — 근거: `sessions/2026-06-28T17-36-54/bess-tax-japan.md`, `sessions/2026-06-21T08-31-05/bess-tax-japan.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ HS 코드 혼용(Li-ion 8507.60 vs 8507.62, 동일 8507.60을 변압기·PCS로 매핑, 변압기 8501.10·PCS 8507.30 오기) → ✅ 표준 매핑: Li-ion cell/pack 8507.60.xx, 변압기 8504.xx — 근거: `sessions/2026-06-03T21-09-10/bess-tax-japan.md` vs `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
-- ❌ "특별법인세 약 37% 추가 적용" 표기 → ✅ 일본 실효세율(법인세+주민세+사업세 합산) 약 30%와 혼동 금지, 단일 "특별법인세 37%"는 부정확 — 근거: `sessions/2026-05-20T11-58-48/bess-tax-japan.md`
-- ❌ 환경관련 투자촉진세제를 "특별상각 30%/공제 7%" vs "3년간 2/3 감면"으로 세션 간 상이 서술 → ✅ 제도 버전 정렬 후 단일 기준 적용 — 근거: `sessions/2026-06-05T13-23-17/bess-tax-incentive.md` vs `sessions/2026-05-20T11-58-48/bess-tax-japan.md`

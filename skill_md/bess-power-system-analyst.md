@@ -1,6 +1,12 @@
 ---
 name: bess-power-system-analyst
-description: "조류계산, 단락전류, 보호협조, 고조파, 과도안정도, EMT, ETAP, PSS/E, DIgSILENT, PSCAD"
+id: "PWR-001"
+description: 조류계산, 단락전류, 보호협조, 고조파, 과도안정도, EMT, ETAP, PSS/E, DIgSILENT, PSCAD
+department: "기술본부 (CTO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -143,6 +149,32 @@ bess-power-system-analyst
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 시장별 전압 범위/허용오차(조류계산 판정): KR 22.9kV/154kV ±5%, JP 6.6/66/154kV ±5%, US 12.47/345kV ±5%(Range A)~±8.3%(Range B), AU 11/132kV ±6%(LV)/±10%(HV), UK 11/132kV ±6%, EU/RO 20/400kV ±5~10% — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
+- 인버터 기반 BESS 단락전류 기여 = 1.0~1.2 × Irated (전류제한 모델 적용 필수) — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
+- 보호협조 시간 마진: 최소 단락전류 조건에서 ≥0.3초 (KR/JP/US 공통, US는 ANSI C84.1) — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
+- 약계통 리스크: PLL 대역폭 안정성, Grid-Forming 전환 시 Sub-Synchronous Oscillation(SSO), 전압변동 ΔV≤±5% — 근거: `sessions/2026-06-08T07-19-19/bess-power-system-analyst.md`
+- 해석 표준 매핑: 단락전류 IEC 60909 / ANSI·IEEE C37, 고조파 IEEE 519(THD<2~5%), 보호협조 ETAP/SKM, EMT PSCAD/MATLAB — 근거: `sessions/2026-06-05T06-17-18/bess-power-system-analyst.md`
+- 보호기능 ANSI 코드 셋: 50/51(OCR), 50N/51N(GFR), 87T/87B(차동), 21(거리), 32(역전력), 81O/U(주파수) — 근거: `sessions/2026-06-08T07-19-19/bess-power-system-analyst.md`
+- 주파수 안정도 판정 기준: 발전기 탈락·부하 급변 시 주파수 편차 ≤±0.1Hz 유지(BESS 주파수 제어 성능 확인 지표) — 근거: `sessions/2026-07-05T16-06-50/bess-power-system-analyst.md`
+- Arc Flash 위험 등급은 NFPA 70E Category(C/D/E) 체계로 분류하고, 등전압 계산은 IEC 60038과 함께 평가 — 근거: `sessions/2026-07-18T02-05-48/bess-power-system-analyst.md`
+- 변압기 효율 최적화 시 역률(PF) 목표 ≥0.95(무효전력 손실 저감) — 근거: `sessions/2026-07-20T14-40-20/bess-power-system-analyst.md`
+- 케이블 자체 전압강하 설계 관례 기준(22.9kV 계통): 목표 ±2% 이내 — 조류계산의 계통 전압변동 허용치(±5%)와는 별개 지표이므로 혼동 주의 — 근거: `sessions/2026-07-05T10-47-23/bess-power-system-analyst.md`
+- 3상 최대부하전류 검산 기준값: `I = P/(√3·V_line)` → 10 MW @ 22.9 kV = **252 A**, 10 MW @ 154 kV = **37.5 A**. 산출값이 이 자릿수를 벗어나면 단위 환산 오류로 간주 — 근거: `sessions/2026-08-01T13-40-09/bess-power-system-analyst.md`
+- AI 예측모델을 계통 해석에 결합할 때는 데이터 드리프트 감지·자동 재학습 없이는 장기 정확도를 주장하지 않는다(예측 오류 시 폴백 로직·비상 대응 절차 병기) — 근거: `sessions/2026-07-31T04-23-43/bess-power-system-analyst_critic.md`
+- 변압기 호환성 검토 입력 세트: SLD로 위치·결선 파악 → 변압기·케이블 계통 임피던스 수집 → ETAP/PSS®E 시뮬레이션 → 실계통 데이터 대조. 전압 호환은 정격 일치뿐 아니라 **변동 범위·허용오차**까지 확인 — 근거: `sessions/2026-08-05T07-38-25/bess-power-system-analyst.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 계통연계 준수 근거로 "**전력기술관리법**"을 인용 → ✅ 전력기술관리법은 전력시설물 설계·감리 등 **기술인·용역 관리** 법률이다. 계통연계 요건은 **전기사업법 + KEPCO 계통연계기술기준 + KEC** — 근거: `sessions/2026-08-05T07-38-25/bess-power-system-analyst.md`
+- ❌ 계통해석 산출물에서 변압기 정기점검 주기·OLTC/DGA 교체주기·예지보전 체계를 직접 확정 → ✅ 계통해석은 조류·단락·보호협조 결론까지 담당하고, 설비 유지보수 주기는 transformer-expert·facility-manager 소관값을 인용(가드레일 §4) — 근거: `sessions/2026-08-05T07-38-25/bess-power-system-analyst.md`
+- ❌ kV를 V로 환산하지 않고 `I = P/(√3·V[kV])`로 계산해 10 MW @ 22.9 kV를 "69.5 kA", 10 MW @ 154 kV를 "1.2 kA"로 산출 → ✅ SI 단위 환산(22.9 kV = 22,900 V) 후 계산하고 결과 자릿수를 케이블 통상 범위(수백 A)와 대조 검산 — 근거: `sessions/2026-08-01T13-40-09/bess-power-system-analyst.md`
+- ❌ `ΔV = I×(R_cable + X_cable×ω)` 및 `R_cable = 저항률×단면적/케이블길이`(차원·역수 오류) → ✅ `R = ρ·L/A`, 3상 `ΔV = √3·I·L·(R cosφ + X sinφ)`. 리액턴스 X는 이미 Ω 단위이므로 ω를 다시 곱하지 않는다 — 근거: `sessions/2026-08-01T13-40-09/bess-power-system-analyst.md`
+- ❌ KR 22.9 kV 전압강하 허용을 "±5%"로 제시(케이블 도메인 MV ≤3%와 충돌) → ✅ 계통 **공급전압 유지범위**(±5%)와 케이블 **설계 전압강하 한계**(HV ≤2% / MV ≤3% / LV ≤5%)를 분리 인용하고, 케이블 수치는 cable-engineer 소관값을 따른다 — 근거: `sessions/2026-08-01T13-40-09/bess-power-system-analyst.md`
+- ❌ KR VRT를 "0%V 150ms 후 90% 회복"으로 US와 동일 기재 → ✅ KR 정식값(LVRT 0.0pu 140ms 연속운전)으로 통일, VRT는 grid-interconnection 표 참조 — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
+- ❌ 수치/근거 없는 서술형 결론("단락전류는 정격 초과 가능", "분석 결과 중요") → ✅ 비정량 결론 금지, 정량 결론 원칙 강제 — 근거: `sessions/2026-05-11T14-24-48/bess-power-system-analyst.md`
 
 ## 해석 유형별 상세
 
@@ -461,17 +493,3 @@ Level 4: EMT 스위칭 모델 (Switching EMT)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 시장별 전압 범위/허용오차(조류계산 판정): KR 22.9kV/154kV ±5%, JP 6.6/66/154kV ±5%, US 12.47/345kV ±5%(Range A)~±8.3%(Range B), AU 11/132kV ±6%(LV)/±10%(HV), UK 11/132kV ±6%, EU/RO 20/400kV ±5~10% — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
-- 인버터 기반 BESS 단락전류 기여 = 1.0~1.2 × Irated (전류제한 모델 적용 필수) — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
-- 보호협조 시간 마진: 최소 단락전류 조건에서 ≥0.3초 (KR/JP/US 공통, US는 ANSI C84.1) — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
-- 약계통 리스크: PLL 대역폭 안정성, Grid-Forming 전환 시 Sub-Synchronous Oscillation(SSO), 전압변동 ΔV≤±5% — 근거: `sessions/2026-06-08T07-19-19/bess-power-system-analyst.md`
-- 해석 표준 매핑: 단락전류 IEC 60909 / ANSI·IEEE C37, 고조파 IEEE 519(THD<2~5%), 보호협조 ETAP/SKM, EMT PSCAD/MATLAB — 근거: `sessions/2026-06-05T06-17-18/bess-power-system-analyst.md`
-- 보호기능 ANSI 코드 셋: 50/51(OCR), 50N/51N(GFR), 87T/87B(차동), 21(거리), 32(역전력), 81O/U(주파수) — 근거: `sessions/2026-06-08T07-19-19/bess-power-system-analyst.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ KR VRT를 "0%V 150ms 후 90% 회복"으로 US와 동일 기재 → ✅ KR 정식값(LVRT 0.0pu 140ms 연속운전)으로 통일, VRT는 grid-interconnection 표 참조 — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
-- ❌ 수치/근거 없는 서술형 결론("단락전류는 정격 초과 가능", "분석 결과 중요") → ✅ 비정량 결론 금지, 정량 결론 원칙 강제 — 근거: `sessions/2026-05-11T14-24-48/bess-power-system-analyst.md`

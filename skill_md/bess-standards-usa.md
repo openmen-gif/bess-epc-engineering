@@ -1,6 +1,12 @@
 ---
 name: bess-standards-usa
-description: "BESS EPC 미국(US) 규격·표준·인허가 상세"
+id: "STD-005"
+description: BESS EPC 미국(US) 규격·표준·인허가 상세
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -115,6 +121,24 @@ bess-standards-usa
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- IEEE 1547-2018(Category I/II/III 전압·주파수 응답, THD ≤5%), UL 9540/9540A, NFPA 855(이격거리·소화), AHJ 승인 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
+- 연방 FERC Order 841(ESS 도매시장 참여), NERC CIP-002~014(사이버보안); 주별 CPUC(CA)/PUCT(TX/ERCOT) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
+- IRA/ITC: ESS 최대 40% 세액공제(국내제조·에너지커뮤니티 조건), MACRS 5/7년 가속상각 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
+- 인허가 시퀀스: FERC MBR → ISO/RTO Interconnection Study → 주 PUC → 환경/지방허가 → 시운전 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
+- 인허가 리드타임·비용 정량: FERC MBR 60~90일, ISO/RTO Interconnection Study 3~48개월·$10,000~$500,000+; NERC CIP는 100MW 이상 BESS를 Medium Impact BES Cyber System으로 분류 — 근거: `sessions/2026-06-23T19-39-00/bess-standards-usa.md`
+- FERC Order 2222(2020): 분산자원 집합(DER aggregation) 도매시장 참여(Order 841과 별개); IEEE 2030.2.1(BESS 설계·시험 가이드); UL 9540/9540A 적용 범위 50V DC 초과 또는 240VA 초과 — 근거: `sessions/2026-06-23T19-39-00/bess-standards-usa.md`
+- HTS 세부: 리튬이온 BESS 8507.60.00(기본 0%, USMCA 특혜 적용 가능), 8507.60.50(특정 조건 추가 세분류); HTS는 HS 6자리에 미국 고유 세분류 추가 — 근거: `sessions/2026-06-25T17-45-30/bess-standards-usa.md`
+- NFPA 855(2026년판) 강화 3축: ①**TRPP(열폭주 확산 방지)** — 셀→모듈→랙→캐비닛 확산 차단 설계 의무화, ②화재 원인 범위를 배선·냉각계통·BMS 등 **BOS 전체 상호작용**까지 확대, ③능동 안전장치(능동 방폭·구획화·열차폐재·물분무/가스 소화·오프가스 감지 자동 셧다운) — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
+- BESS 사이버·펌웨어 영역의 US 참조 문서: **NIST SP 800-82**(ICS 보안 가이드) + NERC CIP. 계통 연계 응답 기준은 IEEE 1547-2018 — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ NFPA 855를 펌웨어 무결성·사이버보안 요구사항의 근거로 확장 인용 → ✅ NFPA 855는 **설치·방화** 기준이며, 펌웨어·보안 요구는 NIST SP 800-82 / IEC 62443-4-1 / NERC CIP로 분리 — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
+- ❌ BMS HS코드 "8514.10" → ✅ 8514는 산업용 전기로(furnace), BMS는 전자제어로 8537/8504 계열이 적절([요확인]) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
+- ❌ ISO 14698을 "수소 저장 및 분배 시스템 안전·성능 기준"으로 인용 → ✅ ISO 14698은 클린룸·생물오염관리(Biocontamination Control) 표준, 수소 관련 표준은 ISO 19880(수소 충전소)·ISO 26142(수소 검출기)·ISO 14687(수소 연료 품질) 등을 별도 확인 필요 — 근거: `sessions/2026-07-09T11-22-07/bess-standards-usa.md`
 
 ## 🇺🇸 미국 (United States)
 
@@ -426,17 +450,3 @@ NEC (NFPA 70) Article 706 — ESS 배선 기준:
 ├── Agricultural (A): 주별 상이, Special Use Permit
 └── Residential (R): 대부분 불허 (소규모 residential ESS 제외)
 ```
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- IEEE 1547-2018(Category I/II/III 전압·주파수 응답, THD ≤5%), UL 9540/9540A, NFPA 855(이격거리·소화), AHJ 승인 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
-- 연방 FERC Order 841(ESS 도매시장 참여), NERC CIP-002~014(사이버보안); 주별 CPUC(CA)/PUCT(TX/ERCOT) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
-- IRA/ITC: ESS 최대 40% 세액공제(국내제조·에너지커뮤니티 조건), MACRS 5/7년 가속상각 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
-- 인허가 시퀀스: FERC MBR → ISO/RTO Interconnection Study → 주 PUC → 환경/지방허가 → 시운전 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
-- 인허가 리드타임·비용 정량: FERC MBR 60~90일, ISO/RTO Interconnection Study 3~48개월·$10,000~$500,000+; NERC CIP는 100MW 이상 BESS를 Medium Impact BES Cyber System으로 분류 — 근거: `sessions/2026-06-23T19-39-00/bess-standards-usa.md`
-- FERC Order 2222(2020): 분산자원 집합(DER aggregation) 도매시장 참여(Order 841과 별개); IEEE 2030.2.1(BESS 설계·시험 가이드); UL 9540/9540A 적용 범위 50V DC 초과 또는 240VA 초과 — 근거: `sessions/2026-06-23T19-39-00/bess-standards-usa.md`
-- HTS 세부: 리튬이온 BESS 8507.60.00(기본 0%, USMCA 특혜 적용 가능), 8507.60.50(특정 조건 추가 세분류); HTS는 HS 6자리에 미국 고유 세분류 추가 — 근거: `sessions/2026-06-25T17-45-30/bess-standards-usa.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ BMS HS코드 "8514.10" → ✅ 8514는 산업용 전기로(furnace), BMS는 전자제어로 8537/8504 계열이 적절([요확인]) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`

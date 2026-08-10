@@ -1,6 +1,12 @@
 ---
 name: bess-grid-interconnection
-description: "계통연계 시험, VRT, FFR, LVRT, HVRT, IEEE 1547, G99, FCAS, 보호계전기"
+id: "COM-003"
+description: 계통연계 시험, VRT, FFR, LVRT, HVRT, IEEE 1547, G99, FCAS, 보호계전기
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -133,6 +139,34 @@ PCS전문가 ──PCS 제어설정──▶ 계통연계(시운전엔지니어)
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- LVRT/HVRT 정의 및 시험: LVRT 0.0pu → 유지시간(JP 150ms / KR 150ms / EU·RO 140ms), HVRT 1.3pu → 100ms — 근거: `sessions/2026-06-01T10-21-36/bess-grid-interconnection.md`
+- 복귀 기울기: JEAC 9701-2020 ±0.5%/s, AS 4777 ±0.3%/s — 근거: `sessions/2026-06-01T10-21-36/bess-grid-interconnection.md`
+- 주파수 보호: OFR 51.0~52.0Hz/1.0s, UFR 47.5~49.0Hz/1.0s(AU), ROCOF 1.5~4.0Hz/s(AU)·≥2.0Hz/s 내성(EU) — 근거: `sessions/2026-06-02T21-52-30/bess-grid-interconnection.md`
+- 표준 매핑: IEC 62933 시리즈, IEEE 1547, AS 4777(AU), G99(UK), RfG(EU), 통신 IEC 61850 GOOSE/MMS — 근거: `sessions/2026-05-12T05-09-20/bess-grid-interconnection.md`
+- BESS Type 1~4 분류(Type 4 = 변전소형, IEC 61850 추가요건); FAT 전 절연·접지저항 시험, LOTO 안전절차 — 근거: `sessions/2026-05-12T05-09-20/bess-grid-interconnection.md`
+- Type 4(변전소형) 추가 시험 항목: IEC 61850 GOOSE/MMS 전체 포인트 검증 + 모선 Volt-VAR 시험 + (적용 시) Black Start 기능 시험 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
+- Type 2(Solar+BESS) 연계 추가 시험: PV 발전량 기반 자동 충전 로직 시험 + 잉여전력 제어 시험 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
+- 보호계전기 정정값은 연계 전압등급(22.9 kV MV vs 154 kV HV)에 따라 달라지므로, 연계 전압 미확정 시 `[요확인] 연계 전압(kV)` 태그를 발행한 뒤 보호협조 시뮬레이션 결과를 첨부한다 — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
+- 보조금·정책 의존 가정은 정책 중단 시나리오를 병기해야 한다(보조금 지속성 미검증 상태의 비용 구조 결론 금지) — 근거: `sessions/2026-08-02T03-24-37/bess-grid-interconnection_critic.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 3상 최대전류를 `I = P/V_phase`(= P/(V_line/√3))로 계산해 10 MW @ 22.9 kV를 **765 A**로 산출(실제 252 A, 3배 과대) → ✅ `I = P/(√3·V_line)` 단일식만 사용하고 V_phase 환산을 중복 적용하지 않는다 — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
+- ❌ 전압강하를 `VD = K×I²×L`(전류 제곱 비례)로 계산 → ✅ 전압강하는 전류에 **선형**: `ΔV = √3·I·L·(R cosφ + X sinφ)` — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
+- ❌ LVRT(계통사고 시 저전압 통과 능력, KR 0.0 pu 150 ms 유지)를 케이블 정상운전 전압강하 허용치("150 ms 동안 1.5% 이내")로 전용 → ✅ VRT는 **사고 통과 요건**, 전압강하는 **정상운전 설계기준**으로 분리 — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
+- ❌ 765 A 부하에 "95 mm² 이상" 케이블 선정(해당 단면적 통상 허용전류 ~250 A) → ✅ 전류-단면적 매칭은 cable-engineer의 Ampacity 표로 교차검증 후 인용 — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
+- ❌ JEAC 9701-2020(일본 규격)을 KR LVRT/ROCOF 근거로 인용 → ✅ KR은 KEPCO 분산형전원 배전계통 연계 기술기준/계통연계규정 적용, JEAC는 JP 전용 — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
+- ❌ FCAS(호주 AEMO 보조서비스: Raise/Lower 6s·60s·5min)를 KR 분석에 사용 → ✅ KR은 KPX 예비력·주파수조정(FR) 시장, FCAS는 AU 전용 용어 — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
+- ❌ VRT를 "Voltage Regulation Mode(전압조정모드)"로 오역 → ✅ "Voltage Ride-Through(전압 사고 통과 능력)" — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
+- ❌ 연계전압 15kV로 가정(KR 표준 아님) → ✅ KR MV는 22.9kV가 표준값 — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
+- ❌ OFR/UFR을 Ride/Regulation 의미로 혼용 표기 → ✅ OVR/UVR(Over/Under Voltage Relay)과 OFR/UFR(Over/Under Frequency Relay) 약어 일관 적용 — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
+- ❌ VRT를 "Voltage Regulation Tracking"으로 풀어쓰기(전압 실시간 추종 제어로 오해) → ✅ VRT = Voltage Ride-Through(전압 사고 통과 능력), 실시간 전압추종 제어는 Volt-VAR/AVR로 별도 표기 — 근거: `sessions/2026-06-22T01-11-47/bess-grid-interconnection.md`
+- ❌ FCAS를 DC(Dynamic Containment)/DR/DM ≤1s로 세분해 KR/일반 분석에 적용 → ✅ DC/DR/DM은 GB(National Grid ESO) 응답 서비스이고 FCAS(Raise/Lower 6s·60s·5min)는 AU AEMO 전용, KR은 KPX 예비력·주파수조정(FR) — 시장별 서비스명 혼용 금지 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
+- ❌ ROCOF 국가 기준을 "KR 500ms"처럼 시간(ms) 단위로 표기 → ✅ ROCOF는 주파수 변화율(Hz/s)로 표기(예: EU 0.5Hz/s, AS 4777 2.0Hz/s), 지속시간(ms)은 검출 지연으로 별도 명시 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
+- ❌ IEC 62271-100/101을 "분산형 에너지 자원(DER) 통합 일반 요구사항" 표준으로 인용 → ✅ IEC 62271 시리즈는 고전압 개폐장치(교류 회로차단기·정격) 표준이며 DER 계통연계 일반요건과 무관, DER 통합 요건은 IEEE 1547 / IEC 62933 시리즈가 소관 — 근거: `sessions/2026-07-13T16-22-55/bess-grid-interconnection.md`
 
 ## 핵심 역량 및 업무 범위 (핵심 원칙)
 
@@ -482,24 +516,3 @@ Phase 10 통신    | [X]    | [X] | [X]   | [X] | □P □F
 발주처 확인: _______________ 서명: _______ 날짜: _______
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- LVRT/HVRT 정의 및 시험: LVRT 0.0pu → 유지시간(JP 150ms / KR 150ms / EU·RO 140ms), HVRT 1.3pu → 100ms — 근거: `sessions/2026-06-01T10-21-36/bess-grid-interconnection.md`
-- 복귀 기울기: JEAC 9701-2020 ±0.5%/s, AS 4777 ±0.3%/s — 근거: `sessions/2026-06-01T10-21-36/bess-grid-interconnection.md`
-- 주파수 보호: OFR 51.0~52.0Hz/1.0s, UFR 47.5~49.0Hz/1.0s(AU), ROCOF 1.5~4.0Hz/s(AU)·≥2.0Hz/s 내성(EU) — 근거: `sessions/2026-06-02T21-52-30/bess-grid-interconnection.md`
-- 표준 매핑: IEC 62933 시리즈, IEEE 1547, AS 4777(AU), G99(UK), RfG(EU), 통신 IEC 61850 GOOSE/MMS — 근거: `sessions/2026-05-12T05-09-20/bess-grid-interconnection.md`
-- BESS Type 1~4 분류(Type 4 = 변전소형, IEC 61850 추가요건); FAT 전 절연·접지저항 시험, LOTO 안전절차 — 근거: `sessions/2026-05-12T05-09-20/bess-grid-interconnection.md`
-- Type 4(변전소형) 추가 시험 항목: IEC 61850 GOOSE/MMS 전체 포인트 검증 + 모선 Volt-VAR 시험 + (적용 시) Black Start 기능 시험 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
-- Type 2(Solar+BESS) 연계 추가 시험: PV 발전량 기반 자동 충전 로직 시험 + 잉여전력 제어 시험 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ JEAC 9701-2020(일본 규격)을 KR LVRT/ROCOF 근거로 인용 → ✅ KR은 KEPCO 분산형전원 배전계통 연계 기술기준/계통연계규정 적용, JEAC는 JP 전용 — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
-- ❌ FCAS(호주 AEMO 보조서비스: Raise/Lower 6s·60s·5min)를 KR 분석에 사용 → ✅ KR은 KPX 예비력·주파수조정(FR) 시장, FCAS는 AU 전용 용어 — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
-- ❌ VRT를 "Voltage Regulation Mode(전압조정모드)"로 오역 → ✅ "Voltage Ride-Through(전압 사고 통과 능력)" — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
-- ❌ 연계전압 15kV로 가정(KR 표준 아님) → ✅ KR MV는 22.9kV가 표준값 — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
-- ❌ OFR/UFR을 Ride/Regulation 의미로 혼용 표기 → ✅ OVR/UVR(Over/Under Voltage Relay)과 OFR/UFR(Over/Under Frequency Relay) 약어 일관 적용 — 근거: `sessions/2026-06-08T20-24-13/bess-grid-interconnection.md`
-- ❌ VRT를 "Voltage Regulation Tracking"으로 풀어쓰기(전압 실시간 추종 제어로 오해) → ✅ VRT = Voltage Ride-Through(전압 사고 통과 능력), 실시간 전압추종 제어는 Volt-VAR/AVR로 별도 표기 — 근거: `sessions/2026-06-22T01-11-47/bess-grid-interconnection.md`
-- ❌ FCAS를 DC(Dynamic Containment)/DR/DM ≤1s로 세분해 KR/일반 분석에 적용 → ✅ DC/DR/DM은 GB(National Grid ESO) 응답 서비스이고 FCAS(Raise/Lower 6s·60s·5min)는 AU AEMO 전용, KR은 KPX 예비력·주파수조정(FR) — 시장별 서비스명 혼용 금지 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
-- ❌ ROCOF 국가 기준을 "KR 500ms"처럼 시간(ms) 단위로 표기 → ✅ ROCOF는 주파수 변화율(Hz/s)로 표기(예: EU 0.5Hz/s, AS 4777 2.0Hz/s), 지속시간(ms)은 검출 지연으로 별도 명시 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
