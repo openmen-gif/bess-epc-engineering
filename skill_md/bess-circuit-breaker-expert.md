@@ -139,6 +139,9 @@ IEC 62271, IEC 62271-100, IEEE C37, JEC 2300, KS C 4613, 단로기, DS, 접지�
 - KEPCO 계통 단락용량 기준(설계 검산용): 154 kV ≥ **40 kA**, 22.9 kV ≥ **25 kA**. 적용 규격 IEC 62271-100(차단기), IEC 60909(단락전류 계산), IEC 60071-1(절연협조), IEC 60099-4(산화아연 피뢰기) — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
 - 보호협조 검토 시 ANSI 계전기 번호 표기: 50/51(과전류), 27(부족전압), 59(과전압), 81(주파수) — TCC 곡선으로 동작 순서·시간을 정정 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **IEC 60071-1**을 "절연협조 **및 단락용량** 검토" 근거로 묶어 인용 → ✅ IEC 60071-1은 **절연협조(Insulation Co-ordination) 정의·원칙**만 다룬다. 단락용량(정격 단시간전류·차단전류)은 **IEC 62271-100**, 단락전류 계산은 **IEC 60909** 소관으로 분리 인용 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
+- ❌ 액냉 시스템 내 **과열보호기·과전압(OVP)·과전류(OCP) 소자** 설정 근거로 **IEC 62271-100 / IEEE C37 시리즈**(고압 개폐장치 규격)를 인용 → ✅ 62271-100·IEEE C37은 **고압 차단기·계전기** 규격이다. 저압·기기 내장 보호소자는 **IEC 60947**(저압 개폐기기)·**IEC 62477-1**(전력변환 안전) 계열이고, SPD는 IEC 61643 소관 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
+- ❌ 과열 보호기 설정을 "최대 허용 온도보다 약간 **낮게** 설정합니다 (예: **+10°C 마진**)"로 기재(부호 모순) → ✅ 마진은 부호를 명시한다 — 설정값 = **허용 최대온도 − 10 °C**. 방향과 부호가 어긋난 임계값은 그대로 설비 설정으로 전파되므로 발행 전 검산 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
 - ❌ **동일 4개 오류가 2026-08-04 세션에서 일괄 재발**(3사이클 50/60 ms 역전 + 같은 문서 내 상반 표기, Icm 40 kA < Isc 50 kA, "Icu는 Isc의 약 2.5배", KEPCO 154 kV 40 kA를 Icm으로 라벨) → ✅ 사양 표 발행 전 **①3사이클 = 50 Hz 60 ms / 60 Hz 50 ms ②Icm ≈ 2.5×Isc(peak) ③KEPCO 154 kV ≥40 kA·22.9 kV ≥25 kA는 차단용량(Isc) 기준** 3개를 체크리스트로 대조. 2.5배 관계는 **Icm**에만 성립하며 Icu에는 적용되지 않는다 — 근거: `sessions/2026-08-04T04-33-36/bess-circuit-breaker-expert.md`
 - ❌ Icm(정격 투입용량)을 "고장 상황에서 안전하게 **차단**할 수 있는 최대 전류"로 정의 → ✅ Icm은 **투입(making)** 능력(단락 상태 투입 시 견디는 peak 전류)이고, 차단 능력은 Icu/Isc다. 투입↔차단 동사를 뒤바꾸지 않는다 — 근거: `sessions/2026-08-04T04-33-36/bess-circuit-breaker-expert.md`
 - ❌ 3사이클 차단시간을 "50 Hz: 50 ms / 60 Hz: 60 ms"로 기재(같은 문서 내 권고절에서는 반대로 표기) → ✅ 3사이클 = **50 Hz 60 ms / 60 Hz 50 ms**. 주파수-사이클-시간 환산은 문서 내 전 구간 동일값으로 통일 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
@@ -152,6 +155,8 @@ IEC 62271, IEC 62271-100, IEEE C37, JEC 2300, KS C 4613, 단로기, DS, 접지�
 - ❌ Arc Flash 근거 규격으로 "IEC 69870-2-57"·"IEC 60070" 인용 → ✅ 존재하지 않거나 무관한 규격번호(오기); Arc Flash는 NFPA 70E + IEEE 1584-2018(입사에너지 모델) + IEC 61482-1-2(보호복)만 인용 — 근거: `sessions/2026-07-15T19-02-57/bess-circuit-breaker-expert.md`
 - ❌ 부하전류 계산식(P/(√3×V))으로 산출한 값을 "단락용량(Ics)"으로 명명 → ✅ 그 값은 정격 부하전류(In)이며, 단락용량(Isc/Icu)은 계통 임피던스 기반 별도 계산(IEC 60909) 필요 — 근거: `sessions/2026-07-16T20-20-42/bess-circuit-breaker-expert.md`
 - ❌ KEPCO 154kV GIS 정격을 "정격 한시 차단 전류(Icu): 1500A"로 표기 → ✅ KEPCO 154kV GIS 표준은 In=1250A / Icu=40kA(=40,000A) — In(A)과 Icu(kA)는 자릿수·단위가 다르므로 혼동 금지 — 근거: `sessions/2026-07-20T14-40-20/bess-circuit-breaker-expert.md`
+- ❌ 차단기 정격 산정 시 Icm(정격 투입용량)을 "Icm ≥ 최대부하전류 × 1.25"로 계산(In의 여유율 공식을 오적용) → ✅ Icm은 비대칭 첨두전류 Ip(=κ×√2×Isc)와 비교해 선정하고, "×1.25 여유율" 공식은 In(정격연속전류) ≥ 최대부하전류×1.25에만 적용 — 두 정격의 산정식을 혼용하지 않는다 — 근거: `sessions/2026-08-14T16-51-37/bess-circuit-breaker-expert.md`
+- ❌ VRT를 "Voltage Ramp Test"로 정의 → ✅ VRT는 "Voltage Ride Through"(전압 이상 시 탈락 없이 운전을 유지하는 능력)이며 LVRT/HVRT와 동일 계열 용어 — 근거: `sessions/2026-08-16T00-03-02/bess-circuit-breaker-expert.md`
 
 ## 시장별 차단기·개폐장치 기준
 

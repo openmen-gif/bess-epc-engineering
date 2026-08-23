@@ -154,6 +154,9 @@ PCS전문가 ──PCS 제어설정──▶ 계통연계(시운전엔지니어)
 - 보호계전기 정정값은 연계 전압등급(22.9 kV MV vs 154 kV HV)에 따라 달라지므로, 연계 전압 미확정 시 `[요확인] 연계 전압(kV)` 태그를 발행한 뒤 보호협조 시뮬레이션 결과를 첨부한다 — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
 - 보조금·정책 의존 가정은 정책 중단 시나리오를 병기해야 한다(보조금 지속성 미검증 상태의 비용 구조 결론 금지) — 근거: `sessions/2026-08-02T03-24-37/bess-grid-interconnection_critic.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **KR LVRT 시험 기준으로 "JEAC 9701-2020 §8.1"(일본 계통연계 기술요건)을 1순위 근거로 인용**(본 도메인 **재발**) → ✅ KR 근거는 **KEPCO 분산형전원 배전계통 연계 기술기준 + 계통연계규정 + KEC**이며, JEAC는 JP 전용이다. 해외 규격 병기 시 "(참고용, 국내 적용 아님)"을 명시(가드레일 §1.1) — 근거: `sessions/2026-08-19T06-00-22/bess-grid-interconnection.md`
+- ❌ 전압 조정 능력 목표를 "**±0.05% 전압 변동 범위 내 조정**"으로 기재 → ✅ 계통 공급전압 유지범위는 **±5%(= ±0.05 pu)** 이며, **% 와 pu 를 혼동하면 100배 오차**가 된다. 무차원 pu 값과 백분율 표기를 문서 내에서 분리 사용한다(가드레일 §5-5) — 근거: `sessions/2026-08-19T06-00-22/bess-grid-interconnection.md`
+- ❌ 전압 조정 능력의 준거 규격으로 **IEC 62933 시리즈**를 인용 → ✅ IEC 62933은 **ESS 시스템** 표준으로 계통연계 전압·주파수 요구를 규정하지 않는다. 계통연계 요구는 **KEPCO 계통연계기술기준**(KR)·IEEE 1547(US 참고)·EN 50549/RfG(EU) 소관 — 근거: `sessions/2026-08-19T06-00-22/bess-grid-interconnection.md`
 - ❌ 3상 최대전류를 `I = P/V_phase`(= P/(V_line/√3))로 계산해 10 MW @ 22.9 kV를 **765 A**로 산출(실제 252 A, 3배 과대) → ✅ `I = P/(√3·V_line)` 단일식만 사용하고 V_phase 환산을 중복 적용하지 않는다 — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
 - ❌ 전압강하를 `VD = K×I²×L`(전류 제곱 비례)로 계산 → ✅ 전압강하는 전류에 **선형**: `ΔV = √3·I·L·(R cosφ + X sinφ)` — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
 - ❌ LVRT(계통사고 시 저전압 통과 능력, KR 0.0 pu 150 ms 유지)를 케이블 정상운전 전압강하 허용치("150 ms 동안 1.5% 이내")로 전용 → ✅ VRT는 **사고 통과 요건**, 전압강하는 **정상운전 설계기준**으로 분리 — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
@@ -167,6 +170,8 @@ PCS전문가 ──PCS 제어설정──▶ 계통연계(시운전엔지니어)
 - ❌ FCAS를 DC(Dynamic Containment)/DR/DM ≤1s로 세분해 KR/일반 분석에 적용 → ✅ DC/DR/DM은 GB(National Grid ESO) 응답 서비스이고 FCAS(Raise/Lower 6s·60s·5min)는 AU AEMO 전용, KR은 KPX 예비력·주파수조정(FR) — 시장별 서비스명 혼용 금지 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
 - ❌ ROCOF 국가 기준을 "KR 500ms"처럼 시간(ms) 단위로 표기 → ✅ ROCOF는 주파수 변화율(Hz/s)로 표기(예: EU 0.5Hz/s, AS 4777 2.0Hz/s), 지속시간(ms)은 검출 지연으로 별도 명시 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
 - ❌ IEC 62271-100/101을 "분산형 에너지 자원(DER) 통합 일반 요구사항" 표준으로 인용 → ✅ IEC 62271 시리즈는 고전압 개폐장치(교류 회로차단기·정격) 표준이며 DER 계통연계 일반요건과 무관, DER 통합 요건은 IEEE 1547 / IEC 62933 시리즈가 소관 — 근거: `sessions/2026-07-13T16-22-55/bess-grid-interconnection.md`
+- ❌ ENA EREC G99 Issue 6(영국 전용 그리드코드)을 EU/RO 시장 LVRT 근거로 인용 → ✅ EU/RO는 EU RfG 2016/631(Type B~D)·EN 50549-2·ANRE Order 적용, G99 Issue 6은 UK 전용(유지시간 140ms가 우연히 유사해도 규격 출처 혼용 금지) — 근거: `sessions/2026-08-16T00-03-02/bess-grid-interconnection.md`
+- ❌ US IEEE 1547-2018 LVRT(0.0pu) 유지시간을 "100ms"로 기재 → ✅ IEEE 1547-2018 Category II는 0.0pu 시 1.0s(Momentary cessation 후 복귀), 0.65pu는 10.0s이며 100ms대는 HVRT(1.20pu→0.16s)만 해당 — 근거: `sessions/2026-08-16T00-03-02/bess-grid-interconnection.md`
 
 ## 핵심 역량 및 업무 범위 (핵심 원칙)
 

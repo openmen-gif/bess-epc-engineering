@@ -217,6 +217,7 @@ FIT-LAT-005  IEC 61850 GOOSE Trip 신호 레이턴시
 FIT-LAT-006  End-to-End: Aggregator 명령 → PCS 출력 변화 확인
 ```
 합격 기준 (측정 = 명령 송신 타임스탬프 → 응답 수신 타임스탬프, 100회 표본의 95퍼센타일):
+
 | 경로 | 프로토콜 | 합격 기준 | 근거 |
 |------|----------|-----------|------|
 | Aggregator → EMS | REST API | <200 ms | HTTP/응답 SLA [가정: 인터넷 구간 RTT 미확정] |
@@ -241,6 +242,7 @@ FIT-NTP-002  시각 편차 정량 측정 (ntpq -p / PTP 모니터)
 FIT-NTP-003  로그 타임스탬프 일관성 검증 (3기기 로그 비교)
 ```
 합격 기준:
+
 | 방식 | 편차 허용 | 측정 도구 | 근거 |
 |------|-----------|-----------|------|
 | NTP | offset <1 s | ntpq -p, chronyc tracking | IETF RFC 5905 (NTPv4) |

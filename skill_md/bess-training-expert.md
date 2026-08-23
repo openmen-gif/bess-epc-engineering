@@ -128,6 +128,7 @@ Arc Flash, NFPA 70E, OSHA, 전기안전, 위험물, 자격, 인증,
 - 탄소중립(Net Zero) 목표 직원교육은 12주 구조(기초 8주: 개념·목표소개→에너지효율/재생에너지→탄소발자국감소전략→환경인식행동변화, 심화 4주: 기술적용사례→시뮬레이션워크숍)로 설계하고, 목표는 단기(1년 내 10% 감소)/중기(3년 내 탄소중립)/장기(지속가능 운영모델)로 단계화 — 근거: `sessions/2026-07-26T00-45-26/bess-training-expert.md`
 - EMC·시운전 교육 커리큘럼 표준안: 이론 3일(IEC 61000 시리즈·CISPR·EN 55011, EMI 저감 기법) + 실습 4일(EMC 측정, 필터 설계·조정, 자동화 도구) = 1주 과정, 분기별 최신 표준 업데이트 세션 — 근거: `sessions/2026-07-31T10-59-41/bess-emc-analyst.md`
 - 외국인 인력 대상 교육은 다국어 안전 지침 + 특화 세션을 정기 운영(labor-safety와 공동) — 근거: `sessions/2026-07-23T17-26-47/bess-labor-safety.md`
+- 사이버보안·데이터 프라이버시 교육 프로그램은 NIST Cybersecurity Framework(위험평가→정책→기술통제→교육 4단계 구조)를 참조 프레임워크로 설계하고, 데이터 프라이버시 파트는 GDPR/CCPA 외 시장별 특수 법규(예: 산업안전보건법·労働安全衛生法)까지 포함해 검토 — 근거: `sessions/2026-08-11T16-44-49/bess-training-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ 교육 프로그램 효과를 외부 성공 사례만으로 정당화 → ✅ 내부 직원 피드백·성과 데이터로 효과성을 검증한 뒤 확대하고, 미검증 항목은 `[요확인]` — 근거: `sessions/2026-07-23T17-26-47/bess-structural-analyst_critic.md`
 - ❌ "SOC = System Operating Condition" 오정의 → ✅ BESS 표준 SOC = State of Charge(SOH = State of Health와 짝) — 근거: `sessions/2026-06-04T11-42-12/bess-training-expert.md`

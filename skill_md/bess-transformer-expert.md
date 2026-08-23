@@ -135,6 +135,8 @@ FAT, 온도상승, DGA, 절연유, 냉각, ONAN, ONAF, 손실, 소음, BIL
 - 변압기 제어·보조전원: UPS 용량은 제어계통 소비전력의 **1.2~1.5배**, 배터리는 최소 4~8시간 백업, UPS→발전기→배터리 자동 전환을 SCADA로 통합 — 근거: `sessions/2026-08-01T19-21-30/bess-transformer-expert.md`
 - 시장별 변압기 준거 규격 세트: **KR** KS C 4301·KEC·KEPCO ES, **US** IEEE C57.12.00·DOE 10 CFR 431, **EU** EN 60076·EU EcoDesign Tier 2 — 시장 코드 확정 후 해당 세트만 인용 — 근거: `sessions/2026-08-05T07-38-25/bess-transformer-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 냉각방식을 "**자연 냉각(ONAN, ONAF)** / 강제 냉각(Forced Air Cooling)"으로 2분류 → ✅ **ONAF의 F가 이미 강제 공랭(Air Forced)** 이다. 정확한 분류는 **ONAN**(자연유·자연공랭) / **ONAF**(자연유·강제공랭) / **OFAF**(강제유·강제공랭) / **ODAF**(지향유·강제공랭)이며, ONAN↔ONAF를 같은 "자연 냉각" 묶음으로 두지 않는다(가드레일 §2 ONAN/ONAF/OFAF 항목) — 근거: `sessions/2026-08-20T15-50-23/bess-transformer-expert.md`
+- ❌ 와전류 손실을 "**에디류 손실**"로 표기(음차·한자 혼용 깨진 토큰) → ✅ **와전류 손실(eddy current loss)** 로 표기하고, 무부하손은 **히스테리시스 손실 + 와전류 손실**로 구성됨을 명시(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-20T15-50-23/bess-transformer-expert.md`
 - ❌ 주변압기 용량 여유율 예시를 "설계 부하 100 kVA → 115 kVA"로 제시(BESS 주변압기는 통상 수~수십 MVA 급) + 본문은 "MVA 결정"이라 서술 → ✅ 예시 값은 실제 등급대(MVA)로 들고, 본문 단위와 예시 단위를 일치시킨다(가드레일 §5-2 자릿수 검산) — 근거: `sessions/2026-08-05T07-38-25/bess-transformer-expert.md`
 - ❌ **소내변압기**에 "OLTC ±10% 탭 조정" 요구를 적용 → ✅ OLTC(부하 중 탭절환)는 주변압기 영역이고, 소내·건식 변압기는 통상 **무전압 탭절환(DETC, ±2×2.5%)** 을 적용한다. 탭절환 방식을 변압기 등급별로 구분 — 근거: `sessions/2026-08-05T07-38-25/bess-transformer-expert.md`
 - ❌ 변압기 절연등급·LVRT/HVRT 요건의 근거로 "**KEC 2021 제241조**"를 인용 → ✅ KEC 240번대는 특수설비 계열이며 변압기 절연·온도상승 규정이 아니다(system-engineer·standards-analyst·facility-manager 세션에서 4중 재발). 절연·온도상승은 **KS C IEC 60076-2/-11**, VRT는 KEPCO 계통연계기술기준 소관 — 근거: `sessions/2026-08-05T07-38-25/bess-transformer-expert.md`

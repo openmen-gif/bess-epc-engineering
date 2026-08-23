@@ -142,6 +142,11 @@ bess-emerging-markets
 - 인도 BESS 프로젝트 자본구조 참조 배분: Equity 40% / Sponsor Loan 30% / IFC PF 20% / ECA(K-EXIM·JBIC) 10%, 정치리스크는 MIGA 보험, 통화는 Cross-Currency Swap으로 헤지 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
 - 인도 현지 파트너 축: 공기업·발전사(NTPC·SECI) 파트너십으로 기술 이전·현지화, 국제금융기구(IFC PS1-8 / ADB SPS) 준수로 조달 신뢰성 확보 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 사우디 규제기관을 "**Saudi Arabian Petroleum Company, SAPTCO**"로 기재하고 SPPC를 "사우디아라비아 **프로젝트 파트너십** 회사"로 오역 → ✅ **SAPTCO는 사우디 대중교통공사**(Saudi Public Transport Company)로 전력 규제와 무관하고, Saudi Aramco는 석유회사다. 전력·수도 규제는 **WERA**(Water & Electricity Regulatory Authority, 구 ECRA), 발전 조달은 **SPPC = Saudi Power Procurement Company**(전력구매공사)이며 재생E 개발은 REPDO(에너지부 산하) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ UAE 기관명 오역("EWEC = 에미리트 **에너지** 회사", "DEWA = 두바이 **에너지** 회사") → ✅ **EWEC = Emirates Water and Electricity Company**(아부다비 수·전력공사), **DEWA = Dubai Electricity and Water Authority**(두바이 수전력청). 기관 정식 명칭을 임의 축약·의역하지 않는다 — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ 동남아를 한 묶음으로 두고 "**MOIT(산업통상부)와 EGAT(전력공사)** 등이 주요 역할"로 기재 → ✅ **MOIT는 베트남 산업무역부**, **EGAT는 태국 발전공사**로 서로 다른 나라 기관이다. 베트남 전력공사는 **EVN**, 필리핀은 DOE·NGCP, 인도네시아는 **PLN** — 국가별로 기관을 분리 매핑한다(가드레일 §1.1) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ 약어 오역 2건: "**NDF(비표시 외화)**", "**크로스 커브리어 스왑(CCS)**" → ✅ **NDF = Non-Deliverable Forward(차액결제선물환)**, **CCS = Cross-Currency Swap(크로스 커런시 스왑)**. 금융상품 약어는 원어 확인 후 표기(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ 인도 지원정책을 "**국가 에너지 저장 미션(NESM)**"으로 다시 확정 서술(2026-08-05에 이어 **본 도메인 재발**), 인허가 절차에 근거 불명 "지역 에너지 계획(REP) 승인" 기재 → ✅ NESM은 정식 출범 미확인이며 실제 수단은 **VGF·PLI(ACC)·주별 RPO/ESO**다. 미확인 정책·절차명은 `[요확인]`으로 강등(가드레일 §1.1·§4) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
 - ❌ **VGF**를 "Value Added Fund"로 풀어 씀 → ✅ 인도 VGF = **Viability Gap Funding(사업성보전지원금)** — MNRE/SECI 입찰의 보조금 수단이며 "부가가치 기금"이 아니다 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
 - ❌ 100 MW / 200 MWh 프로젝트 총 비용을 "~$120M"으로 제시하면서 단위비용을 "~**$1.2/kWh**"로 기재(실제 $120M ÷ 200,000 kWh = **$600/kWh**, 500배 오차이자 기준표 $300~400/kWh 초과) → ✅ 총액÷용량으로 단위비용을 역산해 §3.3 기준표 범위와 대조한 뒤 발행(가드레일 §5-2) — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
 - ❌ 인도 지원정책을 "**국가 에너지 저장 미션(NESM)**"으로 확정 서술 → ✅ NESM은 2019년 제안 후 정식 출범이 확인되지 않는다. 실제 집행 수단은 **VGF 스킴·PLI(ACC 배터리)·주별 RPO/ESO**이며, 미확인 정책명은 `[요확인]`(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
@@ -151,6 +156,7 @@ bess-emerging-markets
 - ❌ 인도 현지화 정책에 "Saudization" 혼입 → ✅ Saudization=중동(사우디), PLI/RPO/VGF/DCR=인도로 국가↔정책 귀속 고정(복붙 금지) — 근거: `sessions/2026-05-21T09-40-14/bess-emerging-markets.md`
 - ❌ "NREA/NREMP/450GW" 등 정책 약어·수치 세션 간 혼재(47GW 저장 vs 재생목표 수치) → ✅ 저장목표(47GW≈236GWh)와 재생목표(500GW급)를 구분·고정 인용 — 근거: `sessions/2026-06-03T01-26-09/bess-emerging-markets.md`
 - ❌ VRT를 "Virtual Synchronization Technology(가상 동기화 기술)"로 정의(신흥시장 그리드코드 분석) → ✅ VRT = Voltage Ride-Through(전압 사고 통과 능력) — 정의는 시장 무관 공통, bess-grid-interconnection 가드레일과 동일 원칙 적용 — 근거: `sessions/2026-07-16T21-28-13/bess-emerging-markets.md`
+- ❌ 인도 PLI(ACC 배터리 셀 제조 인센티브, 목표 50GWh)를 "2030년까지 47GW 저장 목표"의 예시인 것처럼 병기 → ✅ PLI는 배터리 **셀 제조(생산능력)** 인센티브 목표(50GWh)이고, 47GW(≈236GWh)는 별개의 BESS **배치(저장용량)** 목표 — 두 수치를 상호 예시로 혼용 금지 — 근거: `sessions/2026-08-12T09-56-45/bess-emerging-markets.md`
 </content>
 </invoke>
 

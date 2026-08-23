@@ -140,7 +140,12 @@ Arbitrage, 차익거래, FCAS, FR, 주파수조정, 용량시장, Capacity Marke
 - Dispatch 최적화 3축 동시 고려: 에너지 차익(KPX CBP 경부하 충전·피크 방전), 보조서비스, 용량시장(US PJM·UK Capacity Market) — 다중목표 최적화 + ML 가격 예측 + SOC 관리로 결합 — 근거: `sessions/2026-08-01T19-21-30/bess-power-market-expert.md`
 - 최저가 낙찰 시장에서는 기술적 제약(응답속도·가용률)이 있는 사업자가 불리하므로, 입찰 전략에 기술 역량 평가를 함께 반영 — 근거: `sessions/2026-08-01T01-23-30/bess-commissioning-coordinator.md`
 - Revenue Stacking 시간축 전개: **단기** 시간대별 에너지 차익거래 → **중기** 주파수조정(FR) 등 보조서비스 입찰 확대 → **장기** 용량시장 참여 + REC 프리미엄. 출하량 급증(2026 상반기 +71%)에 따른 입찰가 경쟁 심화를 수익성 압박 변수로 반영 — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
+- Revenue Stacking 3층 구조(기간축): **단기** = 시간대별 에너지 차익거래(KPX CBP·NEM 5분 정산) / **중기** = 주파수조정·FFR·EFR 등 보조서비스 / **장기** = 용량시장·REC 프리미엄 — 층별로 시장·정산주기·기술요건을 분리해 기재 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **FCAS를 미국·일본 시장에 적용**("미국(FCAS)", "일본(FCAS)", "미국 ERCOT 시장에서 FCAS 입찰") → ✅ **FCAS는 호주 AEMO/NEM 전용 명칭**이다. ERCOT의 보조서비스는 **Reg-Up/Reg-Down·RRS·ECRS·Non-Spin**, PJM은 **RegA/RegD**, 일본은 **需給調整市場(수급조정시장)** 이다(가드레일 §1.1 재발) — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
+- ❌ **"JEPX의 보조서비스", "JEPX 용량시장"** 표기가 **본 도메인 재발** → ✅ JEPX는 **도매 거래소(spot/forward)** 이고, 용량시장은 **OCCTO**, 수급조정시장은 **일반송배전사업자 공동 운영**이다. 세 시장의 운영주체를 분리해 인용 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
+- ❌ 영국 계통운영자를 **"NGESO"** 로 표기 → ✅ 2024년 이후 영국 시스템 운영자는 **NESO**다(가드레일 §1.1 재발) — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
+- ❌ 한국 주파수조정 시장을 **"AGC 시장"** 으로 지칭 → ✅ KR은 **예비력·주파수조정(FR) 시장**이고 AGC는 급전 지시를 전달하는 **제어 방식**이다. 시장명과 제어 방식을 구분해 표기 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
 - ❌ **CBP**를 "계약 기반 전력 거래(Contract-Based Pool)"로 풀어 씀 → ✅ KPX의 CBP = **Cost-Based Pool(변동비반영시장)** — 발전기 변동비 기반 정산 구조이며 계약 기반 거래가 아니다 — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
 - ❌ KR 보조서비스 수익원으로 "무효전력 조정 입찰"을 확정 서술 → ✅ KR 보조서비스는 **예비력·주파수조정(FR)** 중심이며 무효전력의 독립 정산시장 여부는 전력시장운영규칙 확인 전까지 `[요확인]` — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
 - ❌ KPX 연간 소비량·발전용량·FR 시장 거래량을 "(시점 미상)" 추정치로 제시 → ✅ KEPCO 연간보고서·KPX 통계의 기준연도와 함께 인용하고, 미확보 시 `[요확인]`(출처 없는 정량 주장 금지, 가드레일 §0-4) — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`

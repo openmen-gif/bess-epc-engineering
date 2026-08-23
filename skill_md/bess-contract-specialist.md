@@ -154,7 +154,11 @@ bess-contract-specialist
 - ESS 성능 보증 수치 예시(계약 명문화 대상): 가용률 **≥97%**, RTE **≥88%**, 열화 보증 **SOH ≥80% @ Year 10** — 근거: `sessions/2026-07-31T00-46-34/bess-contract-specialist.md`
 - 기술 파트너십 계약에는 기술 이전 마일스톤과 공동 R&D 우선권 조항을 포함해 장기 경쟁력을 확보 — 근거: `sessions/2026-07-31T00-46-34/bess-contract-specialist.md`
 - BESS 계약에 추가할 소프트웨어·데이터 조항 3종(물리 EPC 조항만으로 미커버): 펌웨어·소프트웨어 버전 관리 및 업데이트 검증 절차, 데이터 접근권한·암호화·사이버보안 요건, 실시간 모니터링·알람 시스템 성능 기준 — 근거: `sessions/2026-08-04T07-13-44/bess-contract-specialist.md`
+- 불가항력 조항 판번 매핑: **FIDIC 2017판 Cl.18 = Exceptional Events**, **1999판 Cl.19 = Force Majeure** — 판번을 밝히지 않고 조항 번호만 쓰면 상대방과 다른 조항을 지칭하게 되므로 항상 "(2017판/1999판)"을 병기 — 근거: `sessions/2026-08-22T16-03-15/bess-contract-specialist.md`
+- 연차별 열화 보증 기재 예시(단조 감소 준수): **SOH ≥80% @ Year 10 → ≥75% @ Year 20** + 검증 방법·측정 주기(분기/반기)를 조항에 함께 명시 — 근거: `sessions/2026-08-22T16-03-15/bess-contract-specialist.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **RTE**를 "**Renewable Energy Target Efficiency**"로 풀어 씀 → ✅ RTE = **Round-Trip Efficiency(왕복효율)** 이며 재생에너지 목표와 무관하다(가드레일 §2 재발) — 근거: `sessions/2026-08-22T16-03-15/bess-contract-specialist.md`
+- ❌ **성능 보증(Performance Guarantees)** 을 "**Clause 4.2 (Performance Security)**"에 매핑 → ✅ Cl.4.2는 **이행보증(Performance Security, 계약금액의 10%)** 이고, 성능 보증·준공 후 시험은 **Cl.11~12(Tests after Completion 계열)** 소관이다. legal-expert 세션에 이어 **재발** — 근거: `sessions/2026-08-22T16-03-15/bess-contract-specialist.md`
 - ❌ 열화 보증을 "SOH ≥80% @ Year 10, **≥95% @ Year 20**"으로 기재(후행 연차 값이 더 높음) → ✅ SOH 보증은 연차에 대해 **단조 감소**해야 한다. 연차별 값을 나열할 때 대소관계를 검산한 뒤 계약서에 반영 — 근거: `sessions/2026-08-04T07-13-44/bess-contract-specialist.md`
 - ❌ 응답 시간 보증을 "**≤10초 / MW**"로 표기(시간 지표에 용량 단위 결합) → ✅ 응답시간은 초·ms 단위 단독으로 규정하고(PCS 제어 응답 ≤50 ms 등 소관값 인용), 용량 의존 지표는 별도 항목으로 분리(가드레일 §5-5) — 근거: `sessions/2026-08-04T07-13-44/bess-contract-specialist.md`
 - ❌ 성능 보증 수치(가용률·RTE·SOH)를 계약서에 계약전문가 단독 판단으로 확정 → ✅ 수치는 battery-expert·om-expert 소관값을 인용하고, 계약전문가는 조항 구조·LD 연동만 설계(가드레일 §4 역할 경계) — 근거: `sessions/2026-07-31T00-46-34/bess-contract-specialist.md`
@@ -162,6 +166,7 @@ bess-contract-specialist
 - ❌ "Sub-Clause 4.2 ... 성능 보증 조항/KPI 설정" → ✅ 4.2는 Performance Security임. 성능 KPI/Tests after Completion은 Cl.11~12 — 근거: `sessions/2026-06-08T01-43-37/bess-contract-specialist.md`
 - ❌ "이행 보증(4.2)으로 성능 보증 기간 최소 2년" + legal의 "성능보증 5년" 혼용 → ✅ 보증 3종 구분: 이행보증(Performance Security, Cl.4.2) ≠ 결함통지기간(DNP, Cl.11, 통상 1~2y) ≠ 성능·열화보증(SOH, 10~15y) — 근거: `sessions/2026-06-08T01-43-37/bess-contract-specialist.md`
 - ❌ 파트너십 라이선스 표에 "Sub-Clause 2.1/14.3/15/17/18" 임의 부여 → ✅ FIDIC 조번호는 EPC GCC 체계에만 적용, 라이선스 계약에 임의 매핑 금지(계약 유형 혼용 환각) — 근거: `sessions/2026-06-04T06-56-39/bess-contract-specialist.md`
+- ❌ Sub-Clause 12를 "Warranty(보증)"로 표기 → ✅ Cl.12는 Tests after Completion(완공 후 시험 — 성능 KPI·열화 검증), 보증(Warranty/제조사 보증서·Schedule 1)은 별개 개념이므로 조항 목적과 명칭을 혼동 금지 — 근거: `sessions/2026-08-11T07-50-06/bess-contract-specialist.md`
 
 ## 핵심 역량 및 업무 범위
 

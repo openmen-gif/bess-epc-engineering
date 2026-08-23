@@ -164,6 +164,7 @@ bess-transfer-pricing
 ## DEMPE 기능 매핑 (BESS 가치 사슬)
 
 DEMPE = Development, Enhancement, Maintenance, Protection, Exploitation of IP
+
 | 기능 | BESS 사업 활동 예시 | 위치(예시) |
 |------|-------------------|-----------|
 | **Development (개발)** | BMS·EMS·Grid-Forming 알고리즘 R&D | 본사 R&D 센터 (KR/JP) |

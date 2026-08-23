@@ -134,6 +134,8 @@ bess-risk-manager
 - Risk Register 표기 규약: 분류 / 설명 / **P(1~5) × I(1~5) = Score** / Owner / 대응전략(Avoid·Mitigate·Transfer·Accept) / 완화조치 / 기한. Score ≥20 = Critical, 12~19 = High — 근거: `sessions/2026-07-29T00-22-09/bess-risk-manager.md`
 - 외부 전문가 자문 계약은 **자문 범위와 정기 피드백 주기**(예: 월 1회 기술회의 + 이슈 상세보고서)를 계약서에 명시해야 리스크 완화 효과를 추적할 수 있다 — 근거: `sessions/2026-07-29T00-22-09/bess-risk-manager.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ FIDIC 계약 유형을 "**Conditions of Contract for Plant and Design-Build (FIDIC Purple Book)**"로 기재 → ✅ Plant & Design-Build는 **Yellow Book**이며 **Purple Book은 FIDIC 계약군에 존재하지 않는다**(Red=Construction, Silver=EPC/Turnkey, Green=Short Form, Gold=DBO). 같은 배치의 standards-analyst 세션에서도 동일 오매핑이 검출된 **2개 도메인 반복 오류** — 근거: `sessions/2026-08-22T16-03-15/bess-risk-manager.md`
+- ❌ 인용한 NEWS-ID의 **실제 보도 주제와 다른 라벨**을 붙여 근거로 사용(계측기 출시 보도 `bess-20260822-a01`을 "공급 부족 리스크 관련 보도"로, 국제연수 보도 `a04`를 "기후 규제 강화 근거"로 재라벨) → ✅ NEWS-ID를 인용할 때는 원 보도의 주제를 그대로 요약하고, 리스크 연결은 별도 `[전망]` 문장으로 분리한다(가드레일 §0-4·§0-7) — 근거: `sessions/2026-08-22T16-03-15/bess-risk-manager.md`
 - ❌ 공급망 지연 리스크의 대응전략을 **Transfer**(이전)로 분류하면서 실제 조치는 다중 공급처 확보(= Mitigate) → ✅ 대응전략 라벨과 완화조치의 성격을 일치시킨다(Transfer는 보험·계약상 책임 이전에 한정) — 근거: `sessions/2026-07-29T00-22-09/bess-risk-manager.md`
 - ❌ 재무 리스크를 NPV·IRR 단일 시나리오로 평가 → ✅ 배터리 가격·환율 민감도를 **Monte Carlo**로 정량화한 뒤 예비비를 산정 — 근거: `sessions/2026-07-29T00-22-09/bess-risk-manager.md`
 - ❌ 등급 임계값 비일관(Score 16>15인데 16=High·15=Critical로 더 낮게 표기) → ✅ 5×5 매트릭스 단일 임계값 고정: ≥20 Critical, 15-19 High, 8-14 Medium, <8 Low — 근거: `sessions/2026-06-03T19-08-13/bess-risk-manager.md` vs `sessions/2026-06-08T07-19-19/bess-risk-manager.md`

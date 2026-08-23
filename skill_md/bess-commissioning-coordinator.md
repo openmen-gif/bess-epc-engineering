@@ -175,6 +175,8 @@ BESS 시운전 전 단계(Pre-Commissioning → Commissioning → PAT → Grid I
 - 시운전 안전 게이트에 NFPA 855 **TRPP(열폭주 확산 방지)** 항목을 편입하고, LOTO·PTW와 함께 게이트 전환 증빙으로 관리 — 근거: `sessions/2026-08-01T01-23-30/bess-commissioning-coordinator.md`
 - 게이트 승인 체계는 CMP(시운전 마스터플랜) 기준으로 단계별 증빙(시험성적서·측정로그·승인기록)을 갖춰야 전환 — 근거: `sessions/2026-08-01T01-23-30/bess-commissioning-coordinator.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 시운전 프로세스 초안이 **뉴스 4건(NEWS-ID `bess-20260822-a01~a04`) 해설 + 기술 도입 권고**로 채워지고 **PreCom → Com → PAT → Grid Test 단계 전환 게이트·Hold Point·Punch List·PAC/FAC 증빙이 0건**(2026-08-04에 이은 **재발**) → ✅ 시운전 코디네이터 산출물의 1순위 결론은 항상 **단계 게이트와 전환 증빙**이며, 트렌드는 부가 정보로만 기재한다(가드레일 §0-7) — 근거: `sessions/2026-08-22T10-52-50/bess-commissioning-coordinator.md`
+- ❌ 바나듐 이온 배터리를 "**높은 에너지 밀도**와 장수명"으로 서술하고 배터리 선택 기준으로 제시 → ✅ 바나듐계는 리튬이온 대비 **에너지 밀도가 낮고** 강점은 안전성·장수명이다. 화학종 성능값은 battery-expert 소관값을 인용하며, 배터리 선정 자체도 시운전 코디네이터 결론 범위가 아니다 — 근거: `sessions/2026-08-22T10-52-50/bess-commissioning-coordinator.md`
 - ❌ 시운전 리스크 산출물이 공급망·품질경영(ISO 9001)·시장 수요예측·규제 일반으로 채워지고 **시운전 고유 게이트**(Hold Point, Punch List, PAC/FAC 전환 증빙, 초기 사이클링 셀 불균형 검증)가 누락 → ✅ 시운전 코디네이터는 단계 전환 게이트와 증빙을 1순위 결론으로 제시하고, 공급망·품질경영·시장 항목은 procurement·qaqc·marketer 결과를 인용 — 근거: `sessions/2026-08-04T15-44-15/bess-commissioning-coordinator.md`
 - ❌ 품질 리스크 근거로 "노무현 정부 시기부터 이어진 정책 변동성"을 인용(marketer·epc-bom 세션에서 전파된 미검증 서술) → ✅ 타 도메인 산출물의 정권 귀속 서술을 복사하지 않고, 정책 변동은 **고시·법령 개정 이력**으로 특정 — 근거: `sessions/2026-08-04T15-44-15/bess-commissioning-coordinator.md`
 - ❌ 뉴스 기반 입찰 일정·규모(공고월·1조원)를 확정 사실로 기재 → ✅ 공고 확정 전까지 `[요확인]` 유지하고 NEWS-ID와 원보도 링크를 병기 — 근거: `sessions/2026-08-01T01-23-30/bess-commissioning-coordinator.md`
@@ -186,6 +188,7 @@ BESS 시운전 전 단계(Pre-Commissioning → Commissioning → PAT → Grid I
 - ❌ 고조파를 전압 THD로 판정 → ✅ 계통 주입 전류는 TDD <5%(IEEE 1547-2018 §7.3 / IEEE 519-2014) — 근거: 본 최적화(2026-06-10) 규격 정합 검토
 - ❌ PAT를 "Performance Acceptance Testing"으로 표기(activity화) → ✅ PAT = Performance Acceptance Test로 통일(재발 방지) — 근거: `sessions/2026-06-16T01-11-29/bess-commissioning-coordinator.md`
 - ❌ 마스터플랜에서 FIT를 "Factory Integration Test"로 확장 → ✅ FIT = Functional/Field Integration Test(EMS 통합시험, fit-procedure SSOT), 공장시험은 FAT로 별도 표기 — 근거: `sessions/2026-06-22T10-54-19/bess-commissioning-coordinator.md`
+- ❌ VRT를 "Voltage Regulation Reserve", FFR을 "Frequency Follower Reserve"로 오역 → ✅ VRT=Voltage Ride-Through(전압 순간강하 통과), FFR=Fast Frequency Response(고속 주파수 응답)로 정정 — 근거: `sessions/2026-08-11T14-15-00/bess-commissioning-coordinator.md`
 
 ## 핵심 역량 및 업무 범위 (요약)
 
@@ -278,6 +281,7 @@ BESS 시운전 전 단계(Pre-Commissioning → Commissioning → PAT → Grid I
 > FAT를 현장 Pre-Com 이후에 배치하지 않는다. (가드레일 §운영 학습 참조)
 ### Phase 1: Pre-Commissioning (사전 시운전)
 **→ 실무: bess-precom-report 참조**
+
 | 시험 항목 | 합격 기준 (정량) | 적용 규격 |
 |----------|:---:|-----------|
 | 절연저항 (AC 회로) | ≥1MΩ (저압) / 측정전압 500~1000VDC 인가 | IEC 60364-6 §6.4.3.3 / BS 7671 Table 64 |
@@ -294,6 +298,7 @@ BESS 시운전 전 단계(Pre-Commissioning → Commissioning → PAT → Grid I
 - [ ] 시험 장비 교정 유효기간 잔존 (교정 만료일 > 시험 종료 예정일)
 ### Phase 2: EMS FIT (Factory/Field Integration Test)
 **→ 실무: bess-fit-procedure 참조**
+
 | 시험 항목 | 합격 기준 (정량) | 적용 규격 |
 |----------|:---:|-----------|
 | 통신 레이턴시 | <100ms (Modbus TCP 폴링 주기) | IEC 61850 / Modbus 사양 |

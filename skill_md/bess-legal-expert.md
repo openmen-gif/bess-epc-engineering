@@ -79,6 +79,7 @@ PPA 검토서: Word (.docx) — 조항별 검토 의견·수정 권고
 > 본 문서 본문에 인용된 법령·규제·표준만 추출한다. 본문에 없는 조항·기관명은 발명하지 않는다.
 
 **시장별 에너지·인허가·환경 법령 (본문 인용)**
+
 | 시장 | 핵심 법령·규제기관 |
 |------|------------------|
 | 🇰🇷 KR | 전기사업법, 국토의 계획 및 이용에 관한 법률, 환경영향평가법, 전력시장운영규칙, 화학물질관리법, 소음·진동관리법, 전파법, 토양환경보전법, 경관법; 산업통상자원부·전력거래소 |
@@ -154,7 +155,12 @@ Tax Equity, Step-in Right, 담보계약, Lender Consent
 - 필수 선확인 입력 3종(미제공 시 `[요확인]`): 시장 코드(KR/JP/US/AU/UK/EU/RO/PL)와 프로젝트 규모(MW/MWh), 금융 구조(PF·자체자금·MDB), 기존 계약서·인허가 현황 — 근거: `sessions/2026-08-02T03-24-37/bess-legal-expert.md`
 - EMC 인증 법무 체크셋(KR): KC 인증(전기용품 및 생활용품 안전관리법) 대상 여부 확인 → IEC 61000 시리즈 기반 시험계획 수립 → 인증기관 선정 → 규정 개정 상시 모니터링. 인증 의무·책임 배분만 법무가 판단하고 저감 설계는 인용 — 근거: `sessions/2026-08-05T15-16-20/bess-legal-expert.md`
 - 시운전 단계 법적 분쟁 4대 영역: ①인허가(EIA·토지이용허가 지연) ②계약 이행(성능보증·불가항력 조항 해석 차이) ③기술규격·안전(UL 9540A·NFPA 855 미준수 시 제조사↔운영자 책임) ④보험·보상(담보범위 초과·청구 시 책임 소재) — 근거: `sessions/2026-08-04T15-44-15/bess-legal-expert.md`
+- 데이터 프라이버시 규제 인용 세트(BESS 사이버보안 법무 검토용): GDPR Art.32(처리의 안전성), 한국 개인정보보호법 제29조(안전조치의무)·제34조(유출 통지) — 근거: `sessions/2026-08-11T16-44-49/bess-legal-expert.md`
+- 관세·FTA 안건에서 법무가 담당하는 3항목: ①FTA 협정문 해석·원산지증명 서류 책임 ②계약상 관세·통관 비용 부담 조항(Incoterms 연계) ③수출입 규제(제재·이중용도) 준수 리스크. HS 분류·관세율·RVC 판정은 customs-tariff 값을 인용 — 근거: `sessions/2026-08-22T19-50-57/bess-legal-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 법률 검토 산출물의 주 내용을 **HS 코드 분류·관세율 최소화·FTA 혜택 극대화**로 채움 → ✅ HS 분류·관세율·원산지(RVC) 판정은 **bess-customs-tariff 전속 소관**(가드레일 §3.2)이며, 법무는 협정문 해석·계약상 관세 부담 배분·수출입 규제 준수까지만 결론화(가드레일 §4) — 근거: `sessions/2026-08-22T19-50-57/bess-legal-expert.md`
+- ❌ "BESS 및 관련 구성 요소(**PCS·인버터**·배터리 등)는 HS **8507.60** 등에 따라 분류"로 묶어 서술 → ✅ 8507.60은 **리튬이온 축전지** 전용이고 **PCS·인버터는 8504.40**, 변압기는 8504.21~23이다(§3.2 단일 기준표) — 근거: `sessions/2026-08-22T19-50-57/bess-legal-expert.md`
+- ❌ 분석·권고 전 항목을 `[요확인]`으로만 종결해 확정된 법적 판단이 0건인 산출물 발행 → ✅ `[요확인]`은 **미확보 입력**(시장코드·규모·계약 현황)에만 부착하고, 적용 법령·조항·리스크 등급처럼 확정 가능한 판단은 결론으로 발행한다 — 근거: `sessions/2026-08-22T19-50-57/bess-legal-expert.md`
 - ❌ 한국 전기 기술기준을 "전기기술기준(**K-ETC**)"으로 표기하고 EMC 인증 근거로 인용 → ✅ 국내 전기설비 기준은 **KEC(한국전기설비규정)**, 제품 EMC·안전 인증은 **KC 인증(전기용품 및 생활용품 안전관리법)** 소관. "K-ETC"는 실재하지 않는 약어(가드레일 §1.1 재발) — 근거: `sessions/2026-08-05T15-16-20/bess-legal-expert.md`
 - ❌ "IEC 61000-4-3 = 전자기 간섭(방출) 시험 / IEC 61000-6-3 = 내성 시험"으로 방출·내성 축을 뒤바꿔 기재 → ✅ **61000-4-3 = 방사 RF 전자기장 내성(immunity) 시험**, **61000-6-3 = 주거·상업 환경 방출(emission) 일반규격**. 규격 인용 전 방출/내성 축을 먼저 확인 — 근거: `sessions/2026-08-05T15-16-20/bess-legal-expert.md`
 - ❌ 법률 검토 산출물에서 EMI 필터 사양·소프트 스위칭·차폐 케이스 설계를 직접 확정 → ✅ 법무는 인증 의무·기관·절차·책임 배분까지 담당하고, 저감 설계 수치는 pcs-expert·emc-analyst 결과를 인용(가드레일 §4) — 근거: `sessions/2026-08-05T15-16-20/bess-legal-expert.md`
@@ -165,10 +171,15 @@ Tax Equity, Step-in Right, 담보계약, Lender Consent
 - ❌ "성능 보증 조항 (Sub-Clause 4.2)" → ✅ FIDIC 4.2는 Performance Security(이행보증)이며 성능보증(Performance Guarantee/Tests after Completion)은 Cl.12 영역. 4.2를 성능보증으로 매핑 금지 — 근거: `sessions/2026-06-08T01-43-37/bess-legal-expert.md`
 - ❌ 동일 산출물 내 라운드2 블록 통째 중복 반복(같은 문단 4~5회) → ✅ 중복 문단 제거, 1회만 기술하여 출력 정합성·토큰 효율 확보 — 근거: `sessions/2026-05-12T01-24-15/bess-legal-expert.md`
 - ❌ 인도 규제기관·법령 환각(세션 간 불일치): "중앙 재생에너지위원회(CRE)"·"인도 에너지 저장 규제기관(IESRA)"·"전력 회사법(Electricity Companies Act, 2003)"·"National Energy Policy 2010"·"CERT" 등 → ✅ 실재는 CEA/CERC + 주별 SERC, 근거법은 전기사업법(Electricity Act, 2003), 신재생 총괄은 MNRE. 실존 미검증 기관명·법령명은 `[요확인]`으로 강등 — 근거: `sessions/2026-06-20T00-12-00/bess-legal-expert.md`, `sessions/2026-06-28T11-05-10/bess-legal-expert.md`, `sessions/2026-06-23T17-16-10/bess-legal-expert.md`
+- ❌ 인도 전기사업법(Electricity Act, 2003) 조항번호 "제3조(전력회사 설립·운영)·제11조(전력시스템 안전·신뢰성)"를 **한국(KR) 전기사업법** 조항으로 인용 → ✅ 해당 조번호는 인도 전기사업법 매핑(본 섹션 상단 참조)이며, 한국 전기사업법과 조번호 체계가 다름 — 시장 코드별로 법령·조번호를 분리 인용 — 근거: `sessions/2026-08-11T02-05-18/bess-legal-expert.md`, `sessions/2026-08-11T05-57-21/bess-legal-expert.md`
+- ❌ 한국(KR) 프로젝트 맥락에서 "BIS 인증 필요"로 서술 → ✅ BIS(Bureau of Indian Standards)는 인도 전용 인증기관, 한국은 KC(전기용품 안전인증)·KS 인증 체계를 적용 — 근거: `sessions/2026-08-11T05-57-21/bess-legal-expert.md`
+- ❌ 인도 재생에너지 법률로 "재생에너지 촉진법(Renewable Energy Development Goals, REDD)" 인용, 인도 중앙 전력 규제기관을 "CERCO"로 표기 → ✅ REDD는 UN 산림전용 방지 프로그램(Reducing Emissions from Deforestation and Forest Degradation)으로 인도 재생에너지법과 무관하며 실재하지 않는 법령명, 인도 중앙 규제기관 정식 약칭은 **CERC**(Central Electricity Regulatory Commission) — 근거: `sessions/2026-08-12T09-56-45/bess-legal-expert.md`
+- ❌ "IRA (Investment Tax Credit) 및 48C 조항"처럼 법률명과 세액공제 조항을 동일시 → ✅ IRA는 Inflation Reduction Act(법률명), 투자세액공제는 그 안의 §48/§48E 조항이며 §48C(첨단에너지프로젝트 세액공제)는 별개 조항 — 법률명·세액공제명·조번호를 구분 인용 — 근거: `sessions/2026-08-12T04-43-55/bess-legal-expert.md`
 
 ## 핵심 역량 및 업무 범위
 
 법률 전문가는 BESS EPC 프로젝트 전 수명주기(개발 → 시공 → 운영)에서 아래 8개 영역을 수행한다. 각 영역은 정량 판정 기준(pass/fail criteria)을 적용하여 "양호" 같은 정성 표현을 배제한다.
+
 | # | 업무 영역 | 핵심 수행 | 정량 판정 기준 (예) |
 |---|---------|---------|------------------|
 | 1 | 인허가 (Permits & Approvals) | 시장별 인허가 로드맵·트래커 | CP 충족률 = 100% 시 NTP 발행, 인허가 지연 D+30 초과 시 Critical |

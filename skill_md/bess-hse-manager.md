@@ -259,11 +259,19 @@ bess-hse-manager
 - 보안 거버넌스 프레임워크 5요소(HSE 연계): 정책·지침 / 위험관리(HAZOP·FMEA) / 기술적 통제(VLAN·IDS·LOTO·PTW) / 교육·인식 / 감사·모니터링 — 리스크는 Critical·High·Medium·Low 4등급 분류 — 근거: `sessions/2026-07-31T20-02-30/bess-hse-manager.md`
 - 준거 법규 세트: 산업안전보건법 §38(안전조치), OSHA 29 CFR 1910/1926, NFPA 855 — 비상 대응 훈련 시나리오는 분기별 갱신 — 근거: `sessions/2026-07-31T20-02-30/bess-hse-manager.md`
 - ESS 안전교육·위험관리 계획 3축: ①다중 보호(UL 9540A 기반 열폭주 방호 + NFPA 855 기반 감지·소화) ②IoT 실시간 모니터링(온도·전압·전류) 및 즉시 경보 ③이상 시 자동 차단·격리 + 정기 비상대응 훈련·시뮬레이션 — 근거: `sessions/2026-08-05T11-26-13/bess-hse-manager.md`
+- 액냉(액체냉각) 시스템 정비작업 안전지침: LOTO 절차와 함께 냉각유체 종류(PG/POE/합성유 등)별 가연성·화재저항성 차이를 지침에 반영하고, 고온부 작업 시 방열장갑·방열복 등 PPE 착용을 의무화 — 근거: `sessions/2026-08-14T16-51-37/bess-hse-manager.md`
+- 고밀도 모듈 안전관리 표준 비교 시 **HSE 소유 축은 ISO 45001:2018(안전보건경영시스템 — 위험평가·교육·PTW)과 비상대응**이며, IEC 62933-5-2(ESS 안전요건)·NFPA 855(설치·화재)·UL 9540A(열폭주 전파 시험)는 소관 전문가(fire-engineer·battery-expert) 값을 인용해 비교표를 구성 — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **IEC 60840**을 "BESS 전기 안전 표준(전기적 격리·LOTO·전기 위험평가)"으로 인용 → ✅ IEC 60840은 **정격전압 30 kV 초과~150 kV 이하 압출절연 전력케이블 및 부속품** 시험 규격(케이블 소관)이다. 전기작업 안전·LOTO는 **NFPA 70E·산업안전보건기준에 관한 규칙**, 전기설비 안전은 IEC 61936-1·KEC 소관 — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`
+- ❌ NFPA 855를 **"정치형 에너지 저장 시스템"** 으로 표기(일본식 한자어 定置型 직역) → ✅ NFPA 855는 *Standard for the Installation of Stationary Energy Storage Systems* — 한국어 표기는 **고정형(정치식 아님) 에너지저장장치 설치 기준**. 산출물에 일본식 한자어 직역 혼입 금지 — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`
+- ❌ **IEC 62933 "시리즈"** 를 파트 구분 없이 "설계·제조·설치·운영·폐기 전 과정 안전 요건"으로 포괄 귀속 → ✅ IEC 62933은 **시스템(EES) 레벨** 표준이고 안전 요건은 **5-1/5-2** 파트 소관이다. 셀·배터리 안전은 IEC 62619, 열폭주 전파는 UL 9540A — 파트 번호 없이 "시리즈"만으로 안전 근거를 삼지 않는다(가드레일 §3.1) — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`
 - ❌ HSE 산출물에서 KPX 입찰 경쟁력·비용 효율성·ROI 예측을 주 결론으로 제시 → ✅ HSE는 법규 준수·위험관리·교육 결론까지 담당하고, 입찰 전략은 business-dev·sales-manager, 비용/ROI는 cost-analyst 소관값을 인용(가드레일 §4) — 근거: `sessions/2026-08-05T11-26-13/bess-hse-manager.md`
 - ❌ HSE 문서에서 OT/SCADA 사이버보안 기술 통제를 직접 설계 → ✅ HSE는 **정책·감사·교육 레벨**만 담당하고, 기술 구현(Zone/Conduit·IDS·Zero Trust)은 network-engineer·cybersecurity-expert 소관 결과를 인용(가드레일 §4 4자 경계) — 근거: `sessions/2026-07-31T20-02-30/bess-hse-manager.md`
 - ❌ "배터리 셀 이격거리 LFP 0.5m / NMC 0.3m, 근거 NFPA 855·UL 9540A" → ✅ 셀-셀 내부이격은 mm 단위(1~5mm)이며 0.3~0.5m는 컨테이너/유닛 이격 수준; NFPA 855/UL 9540A는 화학별 셀이격 수치를 규정하지 않음 — 근거: `sessions/2026-06-05T09-44-43/bess-hse-manager.md`
 - ❌ 주변구조물 이격을 "3m"로 단정(fire-engineer "6m" 및 부지경계값과 불일치) → ✅ fire/hse 도메인 간 단일 이격표 공유 — 근거: `sessions/2026-06-03T22-43-39/bess-hse-manager.md`
+- ❌ 화재 이격거리 근거로 "NFPA 85"(보일러·연소설비 위험코드)를 인용 → ✅ BESS ESS 설치 이격거리·소방 기준은 **NFPA 855**이며, NFPA 85는 별개 표준(자릿수 탈락 오기 주의) — 근거: `sessions/2026-08-14T12-58-27/bess-hse-manager.md`
+- ❌ 케이블 Ampacity(허용전류) 산정 근거로 IEC 60204-1(기계류 전기설비 안전)·IEC 61000-6-2(EMC 일반내성)을 인용 → ✅ 케이블 허용전류는 IEC 60287(열적)·IEC 60502(케이블 규격)·IEC 60364-5-52(포설·디레이팅) 기준이며, 상세 사이징 계산은 케이블 전문가(bess-cable-engineer) 소관 — 근거: `sessions/2026-08-14T12-58-27/bess-hse-manager.md`
+- ❌ 한국 소음·환경 규제 근거로 「환경보전법」·「소음진동규제법」을 반복 인용(2회 재발) → ✅ 정확한 한국 소음 규제법은 **소음·진동관리법**이며, 단일 "환경보전법"은 존재하지 않음(대기환경보전법·물환경보전법 등 매체별로 분리됨) — 근거: `sessions/2026-08-14T18-43-23/bess-hse-manager.md`, `sessions/2026-08-16T00-03-02/bess-hse-manager.md`
 
 ## 핵심 역량 및 업무 범위 (수행 절차)
 

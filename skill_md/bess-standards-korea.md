@@ -161,7 +161,13 @@ bess-standards-korea
 - 자동화 시스템 구축 시 KEC·KEPCO 고시 개정을 상시 추적하는 **규제 준수 모듈**을 포함해야 구축 후 드리프트를 막을 수 있다 — 근거: `sessions/2026-07-31T12-18-21/bess-standards-korea_critic.md`
 - KR EMC 인증 경로: **KC 인증**(전기용품 및 생활용품 안전관리법) 기준 시험·문서화를 주 경로로 두고 **IEC 61000 시리즈**를 병행 적용, PCS·배터리 시스템 모두 대상 — 근거: `sessions/2026-08-05T15-16-20/bess-standards-korea.md`
 - 관세·원산지 검토 시 도메인 경계: KR 규격 근거는 **KEC 2021 + 계통연계기술기준(KEPCO 고시) + ESS 화재안전기준(소방청·국토부 고시)** 까지이고, FTA 혜택률·RVC·원산지 판정은 customs-tariff 소관값을 인용 — 근거: `sessions/2026-08-04T13-03-35/bess-standards-korea.md`
+- KR↔국제 표준 연계 매트릭스 작성 4축: ①ESS 안전·성능 = IEC 62933(5-1/5-2) ↔ KEC + ESS 화재안전기준 ②계통연계 = IEEE 1547-2018(참고) ↔ KEPCO 계통연계기술기준 ③환경 = ISO 14001 ↔ 환경영향평가법 ④화재 = NFPA 855 ↔ 소방시설법·위험물안전관리법. 국제 표준은 **참고 열**, 국내 고시가 **판정 열** — 근거: `sessions/2026-08-22T13-26-36/bess-standards-korea.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ BESS 화재 안전 기준으로 **NFPA 88**을 인용(비교표·체크리스트에 2회 등장) → ✅ BESS/ESS 설치·화재 기준은 **NFPA 855**. NFPA 88A는 **주차구조물** 화재안전 기준으로 BESS와 무관하다. NFPA **85↔855** 오기에 이어 **88↔855** 자릿수 오기 신규 검출 — 근거: `sessions/2026-08-22T13-26-36/bess-standards-korea.md`
+- ❌ KEC를 "**한국전기설비기준**"으로 표기하고 [요확인] 항목에는 "**KEEC**"로 병기 → ✅ 정식 명칭은 **한국전기설비규정(KEC, Korea Electro-technical Code)** 하나이며 "한국전기설비기준"·"KEEC"·"K-ETC"는 모두 비표준 표기다(가드레일 §1.1 재발) — 근거: `sessions/2026-08-22T13-26-36/bess-standards-korea.md`
+- ❌ **보호계전 정정 검증** 근거로 **IEC 60034-1**을 인용 → ✅ IEC 60034-1은 **회전기기(전동기·발전기) 정격 및 성능** 규격이다. 보호계전기는 **IEC 60255**, 계통연계 보호 정정값은 KEPCO 계통연계기술기준 소관 — 근거: `sessions/2026-08-22T13-26-36/bess-standards-korea.md`
+- ❌ BESS **VRT/FRT 시험 절차** 근거로 **IEC 61400-21-1**을 인용 → ✅ IEC 61400-21-1은 **풍력발전기 전기적 특성 측정** 규격이다. BESS의 VRT/FRT 시험은 **IEEE 1547.1(시험절차)** + KEPCO 계통연계기술기준 + IEC 62933-2-1 소관 — 근거: `sessions/2026-08-22T13-26-36/bess-standards-korea.md`
+- ❌ 같은 산출물에서 **IEEE 1547-2018**과 **IEEE 1547-2020**을 병기(판번 상충) → ✅ 본표준 현행 판은 **IEEE 1547-2018**이고 **1547.1-2020**은 별개의 시험(Conformance Test) 표준이다. 본표준과 시험표준의 번호·판번을 뒤섞지 말고 문서 내 단일화 — 근거: `sessions/2026-08-22T13-26-36/bess-standards-korea.md`
 - ❌ IEC 61000 파트 역할 오매핑("4-3 = 방사 제한", "5-2 = 애플리케이션별 방사 제한", "6-3 = 전력 품질 표준") → ✅ **4-3 = 방사 RF 내성 시험**, **5-2 = 설치·완화(접지·배선) 지침**, **6-3 = 주거·상업 환경 방출 일반규격**. 산업 환경 ESS/PCS 방출 한계는 **CISPR 11(EN 55011)** 소관 — 근거: `sessions/2026-08-05T15-16-20/bess-standards-korea.md`
 - ❌ "KEC 및 관련 고시가 22.9 kV·154 kV 전압 레벨별 EMI 제한을 명시"로 기술 → ✅ KEC는 **전기설비 시설기준**이며 EMI 방출 한계를 규정하지 않는다. EMI 한계는 KC 인증 기준·CISPR/IEC 61000 계열 소관 — 근거: `sessions/2026-08-05T15-16-20/bess-standards-korea.md`
 - ❌ 근거 경로를 `sessions/2026-07-31T12:09:00+09:00/...`처럼 콜론·오프셋 포함 형식으로 기재(실재하지 않는 디렉터리) → ✅ 세션 경로는 실제 디렉터리 형식 `sessions/YYYY-MM-DDTHH-MM-SS/<domain>.md`만 사용하고, 인용 전 파일 존재를 확인 — 근거: `sessions/2026-08-02T03-24-37/bess-standards-korea.md`
@@ -173,6 +179,7 @@ bess-standards-korea
 - ❌ FIDIC 계약조건/HS코드 일반론으로 주제 이탈 → ✅ 도메인은 국내 표준·인허가에 한정 — 근거: `sessions/2026-06-08T01-43-37/bess-standards-korea.md`
 - ❌ PCS(전력변환장치) HS "8514.90" → ✅ 8514는 산업용 전기로(furnace), PCS/인버터는 8504.40 계열 — 근거: `sessions/2026-06-25T20-04-37/bess-standards-korea.md`
 - ❌ KEC ESS 조항을 "제241조·제351조·제362조"로 뭉뚱그림 → ✅ ESS 전용은 제241.x 세부조항(241.2 이격·241.3 전기설비), 351/362는 특고압수전·저압배선 일반조항 — 근거: `sessions/2026-06-20T19-30-32/bess-standards-korea.md`
+- ❌ LVRT/HVRT·유효전력 복귀시간·ΔQ 요건(계통연계기술기준 소관)을 "KEC 제241.6조 참조"로 인용 → ✅ VRT/FRT·유효전력 복귀·ΔQ 기준은 계통연계기술기준(KEPCO 고시) 소관이며, KEC 제241.6조는 변압기 절연등급·설계요건(별도 조항)이다 — 근거: `sessions/2026-08-11T04-02-08/bess-standards-korea.md`
 
 ## 🇰🇷 한국 (Korea)
 

@@ -175,7 +175,15 @@ bess-standards-analyst
 - 국제표준 개정 시점(비교표 기준값): IEC 62933-3(2023 개정, 통합 안전 강화)·UL 9540A(2022 개정, 시험/인증 강화)·IEEE 1547-2020(주파수·전압 조정 기능 강화) — 근거: `sessions/2026-06-23T17-16-10/bess-standards-analyst.md`
 - 환경영향평가(EIA) 관할기관은 국가별로 상이: 한국 환경부(≥100MW 대상), 일본 환경성, 미국 NEPA 관할청, EU EIA Directive — 초기 BOQ 단계에 ISO 14001·EU Ecolabel 등 관련 인증 비용을 반영해야 함 — 근거: `sessions/2026-07-17T23-07-32/bess-standards-analyst_critic.md`
 - 보안 표준 통합 매핑 시 축 분리: **IEC 62443**(IACS 보안, 3-2 Zone&Conduit / 3-3 시스템 SL / 4-1 개발 프로세스 / 4-2 구성요소) ↔ **NERC CIP**(북미 규제 준수) ↔ **ISO 27001**(ISMS 관리체계) — 셋은 목적 계층이 달라 1:1 대응표로 묶지 않는다 — 근거: `sessions/2026-08-04T21-33-22/bess-standards-analyst.md`
+- **FIDIC 계약서 색상↔유형 정본표**(계약 관련 표준 동향 비교 시 인용 기준): Red=Construction(발주자 설계) · Yellow=Plant & Design-Build(시공자 설계) · Silver=EPC/Turnkey · Green=Short Form · Gold=DBO · Emerald=지하공사(FIDIC·ITA 공동). 계약 유형 선택·리스크 배분 결론은 contract-specialist 소관 — 근거: `sessions/2026-08-22T16-03-15/bess-standards-analyst.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 국제표준 동향에 **"IEEE 1547-2030"** 을 기재(본 도메인 과거 세션의 "1547-2020"에서 판번이 재차 드리프트) → ✅ 본표준 현행은 **IEEE 1547-2018**, 시험(Conformance Test) 표준은 **IEEE 1547.1-2020**이다. 2020·2030 표기는 시험표준 혼동 또는 환각이므로 사용 금지하고, 판번은 비교표 발행 전 원문 대조 — 근거: `sessions/2026-08-22T19-50-57/bess-standards-analyst.md`
+- ❌ 배터리 모듈 HS 코드를 "8507.60 **또는 8517.10**(기타 전기 저장 장치)"로 병기 → ✅ **HS 8517은 전화기·통신기기** 류이며 축전지와 무관하다. 리튬이온 축전지=**8507.60**(팩 8507.63), PCS·인버터=**8504.40**(가드레일 §3.2 단일 기준표) — 근거: `sessions/2026-08-22T19-50-57/bess-standards-analyst.md`
+- ❌ EU 에너지 효율 지침을 **"EEG"** 로 표기 → ✅ **EEG는 독일 재생에너지법(Erneuerbare-Energien-Gesetz)** 이고, EU 에너지효율지침은 **EED(Energy Efficiency Directive)** 다. 회원국 국내법과 EU 지침을 뒤섞지 않는다(가드레일 §1.1) — 근거: `sessions/2026-08-22T19-50-57/bess-standards-analyst.md`
+- ❌ **IEC 62933-3**을 "배터리 시스템의 안전성과 성능을 엄격히 규정(2023 개정)"으로 서술하고 조달·설계 변경 근거로 사용 → ✅ 62933 파트 소관은 **1(용어)·2-1(단위 파라미터·시험)·3(계획·성능 평가)·5-1/5-2(안전)** 이며 **안전 요건은 5-2 소유**다. 파트별 소관과 개정 연도는 원문 확인 전 `[요확인]`(가드레일 §3.1) — 근거: `sessions/2026-08-22T19-50-57/bess-standards-analyst.md`
+- ❌ **FIDIC 계약서 색상↔유형 전면 오매핑**("Construction=FMC", "Plant and Design-Build=Purple Book", "Tunnel and Underground Works=Red Book", "Engineering and Design-Build=Silver Book") → ✅ **Red=Construction, Yellow=Plant & Design-Build, Silver=EPC/Turnkey, Green=Short Form, Gold=DBO, 지하공사=Emerald Book**. "FMC"·"Purple Book"은 FIDIC 계약군에 존재하지 않는 명칭(가드레일 §4 환각 출처) — 근거: `sessions/2026-08-22T16-03-15/bess-standards-analyst.md`
+- ❌ 한국 법규를 **"기후변화 대응 기본법"** 으로, 정책 근거를 **"에너지기본계획"**(계획 문서)으로 인용 → ✅ 현행 법률명은 **탄소중립·녹색성장 기본법(약칭 탄소중립기본법)** 이며, 에너지기본계획은 법률이 아니라 에너지법에 근거한 **계획**이다. 법률과 계획을 구분해 인용 — 근거: `sessions/2026-08-22T16-03-15/bess-standards-analyst.md`
+- ❌ **"IRA (Investment Tax Credit)"** 로 표기(공급망·조달 규제 동향 절) → ✅ **IRA = Inflation Reduction Act(법률명)**, 투자세액공제는 그 안의 **ITC(§48/§48E)** 조항이다(가드레일 §2 재발, 5개 도메인 누적) — 근거: `sessions/2026-08-22T16-03-15/bess-standards-analyst.md`
 - ❌ IEC 62443 파트 역할을 통째로 오매핑("2-1 = 보안 아키텍처·설계 원칙", "3-1 = 네트워크 시스템 보안 요구사항", "**4-0**", "4-1 = 네트워크 인터페이스 장치 보안") → ✅ **2-1 = IACS 보안 프로그램(관리체계) 요구사항**, **3-1 = 보안기술 조사(TR)**, **3-2 = Zone & Conduit 위험평가**, **3-3 = 시스템 보안 요구사항·SL**, **4-1 = 제품 개발 수명주기 보안**, **4-2 = 구성요소 보안 요구사항**. **4-0은 실재하지 않는 파트**(가드레일 §3.1 재발) — 근거: `sessions/2026-08-04T21-33-22/bess-standards-analyst.md`
 - ❌ NERC CIP 표준번호를 한 칸씩 밀려 매핑("CIP-004 = 네트워크 보안", "CIP-005 = 모니터링", "CIP-006 = 보안 인식 교육", "CIP-007 = 물리 보안", "CIP-008 = 취약점 관리", "CIP-009 = 사이버 공격 대응") → ✅ **CIP-002 자산 분류 / CIP-003 보안관리 통제 / CIP-004 인적보안·교육 / CIP-005 전자적 보안경계(ESP) / CIP-006 물리적 보안 / CIP-007 시스템 보안관리 / CIP-008 사고 보고·대응 / CIP-009 복구계획 / CIP-010 구성변경·취약점 평가 / CIP-011 정보보호**. 번호↔주제는 원문 대조 후 인용 — 근거: `sessions/2026-08-04T21-33-22/bess-standards-analyst.md`
 - ❌ 국내 보안 근거로 "KEC 제142조 = ESS 연계 보안 요구사항", "KEC 제241조 = 계통연계 보안 조항"을 인용 → ✅ **KEC에는 사이버보안 조항이 없다**(142는 접지시스템 시설, 240번대는 특수설비). OT 보안 근거는 IEC 62443·NERC CIP·정보통신기반보호법 계열로 귀속하고, KEC 조문은 확인 전까지 `[요확인]` — 근거: `sessions/2026-08-04T21-33-22/bess-standards-analyst.md`
@@ -183,6 +191,9 @@ bess-standards-analyst
 - ❌ 한국어+영어 혼합 깨진 토큰("independency", "알카ไล") → ✅ 출력 토큰·표기 품질 검증 — 근거: `sessions/2026-05-13T10-38-22/bess-standards-analyst.md`
 - ❌ 인도 규제 인용에 "Revised Notification No. SO 31040/2015-2023" 등 미확인 법령번호를 확정 사실로 기재 → ✅ 법령·통지번호는 원문 확인 전 [요확인] 태그 강제(환각 가능) — 근거: `sessions/2026-06-23T17-16-10/bess-standards-analyst.md`
 - ❌ 케이블 사이징 등 전기설비 규격을 국가 구분 없이 일반 기준으로만 검토 → ✅ 한국 KEC·미국 NEC·일본 JEAC 등 국가별 전기규격 개별 준수 여부를 조항까지 명시 검증 — 근거: `sessions/2026-07-17T23-07-32/bess-standards-analyst_critic.md`
+- ❌ IEC 62262을 "데이터 관리" 표준으로 인용 → ✅ IEC 62262는 전기기기 외함의 기계적 충격 보호등급(IK 코드) 규격이며 데이터 관리와 무관 — 데이터 품질·보안 관리는 ISO/IEC 27001 등으로 별도 인용 — 근거: `sessions/2026-08-11T00-04-34/bess-standards-analyst.md`
+- ❌ AI 모델 예측 정확도·신뢰성 검증 근거로 IEEE Std 1680-2017을 인용 → ✅ IEEE 1680 시리즈는 컴퓨터·디스플레이 등 전자제품의 환경·사회적 책임성 평가(EPEAT) 표준이며 AI 모델 성능 검증과 무관 — 근거: `sessions/2026-08-11T00-04-34/bess-standards-analyst.md`
+- ❌ 접지저항 요구사항 근거로 "KEC 제241조"를 인용(같은 세션 내 제142조와 혼용) → ✅ 접지저항의 KEC 근거는 제142조(접지시스템 시설)이며, 제241조는 ESS 설비 전용 조항(배터리·PCS·안전장치)으로 접지저항 규정을 포함하지 않는다 — 근거: `sessions/2026-08-11T00-04-34/bess-standards-analyst.md`
 
 ## 핵심 역량 및 업무 범위 (Process)
 
@@ -229,6 +240,7 @@ bess-standards-analyst
 ## 시장별 상세 규격 (Hub-Spoke)
 
 각 시장의 상세 규격·표준·인허가 정보는 아래 개별 파일을 참조한다.
+
 | 시장 | 파일 | 주요 내용 |
 |------|------|---------|
 | 🇰🇷 한국 | [`bess-standards-korea.md`](./bess-standards-korea.md) | KEC, KEPCO 계통연계, 소방청 ESS 화재안전, KPX 전력시장 |

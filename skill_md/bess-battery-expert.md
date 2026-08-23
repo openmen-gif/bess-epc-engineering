@@ -168,7 +168,11 @@ bess-battery-expert
 - 열 전파 차단 설계: 모듈당 NTC 온도센서 배치 + 셀 간 이격 **1~5 mm** 유지, CFD 검증으로 냉각 설계 확정 — 근거: `sessions/2026-08-02T03-24-37/bess-battery-expert.md`
 - 2026년 상반기 글로벌 리튬이온 ESS 출하량 **전년 동기 대비 +71%**(NEWS-ID `bess-20260804-a01`) — 셀 단가·공급망 전망의 기준 사실 — 근거: `sessions/2026-08-04T18-36-55/bess-battery-expert.md`
 - 배터리 시스템 EMC 대응 축(팩·BMS 레벨): PCB 레이아웃(고주파 신호↔접지 분리·그라운드 플레인 확장), 입출력 LC 필터, 스위칭 주파수 하향·소프트 스위칭, EMI 차폐 케이스 — 정량 판정은 emc-analyst 시험값으로 확정 — 근거: `sessions/2026-08-05T15-16-20/bess-battery-expert.md`
+- 고밀도 모듈 안전성 평가 시 **표준 4종 소관 분리**: UL 9540A(열폭주 전파 시험, Cell/Module/Unit/Installation) · IEC 62619(셀·배터리 안전요건) · IEC 62620(용량·사이클·캘린더 **성능** 평가) · NFPA 855(설치·화재안전·이격). 평가 항목별로 근거 표준을 분리 인용 — 근거: `sessions/2026-08-22T13-26-36/bess-battery-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ SOC/SOH 하이브리드 추정의 **CC**를 "Calibration Cycle(캘리브레이션 사이클)"로 풀어 씀 → ✅ 여기서 CC는 **Coulomb Counting(전류 적산)**. 캘리브레이션 사이클(Full Cycle)은 SOH **검증 절차**이지 추정 알고리즘 약어가 아니며, 둘을 바꿔 쓰면 알고리즘 구성(CC+EKF+OCV) 설명이 무너진다 — 근거: `sessions/2026-08-22T18-06-06/bess-battery-expert.md`
+- ❌ 영문 약어를 발음 음차로 표기("SOC(상태 오브 차지)", "SOH(상태 오브 헬스)") → ✅ SOC=**충전상태**(State of Charge), SOH=**건전성 상태**(State of Health)로 한국어 정식 용어를 쓴다(가드레일 §4 출력 품질 — 한/영 혼용 깨진 토큰 금지) — 근거: `sessions/2026-08-22T18-06-06/bess-battery-expert.md`
+- ❌ **셀 간 이격 1~5 mm**(열전파 차단 목적)를 "모듈 간 최소 이격거리"로 라벨링하고 NFPA 855 화재 이격 요구와 같은 문단에 병기(같은 문서 내 "모듈 간 최소 3 mm"까지 병기) → ✅ 셀 간 이격(mm 단위, 열전파 차단)과 유닛·컨테이너 화재 이격(NFPA 855 3 ft=0.9 m)은 **대상·목적·단위가 다른 별개 지표**이며 화재 이격 값의 단일 소유자는 bess-fire-engineer — 근거: `sessions/2026-08-22T13-26-36/bess-battery-expert.md`
 - ❌ 산업용 ESS/PCS 방출 규격으로 **CISPR 32**(멀티미디어 기기 EMC)를 인용 → ✅ 산업·ISM 환경 방출은 **CISPR 11(EN 55011)**, 전력구동시스템은 **IEC 61800-3**. CISPR 32는 대상 기기군이 다름 — 근거: `sessions/2026-08-05T15-16-20/bess-battery-expert.md`
 - ❌ "2026년 말까지 셀 단가 5~10% 하락"을 출하량 증가 보도 1건만으로 단정 → ✅ 가격 전망은 `[전망]` 태그 + 원자재(리튬·코발트) 가격 시계열·증설 계획 등 2차 근거를 붙이고, 미확보 시 `[요확인]` — 근거: `sessions/2026-08-04T18-36-55/bess-battery-expert.md`
 - ❌ 벤더 1곳의 기술력·가격 우위만으로 선정 결론(공급능력·긴급조달 유연성 미검증) → ✅ 최소 3~5개 벤더 비교 + 공급능력·주문변경 대응력까지 평가 항목에 포함 — 근거: `sessions/2026-07-26T15-05-49/bess-battery-expert_critic.md`
@@ -178,10 +182,13 @@ bess-battery-expert
 - ❌ 성능 시험(용량·사이클·캘린더)을 IEC 62619로 인용 → ✅ IEC 62620(성능) / IEC 62619(안전) 소관 분리 인용 — 근거: 본 최적화(2026-06-10) 표준 정합화
 - ❌ 사이클 수명 시험을 시스템 표준 "IEC 62933 시리즈"로 인용(예: "IEC 62933 시리즈에 따른 6,000사이클"), DCIR을 IEC 62619로 인용 → ✅ 셀 사이클·용량·캘린더 성능시험은 IEC 62620, IEC 62933은 시스템(EES) 레벨 표준으로 소관 분리 — 근거: `sessions/2026-06-25T23-35-51/bess-battery-expert.md`
 - ❌ LTO(리튬 티타늄 산화물) 대표 벤더로 Solid Power·QuantumScape 언급 → ✅ 두 회사는 전고체(Solid-state) 리튬금속 배터리 스타트업이며 LTO 벤더가 아님, LTO 대표 벤더는 Toshiba(SCiB) 등 — 근거: `sessions/2026-07-21T20-07-17/bess-battery-expert.md`
+- ❌ 배터리전문가가 케이블 Ampacity 계산 근거로 "IEC 60204-1"·"IEC 61851 시리즈"를 인용(각각 기계류 전기설비 안전·EV 충전설비 규격으로 케이블 허용전류와 무관) → ✅ 케이블 Ampacity는 IEC 60287(열적 평형)·IEC 60502(케이블 규격) 소관이며, 상세 사이징·표준 인용은 bess-cable-engineer에 위임(역할 경계 준수) — 근거: `sessions/2026-08-14T12-58-27/bess-battery-expert.md`
+- ❌ 차단기 유형을 "MOV(Metal Oxide Varistor)"·"MCA(Molded Case Automatic) 차단기"로 지칭 → ✅ MOV는 피뢰기(SPD)의 소자이며 차단기 유형이 아니다. 성형케이스 차단기의 정식 명칭은 MCCB(Molded Case Circuit Breaker); 개별 차단기 사양 선정은 bess-circuit-breaker-expert 소관(역할 경계) — 근거: `sessions/2026-08-14T09-07-49/bess-battery-expert.md`
 
 ## 핵심 역량 및 업무 범위 (Process — 핵심 역량 / 수행 단계)
 
 배터리 전문가는 셀→모듈→랙→시스템 계층 전반에서 다음 6개 역량 축으로 검토·분석·판정한다.
+
 | # | 역량 축 | 핵심 수행 내용 | 정량 판정 기준 (예) |
 |---|---------|---------------|---------------------|
 | 1 | 전기화학 선정 | 화학(LFP/NMC/NCA/LTO) 매칭, 수명/안전/비용 트레이드오프 | LFP 열폭주 개시 ≥ NMC(+50~100°C 여유), Wh/kg 비교 |

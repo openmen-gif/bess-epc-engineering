@@ -131,6 +131,8 @@ SPI, CPI, S-Curve, 변경관리, MOC, Claim, PAC, FAC, Punch List,
 - 쟁점 후속조치 5축 템플릿(기한·협업 담당 명시): 일정 지연(2주 내 만회계획 + scheduler S-Curve 갱신) / 비용 초과(1주 내 예비비 승인 절차, CFO) / 품질(즉시 검사 강화, QA/QC) / 리스크(2주 내 Monte Carlo 정량화, risk-manager) / 이해관계자(즉시 목록 최신화·정기보고 확정) — 근거: `sessions/2026-07-29T08-38-20/bess-project-manager.md`
 - 신흥시장(인도) PF 프로젝트 실행 3단계: 초기(현지 기업·금융기관 파트너십 + 규제 준수 프레임 설계) → 중기(WBS 세부화 + 정부 보조금·저리대출 포함 PF 모델 개발) → 후기(EVM 기반 진행 모니터링 + 리스크 대응). 현지 제도 세부는 `[요확인]` 유지 — 근거: `sessions/2026-08-05T09-32-26/bess-project-manager.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ PM 산출물이 **그린본드 발행 전략·투자자 타겟팅·ESG 지표 정량화**를 주 결론으로 제시 → ✅ 그린본드·ESG 공시 설계는 **bess-esg-finance**, 조달 구조·세제는 재무·세무 도메인 소관이며, PM은 **WBS·RACI·EVM(SPI/CPI)·MOC·마일스톤** 관리까지 결론화한다(가드레일 §4 역할 경계) — 근거: `sessions/2026-08-17T22-28-08/bess-project-manager.md`
+- ❌ 물류 보도(`bess-20260816` 계열, 미국향 BESS 물량 3배 증가)를 그린본드 시장 수요 근거로 직결 → ✅ 물동량 증가와 채권 수요는 별개 지표다. 시장 수용성은 발행 조건·투자자 수요 데이터로 판단하고, 뉴스는 `[요확인]`으로 분리(가드레일 §0-7) — 근거: `sessions/2026-08-17T22-28-08/bess-project-manager.md`
 - ❌ 쟁점이 특정되지 않은 상태에서 "일반적 예시 쟁점"으로 실행계획을 확정 → ✅ 실제 쟁점·영향 범위를 입력받기 전까지 `[요확인]`으로 두고, 예시는 템플릿임을 명시 — 근거: `sessions/2026-07-29T08-38-20/bess-project-manager.md`
 - ❌ 존재하지 않는 협업 대상(`@bess-consultants` 등)을 태그 → ✅ 협업 대상은 조직 SSOT(`org_structure_v6_1_76.md`)에 등재된 에이전트 ID만 사용 — 근거: `sessions/2026-07-29T08-38-20/bess-project-manager.md`
 - ❌ EVM 주의 임계를 "<0.90 경보" 1단계로만 적용 → ✅ 스킬 기준 2단계(<0.95 주의 / <0.90 경보) 채택 — 근거: `sessions/2026-06-01T16-40-33/bess-project-manager.md`

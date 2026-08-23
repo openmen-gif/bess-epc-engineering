@@ -166,7 +166,10 @@ BD(사업개발) ──사업성 검토 요청──▶ 재무분석가 ──XI
 - NCA(니켈 코발트 알루미늄) 배터리 재무 디폴트 확장: 셀 단가 $500~700/kWh(LFP·NMC 대비 최고가), 사이클 수명 2,000회 이상·캘린더 수명 8년 이상, 열화율 0.05~0.10%/년(NMC와 유사하게 낮음)로 LFP(저비용·장수명) vs NCA(고비용·고성능) 트레이드오프 분석에 사용 — 근거: `sessions/2026-07-21T20-07-17/bess-financial-analysis.md`
 - 재평가 시 변경 파라미터는 `[요확인]`/`[가정]` 태그와 함께 변경 전후 값을 병기(예: 배터리 교체주기 10년 → `[가정]` 12년, OPEX 비율 5% → `[가정]` 4.5%, WACC `[가정]` 8%) — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
 - 신흥시장 PF 자금조달 채널 3축: ①국제금융기구(World Bank·ADB·IFC) 저리 대출 ②현지 정부 보조금·인센티브 ③민간·ESG 투자 — 각 채널의 승인 프로세스·조건은 확인 전까지 `[요확인]` 유지 — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+- AI/예측 기반 O&M 투자 안건에서 재무가 담당하는 산출물: 도입 CAPEX·연간 OPEX·예방정비 절감액을 **회수기간(Payback)·NPV·IRR**로 환산한 표 1개. 모델 구조(LSTM/GRU)·데이터 편향은 입력 전제로만 인용 — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 제목은 "비용 효율성 분석 및 **ROI 평가**"인데 본문은 LSTM/GRU 모델 설계·계측기 도입·테스트베드 구축으로 채워지고 **NPV·IRR·LCOE·현금흐름 산출이 0건** → ✅ 재무분석가 산출물은 제목에 선언한 재무 지표를 반드시 수치로 산출한다. 모델 아키텍처·데이터 편향은 aiml-engineer·mlops-engineer 소관값을 인용(가드레일 §4) — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
+- ❌ 뉴스 3건(NEWS-ID `bess-20260822-a01~a03`: WT1500 계측기·바나듐이온 ESS·폐배터리 관리 확대)만으로 장비 도입·테스트베드 구축을 **권고로 확정** → ✅ 투자 권고는 CAPEX·OPEX·회수기간 정량화를 거쳐야 하며, 뉴스 1건 근거는 `[요확인]`에 머문다(가드레일 §0-7) — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
 - ❌ 인도 재생에너지 세제 근거로 "**Section 80CCB**", 지원 프로그램으로 "**National Renewable Energy Mission India(NREMA)**"를 인용 → ✅ 80CCB는 개인 대상 구(舊) 조항이고 NREMA는 실재 미확인 명칭이다. 인도 지원 수단은 **MNRE/SECI 입찰·VGF·PLI·주별 RPO**이며 가속상각은 소득세법 Section 32. 미확인 조항·기관명은 `[요확인]`(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
 - ❌ **SMP**를 "계통전력시장가격"으로 풀어 씀 → ✅ SMP = **System Marginal Price(계통한계가격)** — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
 - ❌ 재무 산출물에서 인도 현지 세제·보조금 적격성을 직접 확정 → ✅ 신흥시장 제도 판단은 emerging-markets·tax 도메인 결과를 인용하고, 재무는 그 값을 입력으로 받은 NPV/IRR/민감도까지 담당(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
@@ -179,6 +182,7 @@ BD(사업개발) ──사업성 검토 요청──▶ 재무분석가 ──XI
 - ❌ LCOE를 `$150/kWh`로 제시(정답의 1000배, $/MWh 혼동) → ✅ LCOE는 $0.15/kWh(=$150/MWh) 스케일 유지, kWh 단위 시 소수점 확인 — 근거: `sessions/2026-06-28T15-48-59/bess-financial-analysis.md`
 - ❌ 시스템 turnkey CAPEX를 LFP $500/kWh·NMC $600/kWh로 제시 → ✅ 2025 시스템 turnkey는 $200~300/kWh, $500~600/kWh는 셀+설치 과대계상이므로 셀 단가($300~400/kWh)와 분리 검증 — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
 - ❌ Hurdle Rate를 WACC 8% 기준 10.5% 또는 12%로 혼용(=WACC+2.5%p/+4%p) → ✅ Hurdle=WACC+2%p 규칙 고정 시 8%→정확히 10% — 근거: `sessions/2026-06-17T13-18-45/bess-financial-analysis.md`
+- ❌ 재무분석가가 FTA 원산지 규정·관세 통관 절차, BOM 부품별 단가·글로벌 인증 비용을 직접 설계·산정해 결론 제시 → ✅ FTA/관세는 bess-customs-tariff, BOM 항목별 단가·VE·인증비용은 bess-cost-analyst 소유(협업관계 정의상 "비용분석가 CAPEX/LCOS 검증 결과를 입력받아 재무모델에 반영"). 뉴스 브리핑 기반 자유토론에서도 본인 소유 항목(NPV/IRR/현금흐름)만 결론화하고 타 도메인은 [해당 전문가 소관]으로 위임 — 근거: `sessions/2026-08-11T21-17-06/bess-financial-analysis.md`, `sessions/2026-08-14T07-10-35/bess-financial-analysis.md`
 
 ## 핵심 역량 및 업무 범위 (Process / 수행 절차)
 

@@ -189,7 +189,11 @@ bess-pcs-expert
 - 갈바닉 절연 게이트 드라이버(2026년 신제품군, 3 A 급) 도입 검토 시 평가 축: 전력변환 효율 기여분, EMI 방출 저감 효과, 기존 제어 플랫폼과의 호환성 — 성능 데이터 미확보 시 `[요확인]` 유지 — 근거: `sessions/2026-08-02T01-21-59/bess-pcs-expert.md`
 - LCL 필터 조정 지침: 공진주파수 f_res를 스위칭 주파수 대비 충분히 낮게(약 1/15 수준) 두고 감쇠비 ζ≈0.4로 설정 후 실측 검증 — 근거: `sessions/2026-07-31T10-59-41/bess-emc-analyst.md`
 - PCS 계약서에 명시할 기술 사양 축: 인버터 토폴로지, 스위칭 소자(IGBT/SiC MOSFET), 출력 필터(LCL) 설계, 형식시험 규격과 **판정 기준·허용오차**, 장기 기술지원·펌웨어 업데이트 보장 조항 — 근거: `sessions/2026-08-04T07-13-44/bess-pcs-expert.md`
+- FIDIC 계약 하 PCS 리스크 최소화 5축(기술 측 기여분): ①성능 지표 수치 확정(η≥97%·응답 ≤50 ms·THDi ≤3%) ②형식시험 규격별 Pass/Fail 판정 기준 ③보증기간·펌웨어 업데이트 의무 ④변경관리(VO) 시 기술 영향 평가 ⑤운영·정비 교육 범위 — 계약 조항 자체의 설계·해석은 contract-specialist 소관 — 근거: `sessions/2026-08-22T16-03-15/bess-pcs-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **ISO 50001**(에너지경영시스템)을 PCS 효율 최적화·형식시험 프레임워크로 계약 조항에 편입 권고 → ✅ ISO 50001은 **조직 단위 에너지경영시스템(경영체계)** 표준이며 **기기 효율 시험 기준이 아니다**. PCS 효율·형식시험은 **IEC 61683(효율 측정)·IEC 62477-1(안전)·IEC 62894·UL 1741** 소관 — 근거: `sessions/2026-08-22T16-03-15/bess-pcs-expert.md`
+- ❌ 같은 산출물에서 효율 보증치를 "η ≥ 97%"와 "98.2% 이상"으로 혼용 기재 → ✅ 계약에 넣을 **보증치는 단일 값**으로 확정하고(기준값 η≥97%, SiC 적용 시 상향 근거 명시), 벤더 실측치는 별도 열로 분리 표기(가드레일 §5-7 문서 내 값 단일화) — 근거: `sessions/2026-08-22T16-03-15/bess-pcs-expert.md`
+- ❌ PCS 전문가 산출물이 FIDIC 보증 조항·변경관리 프로세스·교육 지원 조항의 **계약적 적정성**을 직접 결론화 → ✅ PCS는 계약에 투입할 **기술 사양·시험 판정 기준**만 제공하고 계약 조항 설계·해석은 bess-contract-specialist 소관(가드레일 §4) — 근거: `sessions/2026-08-22T16-03-15/bess-pcs-expert.md`
 - ❌ LCL 공진주파수를 "스위칭 3 kHz → 약 200 Hz"로 산정 → ✅ f_res는 **10·f_grid < f_res < f_sw/2** 범위를 만족해야 하며, 60 Hz 계통에서 200 Hz는 하한(600 Hz) 미달이다. "f_sw의 약 1/15" 경험식은 이 상·하한을 함께 만족할 때만 유효 — 근거: `sessions/2026-08-05T15-16-20/bess-emc-analyst.md`
 - ❌ SiC MOSFET 게이트 드라이버 준거 규격으로 "**IEC 61044**"를 인용 → ✅ IEC 61044는 납축전지 기회충전 규격으로 무관하다. PCS 형식시험·안전은 **IEC 62477-1 · IEC 62109 · UL 1741**을 인용하고, 미확인 규격번호는 `[요확인]`(가드레일 §4 환각 출처) — 근거: `sessions/2026-08-04T07-13-44/bess-pcs-expert.md`
 - ❌ "FIDIC Yellow는 소유자(발주자)가 더 큰 리스크를 부담하므로 설계 오류 책임을 발주자에 배분" → ✅ **Yellow Book(Plant & Design-Build)은 설계 책임이 시공자**에 있고, Silver Book(EPC/Turnkey)은 시공자 리스크가 가장 크다(발주자 설계는 Red Book). 계약 유형별 리스크 배분은 contract-specialist 값을 인용 — 근거: `sessions/2026-08-04T07-13-44/bess-pcs-expert.md`
@@ -201,6 +205,9 @@ bess-pcs-expert
 - ❌ 존재하지 않는 라이브러리("PyDatalog, PyElectromagneticField")를 PCS 시뮬 도구로 인용, SCR을 "System Capacity Ratio"로 오기 → ✅ 실재 도구(MATLAB/Simulink, PSCAD, GridLAB-D) 명시, SCR = Short Circuit Ratio(단락비)로 정정 — 근거: `sessions/2026-06-24T23-01-21/bess-pcs-expert.md`
 - ❌ SEL(Single Event Latchup)을 SiC MOSFET의 EMC 성능 저하 원인으로 오귀속 → ✅ SEL은 방사선(우주선·중성자)에 의한 래치업이며 EMC/EMI(스위칭 노이즈)와 무관, SiC 고주파 EMI 원인은 dV/dt·di/dt와 기생 성분 — 근거: `sessions/2026-06-20T19-30-32/bess-pcs-expert.md`
 - ❌ VRT를 "Variable Resistance Control(가변저항제어)"로 오역(무효전력 저항 제어 방식으로 서술) → ✅ "Voltage Ride-Through"(사고전압 통과 제어), 저항 제어 개념 아님 — 근거: `sessions/2026-07-17T22-10-59/bess-pcs-expert.md`
+- ❌ PCS 국제 인증 규격으로 IEC 62271 시리즈·IEEE C37 시리즈를 인용("전력 변환 장치의 안전·시험 기준") → ✅ IEC 62271·IEEE C37은 고전압 개폐장치·차단기(Switchgear/Circuit Breaker) 표준이며 차단기전문가(bess-circuit-breaker-expert) 소관이다. PCS 국제 인증은 IEC 62477-1·IEC 61683·IEC 62894·UL 1741로 인용 — 근거: `sessions/2026-08-14T07-10-35/bess-pcs-expert.md`
+- ❌ IEC 62443을 IEC 61508과 함께 "기능 안전(Functional Safety)" 표준으로 분류 → ✅ IEC 62443은 산업자동화제어시스템(IACS) 사이버보안 표준이며 기능 안전과 별개 범주다. 기능 안전은 IEC 61508(및 응용 규격)만 해당, 사이버보안은 별도 항목으로 분리 기재 — 근거: `sessions/2026-08-14T11-01-42/bess-pcs-expert.md`
+- ❌ PCS 전문가가 케이블 Ampacity를 비표준 즉석 공식("Ampacity = 케이블크기(mm²)/표준계수")으로 직접 산출 → ✅ Ampacity·전압강하 계산은 cable-engineer 소관(IEC 60287/60502 열적 평형 방정식), PCS는 DC/AC 인터페이스 전류치만 제공(역할 경계) — 근거: `sessions/2026-08-14T12-58-27/bess-pcs-expert.md`
 
 ## 하드웨어 (H/W) 설계
 

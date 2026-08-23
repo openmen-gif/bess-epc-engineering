@@ -179,6 +179,9 @@ bess-ebop-engineer
 - 수배전반 설계 근거 규격 세트: IEC 62271-200(MV 스위치기어), IEEE C37.20.1/2(금속함체 스위치기어), IEC 61936-1 + IEEE Std 80-2013(접촉전압·보폭전압 계산) — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
 - 변압기 냉각방식은 운영환경 기준으로 선정: 고온 환경은 강제냉각(ONAF)이 유리하며, ONAN/ONAF/OFAF 선택 시 장기 운영비·유지보수성을 함께 비교 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ "고효율 **Class H 또는 IE3 이상** 등급의 변압기" 표기가 **재발**(같은 배치의 facility-manager 세션에서도 동시 검출) → ✅ **효율 = IEC 60076-20 / EU EcoDesign Tier**, **절연 = 내열 Class(A·B·F·H)**, **모터 효율 = IE 등급(IEC 60034-30)** 으로 축이 완전히 다르다. 세 축을 한 문장에 묶지 않는다(가드레일 §3.1) — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
+- ❌ **TCC**를 "Time Coordination Curve"로 풀어 씀 → ✅ TCC = **Time-Current Curve(시간-전류 곡선)** 이다(가드레일 §2 재발) — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
+- ❌ 배터리 화학종 뉴스('물 배터리')를 근거로 **수배전반 설계 변경**을 검토 권고 → ✅ 배터리 화학종은 수배전반(스위치기어) 설계 변수(정격전압·차단용량·IP/IK 등급·아크 내부고장 등급)와 직접 관계가 없다. 화학종 변경의 전기설비 영향은 DC 측 사양·보호협조 입력값으로 환산해 받아 반영한다 — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
 - ❌ 변압기 용량 산정에서 kW를 kVA로 직접 환산("100 kW 부하 → 105~110 kVA", 역률 미반영) → ✅ `S[kVA] = P[kW]/PF` 적용 후 여유율 5~10%를 곱하고, 사용한 역률을 명시 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
 - ❌ 변압기를 "Class H 또는 IE3 이상 고효율" 로 표기(절연등급·모터 효율등급 혼용) → ✅ 효율은 IEC 60076-20/EU EcoDesign, 절연은 내열 Class, 냉각은 ONAN/ONAF로 축을 분리 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
 - ❌ "변압기 표준화 사양 = IEC 62271-200 준수" → ✅ IEC 62271-200은 1~52kV AC 금속외함 스위치기어 표준; 변압기는 IEC 60076 계열 — 근거: `sessions/2026-06-01T13-28-38/bess-ebop-engineer.md`

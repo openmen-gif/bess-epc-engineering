@@ -138,7 +138,12 @@ bess-customs-tariff
 - 관세율 검증 출처(국가별 1차 자료): KR 관세청 HSK, US CBP HTSUS + USITC, EU TARIC DB — 인용 시 조회 기준일 병기 — 근거: `sessions/2026-08-01T09-40-44/bess-customs-tariff.md`
 - 국가별 기본세율 참조값(기준일 병기 필수): KR 배터리셀·PCS 약 **8%**·변압기 약 **3.7%**(FTA 적용 시 0% 가능), US MFN 배터리셀 약 **1.3%** + 중국산 Section 301 추가 **25%**, EU TARIC 배터리셀 약 **1.3%**·변압기 약 **3.7%** + CBAM, JP 대부분 0% — 근거: `sessions/2026-08-04T13-03-35/bess-customs-tariff.md`
 - BMS(전자제어) HS 세분류는 **8537.10**(저전압 제어반 계열)으로 인용 — 8514(전기로)·8501(전동기) 오분류 금지 — 근거: `sessions/2026-08-04T13-03-35/bess-customs-tariff.md`
+- 보세창고(Bonded Warehouse) 활용 시 수입 부품의 관세 납부를 통관 후 일정 기간 유예할 수 있어 현금흐름 최적화에 기여(관세 면제가 아닌 지연납부 전략) — 근거: `sessions/2026-08-11T21-17-06/bess-customs-tariff.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 한국이 **CPTPP 회원인 것처럼** 서술("CPTPP를 통해 캐나다·멕시코·일본·뉴질랜드·호주와의 교역에서 관세 0% 적용 가능", "KORUS·CPTPP·RCEP를 적극 활용") → ✅ **한국은 CPTPP 미가입**(가입 신청 단계)이므로 한국발 수출입에 CPTPP 특혜세율을 적용할 수 없다. 대일 특혜는 **RCEP** 경로뿐이고(§2 JEPA 항목과 정합), 대호주는 **KAFTA**, 대캐나다는 **한-캐나다 FTA**를 사용한다 — 근거: `sessions/2026-08-22T19-50-57/bess-customs-tariff.md`
+- ❌ "**호주 및 뉴질랜드: KAFTA와 CPTPP**"로 두 나라를 한 협정으로 묶음 → ✅ **KAFTA는 한-호주 FTA**로 뉴질랜드에 적용되지 않으며, 뉴질랜드는 **한-뉴질랜드 FTA** 소관이다. 협정명↔상대국을 1:1로 확인해 인용 — 근거: `sessions/2026-08-22T19-50-57/bess-customs-tariff.md`
+- ❌ "US Section 301 중국산 추가관세 25%… **KORUS FTA를 활용하면 일부 혜택**"으로 두 제도를 상호 대체 가능하게 서술 → ✅ Section 301은 **중국 원산지** 물품 대상이고 KORUS 특혜세율은 **한국 원산지** 물품에만 적용된다. 두 제도는 원산지가 달라 상쇄되지 않으며, 관세 절감은 실질변형(CTC/RVC 충족)으로 **원산지 자체를 바꿔야** 가능 — 근거: `sessions/2026-08-22T19-50-57/bess-customs-tariff.md`
+- ❌ "**EU 내에서 조립되는 배터리는 CBAM 적용에서 제외**될 수 있다"로 CBAM 적용 범위를 배터리에 확장 → ✅ CBAM 대상은 **Annex I 품목(시멘트·철강·알루미늄·비료·전력·수소)** 기준이며 배터리·ESS 완제품은 포함되어 있지 않다. EU의 배터리 탄소 규제는 **Battery Regulation 2023/1542의 탄소발자국 신고 의무**로 별개 제도이고, CBAM 품목 확대 여부는 **조회 기준일과 함께 `[요확인]`** — 근거: `sessions/2026-08-22T19-50-57/bess-customs-tariff.md`
 - ❌ 변압기 세분류 "8504.22 = 650~1,000 kVA / 8504.23 = 1,000 kVA 초과" 표기가 **소유 도메인 내부에서 재발**(2026-08-04) → ✅ 기존 정정값(**8504.21 ≤650 / 8504.22 >650~10,000 / 8504.23 >10,000 kVA**)을 산출물 발행 전 대조 확인. 본 표는 customs-tariff 소유이므로 도메인 내 재발은 타 도메인으로 그대로 전파됨 — 근거: `sessions/2026-08-04T13-03-35/bess-customs-tariff.md`
 - ❌ CPTPP RVC 문턱을 세션 간 **≥40%**(2026-07)와 **≥45%**(2026-08)로 혼재 표기 → ✅ 협정별 RVC는 **품목별 PSR**이 우선이므로 단일 %로 단정하지 말고, 협정문·PSR 조회 기준일과 함께 인용. 문서 내 상충 표기는 발행 전 단일화(가드레일 §5-7) — 근거: `sessions/2026-08-04T13-03-35/bess-customs-tariff.md`
 - ❌ 같은 문서에서 **ITC**를 관세 문맥(US International Trade Commission)과 세제 문맥(Investment Tax Credit) 두 의미로 혼용 → ✅ 관세·무역구제 기관은 **USITC**로 표기하고, 세액공제 ITC와 명시적으로 분리(가드레일 §2) — 근거: `sessions/2026-08-04T13-03-35/bess-customs-tariff.md`
@@ -149,6 +154,9 @@ bess-customs-tariff
 - ❌ "KORUS FTA로 배터리 KR 0%" → ✅ KORUS는 미국 수출 시 적용, KR 수입관세에 귀속하면 방향 오류 — 수입국·수출국 방향 명시 — 근거: `sessions/2026-06-05T16-47-22/bess-customs-tariff.md`
 - ❌ 완제 BESS를 "8507.60 또는 8502.39"로 분류 → ✅ 8502는 발전세트(generating set)로 BESS 분류 부적절, 8502.39 대안 제시 금지 — 근거: `sessions/2026-06-03T12-30-05/bess-customs-tariff.md`
 - ❌ KORUS·KAFTA를 "한국-일본 FTA"로 표기(국가 페어 오인) → ✅ KORUS=한-미 FTA, KAFTA=한-호주 FTA — 일본 관련 FTA 아님(JEPA 등과 구분) — 근거: `sessions/2026-07-13T18-53-11/bess-customs-tariff.md`
+- ❌ 한국(KR) 변압기(HS 8504.21~23) MFN 기본세율을 배터리셀·PCS와 동일하게 "약 8%"로 일괄 표기 → ✅ 기존 확립값은 변압기 약 **3.7%**(배터리셀·PCS는 약 8%)로 품목별 세율이 상이하므로 일괄 적용 금지, 품목별로 기준일 병기 후 재확인 — 근거: `sessions/2026-08-11T21-17-06/bess-customs-tariff.md`
+- ❌ 미국(US)에 "VAT 환급 프로그램"이 있다고 서술 → ✅ 미국은 연방 차원 VAT(부가가치세) 제도가 없음(주별 판매세만 존재), VAT 환급 검토는 EU/UK/AU/KR 등 VAT 시행국에 한정 — 근거: `sessions/2026-08-11T21-17-06/bess-customs-tariff.md`
+- ❌ 다국가 VAT 환급 정책까지 관세 전문가가 직접 검토·권고 → ✅ 다국가 VAT 환급 실무는 bess-tax-epc-accounting(TAX-002) 소관(본 문서 역할 경계 명시), 본 전문가는 관세·HS코드·원산지만 담당 — 근거: `sessions/2026-08-11T21-17-06/bess-customs-tariff.md`
 
 ## 핵심 역량 및 업무 체크리스트 (수행 프로세스)
 

@@ -168,6 +168,9 @@ bess-power-system-analyst
 - AI 예측모델을 계통 해석에 결합할 때는 데이터 드리프트 감지·자동 재학습 없이는 장기 정확도를 주장하지 않는다(예측 오류 시 폴백 로직·비상 대응 절차 병기) — 근거: `sessions/2026-07-31T04-23-43/bess-power-system-analyst_critic.md`
 - 변압기 호환성 검토 입력 세트: SLD로 위치·결선 파악 → 변압기·케이블 계통 임피던스 수집 → ETAP/PSS®E 시뮬레이션 → 실계통 데이터 대조. 전압 호환은 정격 일치뿐 아니라 **변동 범위·허용오차**까지 확인 — 근거: `sessions/2026-08-05T07-38-25/bess-power-system-analyst.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **계측기(파워아날라이저) 도입 검토**를 ETAP/PSS®E 조류·단락·보호협조 시뮬레이션으로 검증하라고 권고 → ✅ 계측기는 계통 구성요소(전원·부하·임피던스)가 아니므로 계통 시뮬레이션 대상이 아니다. 계측기 통합은 **측정 정격·통신 인터페이스·교정 주기** 검토(system-engineer·precom) 소관이며, 계통해석은 실제 회로 요소 변경이 있을 때 수행 — 근거: `sessions/2026-08-22T10-52-50/bess-power-system-analyst.md`
+- ❌ 바나듐계 배터리를 "**에너지 밀도와 효율성을 크게 향상**"으로 서술 → ✅ 바나듐계(VRFB·바나듐이온)는 리튬이온 대비 **에너지 밀도가 낮고**, 강점은 안전성(열폭주 위험 저감)·장수명·심방전 내성이다. 화학종 성능 주장은 battery-expert 데이터로 확인 후 인용 — 근거: `sessions/2026-08-22T10-52-50/bess-power-system-analyst.md`
+- ❌ 계통해석 산출물에서 배터리 열관리 **CFD 분석 지시**·BMS↔PCS **통신 프로토콜 조정**·폐배터리 **처리 안전기준**을 권고로 확정 → ✅ 각각 cfd-analyst·system-engineer·fire-engineer 소관이며 계통해석은 조류·단락·보호협조·과도안정도 결론까지 담당(가드레일 §4) — 근거: `sessions/2026-08-22T10-52-50/bess-power-system-analyst.md`
 - ❌ 계통연계 준수 근거로 "**전력기술관리법**"을 인용 → ✅ 전력기술관리법은 전력시설물 설계·감리 등 **기술인·용역 관리** 법률이다. 계통연계 요건은 **전기사업법 + KEPCO 계통연계기술기준 + KEC** — 근거: `sessions/2026-08-05T07-38-25/bess-power-system-analyst.md`
 - ❌ 계통해석 산출물에서 변압기 정기점검 주기·OLTC/DGA 교체주기·예지보전 체계를 직접 확정 → ✅ 계통해석은 조류·단락·보호협조 결론까지 담당하고, 설비 유지보수 주기는 transformer-expert·facility-manager 소관값을 인용(가드레일 §4) — 근거: `sessions/2026-08-05T07-38-25/bess-power-system-analyst.md`
 - ❌ kV를 V로 환산하지 않고 `I = P/(√3·V[kV])`로 계산해 10 MW @ 22.9 kV를 "69.5 kA", 10 MW @ 154 kV를 "1.2 kA"로 산출 → ✅ SI 단위 환산(22.9 kV = 22,900 V) 후 계산하고 결과 자릿수를 케이블 통상 범위(수백 A)와 대조 검산 — 근거: `sessions/2026-08-01T13-40-09/bess-power-system-analyst.md`

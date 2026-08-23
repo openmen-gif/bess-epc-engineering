@@ -125,6 +125,8 @@ HR, 인사, 채용, 성과관리, KPI, 역량개발, 조직개발, 인력계획,
 - 역량 베이스라인→목표 매트릭스: 직무전문성 80→90%, 팀워크 70→85%, 리더십 60→75%(정량 추적 템플릿) — 근거: `sessions/2026-05-12T10-37-31/bess-hr-manager.md`
 - HR 툴 스택 표준: 실시간 피드백 15Five/Culture Amp, HRIS Workday/SAP SuccessFactors, 익명설문 SurveyMonkey/Google Forms — 근거: `sessions/2026-06-05T19-56-29/bess-hr-manager.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ HR 산출물이 뉴스 4건(NEWS-ID `bess-20260820-a01~a04`)의 시장 동향 해설로 시작해 특정 신기술('물 배터리') **교육과정 참여**를 권고로 제시 → ✅ 교육 커리큘럼은 **직무 요구역량 갭 분석** 결과로 도출하고, 뉴스는 `[요확인]` 상태로 남긴다. 기술 교육 설계 자체는 training-expert 소관(가드레일 §0-7·§4) — 근거: `sessions/2026-08-20T10-35-37/bess-hr-manager.md`
+- ❌ 실시간 피드백 도구로 해외 SaaS(15Five·Culture Amp)를 **도입 확정 권고** → ✅ 인사 데이터는 개인정보이므로 **국외 이전·위탁 동의(개인정보보호법 §28-8 계열)와 보안 검토**를 선행 조건으로 명시한 뒤 후보로 제시한다. 도구명 확정은 검토 완료 후 — 근거: `sessions/2026-08-20T10-35-37/bess-hr-manager.md`
 - ❌ 외국인 안전교육·다국어 안전수칙을 HR 권고로 흡수 → ✅ 노무·산업안전(OSH-001)이 외국인 인력·안전 담당, HRM-001과 분리, 안전교육은 OSH-001/training-expert로 위임 — 근거: `sessions/2026-06-05T19-56-29/bess-hr-manager.md`
 - ❌ 프로젝트 일정·예산 계획을 HR 범위로 주장(PM 영역 침범) → ✅ HR은 운영본부(COO 산하) 인사 범위 고정, 일정·예산은 PM 위임 — 근거: `sessions/2026-05-12T10-37-31/bess-hr-manager.md`
 

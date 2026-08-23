@@ -133,13 +133,21 @@ bess-cybersecurity-expert
 - 위협 모델링은 STRIDE + **MITRE ATT&CK for ICS** 기법 ID를 명시하고, 잔여 취약점은 **CVSS v3.1** 등급으로 처리. 사고 대응은 검출→격리→분석→제거→복구→사후분석 + NIS2 **24시간** 보고 시한 — 근거: `sessions/2026-08-01T15-46-57/bess-cybersecurity-expert.md`
 - 가용성 설계 기준값: 백업·재해복구 **RPO ≤15분 / RTO ≤4시간**, 다중화 연결(VPN/MPLS). 기밀성은 TLS·IAM·코드사이닝+SBOM, 무결성은 체크섬·해싱 + 보안 업데이트 프로세스 — 근거: `sessions/2026-08-04T21-33-22/bess-cybersecurity-expert.md`
 - 공급망 보안 강화 3수단: SBOM 기반 펌웨어·하드웨어 구성요소 무결성 검증, 주요 공급업체 보안 협약·정기 보안상태 보고, 공급망 위협 상시 모니터링 — 연간 투자 규모 참고치 **$20,000~50,000** — 근거: `sessions/2026-08-04T21-33-22/bess-cybersecurity-expert.md`
+- 데이터 프라이버시↔사이버보안 통합 준수 프레임워크의 인용 법규 세트: **GDPR(EU) · CCPA(US-CA) · NIS2 Directive(EU) · 개인정보보호법(KR)** — 보안 통제(IEC 62443·NERC CIP)와 프라이버시 요구를 한 매트릭스에 매핑하되 계층(기술 통제 vs 법적 의무)은 분리 — 근거: `sessions/2026-08-22T03-41-32/bess-cybersecurity-expert.md`
+- 공급망 보안 기술 조치 3종(펌웨어·SW 무결성): **SBOM** 구성요소 검증 → **코드 서명·해시 검증**(업데이트 시) → **다중 계층 경계장치**(단방향 게이트웨이·데이터 다이오드·애플리케이션 프록시) — 근거: `sessions/2026-08-22T03-41-32/bess-cybersecurity-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **RTO/RPO 정의 역전**("사고 대응 시간 (RTO), 복구 시간 (RPO)") → ✅ **RTO = Recovery Time Objective(복구 목표 시간)**, **RPO = Recovery Point Objective(복구 시점 목표 = 허용 데이터 손실 구간)**. 탐지 시간은 **MTTD**로 별도 표기하며, 본 스킬 기준값은 RPO ≤15분 / RTO ≤4시간 — 근거: `sessions/2026-08-22T03-41-32/bess-cybersecurity-expert.md`
+- ❌ 조직에 없는 역할·사번을 창작해 팀 구성안 제시("bess-data-privacy-expert (DP-001)", "bess-compliance-analyst (COMP-001)") 및 시스템엔지니어에 network-engineer의 사번(NET-001) 부여 → ✅ 인원·역할·ID는 조직 SSOT(CEO+81명, `org_structure_v6_1_76.md`·CLAUDE.md 카탈로그) 내에서만 지정하고, 신규 역할이 필요하면 `[요확인]`으로 제안만 한다 — 근거: `sessions/2026-08-22T03-41-32/bess-cybersecurity-expert.md`
+- ❌ NEWS-ID 자리에 비식별자를 기재("(NEWS-ID: 관련 법규 언급)")하고, 2026-08-22 세션에서 전일자 `bess-20260821-a01·a02`를 당일 근거로 인용 → ✅ NEWS-ID는 `bess-YYYYMMDD-aNN` 실 식별자만 쓰고, 인용한 브리핑 날짜가 세션 날짜와 다르면 그 사실을 명시 — 근거: `sessions/2026-08-22T03-41-32/bess-cybersecurity-expert.md`
+- ❌ 회의 일정을 "**2026년 9월 15일 (금)**"으로 기재(실제 2026-09-15는 **화요일**) → ✅ 날짜·요일은 암산하지 말고 시스템 시각 기준으로 계산해 표기한다(가드레일 §4 일정 산출) — 근거: `sessions/2026-08-22T03-41-32/bess-cybersecurity-expert.md`
 - ❌ 규격번호를 "**IEC 624443-3-2**"처럼 자릿수 깨진 토큰으로 발행 → ✅ IEC **62443**-3-2. 규격번호는 발행 전 자릿수 검증(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-04T21-33-22/bess-cybersecurity-expert.md`
 - ❌ 출처 없는 위협 기법명·ID를 생성해 인용 → ✅ MITRE ATT&CK for ICS 공식 기법 ID(T08xx)만 사용하고, 미확인 항목은 `[요확인]` — 근거: `sessions/2026-08-01T15-46-57/bess-cybersecurity-expert.md`
 - ❌ "Stuxnet 변형"·"Cobalt Strike"를 구체 위협으로 단정 인용(환각 위험) → ✅ 위협은 MITRE ATT&CK ICS 기법ID로 표기 — 근거: `sessions/2026-06-08T20-24-13/bess-cybersecurity-expert.md`
 - ❌ IEC 62619가 "사이버보안 요건 포함"이라 서술(부정확) → ✅ 62619는 배터리 안전(전기/기계/환경) 표준, 사이버보안은 IEC 62443/62351 소관(혼동 금지) — 근거: `sessions/2026-06-05T14-55-57/bess-cybersecurity-expert.md`
 - ❌ Modbus/DNP3 평문 통신 보호로 "OPC-UA"만 제시 → ✅ 직렬/레거시 프로토콜은 IEC 62351(특히 62351-5 DNP3 SA) 적용 — 근거: `sessions/2026-06-05T14-55-57/bess-cybersecurity-expert.md`
 - ❌ 인도 CEA/SECI에 "BESS 전용 사이버보안 규정 존재"로 단정 → ✅ 현재 BESS 특화 사이버 규정 미비, IEC 62443 부분 채택 상태로 서술하고 근거·출처 [요확인] 태그 부착(인도 ISMS 국가표준은 IS/ISO/IEC 27001 계열 확인 후 인용) — 근거: `sessions/2026-06-28T11-05-10/bess-cybersecurity-expert.md`
+- ❌ NIS2 Art.23의 "24시간"을 위협 탐지·대응 SLA로 오용(예: "CVSS≥9.0 위협을 24시간 내 탐지·대응 체계 구축") → ✅ NIS2 24시간은 사고 인지 후 당국에 통보하는 조기경보(early warning) 시한이며, 탐지 목표는 별도 KPI인 MTTD ≤15분으로 관리(탐지·대응 SLA와 대외 보고 시한 혼동 금지) — 근거: `sessions/2026-08-11T16-44-49/bess-cybersecurity-expert.md`
+- ❌ MITRE ATT&CK **Enterprise** 기법 ID(T1xxx, 예: T1486 Data Encrypted for Impact, T1566 Phishing)를 "MITRE ATT&CK **ICS**" 기법 ID로 표기하고 기법명까지 임의 재정의("T1486=데이터 주입", "T1566=악성코드 실행") → ✅ ICS 전용 기법 ID는 **T08xx** 계열만 사용, Enterprise(T1xxx)와 ICS(T08xx) 프레임워크·ID 혼용 금지 — 근거: `sessions/2026-08-12T07-21-00/bess-cybersecurity-expert.md`
 
 ## 핵심 역량 및 업무 범위 (Process / 업무 단계)
 
@@ -199,6 +207,7 @@ Conduit 통제:
 ## 정량 판정 기준 (Pass/Fail Criteria)
 
 "양호/정상/적정" 등 비정량 판정 대신 아래 수치 임계값으로 합/부를 판정한다.
+
 | 항목 | 합격(Pass) | 불합격(Fail) | 근거/단위 |
 |------|-----------|-------------|----------|
 | 자산 인벤토리 매핑률 | = 100% | < 100% | 미분류 자산 0건 (CIP-002) |

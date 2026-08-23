@@ -180,7 +180,13 @@ NFPA72, NFPA750, NFPA68, NFPA20, Pre-incident Plan, 화재시퀀스, 감지기�
 - 이격거리 산정 순서: ①UL 9540A 시험 결과(Cell/Module/Unit/Installation 레벨) → ②NFPA 855 + 현지 소방법 → ③보험사 요건(FM Global 등). 시험 미실시 구간은 최악 조건 적용 + `[가정]` 태그 — 근거: `sessions/2026-08-01T17-34-33/bess-fire-engineer.md`
 - 컨테이너 환기는 가연성 가스 농도를 LFL(하한 폭발한계) 이하로 유지하는 환기량을 기준으로 설계하고, 소화는 Water Mist·청정약제 중 화학 특성에 맞게 선정 — 근거: `sessions/2026-08-01T17-34-33/bess-fire-engineer.md`
 - EMC·전기적 안정성과 화재 위험의 연결 고리: PCS 스위칭 노이즈 저감 → 전기적 스트레스·발열 감소 및 감지기(연기·열) 오작동 감소 → 초기 감지 신뢰도 향상. 단, 노이즈 저감만으로 화재 위험이 해소되지는 않으므로 감지·소화·이격 설계와 병행 — 근거: `sessions/2026-08-05T15-16-20/bess-fire-engineer.md`
+- 배터리 화학별 열폭주 가스 발생 경향 차이: LFP는 CO·H₂ 발생이 상대적으로 적고 NMC는 HF·CO 발생 가능성이 높아, 이격거리·환기량·소화약제 선정을 배터리 화학(LFP/NMC)별로 분기 설계 — 근거: `sessions/2026-08-16T00-03-02/bess-fire-engineer.md`
+- 소방 설비별 **근거 규격 4분**: 화재감지·경보 **NFPA 72** / 폭연 방산(Deflagration Vent) **NFPA 68** / 스프링클러 **NFPA 13** / 소화펌프 **NFPA 20**. ESS 설치·이격·화재안전 총괄은 **NFPA 855**, 보험 인수 요건은 **FM Global DS 5-33**(부지경계 복사열 제한·소화 요구) — 설비별로 근거 규격을 분리 인용 — 근거: `sessions/2026-08-22T08-21-14/bess-fire-engineer.md`, `sessions/2026-08-22T13-26-36/bess-fire-engineer.md`
+- 고밀도 모듈 화재안전 검토 4표준 매핑: NFPA 855(이격·소화 요구) · UL 9540A(레벨별 열폭주 전파 시험) · IEC 62933-5-2(ESS 안전 설계·시험 절차) · FM Global DS 5-33(보험 요건). KR 적용 시 소방시설법·위험물안전관리법과 대조해 상향분만 추가 — 근거: `sessions/2026-08-22T13-26-36/bess-fire-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **IEC 62933-5-2를 "유럽 표준"** 으로 귀속("유럽 표준이지만 국제적으로 인정") → ✅ IEC 62933-5-2는 **IEC 국제표준**이고 **EN 62933-5-2**가 그 유럽 채택본이다. 표준 발행기관(IEC/EN/UL/NFPA)과 적용 시장을 뒤섞지 않는다 — 근거: `sessions/2026-08-22T13-26-36/bess-fire-engineer.md`
+- ❌ 부지 경계 이격을 **"최소 10 m (NFPA 80A 기준)"** 으로 확정 → ✅ 부지경계 **거리** 기준은 FM Global **10 ft(3 m)**·NFPA 855이며, **NFPA 80A는 인접 노출 복사열 한계(≤12.5 kW/m²) 산정** 규격이다. 거리 소유 규격과 복사열 한계 규격을 뒤바꾸지 말고 ft→m 환산(1 ft=0.3048 m)을 재검산할 것(§3.4 ft↔m 재발) — 근거: `sessions/2026-08-22T08-21-14/bess-fire-engineer.md`
+- ❌ 단일 뉴스(NEWS-ID `bess-20260822-a01~a04`: WT1500 파워아날라이저·바나듐 이온 ESS·폐배터리 관리 확대·기후 국제연수)를 감지·환기·이격 설계 권고의 근거로 즉시 편입하고 "기존 표준의 적용 범위를 확장" 서술 → ✅ 뉴스 1건은 `[요확인]`에 머물러야 하며 설계기준 변경은 **UL 9540A 시험 결과 또는 소방법·고시 개정**으로만 확정한다(가드레일 §0-7) — 근거: `sessions/2026-08-22T08-21-14/bess-fire-engineer.md`
 - ❌ EMC 최적화가 화재 위험을 낮춘다는 인과를 정량 근거 없이 단정("노이즈 감소 → 화재 위험 감소") → ✅ 인과 주장에는 감지기 EMI 내성 시험값·발열 저감 실측치를 붙이고, 미확보 시 `[요확인]`으로 강등(가드레일 §0-4) — 근거: `sessions/2026-08-05T15-16-20/bess-fire-engineer.md`
 - ❌ 같은 문서에서 컨테이너 간 이격을 "3 ft(0.9 m)" → "2 m" → "6 m"로, 부지 경계를 "6 ft(1.8 m)" → "6 m"로 혼용(ft↔m 단위 혼동 + 값 상충) → ✅ NFPA 855 기본 이격 **3 ft(0.9 m)** 을 원문 단위와 SI 환산값으로 1회만 정의하고, 상향 적용 시 근거(UL 9540A 결과·보험사 요건)를 명시해 단일 값으로 통일 — 근거: `sessions/2026-08-01T17-34-33/bess-fire-engineer.md`
 - ❌ 특정 제품의 UL 9540A·NFPA 855 통과 사실을 전 프로젝트에 그대로 전용 → ✅ 배터리 화학·모듈 구성·현지 소방 요건이 다르면 시험 결과는 인용 불가, 프로젝트별 재검증 필요 — 근거: `sessions/2026-07-30T16-18-36/bess-fire-engineer_critic.md`
@@ -193,6 +199,8 @@ NFPA72, NFPA750, NFPA68, NFPA20, Pre-incident Plan, 화재시퀀스, 감지기�
 - ❌ "NFPA 855 = 컨테이너 간 일률 3ft(0.9m) 이격 규정" → ✅ NFPA 855의 이격은 UL9540A 대규모 화재시험 결과에 의존하며 3ft는 특정 조건의 최소치일 뿐 일률 적용 금지 — 근거: `sessions/2026-06-25T06-54-00/bess-fire-engineer.md`
 - ❌ 이격거리 단위 환산 오류(UL9540A 최악조건 컨테이너 간 이격을 "6m", 부지경계를 "10m"으로 표기) → ✅ 원 단위는 ft — UL9540A 최악조건 6ft(1.8m), 부지경계 FM Global 10ft(3m). ft→m 환산(1ft=0.3048m) 재확인 필수, m·ft 혼동 금지 — 근거: `sessions/2026-07-20T10-39-32/bess-fire-engineer.md`
 - ❌ NFPA 70E Arc Flash PPE Category 0을 "가장 높은 위험 등급"으로 오기재 → ✅ Category 0이 가장 낮은 위험 등급(0→4로 갈수록 위험 증가) — 근거: `sessions/2026-07-16T08-28-32/bess-fire-engineer.md` vs `sessions/2026-07-26T04-44-42/bess-fire-engineer.md`
+- ❌ BESS 이격거리·환기 설계 근거로 "NFPA 85"(§4.1.4·§9.6 인용) 사용 → ✅ NFPA 85는 보일러·연소설비 표준이며 BESS/ESS 설치·이격 기준은 **NFPA 855**(85↔855 오기) — 근거: `sessions/2026-08-14T12-58-27/bess-fire-engineer.md`
+- ❌ 액침형(Immersion) 배터리·고밀도 모듈의 기능안전 CB인증 뉴스만으로 열폭주 전파 위험이 낮다고 일반화 → ✅ 기능안전 인증과 UL 9540A Installation Level 열전파 시험은 별개 항목이며, 이격거리·방화벽 축소는 UL 9540A 시험 결과로만 판단(미실시 시 `[요확인]`) — 근거: `sessions/2026-08-14T09-07-49/bess-fire-engineer.md`, `sessions/2026-08-14T11-01-42/bess-fire-engineer.md`, `sessions/2026-08-11T04-02-08/bess-fire-engineer_critic.md`
 
 ## 소방설계 범위 (핵심 역량 및 업무)
 

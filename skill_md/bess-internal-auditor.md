@@ -101,6 +101,7 @@ BESS 프로젝트의 재무 건전성과 내부통제 체계를 감시하며, Co
 > 본 문서 본문에 인용된 기준·데이터 소스만 추출한다. 본문에 없는 조항·수치는 발명하지 않는다.
 
 **감사·회계 기준 (본문 인용)**
+
 | 기준 | 본문 내 범위 |
 |------|-------------|
 | SOX 404 / ICFR (재무보고 내부통제) | 핵심통제 설계 적정성·운영 효과성 테스트 |
@@ -145,11 +146,13 @@ BESS 프로젝트의 재무 건전성과 내부통제 체계를 감시하며, Co
 - 계약(FIDIC) 재무영향 감사 관점: 비용부담 분배·지연보상 리스크 → 예산추적 시스템·다중검토·예비자금 통제 — 근거: `sessions/2026-06-08T01-43-37/bess-internal-auditor.md`
 - 절감 정량목표 제시 패턴: CAPEX -10%, 인건비 -5% (숫자 명시) — 근거: `sessions/2026-05-12T19-30-07/bess-internal-auditor.md`
 - BESS 유사 프로젝트 비용·현금흐름 리스크 벤치마크: 자재가격 예산 대비 실제 평균 +8% 상승 사례, 납품 지연에 따른 예상 현금유입 지연 평균 20% 사례 — 감사 시 CAPEX 임계(Critical ≥1%) 판정의 참고 벤치마크로 활용 — 근거: `sessions/2026-07-18T05-40-24/bess-internal-auditor.md`
+- 교육훈련 프로그램 효과성 감사 지표 4종: 참여율(Participation), 지식평가(교육 전후 테스트 점수차), 실행준수(현업 적용 여부 점검), 피드백 수집(설문·인터뷰) — 근거: `sessions/2026-08-16T02-38-48/bess-internal-auditor.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ 내부통제 강화 권고를 구체적 사례·데이터 없이 제시(통제 테스트 효율성·증적 관리 미흡을 정성 서술만으로 결론) → ✅ 과거 감사보고서의 통제 위반 패턴·건수를 근거로 제시하고, 데이터 미확보 시 `[요확인]`으로 강등 — 근거: `sessions/2026-07-28T09-00-43/bess-it-infra.md`
 - ❌ FIDIC Silver/Yellow 귀속 완전 반전("Silver=계약자 유리·민간 / Yellow=소유자 유리·공공") → ✅ 반대임. Silver(EPC/Turnkey)는 시공자에 리스크 최대 이전(발주자 유리·민간/PPP/프로세스플랜트), Yellow(P&DB)는 균형형 — 근거: `sessions/2026-06-08T01-43-37/bess-internal-auditor.md`
 - ❌ 위 FIDIC 서술이 동일 세션 legal/contract 답변과 상호 모순(cross-domain 정의 불일치) → ✅ FIDIC 정의는 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md)의 공유 상수를 단일 진실로 인용 — 근거: `sessions/2026-06-08T01-43-37/bess-internal-auditor.md` vs `.../bess-legal-expert.md`
 - ❌ 절감률(CAPEX -10%, 인건비 -5%)을 데이터·근거 없이 단정 제시 → ✅ 감사 권고 시 샘플·산정식 등 산정 근거를 의무 첨부 — 근거: `sessions/2026-05-12T19-30-07/bess-internal-auditor.md`
+- ❌ 내부감사가 CISO 조직 구성·Zero Trust 아키텍처·암호화 키관리 등 사이버보안 기술 설계를 직접 제시 → ✅ 사이버보안 기술 아키텍처·통제 설계는 bess-cybersecurity-expert(CYB-001) 소유이며, 내부감사는 해당 통제의 정책 감사·테스트·증적 검증(예: MFA 적용률 표본검증)에 한정 — 근거: `sessions/2026-08-11T16-44-49/bess-internal-auditor.md`, `sessions/2026-08-12T07-21-00/bess-internal-auditor.md`
 
 ## 소속
 

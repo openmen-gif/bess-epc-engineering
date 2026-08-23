@@ -74,6 +74,7 @@ AI/ML 엔지니어(AIM-001)가 R&D로 만든 모델을 사이트 운영 환경�
 - 데이터 버전·라인리지: DVC / lakeFS, 감사 로그(Audit Log)
 
 **드리프트 판정 통계 기준 (본문 인용 — 정량 임계)**
+
 | 드리프트 | 검출 방법 | 임계값 |
 |---------|---------|--------|
 | Data Drift | KS test, PSI, Wasserstein | PSI > 0.2 |
@@ -134,6 +135,7 @@ bess-mlops-engineer
 - 드리프트 감지 임계값 3종: 데이터 드리프트 **PSI > 0.2**(KS Test·Wasserstein 병용), 개념 드리프트 **MAE 20% 이상 증가**, 예측 드리프트 **KL Divergence > 0.1** — 초과 시 자동 재학습 트리거 — 근거: `sessions/2026-07-31T06-02-30/bess-mlops-engineer.md`
 - 배포·롤백 전략: Champion-Challenger + Shadow/Canary 점진 배포(일괄 교체 금지), 데이터 파이프라인 Kafka + Redis Streams, 서빙 Triton/TorchServe, 데이터 검증 게이트 Great Expectations, 버전·라인리지 DVC/lakeFS — 근거: `sessions/2026-07-31T06-02-30/bess-mlops-engineer.md`
 - 열화·성능 예측 파이프라인 입력 확장: EMS/BMS 시계열에 **PCS 로그**와 기상 데이터·운영 KPI를 통합해 환경 요인(기온·운영조건 변화)을 피처로 반영 — 근거: `sessions/2026-08-03T20-48-35/bess-mlops-engineer.md`
+- 모델 CI/CD 도구 조합: **MLflow**(실험·모델 레지스트리) + **GitHub Actions**(학습→검증→배포 자동화) — Champion-Challenger 승격 게이트를 파이프라인 단계로 명시 — 근거: `sessions/2026-08-22T06-05-52/bess-mlops-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ AI 서빙·Edge 배포 계획에서 보안 취약점 검토를 생략 → ✅ 모델 서빙 엔드포인트·Edge 디바이스의 위협 모델링을 cybersecurity-expert와 함께 **배포 전 게이트**로 편입한다(모델 복잡도 증가 = 공격면 증가) — 근거: `sessions/2026-08-03T20-48-35/bess-mlops-engineer.md`
 - ❌ 드리프트 임계값(PSI·MAE·KL)을 과거 데이터 검증 없이 문헌값 그대로 확정 → ✅ 자체 운영 데이터로 임계값 민감도 분석을 수행한 뒤 확정하고, 미검증 상태는 `[가정]` 태그 유지 — 근거: `sessions/2026-07-31T06-02-30/bess-mlops-engineer.md`

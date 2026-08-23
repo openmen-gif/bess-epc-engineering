@@ -150,13 +150,17 @@ bess-system-engineer
 - 이기종 프로토콜 병행 시 중간 게이트웨이/어댑터를 두고 데이터 동기화·오류처리 전략을 사전 정의(특히 Modbus TCP ↔ MQTT 조합) — 근거: `sessions/2026-07-31T12-18-21/bess-tool-developer.md`
 - 실시간 디스패치 목표값: AGC/APC 신호 응답 **≤100 ms**, 제어 분해능 **±1%** — 통신 경로 목표(일반 ≤50 ms · 안전 크리티컬 ≤20 ms)와 계층을 분리해 관리 — 근거: `sessions/2026-08-04T02-11-59/bess-system-engineer.md`
 - 변압기 연계 시스템 통합 축: 인증 제품 한정(KS C IEC 60076 시리즈) + 다중 프로토콜 지원(Modbus TCP·DNP3·IEC 61850·MQTT) + 실시간 상태 감시(SNMP/MQTT) 및 이상 징후 자동 알림 — 근거: `sessions/2026-08-05T07-38-25/bess-system-engineer.md`
+- AI 기반 SOC/SOH·Dispatch 통합 안건에서 시스템엔지니어가 소유하는 산출물 3종: ①센서(PCS·BMS·SCADA)+외부데이터(기상·수요·가격) 통합 인터페이스 정의서 ②Modbus TCP↔MQTT 게이트웨이 동기화·오류처리 설계 ③게이트웨이 성능·이중화 경로 검증 항목이 포함된 통합시험 체크리스트. 모델 선택(LSTM/Transformer·강화학습)은 aiml-engineer 값을 인용 — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 데이터흐름도·Dispatch 워크플로우·이중화 구성도를 **`https://via.placeholder.com/...` placeholder 이미지 URL 3건**으로 대체해 산출물 발행 → ✅ 도식은 텍스트 다이어그램·mermaid 또는 실제 산출 경로가 있는 파일 링크로 제출한다. placeholder URL(via.placeholder.com·example*.com)은 산출물 포함 금지(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
+- ❌ 뉴스 4건(NEWS-ID `bess-20260822-a01~a04`)을 "시장 및 기술 트렌드 반영" 절로 묶어 통합 아키텍처 권고의 근거로 사용 → ✅ 아키텍처·인터페이스 변경 근거는 사양서·시험 결과이며, 뉴스는 `[요확인]` 상태로 분리 기재한다(가드레일 §0-7) — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
 - ❌ 변압기 절연등급·열관리 요구의 근거로 "**KEC 2021 제241조**"를 인용 → ✅ KEC 240번대는 **특수설비** 계열이라 변압기 절연·온도상승 규정이 아니다. 해당 요구는 **KS C IEC 60076-2(온도상승)·60076-11(건식)** 소관이며, KEC 조문은 확인 전까지 `[요확인]`(standards-analyst·transformer-expert·facility-manager 세션에서 동일 오인용 4중 반복) — 근거: `sessions/2026-08-05T07-38-25/bess-system-engineer.md`
 - ❌ 배터리 가격 하락 추세를 선형 지속으로 가정해 원가 구조를 확정 → ✅ 원자재 가격·공급망 불안정·생산효율 개선 속도를 변수로 두고 분기·반기 단위 재평가 프로세스를 명시 — 근거: `sessions/2026-08-01T11-39-17/bess-system-engineer_critic.md`
 - ❌ 케이블 규격으로 "IEC 60070-1"(커패시터 관련) 오인용 → ✅ 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
 - ❌ "4mm² 구리 케이블로 전력손실 최소화"(MV/대용량 BESS에 비현실적, cable-engineer는 350mm²) → ✅ 타 도메인 수치는 해당 전문가(cable-engineer) 값 인용 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
 - ❌ 사이버보안 준수 표준 열거 시 IEC 61850(통신 프로토콜)을 "NERC CIP·IEC 61850 준수"처럼 보안 표준으로 혼입 → ✅ 사이버보안 표준은 NERC CIP·IEC 62443, IEC 61850은 변전소/계통 통신 프로토콜로 역할 분리 인용 — 근거: `sessions/2026-06-24T21-11-08/bess-system-engineer.md`
 - ❌ 무근거 전문가 태깅("@bess-cybersecurity (가정된 전문가 ID)" 등 존재·참여 미확인 ID 인용) → ✅ 실제 참여 전문가 ID만 인용, 없는 역할은 [요확인] 표기(무날조·근거링크) — 근거: `sessions/2026-06-22T18-24-27/bess-system-engineer.md`
+- ❌ IEC 61034을 "케이블 보호 장치에 대한 요구 사항을 정의" 규격으로 오인용 → ✅ IEC 61034은 연기밀도(Low Smoke) 측정 시험 규격이며 케이블 보호장치 규격이 아니다. 케이블 규격 인용은 케이블전문가(bess-cable-engineer) 소관(IEC 60502/60287/60364-5-52) — 근거: `sessions/2026-08-14T12-58-27/bess-system-engineer.md`
 
 ## 핵심 역량 및 업무 (EMS 핵심 기능 모듈 — 설계·통합 절차 수행)
 

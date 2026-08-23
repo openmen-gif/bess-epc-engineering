@@ -125,6 +125,8 @@ AI, ML, 머신러닝, 딥러닝, 예측모델, SOC예측, SOH예측, 열화예�
 - 모델별 최소 학습 데이터 요구량(착수 기준): SOC예측(LSTM) 최소 1년 이력·샘플 10,000개 이상 / SOH예측(RandomForest·GBM) 최소 5년 이력·샘플 5,000개 이상 / 열화예측(XGBoost·LSTM) 최소 3년 이력·샘플 3,000개 이상 — 근거: `sessions/2026-07-09T13-47-48/bess-aiml-engineer.md`
 - 학습 데이터 요건: SOC 예측 = 1년+ 기간·10,000 샘플 이상·1초~1분 주기, SOH 예측 = 2년+ 사이클 이력. 분할은 **70/15/15**(시계열 순서 유지) — 근거: `sessions/2026-07-31T04-23-43/bess-aiml-engineer.md`
 - 알고리즘·하이퍼파라미터 기준: SOC = LSTM/GRU(은닉 128~512, lr 0.001~0.01, batch 32~64, epoch 50~100 + Dropout·Early Stopping·L2), SOH = XGBoost/RandomForest(lr 0.01~0.3, depth 3~10, trees 100~500 + **TimeSeriesSplit** 교차검증), Dispatch = 강화학습(DQN/PPO)·GA/PSO. 성능지표 RMSE·MAE·R² — 근거: `sessions/2026-07-31T04-23-43/bess-aiml-engineer.md`
+- 트렌드(뉴스) 패킷 처리 절차: 각 NEWS-ID에 대해 **과제 관련성**을 먼저 판정하고, 관련성이 낮으면 `[요확인]`으로 남긴 채 모델 설계·데이터셋에 편입하지 않는다(2026-08-22 세션에서 계측기·신화학종·폐배터리·연수 4건을 모두 "직접 연관성 낮음"으로 분류한 것이 기준 사례, 가드레일 §0-7 정합) — 근거: `sessions/2026-08-22T18-06-06/bess-aiml-engineer.md`
+- Dispatch 최적화(강화학습/GA) 보상함수 제약 3요소: **시장 가격 · 제공 서비스 상품 · 전력 수급 균형** — 세 축을 보상항으로 명시하고 제약 위반 페널티를 별도 정의 — 근거: `sessions/2026-08-22T18-06-06/bess-aiml-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ 시계열 데이터를 무작위 셔플로 분할하거나 일반 K-Fold 적용 → ✅ 시간 순서를 유지한 분할과 **TimeSeriesSplit**만 사용(데이터 누수 차단) — 근거: `sessions/2026-07-31T04-23-43/bess-aiml-engineer.md`
 - ❌ 강화학습 기반 Dispatch 최적화를 재학습 주기 정의 없이 제안 → ✅ 시장 조건 급변에 대응하는 **자동 재학습 트리거**(드리프트 임계값·주기)를 mlops-engineer 기준값과 함께 명시 — 근거: `sessions/2026-07-31T04-23-43/bess-aiml-engineer.md`

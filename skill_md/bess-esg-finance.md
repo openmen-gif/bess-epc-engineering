@@ -145,6 +145,8 @@ bess-esg-finance
 - EU 택소노미 적격성은 **활동 4.10(전기 저장)** Substantial Contribution + **DNSH 6개 환경목표** 충족 여부로 판정 — 근거: `sessions/2026-07-31T14-37-28/bess-esg-finance.md`
 - TCFD/ISSB 리스크 평가 4분류(BESS): 시장(출하량·원자재 변동성) / 신용(PF 조달·입찰 불확실성) / 운영(제조·운영비 변동) / 환경(Scope 1·2·3 배출, 택소노미 적격성, 원자재 공급) — 각 항목에 가능성×영향 등급과 완화책을 부착 — 근거: `sessions/2026-08-05T01-47-03/bess-esg-finance.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ "**ICMA 그린본드 원칙(GBP) 인증을 획득**"으로 표기 → ✅ ICMA GBP는 **자발적 지침(가이드라인)** 이며 인증기관이 아니다. 외부검토는 **SPO(Second Party Opinion)·검증(Verification)·인증(CBI Climate Bonds Standard)·등급(Rating)** 4형태로 구분해 어떤 검토를 받을지 명시한다 — 근거: `sessions/2026-08-20T13-12-53/bess-esg-finance.md`
+- ❌ 뉴스 4건(NEWS-ID `bess-20260820-a01~a04`)의 보도 사실을 그대로 ESG 성과 근거로 편입하고 신기술의 안전성을 단정("'물 배터리' 기술의 발전은 화재 위험을 크게 줄이는 동시에 안전성을 향상") → ✅ 그린본드 문서에 넣을 ESG 근거는 **검증 가능한 지표**(Scope 배출량, 택소노미 정합성, 인증서)여야 하며, 뉴스 기반 기술 평가는 `[요확인]`으로 남긴다(가드레일 §0-7). 안전성 판정은 fire-engineer·battery-expert 소관 — 근거: `sessions/2026-08-20T13-12-53/bess-esg-finance.md`
 - ❌ 리스크 등급을 "**高 / 中**" 등 한자로 표기 → ✅ 산출물은 한국어 표기 원칙에 따라 **높음 / 중간 / 낮음**(또는 Critical·High·Medium·Low)으로 통일한다. 중국어·일본식 한자 혼입 금지(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-05T01-47-03/bess-esg-finance.md`
 - ❌ 물(水) 관련 재무정보를 "**IFRS S2**" 항목으로 분류 → ✅ **IFRS S2는 기후 관련 공시 전용**이며, 물·기타 지속가능성 주제는 **IFRS S1**(일반 요구사항) 또는 향후 주제별 기준에 따른다 — 근거: `sessions/2026-07-31T14-37-28/bess-esg-finance.md`
 - ❌ 그린본드 자금사용처를 "셀 제조시설 = Scope 3-1 / 효율개선 = Scope 2 / 기술 업그레이드 = Scope 1"로 매핑 → ✅ Scope 분류는 배출원(emission source) 기준이지 자금사용처 기준이 아님, 라벨 혼동 금지 — 근거: `sessions/2026-06-05T07-49-59/bess-esg-finance.md`
@@ -226,6 +228,7 @@ BESS 자재 영향 (EU向 수입 시):
 ## LCA·Scope 1/2/3 산정 가이드
 
 근거: GHG Protocol Corporate Standard / Corporate Value Chain (Scope 3) Standard, ISO 14064-1 (조직 GHG 인벤토리), ISO 14067 / EN 15978 (제품·시설 탄소발자국).
+
 | Scope | BESS 사례 | 데이터 출처 | 데이터 품질(1차/2차) | 정확도 |
 |-------|---------|---------|------|------|
 | Scope 1 | 사이트 보조 발전기 연소, 누출(SF6 등) | 운영 직접 측정 | 1차 | 높음 (불확도 ≤10% 목표) |
