@@ -12,7 +12,33 @@ from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils.config import IS_API_MODE
 
-EXEC_DIR = Path(r"c:\Users\openm\00_AI개발\01_BESS사업\output\10_tools\executables")
+def _resolve_exec_dir():
+    r"""실행 파일 폴더를 찾는다. 없으면 None → 클라우드 다운로드로 폴백한다.
+
+    2026-08-25: 종전에는 절대경로가 박혀 있었다.
+        c:\Users\openm\00_AI개발\...\10_tools\executables
+    `00_AI개발`(현 `01_AI개발`) · `10_tools`(현 `99_tools`) 둘 다 옛 이름이라
+    `EXEC_DIR.exists()` 가 **영구 False** 였고, 로컬 모드가 에러 없이 꺼진 채로 남았다
+    (조용한 기능 상실). 이 리포는 독립 클론·HF Space 배포도 되므로 부모 저장소
+    구조를 전제할 수 없다 — 후보를 순회하고 없으면 폴백한다.
+    """
+    cands = []
+    env = os.getenv("BESS_EXEC_DIR")
+    if env:
+        cands.append(Path(env))
+    root = Path(__file__).resolve().parents[1]          # 대시보드 루트
+    cands.append(root / "executables")                  # 독립 배포 시 여기에 둔다
+    cands.append(root.parent / "scripts" / "_dist")     # 모노리포: build_gui_exes.py 의 DIST_DIR
+    for c in cands:
+        try:
+            if c.is_dir():
+                return c
+        except OSError:
+            continue
+    return None
+
+
+EXEC_DIR = _resolve_exec_dir()
 
 # GitHub Release URL for cloud mode
 GH_RELEASE_TAG = "tools-v1.0"
@@ -274,7 +300,7 @@ def run_tool_launcher_module():
     )
 
     # ── Mode detection ──────────────────────────────────────────────
-    use_local = IS_API_MODE and EXEC_DIR.exists()
+    use_local = IS_API_MODE and EXEC_DIR is not None
 
     if use_local:
         exe_files = sorted(
