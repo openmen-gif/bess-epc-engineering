@@ -149,7 +149,10 @@ Step Voltage, Touch Voltage, GPR, 접지망, 접지봉, 피뢰침, SPD,
 - 대지 고유저항 ρ는 Wenner 4전극 실측이 원칙이며, 미측정 시 `[가정] ρ=100 Ω·m` + `[현장측정필요]` 태그를 함께 부착 — 근거: `sessions/2026-08-01T17-34-33/bess-grounding-engineer.md`
 - 계절 변동(동절기 동결)에 따른 토양 저항률 상승을 설계 여유에 반영 — 근거: `sessions/2026-08-01T17-34-33/bess-cbop-engineer.md`
 - SPD 선정 기준: 보호레벨 **Up < 0.8 × Uw**(피보호기기 임펄스 내전압) 조건을 만족하도록 선정하고, 낙뢰 보호등급은 LPL(Lightning Protection Level) I~IV로 명시 — 근거: `sessions/2026-08-04T04-33-36/bess-grounding-engineer.md`
+- 접지망 설계 입력·부품 기준(세션 정리): 대지 고유저항은 **Wenner 4전극법** 측정, 미측정 시 `[가정] ρ=100 Ω·m` + `[현장측정필요]` 태그 · 표면층 감소계수 **Cs**(IEEE 80-2013 §7.4) · 접지봉 **Cu-clad Steel Φ16 mm × 2,400 mm**, 접지선 **Cu ≥25 mm²** · SPD 보호레벨 조건 **Up < 0.8 × Uw**, 낙뢰 보호 레벨 **LPL II(Class II)** — 근거: `sessions/2026-08-27T15-19-26/bess-grounding-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ SPD 보호레벨(Up < 0.8 × Uw)의 근거로 "**IEEE 80-2013 §**"(조항 번호 공란)을 인용 → ✅ SPD 선정·배치는 **IEC 62305-4 · IEC 61643-12** 소관이고 IEEE 80은 **변전소 접지망**(Step/Touch·GPR) 규격이다(§3.1 IEEE 80↔피뢰 오인용 재발). 조항 번호 없는 "§" 표기는 발행 금지 — 근거: `sessions/2026-08-27T15-19-26/bess-grounding-engineer.md`
+- ❌ 접지저항 목표를 "**변압기 접지 ≤1 Ω**"으로 라벨링 → ✅ **≤1 Ω은 변전소 접지망(GPR) 기준**이고 기기접지는 **≤10 Ω**이다. 대상(기기 vs 변전소)을 구분해 표기한다(§3.4 접지 항목) — 근거: `sessions/2026-08-27T15-19-26/bess-grounding-engineer.md`
 - ❌ 접지망 설계 변수로 "**접지 시스템의 열적 성능**"을 두고 배터리 열 안정성에 맞춰 "접지망의 열적 성능·접지저항을 최적화"하도록 권고 → ✅ 접지망 설계 변수는 **대지 고유저항 ρ · 격자 간격 · 도체 단면적 · 고장전류 If · 고장지속시간 tf**(IEEE 80)이며, 도체의 "열적" 항목은 **열적 단면적 산정(§11.3)** 에 한정된다. 배터리 열 안정성은 battery-expert·cfd-analyst 소관으로 접지 성능 지표가 아니다 — 근거: `sessions/2026-08-22T08-21-14/bess-grounding-engineer.md`
 - ❌ 바나듐계 배터리를 "**높은 에너지 밀도**와 장수명을 제공"으로 서술 → ✅ 바나듐계(VRFB·바나듐이온)는 리튬이온 대비 **에너지 밀도가 낮고** 강점은 안전성·장수명이다. 같은 배치의 power-system-analyst 세션에서도 동일 오류가 검출된 **2개 도메인 반복** — 화학종 성능값은 battery-expert 값을 인용 — 근거: `sessions/2026-08-22T08-21-14/bess-grounding-engineer.md`
 - ❌ 접지 도메인 산출물이 뉴스 4건(NEWS-ID `bess-20260822-a01~a04`) 해설로 채워지고 **ρ 실측·격자 설계·Step/Touch 전압·GPR 산출이 0건** → ✅ 접지 산출물은 최소한 ρ(측정 또는 `[가정]`)·격자 간격·도체 단면적·Estep/Etouch 허용치 대조까지 수치로 제시하고, 뉴스는 설계 근거로 삼지 않는다(가드레일 §0-7) — 근거: `sessions/2026-08-22T08-21-14/bess-grounding-engineer.md`

@@ -178,7 +178,11 @@ bess-ebop-engineer
 - 수배전반 접지 접촉·보폭전압 검증은 IEEE 80과 IEC 61936-1(>1kV AC 전력설비) 기준 병용; TCC 보호협조는 상위-하위 동작시간 마진 ≥0.3~0.4s 확보 — 근거: `sessions/2026-06-19T16-14-58/bess-ebop-engineer.md`
 - 수배전반 설계 근거 규격 세트: IEC 62271-200(MV 스위치기어), IEEE C37.20.1/2(금속함체 스위치기어), IEC 61936-1 + IEEE Std 80-2013(접촉전압·보폭전압 계산) — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
 - 변압기 냉각방식은 운영환경 기준으로 선정: 고온 환경은 강제냉각(ONAF)이 유리하며, ONAN/ONAF/OFAF 선택 시 장기 운영비·유지보수성을 함께 비교 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
+- 변압기·수배전반 설계 여유 축(세션 기준값): 용량 여유율 **5~10%**, 임피던스 설계 범위 **8~12%**, 접지·보호는 **IEEE Std 80-2013 + IEC 61936-1**로 접촉전압(Touch)·보폭전압(Step) 검토 — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ ONAN을 "**Off-Load** Natural Air Cooling", OFAF를 "**Off-Load** Forced Air Cooling"으로 풀어 씀 → ✅ 앞 두 글자는 **Oil**(절연유) 계열이다. **ONAN = Oil Natural Air Natural**, **OFAF = Oil Forced Air Forced**. "Off-Load"는 무전압 탭절환(**DETC**) 용어이며 냉각방식과 무관하다(§2 ONAN↔OLTC 혼용 항목의 신규 변형) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
+- ❌ "**Class H 또는 IE3 이상**의 효율 등급 변압기 사용" → ✅ 효율 = **IEC 60076-20 / EU EcoDesign Tier**(+ US DOE 10 CFR 431), 절연 = **내열 Class(A·B·F·H)**, IE 등급 = **모터** 효율(IEC 60034-30). 세 축을 한 문장에 묶지 않는다(§3.1 재발 — ebop-engineer 2회째) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
+- ❌ 변압기 임피던스 8~12% 확인 요청의 근거로 **ESS 시장 성장 보도 ID**를 부착 → ✅ 기술 파라미터의 근거는 규격 조항·벤더 시험성적이며 시장 보도가 아니다(§4 NEWS-ID 라벨 무결성) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
 - ❌ "고효율 **Class H 또는 IE3 이상** 등급의 변압기" 표기가 **재발**(같은 배치의 facility-manager 세션에서도 동시 검출) → ✅ **효율 = IEC 60076-20 / EU EcoDesign Tier**, **절연 = 내열 Class(A·B·F·H)**, **모터 효율 = IE 등급(IEC 60034-30)** 으로 축이 완전히 다르다. 세 축을 한 문장에 묶지 않는다(가드레일 §3.1) — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
 - ❌ **TCC**를 "Time Coordination Curve"로 풀어 씀 → ✅ TCC = **Time-Current Curve(시간-전류 곡선)** 이다(가드레일 §2 재발) — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
 - ❌ 배터리 화학종 뉴스('물 배터리')를 근거로 **수배전반 설계 변경**을 검토 권고 → ✅ 배터리 화학종은 수배전반(스위치기어) 설계 변수(정격전압·차단용량·IP/IK 등급·아크 내부고장 등급)와 직접 관계가 없다. 화학종 변경의 전기설비 영향은 DC 측 사양·보호협조 입력값으로 환산해 받아 반영한다 — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`

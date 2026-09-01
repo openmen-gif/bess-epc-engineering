@@ -175,6 +175,8 @@ BESS 시운전 전 단계(Pre-Commissioning → Commissioning → PAT → Grid I
 - 시운전 안전 게이트에 NFPA 855 **TRPP(열폭주 확산 방지)** 항목을 편입하고, LOTO·PTW와 함께 게이트 전환 증빙으로 관리 — 근거: `sessions/2026-08-01T01-23-30/bess-commissioning-coordinator.md`
 - 게이트 승인 체계는 CMP(시운전 마스터플랜) 기준으로 단계별 증빙(시험성적서·측정로그·승인기록)을 갖춰야 전환 — 근거: `sessions/2026-08-01T01-23-30/bess-commissioning-coordinator.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 시운전 총괄 산출물에 **Hold Point·Punch List·PAC/FAC 게이트가 0건**이고 조달 다각화·비용 재평가·공급망 일반론으로 전면 대체 → ✅ 시운전 마스터플랜의 게이트 수·Hold Point 목록·PAC/FAC 판정 기준 중 최소 1개를 수치로 결론화한다(§4 도메인 필수 산출물 결여 — commissioning-coordinator **3회째 재발**) — 근거: `sessions/2026-08-27T22-34-37/bess-commissioning-coordinator.md`
+- ❌ 뉴스 1건으로 "**미국 시장 ESS 수요가 4배 이상 증가**"를 확정 서술하고 조달 전략·일정 조정 결론에 편입 → ✅ 단일 NEWS-ID 근거의 조기 확정 편입 금지(§0-7). 시장 전망이 시운전 일정에 영향을 준다면 `[전망]` 태그 + 2차 근거를 붙인다 — 근거: `sessions/2026-08-27T22-34-37/bess-commissioning-coordinator.md`
 - ❌ 시운전 프로세스 초안이 **뉴스 4건(NEWS-ID `bess-20260822-a01~a04`) 해설 + 기술 도입 권고**로 채워지고 **PreCom → Com → PAT → Grid Test 단계 전환 게이트·Hold Point·Punch List·PAC/FAC 증빙이 0건**(2026-08-04에 이은 **재발**) → ✅ 시운전 코디네이터 산출물의 1순위 결론은 항상 **단계 게이트와 전환 증빙**이며, 트렌드는 부가 정보로만 기재한다(가드레일 §0-7) — 근거: `sessions/2026-08-22T10-52-50/bess-commissioning-coordinator.md`
 - ❌ 바나듐 이온 배터리를 "**높은 에너지 밀도**와 장수명"으로 서술하고 배터리 선택 기준으로 제시 → ✅ 바나듐계는 리튬이온 대비 **에너지 밀도가 낮고** 강점은 안전성·장수명이다. 화학종 성능값은 battery-expert 소관값을 인용하며, 배터리 선정 자체도 시운전 코디네이터 결론 범위가 아니다 — 근거: `sessions/2026-08-22T10-52-50/bess-commissioning-coordinator.md`
 - ❌ 시운전 리스크 산출물이 공급망·품질경영(ISO 9001)·시장 수요예측·규제 일반으로 채워지고 **시운전 고유 게이트**(Hold Point, Punch List, PAC/FAC 전환 증빙, 초기 사이클링 셀 불균형 검증)가 누락 → ✅ 시운전 코디네이터는 단계 전환 게이트와 증빙을 1순위 결론으로 제시하고, 공급망·품질경영·시장 항목은 procurement·qaqc·marketer 결과를 인용 — 근거: `sessions/2026-08-04T15-44-15/bess-commissioning-coordinator.md`

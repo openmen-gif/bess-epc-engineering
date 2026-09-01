@@ -143,7 +143,13 @@ EMC, EMI, 전자기적합성, 방출, 내성, CE마킹, FCC, KC인증, 고조파
 - 시운전 단계 통신 품질 기준(system-engineer 합의값): 통신 지연 ≤50 ms, 패킷 손실률 ≤0.05% — 근거: `sessions/2026-07-31T10-59-41/bess-emc-analyst.md`
 - AI·데이터 기반 EMI 최적화 도입 시 운영데이터 보안(암호화·접근통제)과 GDPR·개인정보보호법 적용 여부를 함께 판정 — 근거: `sessions/2026-07-05T04-29-31/bess-emc-analyst_critic.md`
 - EMI 저감 설계 파라미터 세트(PCS): 게이트 저항 Rg_on ≈ 10 Ω · Rg_off ≈ 3 Ω로 dV/dt 제어, SiC MOSFET의 높은 dV/dt에는 CM 초크 병행, 중요 부품·케이블 차폐 — 설계 단계 EMC(design-in)가 사후 보정보다 비용 효율적 — 근거: `sessions/2026-08-05T15-16-20/bess-emc-analyst.md`
+- SiC MOSFET EMI 저감 설계 축(세션 예시값): 게이트 저항 **R_g_on ≈ 10 Ω / R_g_off ≈ 3 Ω** + 공통모드 초크(CM Choke) + 차폐, PCB 루프 면적 최소화. 높은 dV/dt 특성 때문에 Si IGBT 대비 CM 경로 대책을 추가로 둔다(값은 `[가정]` — 실제 정정은 방출 시험값으로 확정) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ LCL을 "**Low-Pass Filter**"로 풀어 씀 → ✅ **LCL = Inductor-Capacitor-Inductor** 3소자 구성이다(§2 사전 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
+- ❌ LCL 공진주파수를 같은 문단에서 "**f_sw의 1/10 이하**"와 "**f_res ≈ f_sw/15**" 두 기준으로 병기 → ✅ 판정식은 **10·f_grid < f_res < f_sw/2** 이며 1/15 경험식은 이 상·하한을 함께 만족할 때만 유효하다. 한 산출물에 두 기준을 병기하지 않는다(§3.4 + §5-7) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
+- ❌ EMC 분석가가 **액냉 냉각수 유량·유로 압력손실·열교환기 성능 최적화**를 본인 권고 본문으로 확정 → ✅ 액냉 열유동 판정은 bess-cfd-analyst 소관이다(§3.4 액냉↔공랭 지표 분리, emc-analyst 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
+- ❌ 한국 시장 EMI 표준으로 **KS C IEC 62933 시리즈**를 후보로 검토 → ✅ EMC 방출·내성은 **CISPR 11(EN 55011)·IEC 61000 계열**(전력구동시스템은 IEC 61800-3) 소관이고, IEC 62933은 EES 시스템 용어·안전 표준이다 — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
+- ❌ 리스크 등급을 한자 **中/高**로 표기 → ✅ 한국어(높음/중간/낮음) 또는 Critical·High·Medium·Low(§4 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
 - ❌ **액냉(liquid cooling)** 시스템 최적화 계획을 "기체 동역학 모델링·**기류 분배** 최적화"로 수립 → ✅ 액냉의 주 변수는 **냉각수 유량·유로 압력손실·열교환기 성능·냉매 물성**이며, 기류 분배·ACH는 **공랭** 지표다. 냉각 방식(공랭/액냉)을 먼저 확정한 뒤 지표를 선택한다(열해석 결론 자체는 cfd-analyst 소관) — 근거: `sessions/2026-08-21T16-01-30/bess-emc-analyst.md`
 - ❌ KR EMC 준수 규격으로 **KS C IEC 62933 시리즈**를 인용 → ✅ 62933은 **ESS 시스템** 표준으로 EMC 방출·내성 한계를 규정하지 않는다. KR EMC는 **KC 인증(전파법 적합성평가·전기용품 및 생활용품 안전관리법)** 기준이며 시험규격은 CISPR 11·IEC 61000 계열 — 근거: `sessions/2026-08-21T16-01-30/bess-emc-analyst.md`
 - ❌ 산출물 제목이 빈 문자열("# bess-emc-analyst — ")이고, 라운드2에서 발언 주체를 **플레이스홀더**로 표기("@bess-xxx (예: @bess-emc-analyst)") → ✅ 제목·발언 주체는 실제 값으로 채워 발행하며, `xxx`·`예:` 류 자리표시자는 산출물에 포함 금지(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-21T16-01-30/bess-emc-analyst.md`

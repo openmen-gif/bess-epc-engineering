@@ -136,7 +136,10 @@ bess-mlops-engineer
 - 배포·롤백 전략: Champion-Challenger + Shadow/Canary 점진 배포(일괄 교체 금지), 데이터 파이프라인 Kafka + Redis Streams, 서빙 Triton/TorchServe, 데이터 검증 게이트 Great Expectations, 버전·라인리지 DVC/lakeFS — 근거: `sessions/2026-07-31T06-02-30/bess-mlops-engineer.md`
 - 열화·성능 예측 파이프라인 입력 확장: EMS/BMS 시계열에 **PCS 로그**와 기상 데이터·운영 KPI를 통합해 환경 요인(기온·운영조건 변화)을 피처로 반영 — 근거: `sessions/2026-08-03T20-48-35/bess-mlops-engineer.md`
 - 모델 CI/CD 도구 조합: **MLflow**(실험·모델 레지스트리) + **GitHub Actions**(학습→검증→배포 자동화) — Champion-Challenger 승격 게이트를 파이프라인 단계로 명시 — 근거: `sessions/2026-08-22T06-05-52/bess-mlops-engineer.md`
+- 드리프트 정량 임계값·자동 재학습 트리거: **PSI > 0.2** 또는 **MAE 20% 증가** 또는 **KL Divergence > 0.1** 초과 시 재학습 트리거. Data / Concept / Prediction Drift 3종을 분리 모니터링 — 근거: `sessions/2026-08-30T04-34-06/bess-mlops-engineer.md`
+- MLOps 도구 스택(세션 조합): 데이터 정합성 게이트 **Great Expectations**(학습·추론 양단) · 드리프트 모니터링 **Evidently / WhyLabs** · 관측 **Prometheus + Grafana** · 실험추적·모델 버전관리 **neptune.ai / Kubeflow** — 근거: `sessions/2026-08-30T04-34-06/bess-mlops-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ BESS 운영 시뮬레이션 플랫폼으로 **Simulink·AnyLogic**만 제시 → ✅ 계통·전력변환 거동 검증은 PSCAD/ETAP/DIgSILENT(power-system-analyst)·PLECS(pcs-expert) 소관이다. MLOps 결론은 모델 서빙·드리프트·재학습 파이프라인 범위로 한정한다(역할 경계) — 근거: `sessions/2026-08-30T04-34-06/bess-mlops-engineer.md`
 - ❌ AI 서빙·Edge 배포 계획에서 보안 취약점 검토를 생략 → ✅ 모델 서빙 엔드포인트·Edge 디바이스의 위협 모델링을 cybersecurity-expert와 함께 **배포 전 게이트**로 편입한다(모델 복잡도 증가 = 공격면 증가) — 근거: `sessions/2026-08-03T20-48-35/bess-mlops-engineer.md`
 - ❌ 드리프트 임계값(PSI·MAE·KL)을 과거 데이터 검증 없이 문헌값 그대로 확정 → ✅ 자체 운영 데이터로 임계값 민감도 분석을 수행한 뒤 확정하고, 미검증 상태는 `[가정]` 태그 유지 — 근거: `sessions/2026-07-31T06-02-30/bess-mlops-engineer.md`
 - ❌ PSI 임계값 세션 간 불일치(0.2 vs 0.15 혼용) → ✅ PSI > 0.2 단일 표준 고정 — 근거: `sessions/2026-06-07T22-47-16/bess-mlops-engineer.md`(0.15) vs `sessions/2026-06-04T11-42-12/bess-mlops-engineer.md`(0.2)

@@ -190,7 +190,9 @@ bess-pcs-expert
 - LCL 필터 조정 지침: 공진주파수 f_res를 스위칭 주파수 대비 충분히 낮게(약 1/15 수준) 두고 감쇠비 ζ≈0.4로 설정 후 실측 검증 — 근거: `sessions/2026-07-31T10-59-41/bess-emc-analyst.md`
 - PCS 계약서에 명시할 기술 사양 축: 인버터 토폴로지, 스위칭 소자(IGBT/SiC MOSFET), 출력 필터(LCL) 설계, 형식시험 규격과 **판정 기준·허용오차**, 장기 기술지원·펌웨어 업데이트 보장 조항 — 근거: `sessions/2026-08-04T07-13-44/bess-pcs-expert.md`
 - FIDIC 계약 하 PCS 리스크 최소화 5축(기술 측 기여분): ①성능 지표 수치 확정(η≥97%·응답 ≤50 ms·THDi ≤3%) ②형식시험 규격별 Pass/Fail 판정 기준 ③보증기간·펌웨어 업데이트 의무 ④변경관리(VO) 시 기술 영향 평가 ⑤운영·정비 교육 범위 — 계약 조항 자체의 설계·해석은 contract-specialist 소관 — 근거: `sessions/2026-08-22T16-03-15/bess-pcs-expert.md`
+- PCS 시뮬레이션 비교 축(세션 정리): 환경 **MATLAB/Simulink 또는 PLECS**, 토폴로지 **2-level · 3-level NPC · MMC**, 스위칭 소자 **IGBT · SiC MOSFET · GaN**, 검증 항목 = 효율·응답시간·고조파 저감 + **약계통 조건에서의 GFL/GFM 안정성과 응답시간** — 근거: `sessions/2026-08-29T04-31-15/bess-pcs-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ VRT를 "**Variable Resistance Voltage Regulation**"으로 풀어 씀 → ✅ **VRT = Voltage Ride-Through**(전압 사고 통과 능력). §2 사전에 금지어로 등재된 오역의 신규 변형이며, PCS 제어 알고리즘 목록에서 GFL·GFM과 나란히 쓸 때 특히 반복 검출된다 — 근거: `sessions/2026-08-29T04-31-15/bess-pcs-expert.md`
 - ❌ **ISO 50001**(에너지경영시스템)을 PCS 효율 최적화·형식시험 프레임워크로 계약 조항에 편입 권고 → ✅ ISO 50001은 **조직 단위 에너지경영시스템(경영체계)** 표준이며 **기기 효율 시험 기준이 아니다**. PCS 효율·형식시험은 **IEC 61683(효율 측정)·IEC 62477-1(안전)·IEC 62894·UL 1741** 소관 — 근거: `sessions/2026-08-22T16-03-15/bess-pcs-expert.md`
 - ❌ 같은 산출물에서 효율 보증치를 "η ≥ 97%"와 "98.2% 이상"으로 혼용 기재 → ✅ 계약에 넣을 **보증치는 단일 값**으로 확정하고(기준값 η≥97%, SiC 적용 시 상향 근거 명시), 벤더 실측치는 별도 열로 분리 표기(가드레일 §5-7 문서 내 값 단일화) — 근거: `sessions/2026-08-22T16-03-15/bess-pcs-expert.md`
 - ❌ PCS 전문가 산출물이 FIDIC 보증 조항·변경관리 프로세스·교육 지원 조항의 **계약적 적정성**을 직접 결론화 → ✅ PCS는 계약에 투입할 **기술 사양·시험 판정 기준**만 제공하고 계약 조항 설계·해석은 bess-contract-specialist 소관(가드레일 §4) — 근거: `sessions/2026-08-22T16-03-15/bess-pcs-expert.md`

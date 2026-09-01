@@ -134,7 +134,10 @@ FAT, 온도상승, DGA, 절연유, 냉각, ONAN, ONAF, 손실, 소음, BIL
 - 시험·효율 근거 규격: IEC 60076-1(일반 요건·시험), IEEE C57.12.90(시험 방법). 온도 모니터링은 Top Oil Temperature와 Winding Hot Spot 2점 이상 — 근거: `sessions/2026-08-01T19-21-30/bess-transformer-expert.md`
 - 변압기 제어·보조전원: UPS 용량은 제어계통 소비전력의 **1.2~1.5배**, 배터리는 최소 4~8시간 백업, UPS→발전기→배터리 자동 전환을 SCADA로 통합 — 근거: `sessions/2026-08-01T19-21-30/bess-transformer-expert.md`
 - 시장별 변압기 준거 규격 세트: **KR** KS C 4301·KEC·KEPCO ES, **US** IEEE C57.12.00·DOE 10 CFR 431, **EU** EN 60076·EU EcoDesign Tier 2 — 시장 코드 확정 후 해당 세트만 인용 — 근거: `sessions/2026-08-05T07-38-25/bess-transformer-expert.md`
+- 손실 저감·감시 축(세션 정리): 무부하손 저감 = **방향성 규소강판(GOES) 철심**(히스테리시스·와전류 손실), 부하손 저감 = 저저항 도체·최적 권선 배치. 온도 감시 2축 = **Top Oil Temperature + Winding Hot Spot** + DGA 정기 분석. 시장별 효율 규제 소관 = **KR: KS C 4301·KEPCO ES / US: IEEE C57.12.00 + DOE 10 CFR Part 431** — 근거: `sessions/2026-08-28T00-15-14/bess-transformer-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 유입변압기에 "**액체 냉각(Liquid Cooling) 시스템 신규 도입**"을 권고 → ✅ 유입변압기는 **절연유가 이미 냉매**다. 냉각 강화는 **ONAN → ONAF → OFAF → ODAF** 단계 상향과 방열기·송유펌프·강제송풍으로 표현하며, 배터리 액냉(냉각수 채널·L/min·ΔP)과 개념을 섞지 않는다 — 근거: `sessions/2026-08-28T00-15-14/bess-transformer-expert.md`
+- ❌ 냉각방식을 "**자연 냉각(ONAN) / 강제 냉각(Forced Air Cooling)**" 2분류로 서술 → ✅ §3.4 4분류 유지 — **ONAN**(자연유·자연공랭) / **ONAF**(자연유·강제공랭) / **OFAF**(강제유·강제공랭) / **ODAF**(지향유·강제공랭) — 근거: `sessions/2026-08-28T00-15-14/bess-transformer-expert.md`
 - ❌ 냉각방식을 "**자연 냉각(ONAN, ONAF)** / 강제 냉각(Forced Air Cooling)"으로 2분류 → ✅ **ONAF의 F가 이미 강제 공랭(Air Forced)** 이다. 정확한 분류는 **ONAN**(자연유·자연공랭) / **ONAF**(자연유·강제공랭) / **OFAF**(강제유·강제공랭) / **ODAF**(지향유·강제공랭)이며, ONAN↔ONAF를 같은 "자연 냉각" 묶음으로 두지 않는다(가드레일 §2 ONAN/ONAF/OFAF 항목) — 근거: `sessions/2026-08-20T15-50-23/bess-transformer-expert.md`
 - ❌ 와전류 손실을 "**에디류 손실**"로 표기(음차·한자 혼용 깨진 토큰) → ✅ **와전류 손실(eddy current loss)** 로 표기하고, 무부하손은 **히스테리시스 손실 + 와전류 손실**로 구성됨을 명시(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-20T15-50-23/bess-transformer-expert.md`
 - ❌ 주변압기 용량 여유율 예시를 "설계 부하 100 kVA → 115 kVA"로 제시(BESS 주변압기는 통상 수~수십 MVA 급) + 본문은 "MVA 결정"이라 서술 → ✅ 예시 값은 실제 등급대(MVA)로 들고, 본문 단위와 예시 단위를 일치시킨다(가드레일 §5-2 자릿수 검산) — 근거: `sessions/2026-08-05T07-38-25/bess-transformer-expert.md`

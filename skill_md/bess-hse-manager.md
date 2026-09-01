@@ -262,6 +262,9 @@ bess-hse-manager
 - 액냉(액체냉각) 시스템 정비작업 안전지침: LOTO 절차와 함께 냉각유체 종류(PG/POE/합성유 등)별 가연성·화재저항성 차이를 지침에 반영하고, 고온부 작업 시 방열장갑·방열복 등 PPE 착용을 의무화 — 근거: `sessions/2026-08-14T16-51-37/bess-hse-manager.md`
 - 고밀도 모듈 안전관리 표준 비교 시 **HSE 소유 축은 ISO 45001:2018(안전보건경영시스템 — 위험평가·교육·PTW)과 비상대응**이며, IEC 62933-5-2(ESS 안전요건)·NFPA 855(설치·화재)·UL 9540A(열폭주 전파 시험)는 소관 전문가(fire-engineer·battery-expert) 값을 인용해 비교표를 구성 — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ HSE 매니저가 **CFD 냉각 채널 설계·공기 유동 최적화·열방산 장치 위치**를 본인 권고로 확정 → ✅ 열유동 해석과 냉각 설계 판정은 bess-cfd-analyst 소관. HSE는 그 결과를 안전 교육·비상대응 절차로 옮기는 역할에 한정한다(역할 경계) — 근거: `sessions/2026-08-29T08-52-31/bess-hse-manager.md`
+- ❌ 사이버보안 취약점을 **최우선 리스크로 확정**하고 방화벽·IDS/IPS·암호화·인증 메커니즘 통제를 설계 → ✅ OT 보안 기술 통제 설계는 bess-cybersecurity-expert·bess-network-engineer 소관(§4 "HSE-manager가 OT 보안 기술 통제 설계" 항목 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-hse-manager.md`
+- ❌ 리스크 가능성·영향 등급을 한자 **中/高**로 표기 → ✅ 한국어(높음/중간/낮음) 또는 Critical·High·Medium·Low로 통일(§4 출력 품질 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-hse-manager.md`
 - ❌ **IEC 60840**을 "BESS 전기 안전 표준(전기적 격리·LOTO·전기 위험평가)"으로 인용 → ✅ IEC 60840은 **정격전압 30 kV 초과~150 kV 이하 압출절연 전력케이블 및 부속품** 시험 규격(케이블 소관)이다. 전기작업 안전·LOTO는 **NFPA 70E·산업안전보건기준에 관한 규칙**, 전기설비 안전은 IEC 61936-1·KEC 소관 — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`
 - ❌ NFPA 855를 **"정치형 에너지 저장 시스템"** 으로 표기(일본식 한자어 定置型 직역) → ✅ NFPA 855는 *Standard for the Installation of Stationary Energy Storage Systems* — 한국어 표기는 **고정형(정치식 아님) 에너지저장장치 설치 기준**. 산출물에 일본식 한자어 직역 혼입 금지 — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`
 - ❌ **IEC 62933 "시리즈"** 를 파트 구분 없이 "설계·제조·설치·운영·폐기 전 과정 안전 요건"으로 포괄 귀속 → ✅ IEC 62933은 **시스템(EES) 레벨** 표준이고 안전 요건은 **5-1/5-2** 파트 소관이다. 셀·배터리 안전은 IEC 62619, 열폭주 전파는 UL 9540A — 파트 번호 없이 "시리즈"만으로 안전 근거를 삼지 않는다(가드레일 §3.1) — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`

@@ -195,7 +195,9 @@ bess-data-analyst
 - 분석 스택: 결측치=선형보간/Forward Fill, 이상탐지=IQR·Isolation Forest·DBSCAN, 트렌드=ARIMA·Prophet, 정규화=Min-Max 또는 Z-score — 근거: `sessions/2026-07-31T12-18-21/bess-data-analyst.md`
 - 시장별 통합시험 케이스 분리 필요(KPX 보조서비스 기술기준 vs PJM Manual 14D 등) — 통신 규격이 시장별로 달라 단일 테스트셋으로 대체 불가 — 근거: `sessions/2026-07-31T12-18-21/bess-data-analyst.md`
 - 예측 모델 학습 분할 표준: train **70%** / validation **15%** / test **15%**. 열화 모델은 선형(SOH = 100 − α·t)과 비선형(다항 회귀)을 병기해 비교하고, RUL은 Random Forest·GBM으로 추정 — 근거: `sessions/2026-08-03T20-48-35/bess-data-analyst.md`
+- AI 훈련 데이터 준비 기준(세션 정리): 데이터원 = SCADA/BMS/EMS/PCS 로그 · 기간 **최소 1년 이상**(계절 변동 포착) · 결측치 **≤5%**(선형 보간 또는 전방 채움) · 이상치 검출 **IQR 또는 Isolation Forest** · 분할 **학습 70 / 검증 15 / 테스트 15%** · 평가지표 **RMSE·MAE·R²** — 근거: `sessions/2026-08-30T04-34-06/bess-data-analyst.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 데이터분석가가 데이터 보안·암호화와 GDPR·개인정보보호법 준수 여부를 본인 결론으로 제시 → ✅ 보안 통제는 bess-cybersecurity-expert, 법규 적격성 판단은 bess-legal-expert 소관. 데이터 도메인은 마스킹·익명화가 **분석 정확도에 주는 영향**만 결론화한다(역할 경계) — 근거: `sessions/2026-08-30T04-34-06/bess-data-analyst.md`
 - ❌ 근거 경로를 `sessions/2026-08-22T12:21:19/bess-data-analyst.md` 형식(콜론 포함, 실재하지 않는 디렉터리)으로 인용 — 본 도메인 **재발** → ✅ 세션 경로는 `sessions/YYYY-MM-DDTHH-MM-SS/<domain>.md` 형식만 사용하고, 인용 전 파일 존재를 확인한다(가드레일 §4 근거 경로 형식) — 근거: `sessions/2026-08-22T18-06-06/bess-data-analyst.md`
 - ❌ 데이터분석가 산출물이 특정 계측장비(WT1500) **도입 권고**를 결론으로 제시 → ✅ 데이터분석가는 필요한 **데이터 요구사항**(샘플링 주기·측정 정확도·채널 수)까지 정의하고, 장비 선정·도입 판단은 system-engineer·precom-report 소관값을 인용(가드레일 §4) — 근거: `sessions/2026-08-22T18-06-06/bess-data-analyst.md`
 - ❌ **EFC**를 "Energy Failure Curve"로 풀어 씀 → ✅ EFC = **Equivalent Full Cycle(등가 전 사이클)** — 열화 누적 지표이며 고장 곡선이 아니다 — 근거: `sessions/2026-08-03T20-48-35/bess-data-analyst.md`

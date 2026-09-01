@@ -164,7 +164,10 @@ bess-procurement-expert
 - 신흥시장 조달 시 전력품질(전압·주파수 변동, 고조파)이 설비 수명에 미치는 영향을 벤더 사양 검토 항목에 포함 — 근거: `sessions/2026-07-26T23-00-40/bess-procurement-expert_critic.md`
 - 공급망 다각화 실행 기준: 주요 원자재·부품별 공급업체 **최소 3개 이상** 확보 + 지역 분산(한국·호주·유럽 등), IRA 국내 제조 요건을 충족하는 벤더를 장기계약 우선 검토 대상으로 분류 — 근거: `sessions/2026-08-05T05-41-32/bess-procurement-expert.md`
 - 조달 단계 관세 최적화 3수단: ①HS 분류 정확성 재확인(배터리 8507.60 / PCS 8504.40) ②FTA 특혜세율 적용(원산지증명·RVC 충족 확인) ③현지 생산·조립을 통한 과세 이전. 세율·RVC 판정값 자체는 customs-tariff 소관값을 **기준일과 함께** 인용 — 근거: `sessions/2026-08-22T19-50-57/bess-procurement-expert.md`
+- 공급망 리스크 관리 축(세션 정리): 최소 **3개 이상** 공급업체와 장기계약으로 단일 소싱 회피 · 재고·운송경로·공급업체 평가를 자동화 대상으로 분리 · 비용 실시간 모니터링 항목 = 원자재 / 제조 / 운송 / 관세 / 인증비 5종 — 근거: `sessions/2026-08-30T04-34-06/bess-procurement-expert.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 구매전문가가 **ADWIN(Adaptive Windowing) 데이터 드리프트 감지 알고리즘·자동 재학습 파이프라인**을 본인 결론으로 확정 → ✅ 드리프트 임계값·재학습 트리거는 bess-mlops-engineer 전속 소관이며 조달 도메인은 그 결과가 리드타임·발주량에 미치는 영향만 산출한다(역할 경계) — 근거: `sessions/2026-08-30T04-34-06/bess-procurement-expert.md`
+- ❌ "FTA 특혜세율 적용 + 현지 생산을 통한 **과세 이전** 전략"을 조달 결론으로 확정 → ✅ FTA 원산지 판정(RVC/CTC)은 bess-customs-tariff, 과세 이전(이전가격) 구조 설계는 bess-transfer-pricing 소관. 조달은 산출된 관세·세부담 값을 인용만 한다 — 근거: `sessions/2026-08-30T04-34-06/bess-procurement-expert.md`
 - ❌ IRA의 **"국내(domestic) 제조 요건"** 을 한국 국내 제조로 읽어 "국내 제조 요건을 충족하는 벤더를 우선"으로 조달 전략에 반영 → ✅ IRA Domestic Content Bonus의 domestic은 **미국 내 제조·조달**을 뜻한다. 한국 조달 전략(국산화·현지화)과 IRA 보너스 적격성은 **별개 축**으로 분리해 서술 — 근거: `sessions/2026-08-22T19-50-57/bess-procurement-expert.md`
 - ❌ "한국에서 배터리·PCS를 수입할 때 **KORUS FTA로 관세가 0% 적용**"으로 단정 → ✅ KORUS 특혜세율은 **미국 원산지** 물품에 원산지증명·RVC(≥35%) 충족 시 적용된다. 수입국·원산지·품목별 PSR을 특정하고 **관세율 조회 기준일**을 병기하며, 미확인 시 `[요확인]`(가드레일 §3.2) — 근거: `sessions/2026-08-22T19-50-57/bess-procurement-expert.md`
 - ❌ 원자재 가격 안정화를 출하량 증가 보도만으로 단정하고 장기계약 조건을 확정 → ✅ 가격 전망은 `[전망]` 태그와 헤지 전제(선물·옵션)를 함께 제시하고, 계약 단가는 벤더 견적·기준일을 붙여 인용 — 근거: `sessions/2026-08-05T05-41-32/bess-procurement-expert.md`
