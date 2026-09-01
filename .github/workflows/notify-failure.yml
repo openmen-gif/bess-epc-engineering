@@ -1,0 +1,75 @@
+name: 워크플로 실패 알림
+
+# 왜 workflow_run 인가
+#   각 워크플로에 알림 스텝을 심으면 워크플로마다 중복되고, 손댈 때마다 배포
+#   경로 자체에 회귀 위험이 생긴다. workflow_run 은 바깥에서 결과만 보므로
+#   감시 대상을 건드리지 않는다 — 새 워크플로는 아래 목록에 이름만 추가하면 된다.
+#
+# 배경
+#   2026-08-10 ~ 09-01 사이 HF 배포가 6회 연속 실패했는데, 실패가 Actions 안에만
+#   쌓여 3주간 아무도 보지 못했다(그 사이 skill_md 정본 2회·tool-launcher 죽은
+#   경로 수정이 미배포로 남았다). 조용한 실패를 눈에 보이게 하는 것이 목적이다.
+#
+# 한계 — 이것도 만능은 아니다
+#   1) workflow_run 은 기본 브랜치(main)에 있는 이 파일만 동작한다.
+#   2) 러너가 잡 자체를 못 띄우면 알림도 못 간다. 그 경우는 여전히 조용하다.
+#   3) 봇 토큰이 만료되면 알림기가 침묵한다 — workflow_dispatch 로 가끔 시험 발사할 것.
+
+on:
+  workflow_run:
+    workflows:
+      - "Sync to Hugging Face Spaces"
+      - "Deploy GitHub Pages"
+      - "Keep HF Space Alive"
+    types: [completed]
+  workflow_dispatch:   # 알림 경로 자체를 시험 발사(토큰 만료 점검용)
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    # 실패했을 때만 보낸다. 수동 실행은 경로 점검이므로 항상 보낸다.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 텔레그램 전송
+        env:
+          # 셸에 직접 박지 않고 env 로 넘긴다 — 워크플로 이름에 특수문자가 와도 안전하다
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          WF_NAME: ${{ github.event.workflow_run.name }}
+          WF_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          WF_SHA: ${{ github.event.workflow_run.head_sha }}
+          WF_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then
+            echo "::error::TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 시크릿이 비어 있거나 등록 안 됨"
+            exit 1
+          fi
+
+          # 개행 변수. 여러 줄 문자열을 그대로 쓰면 YAML 블록이 끊긴다(작성 중 실제로 겪음).
+          NL="
+          "
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            MSG="🟢 알림 경로 점검${NL}리포: ${REPO}${NL}이 메시지가 보이면 실패 알림이 살아 있다."
+          else
+            MSG="🔴 GitHub Actions 실패${NL}리포: ${REPO}${NL}워크플로: ${WF_NAME}${NL}브랜치: ${WF_BRANCH}${NL}커밋: ${WF_SHA:0:7}${NL}로그: ${WF_URL}"
+          fi
+
+          # parse_mode 를 쓰지 않는다 — 브랜치명·로그의 특수문자가 파싱 오류를 내면
+          # 알림 자체가 사라진다. 평문이 가장 덜 깨진다.
+          RESP=$(curl -sS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" --data-urlencode "chat_id=${TG_CHAT}" --data-urlencode "text=${MSG}" --data-urlencode "disable_web_page_preview=true" 2>&1 | sed "s/${TG_TOKEN}/***MASKED***/g")
+
+          echo "$RESP" | head -c 200
+          echo ""
+
+          # 전송 실패를 조용히 넘기지 않는다 — 침묵하는 알림기는 없는 것과 같다.
+          # HTTP 200 이어도 ok:false 가 올 수 있어 본문으로 판정한다.
+          case "$RESP" in
+            *'"ok":true'*) echo "전송 확인 (ok:true)" ;;
+            *) echo "::error::텔레그램 전송 실패 — 위 응답 참조" ; exit 1 ;;
+          esac
