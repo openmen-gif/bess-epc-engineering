@@ -2,7 +2,7 @@ name: Deploy GitHub Pages
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
     paths: ["index.html"]
   workflow_dispatch:
 
@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: main
           sparse-checkout: |
             index.html
       - name: Setup Pages

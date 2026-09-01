@@ -2,7 +2,7 @@ name: Sync to Hugging Face Spaces
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:  # 수동 실행도 가능
 
 jobs:
@@ -55,8 +55,8 @@ jobs:
           # 경로의 owner는 'openmen-gif' 로 하드코딩 — HF_USERNAME secret 값과 무관하게 작동
           REMOTE_URL="https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/openmen-gif/bess-epc-engineering"
 
-          echo "Pushing master to HF Space main branch..."
-          git push "$REMOTE_URL" master:main --force 2>&1 | \
+          echo "Pushing main to HF Space main branch..."
+          git push "$REMOTE_URL" main:main --force 2>&1 | \
             sed "s/${HF_TOKEN}/***MASKED***/g"
 
           PUSH_EXIT=${PIPESTATUS[0]}
