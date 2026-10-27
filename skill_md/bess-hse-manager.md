@@ -261,7 +261,12 @@ bess-hse-manager
 - ESS 안전교육·위험관리 계획 3축: ①다중 보호(UL 9540A 기반 열폭주 방호 + NFPA 855 기반 감지·소화) ②IoT 실시간 모니터링(온도·전압·전류) 및 즉시 경보 ③이상 시 자동 차단·격리 + 정기 비상대응 훈련·시뮬레이션 — 근거: `sessions/2026-08-05T11-26-13/bess-hse-manager.md`
 - 액냉(액체냉각) 시스템 정비작업 안전지침: LOTO 절차와 함께 냉각유체 종류(PG/POE/합성유 등)별 가연성·화재저항성 차이를 지침에 반영하고, 고온부 작업 시 방열장갑·방열복 등 PPE 착용을 의무화 — 근거: `sessions/2026-08-14T16-51-37/bess-hse-manager.md`
 - 고밀도 모듈 안전관리 표준 비교 시 **HSE 소유 축은 ISO 45001:2018(안전보건경영시스템 — 위험평가·교육·PTW)과 비상대응**이며, IEC 62933-5-2(ESS 안전요건)·NFPA 855(설치·화재)·UL 9540A(열폭주 전파 시험)는 소관 전문가(fire-engineer·battery-expert) 값을 인용해 비교표를 구성 — 근거: `sessions/2026-08-22T13-26-36/bess-hse-manager.md`
+- FMEA 정량 평가 규약: **RPN = 심각도(S) × 발생도(O) × 검출도(D)**, 각 1~10점 척도(최대 1,000). 리스크 등급(Critical/High/Medium/Low)은 RPN 임계값 구간으로 부여해 RPN 순위와 등급 순위가 일치해야 한다 — 근거: `sessions/2026-09-25T09-08-29/bess-hse-manager.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **"(NEWS-ID 없음)"이라고 선언한 같은 문장에 ID를 병기**("최근 트렌드에 따르면 (NEWS-ID 없음), … (bess-20260904-a01, bess-20260904-a02 참조)") — 두 곳 반복 → ✅ 근거가 있으면 **ID만** 쓰고, 없으면 **"NEWS-ID 없음"만** 남긴다. 두 표기를 겹치면 근거 추적이 불가능해진다(가드레일 §4 NEWS-ID 라벨 무결성) — 근거: `sessions/2026-09-05T00-32-48/bess-hse-manager.md`
+- ❌ HSE 관리자가 **변압기 효율 개선 기술·열 관리 시스템·자동 차단 장치 도입**을 결론 → ✅ 변압기 사양·냉각 방식·온도 모니터링 설계는 **bess-transformer-expert**, 차단·보호 설정은 **bess-circuit-breaker-expert** 소관이다. HSE는 해당 작업의 **위험성 평가·PTW/LOTO·교육 요건**만 결론화한다(역할 경계, 2026-08·2026-08-30 재발) — 근거: `sessions/2026-09-05T00-32-48/bess-hse-manager.md`
+- ❌ Arc Flash 안전 관리 계획을 수립하면서 **IEEE 1584 입사에너지(cal/cm²)·PPE 카테고리·Arc Flash 경계거리(m)가 0건**이고 "교육 강화·정기 테스트" 정성 권고로 종결 → ✅ HSE 소유 지표(입사에너지 등급, PPE Category 1~4, 접근 경계, LOTO/PTW 적용 범위, TBT 주기)를 **최소 1개 이상 수치로 결론화**한다(가드레일 §4 도메인 필수 산출물) — 근거: `sessions/2026-09-05T00-32-48/bess-hse-manager.md`
+- ❌ 리스크 등급을 **가능성 中 / 영향 高**의 한자로 표기 → ✅ **높음/중간/낮음** 또는 Critical·High·Medium·Low(가드레일 §4, 2026-08-30에 이은 동일 도메인 재발) — 근거: `sessions/2026-09-05T00-32-48/bess-hse-manager.md`
 - ❌ HSE 매니저가 **CFD 냉각 채널 설계·공기 유동 최적화·열방산 장치 위치**를 본인 권고로 확정 → ✅ 열유동 해석과 냉각 설계 판정은 bess-cfd-analyst 소관. HSE는 그 결과를 안전 교육·비상대응 절차로 옮기는 역할에 한정한다(역할 경계) — 근거: `sessions/2026-08-29T08-52-31/bess-hse-manager.md`
 - ❌ 사이버보안 취약점을 **최우선 리스크로 확정**하고 방화벽·IDS/IPS·암호화·인증 메커니즘 통제를 설계 → ✅ OT 보안 기술 통제 설계는 bess-cybersecurity-expert·bess-network-engineer 소관(§4 "HSE-manager가 OT 보안 기술 통제 설계" 항목 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-hse-manager.md`
 - ❌ 리스크 가능성·영향 등급을 한자 **中/高**로 표기 → ✅ 한국어(높음/중간/낮음) 또는 Critical·High·Medium·Low로 통일(§4 출력 품질 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-hse-manager.md`
@@ -275,6 +280,10 @@ bess-hse-manager
 - ❌ 화재 이격거리 근거로 "NFPA 85"(보일러·연소설비 위험코드)를 인용 → ✅ BESS ESS 설치 이격거리·소방 기준은 **NFPA 855**이며, NFPA 85는 별개 표준(자릿수 탈락 오기 주의) — 근거: `sessions/2026-08-14T12-58-27/bess-hse-manager.md`
 - ❌ 케이블 Ampacity(허용전류) 산정 근거로 IEC 60204-1(기계류 전기설비 안전)·IEC 61000-6-2(EMC 일반내성)을 인용 → ✅ 케이블 허용전류는 IEC 60287(열적)·IEC 60502(케이블 규격)·IEC 60364-5-52(포설·디레이팅) 기준이며, 상세 사이징 계산은 케이블 전문가(bess-cable-engineer) 소관 — 근거: `sessions/2026-08-14T12-58-27/bess-hse-manager.md`
 - ❌ 한국 소음·환경 규제 근거로 「환경보전법」·「소음진동규제법」을 반복 인용(2회 재발) → ✅ 정확한 한국 소음 규제법은 **소음·진동관리법**이며, 단일 "환경보전법"은 존재하지 않음(대기환경보전법·물환경보전법 등 매체별로 분리됨) — 근거: `sessions/2026-08-14T18-43-23/bess-hse-manager.md`, `sessions/2026-08-16T00-03-02/bess-hse-manager.md`
+- ❌ FMEA 표에서 **RPN 산술 오류**(교육 부족 5×5×8을 "20", 시스템 오류 6×4×5를 "12"로 기재 — 실제 200·120)와 **등급 역전**(RPN 200 = Medium < RPN 84 = High) → ✅ 표 발행 전 S×O×D를 재검산하고, 등급은 RPN 크기 순서와 단조로 일치시킨다(가드레일 §5 산술 검산) — 근거: `sessions/2026-09-25T09-08-29/bess-hse-manager.md`
+- ❌ 라운드2에서 **"가능성: Critical (매우 높음)"** 처럼 가능성 축에 종합 리스크 등급을 사용 → ✅ 가능성·영향은 높음/중간/낮음(또는 빈도·심각도 척도)으로, Critical·High·Medium·Low는 **종합 리스크 등급**에만 쓴다 — 근거: `sessions/2026-09-25T09-08-29/bess-hse-manager.md`
+- ❌ 단일 뉴스(대전 한전 전력연구원 ESS 화재 보도)를 근거로 **"과열 및 단락이 주요 원인으로 지목됨"** 이라 원인을 단정하고, 근거란에 **"(bess-hse-manager 역할)"** 을 자기 인용 → ✅ 화재 원인은 조사 결과 공표 전까지 `[요확인]`(같은 배치 fire-engineer도 원인 미확정 처리), 근거는 규격 조항·세션 경로·타 전문가 발언만 쓴다(가드레일 §0-7·§0-10) — 근거: `sessions/2026-09-25T09-08-29/bess-hse-manager.md`
+- ❌ HSE 산출물이 **배터리팩 냉각 시스템 설치**(2026-09-25 오전)와 **예방정비 일정·다중 공급업체 전략·조달 계획 최적화**(2026-09-25 오후)를 결론으로 제시 → ✅ 냉각 설계는 cfd-analyst·battery-expert, 예방정비는 facility-manager, 조달 다변화는 procurement-expert 소관. HSE는 위험성 평가·LOTO/PTW·교육·비상대응까지만 결론화한다(역할 경계 재발) — 근거: `sessions/2026-09-25T09-08-29/bess-hse-manager.md`, `sessions/2026-09-25T18-59-16/bess-hse-manager.md`
 
 ## 핵심 역량 및 업무 범위 (수행 절차)
 

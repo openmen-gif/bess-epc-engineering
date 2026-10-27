@@ -144,7 +144,10 @@ EMC, EMI, 전자기적합성, 방출, 내성, CE마킹, FCC, KC인증, 고조파
 - AI·데이터 기반 EMI 최적화 도입 시 운영데이터 보안(암호화·접근통제)과 GDPR·개인정보보호법 적용 여부를 함께 판정 — 근거: `sessions/2026-07-05T04-29-31/bess-emc-analyst_critic.md`
 - EMI 저감 설계 파라미터 세트(PCS): 게이트 저항 Rg_on ≈ 10 Ω · Rg_off ≈ 3 Ω로 dV/dt 제어, SiC MOSFET의 높은 dV/dt에는 CM 초크 병행, 중요 부품·케이블 차폐 — 설계 단계 EMC(design-in)가 사후 보정보다 비용 효율적 — 근거: `sessions/2026-08-05T15-16-20/bess-emc-analyst.md`
 - SiC MOSFET EMI 저감 설계 축(세션 예시값): 게이트 저항 **R_g_on ≈ 10 Ω / R_g_off ≈ 3 Ω** + 공통모드 초크(CM Choke) + 차폐, PCB 루프 면적 최소화. 높은 dV/dt 특성 때문에 Si IGBT 대비 CM 경로 대책을 추가로 둔다(값은 `[가정]` — 실제 정정은 방출 시험값으로 확정) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
+- SiC MOSFET 기반 PCS의 CM 노이즈 저감 파라미터 스냅샷: **게이트 저항 Rg_on ≈ 10 Ω / Rg_off ≈ 3 Ω**(dV/dt 제어) + **CM 초크** 병행, **LCL 감쇠비 ζ 0.4~0.7**. 공진주파수는 `10·f_grid < f_res < f_sw/2` 상·하한을 먼저 확인한 뒤 f_sw/15 경험식을 적용한다(가드레일 §3.4) — 근거: `sessions/2026-09-04T05-06-08/bess-emc-analyst.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **"주거 환경에서는 Class B 기준이 적용되며, 이는 더 엄격한 내성 수준을 요구"** → ✅ **Class A(산업·상업) / Class B(주거)는 방출(emission) 한계 등급**이다(CISPR 11 / EN 55011). **내성(immunity)** 은 IEC 61000-4-x 시험 레벨로 별개 축이며, 두 축을 한 문장에서 바꿔 쓰면 시험 계획 자체가 어긋난다(가드레일 §3.1 방출↔내성 역전 계열) — 근거: `sessions/2026-09-04T05-06-08/bess-emc-analyst.md`
+- ❌ EMC 분석가가 **"냉각수 유동 저항 최소화·냉각 효율 향상"·"냉각 채널 유량 최적화"** 를 최적화 방안으로 결론(2026-08·2026-08-30에 이은 **3회째 재발**) → ✅ 액냉 유량·ΔP·열교환 설계는 **bess-cfd-analyst**(해석)·**bess-battery-expert**(열 사양) 소관이다. EMC는 **냉각 팬·펌프의 동작 주파수가 EMI 스펙트럼에 미치는 영향**까지만 결론화하고 냉각 성능값은 인용한다(역할 경계) — 근거: `sessions/2026-09-04T05-06-08/bess-emc-analyst.md`
 - ❌ LCL을 "**Low-Pass Filter**"로 풀어 씀 → ✅ **LCL = Inductor-Capacitor-Inductor** 3소자 구성이다(§2 사전 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
 - ❌ LCL 공진주파수를 같은 문단에서 "**f_sw의 1/10 이하**"와 "**f_res ≈ f_sw/15**" 두 기준으로 병기 → ✅ 판정식은 **10·f_grid < f_res < f_sw/2** 이며 1/15 경험식은 이 상·하한을 함께 만족할 때만 유효하다. 한 산출물에 두 기준을 병기하지 않는다(§3.4 + §5-7) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
 - ❌ EMC 분석가가 **액냉 냉각수 유량·유로 압력손실·열교환기 성능 최적화**를 본인 권고 본문으로 확정 → ✅ 액냉 열유동 판정은 bess-cfd-analyst 소관이다(§3.4 액냉↔공랭 지표 분리, emc-analyst 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-emc-analyst.md`
@@ -167,6 +170,10 @@ EMC, EMI, 전자기적합성, 방출, 내성, CE마킹, FCC, KC인증, 고조파
 - ❌ "IEC 61000-4-7 = 전도방출(Conducted Emission), IEC 61000-4-8 = 방사방출(Radiated Emission)" → ✅ 61000-4-7은 고조파·간고조파 측정, 61000-4-8은 전원주파수 자기장 내성 시험; 전도/방사 방출 한계는 CISPR 11/EN 55011 — 근거: `sessions/2026-06-28T11-05-10/bess-emc-analyst.md`
 - ❌ "EN 55022/EN 55032(EMC 방출 규격)이 전압강하(%) 허용 한계를 규정한다" (예: "EN 55022 Class A는 전압강하 2% 이내") → ✅ EN 55022/EN 55032는 전도·방사 방출 레벨(dBμV) 한계만 규정하며, 전압강하 허용 범위는 전기설비 규정(IEC 60364 등 별도 표준)에서 정함 — 근거: `sessions/2026-07-18T02-05-48/bess-emc-analyst.md`
 - ❌ "FCC 인증(북미)의 준거 규격은 CISPR 36" → ✅ FCC 인증은 FCC Part 15 Subpart B / ANSI C63.4 기준(CISPR 36은 전기차 방사방출 전용 규격이며 일반 BESS FCC 인증 근거 아님) — 근거: `sessions/2026-07-18T03-08-29/bess-emc-analyst.md`
+- ❌ **SLD를 "Short-Circuit Distance"(단락 시 격리 최소거리)**로 풀어 쓰고 "SLD 확보가 변압기 고주파 노이즈 유출을 막는다"고 결론 → ✅ **SLD = Single Line Diagram(단선결선도)**이며 거리 개념이 아니다. 변압기 절연·외부 공기 이격은 IEC 60076-3 소관으로 bess-transformer-expert 값을 인용한다 — 근거: `sessions/2026-09-22T17-16-49/bess-emc-analyst.md`
+- ❌ 변압기 EMI 저감 방안으로 "**변압기의 스위칭 동작 시 게이트 저항 Rg_on ≈10 Ω / Rg_off ≈3 Ω**"과 "변압기 내부 LC/LCL 필터 공진주파수 설정"을 제시 → ✅ 변압기에는 스위칭 소자·게이트가 없다. 게이트 저항·LCL 공진은 **PCS 전력반도체·출력필터** 파라미터이며, 변압기 쪽 EMC 검토 축은 권선 간 결합용량을 통한 공통모드 경로·차폐·접지 본딩으로 한정한다(설비 사양은 transformer-expert 인용) — 근거: `sessions/2026-09-22T17-16-49/bess-emc-analyst.md`
+- ❌ 공진주파수를 "f_res ≈ f_sw/15(보수적) **또는** f_sw/10(권장 상한)", "1/15 ~ 1/10 범위"로 다시 병기(재발, 2026-09-22) → ✅ 판정식은 **10·f_grid < f_res < f_sw/2** 하나이고 경험식은 그 안에서만 유효하다(§3.4 + §5-7) — 근거: `sessions/2026-09-22T17-16-49/bess-emc-analyst.md`
+- ❌ "**IEC 61000-4-2 및 CISPR 11 표준을 준수하여 적절한 거리(SLD)를 유지**" → ✅ IEC 61000-4-2는 **정전기 방전(ESD) 내성 시험**, CISPR 11은 **방출 한계**로 둘 다 설비 간 이격·절연거리를 규정하지 않는다. 규격은 그 규격이 정한 시험 항목에만 인용한다(가드레일 §3.1) — 근거: `sessions/2026-09-22T17-16-49/bess-emc-analyst.md`
 
 ## 핵심 역량 및 업무 범위
 

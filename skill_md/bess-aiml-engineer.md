@@ -129,12 +129,16 @@ AI, ML, 머신러닝, 딥러닝, 예측모델, SOC예측, SOH예측, 열화예�
 - Dispatch 최적화(강화학습/GA) 보상함수 제약 3요소: **시장 가격 · 제공 서비스 상품 · 전력 수급 균형** — 세 축을 보상항으로 명시하고 제약 위반 페널티를 별도 정의 — 근거: `sessions/2026-08-22T18-06-06/bess-aiml-engineer.md`
 - SOC/SOH 모델 하이퍼파라미터 초기 범위(세션 기준값): **SOC(LSTM/GRU)** = 은닉층 128~512 · 학습률 0.001~0.01 · 배치 32~64 · 에폭 50~100 · Dropout + Early Stopping / **SOH(XGBoost·RandomForest)** = 학습률 0.01~0.3 · 트리 100~500 · max_depth 3~10 · **TimeSeriesSplit** 교차검증 — 근거: `sessions/2026-08-26T20-04-33/bess-aiml-engineer.md`
 - Dispatch 최적화·운영 제약(세션 기준값): 알고리즘 **강화학습(DQN/PPO) 또는 GA/PSO**, 보상함수는 시장가격 + 서비스 상품 + 수급 균형 복합 · 추론시간 제약 **Edge ≤100 ms / Cloud ≤1 s** · 입력 데이터 **최소 1년, 샘플링 1초~1분** · 튜닝은 Optuna·Hyperopt·Bayesian Optimization — 근거: `sessions/2026-08-26T20-04-33/bess-aiml-engineer.md`
+- 예측 모델 하이퍼파라미터 초기 범위(BESS 시계열): **SOC 예측 LSTM/GRU** = 은닉층 128~512 · 학습률 0.001~0.01 · 배치 32~64 · 에폭 50~100 · Dropout + Early Stopping / **SOH·열화 예측 XGBoost·RandomForest** = 학습률 0.01~0.3 · 트리 100~500 · 최대 깊이 3~10. 튜닝은 **Optuna/Hyperopt**, 교차검증은 **TimeSeriesSplit**(시계열 데이터 누수 차단 — 일반 K-Fold 금지), 성능 보고는 **RMSE·MAE·R²·F1·AUC** 정량 지표로. Dispatch 최적화는 **강화학습(DQN/PPO) 또는 GA/PSO**, 추론 지연 제약은 **Edge ≤100 ms / Cloud ≤1 s** — 근거: `sessions/2026-09-03T13-49-07/bess-aiml-engineer.md`
+- LSTM 과적합 방지 초기 범위: **Dropout 0.2~0.5** + Early Stopping + L2 정규화. 성능 보고 시 RMSE·MAE·R² 등 점추정과 함께 **오차 범위·신뢰구간**을 병기 — 근거: `sessions/2026-09-21T03-24-19/bess-aiml-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ 시계열 데이터를 무작위 셔플로 분할하거나 일반 K-Fold 적용 → ✅ 시간 순서를 유지한 분할과 **TimeSeriesSplit**만 사용(데이터 누수 차단) — 근거: `sessions/2026-07-31T04-23-43/bess-aiml-engineer.md`
 - ❌ 강화학습 기반 Dispatch 최적화를 재학습 주기 정의 없이 제안 → ✅ 시장 조건 급변에 대응하는 **자동 재학습 트리거**(드리프트 임계값·주기)를 mlops-engineer 기준값과 함께 명시 — 근거: `sessions/2026-07-31T04-23-43/bess-aiml-engineer.md`
 - ❌ 모델 드리프트·재학습·배포 모니터링을 직접 코드로 제시(MLOps 영역 침범) → ✅ 모델 개발/튜닝까지가 aiml, 드리프트·CI/CD·재학습 트리거는 bess-mlops-engineer 소유 — 근거: `sessions/2026-06-04T11-42-12/bess-aiml-engineer.md`
 - ❌ 강화학습 비용절감 효과를 시장변동성·불확실성 없이 낙관 제시 → ✅ 성능예측에 오차범위 동반(financial-analysis 반복 지적) — 근거: `sessions/2026-06-04T11-42-12/bess-aiml-engineer.md`
 - ❌ 인도 기관 CEA·SECI를 "CEA(중국 전기공사)·SECI(일본 전기공사)"로 오귀속(약어 오역·환각 출처, 시장 교차오염) → ✅ CEA = Central Electricity Authority, SECI = Solar Energy Corporation of India로 둘 다 인도 기관 — 근거: `sessions/2026-06-28T15-48-59/bess-aiml-engineer.md`
+- ❌ 라운드2·최종 입장에서 "**강화학습을 활용한 배터리 수명 예측 모델 개발은 타당**"에 동의하고 그 근거로 NEWS-ID `bess-20260920-a01`을 부착(같은 배치 data-analyst·mlops-engineer에서도 동일 주장) → ✅ 수명·SOH·RUL 예측은 **지도학습 회귀**(LSTM/GRU·XGBoost/RandomForest) 과제이고, 강화학습(DQN/PPO)은 보상함수를 갖는 **Dispatch 의사결정** 과제다(본 스킬 모델 매핑). 알고리즘 선택 근거는 문헌·검증 결과이며 뉴스 보도가 아니다(가드레일 §0-7) — 근거: `sessions/2026-09-21T03-24-19/bess-aiml-engineer.md`
+- ❌ "**유전 알고리즘(GA/PSO)**"으로 두 기법을 한 이름으로 묶음 → ✅ GA = Genetic Algorithm(유전 알고리즘), **PSO = Particle Swarm Optimization(입자군집 최적화)**로 서로 다른 메타휴리스틱이다. "메타휴리스틱(GA·PSO)"으로 표기한다 — 근거: `sessions/2026-09-21T03-24-19/bess-aiml-engineer.md`
 
 ## 핵심 역량 및 업무 범위 (수행 프로세스)
 

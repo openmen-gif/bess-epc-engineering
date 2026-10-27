@@ -150,7 +150,15 @@ Step Voltage, Touch Voltage, GPR, 접지망, 접지봉, 피뢰침, SPD,
 - 계절 변동(동절기 동결)에 따른 토양 저항률 상승을 설계 여유에 반영 — 근거: `sessions/2026-08-01T17-34-33/bess-cbop-engineer.md`
 - SPD 선정 기준: 보호레벨 **Up < 0.8 × Uw**(피보호기기 임펄스 내전압) 조건을 만족하도록 선정하고, 낙뢰 보호등급은 LPL(Lightning Protection Level) I~IV로 명시 — 근거: `sessions/2026-08-04T04-33-36/bess-grounding-engineer.md`
 - 접지망 설계 입력·부품 기준(세션 정리): 대지 고유저항은 **Wenner 4전극법** 측정, 미측정 시 `[가정] ρ=100 Ω·m` + `[현장측정필요]` 태그 · 표면층 감소계수 **Cs**(IEEE 80-2013 §7.4) · 접지봉 **Cu-clad Steel Φ16 mm × 2,400 mm**, 접지선 **Cu ≥25 mm²** · SPD 보호레벨 조건 **Up < 0.8 × Uw**, 낙뢰 보호 레벨 **LPL II(Class II)** — 근거: `sessions/2026-08-27T15-19-26/bess-grounding-engineer.md`
+- 대지 고유저항 측정·가정 규약: **Wenner 4전극법**으로 ρ를 측정하고, 미측정 시 **`[가정] ρ = 100 Ω·m` + `[현장측정필요]`** 태그를 함께 부착한다. 표면층(쇄석) 적용 시 **감소계수 Cs**(IEEE 80-2013 §7.4)를 반영해 Step/Touch 허용전압을 재산정한다 — 근거: `sessions/2026-09-02T01-06-09/bess-grounding-engineer.md`
+- 낙뢰 위험평가(IEC 62305-2) 판정 기준: 인명 손실 리스크 **R1 ≤ 허용 리스크 RT = 10⁻⁵/년**. 초과 시 LPS 보호 레벨(LPL I~IV) 상향·SPD 추가로 R1을 재산정하며, 입력인 지역 낙뢰 밀도 Ng는 현지 데이터 확보 전 `[요확인]` — 근거: `sessions/2026-09-21T07-43-57/bess-grounding-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **GPR을 "Ground Potential Reference"(기준 전위)로 오역**하고 **"변압기 접지 시스템의 GPR 관리형 접지저항 ≤1 Ω"** 로 대상까지 혼용(2026-08-30 지적의 **소유 도메인 재발**) → ✅ **GPR = Ground Potential Rise**(대지전위상승, 고장 시 접지망 전위가 **상승**하는 현상)이며, **≤1 Ω은 변전소 접지망** 기준, **기기접지는 ≤10 Ω**이다. 상승 현상을 기준점으로 오역하면 판정 대상 자체가 뒤바뀐다(가드레일 §2·§3.4) — 근거: `sessions/2026-09-02T01-06-09/bess-grounding-engineer.md`
+- ❌ **"IEEE 80-2013의 단락 전류 계산"** 과 **"NFPA 70(NEC)의 Arc Flash 분석 방법"** 을 규격 근거로 인용 → ✅ **IEEE 80은 변전소 접지망**(Step/Touch·GPR·접지도체 열적 단면적)이며 단락전류 계산은 **IEC 60909**(계통해석 소관), Arc Flash 입사에너지는 **IEEE 1584**·작업안전은 **NFPA 70E**다(**70 ↔ 70E** 한 글자 차이가 규격 성격을 바꾼다). §3.1 "IEEE 80 오귀속" **3회째** — 근거: `sessions/2026-09-02T01-06-09/bess-grounding-engineer.md`
+- ❌ **"피뢰침과 구조물 간 최소 이격거리를 3 m 이상"** 고정값 제시 → ✅ 분리거리는 **IEC 62305-3 `s = ki·kc·l/km`** 로 산출하며 고정 m값이 아니다(가드레일 §3.4 재발) — 근거: `sessions/2026-09-02T01-06-09/bess-grounding-engineer.md`
+- ❌ **SPD 보호레벨(Up < 0.8×Uw)을 "Arc Flash 보호 장치" 절에 배치** → ✅ SPD는 **서지 보호**(IEC 61643-12·62305-4), Arc Flash는 **IEEE 1584·NFPA 70E**로 목적·현상이 다르다. 절 제목과 내용의 소관을 일치시킨다 — 근거: `sessions/2026-09-02T01-06-09/bess-grounding-engineer.md`
+- ❌ **"배터리 시스템에서의 '스프링클러'와 같은 열 관리 시스템"** — 소화 설비를 냉각 시스템으로 서술하고 특정 벤더 기술명을 일반 설계 요소로 승격 → ✅ 스프링클러는 **소화(suppression) 설비**(fire-engineer 소관)이고 열 관리는 **공랭·액냉**(cfd-analyst·battery-expert 소관)이다. 뉴스팩에서 읽은 기업·기술명은 원 보도 대조 전까지 `[요확인]`을 유지한다(가드레일 §3.4·§4) — 근거: `sessions/2026-09-02T01-06-09/bess-grounding-engineer.md`
+- ❌ 리스크 등급을 **가능성 中·低 / 영향 中·高**의 한자로 표기 → ✅ **높음/중간/낮음** 또는 Critical·High·Medium·Low(가드레일 §4) — 근거: `sessions/2026-09-02T01-06-09/bess-grounding-engineer.md`
 - ❌ SPD 보호레벨(Up < 0.8 × Uw)의 근거로 "**IEEE 80-2013 §**"(조항 번호 공란)을 인용 → ✅ SPD 선정·배치는 **IEC 62305-4 · IEC 61643-12** 소관이고 IEEE 80은 **변전소 접지망**(Step/Touch·GPR) 규격이다(§3.1 IEEE 80↔피뢰 오인용 재발). 조항 번호 없는 "§" 표기는 발행 금지 — 근거: `sessions/2026-08-27T15-19-26/bess-grounding-engineer.md`
 - ❌ 접지저항 목표를 "**변압기 접지 ≤1 Ω**"으로 라벨링 → ✅ **≤1 Ω은 변전소 접지망(GPR) 기준**이고 기기접지는 **≤10 Ω**이다. 대상(기기 vs 변전소)을 구분해 표기한다(§3.4 접지 항목) — 근거: `sessions/2026-08-27T15-19-26/bess-grounding-engineer.md`
 - ❌ 접지망 설계 변수로 "**접지 시스템의 열적 성능**"을 두고 배터리 열 안정성에 맞춰 "접지망의 열적 성능·접지저항을 최적화"하도록 권고 → ✅ 접지망 설계 변수는 **대지 고유저항 ρ · 격자 간격 · 도체 단면적 · 고장전류 If · 고장지속시간 tf**(IEEE 80)이며, 도체의 "열적" 항목은 **열적 단면적 산정(§11.3)** 에 한정된다. 배터리 열 안정성은 battery-expert·cfd-analyst 소관으로 접지 성능 지표가 아니다 — 근거: `sessions/2026-08-22T08-21-14/bess-grounding-engineer.md`
@@ -167,6 +175,11 @@ Step Voltage, Touch Voltage, GPR, 접지망, 접지봉, 피뢰침, SPD,
 - ❌ "양호/적정/정상" 비정량 판정 → ✅ `Em ≤ Etouch AND Es ≤ Estep` 수치 비교로 PASS/FAIL 명시 — 근거: 본 최적화(2026-06-10), IEEE 80-2013 §8.3/§16.5
 - ❌ IEEE 80 식 번호 임의 인용(Eq.8.9 등) → ✅ 실제 조항(§8.3 허용전위, §16.5 Em/Es, §7.4 Cs, §11.3 도체 열적식) 기준으로 표기 — 근거: 본 최적화(2026-06-10)
 - ❌ 도체 사이징을 단락전류로 본 직원이 직접 산정 → ✅ 계통해석/변전소가 제공한 If·tf·X/R 수신 후 열적식 적용 (역할 경계 준수) — 근거: 본 최적화(2026-06-10)
+- ❌ "암반 토양은 **매우 낮은 저항 (≥1000 Ω·m)**" → ✅ 암반은 **매우 높은** 고유저항(≥1,000 Ω·m)이다. 서술어와 부등호 방향을 함께 검산한다(§5-11 부호·대소 방향) — 근거: `sessions/2026-09-21T07-43-57/bess-grounding-engineer.md`
+- ❌ "표면층의 두께와 저항률에 따라 **접지 저항이 감소**"(Cs 설명) → ✅ **Cs는 표면층 저항률 보정계수**로 허용 Etouch·Estep 산정(IEEE 80-2013 §7.4·§8.3)에 쓰이며 접지망 저항 Rg를 낮추지 않는다. Rg는 대지 고유저항 ρ·접지망 면적·매설 도체 길이로 결정 — 근거: `sessions/2026-09-21T07-43-57/bess-grounding-engineer.md`
+- ❌ 판정식을 "**Step Voltage ≤ Etouch, Touch Voltage ≤ Estep**"로 역전 기재 → ✅ **Em(메시·접촉) ≤ Etouch AND Es(보폭) ≤ Estep**(IEEE 80-2013 §16.5). 허용치와 산출값의 짝을 교차하지 않는다 — 근거: `sessions/2026-09-21T07-43-57/bess-grounding-engineer.md`
+- ❌ "피뢰침 높이 ≥ 건물 1.5배, 구조물과 최소 이격 3 m" 고정값 재기재(재발, 2026-09-21) → ✅ 분리거리 s는 **IEC 62305-3 `s = ki·kc·l/km`** 산출값만 제시(§3.4) — 근거: `sessions/2026-09-21T07-43-57/bess-grounding-engineer.md`
+- ❌ "**Wenner 배열을 활용하여 접지망을 설계**" → ✅ Wenner 4전극법은 **대지 고유저항 측정법**이다. 접지망 배치는 격자 간격·도체 길이·접지봉 수를 IEEE 80-2013 §16 설계 절차로 정한다 — 근거: `sessions/2026-09-21T07-43-57/bess-grounding-engineer.md`
 
 ## 시장별 접지·피뢰 기준
 

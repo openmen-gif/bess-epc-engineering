@@ -142,6 +142,11 @@ bess-risk-manager
 - ❌ 등급-Score 매핑 세션별 상이(2026-05-12 Score 12=High vs 2026-06-03 15=Critical) → ✅ 단일 등급표를 모든 산출물에 강제하여 컷오프 표류 차단 — 근거: `sessions/2026-05-12T04-00-10/bess-risk-manager.md` vs `sessions/2026-06-03T19-08-13/bess-risk-manager.md`
 - ❌ 약어 환각 "VRT(Virtual Synchronization Technology)" / "SCR(Static Synchronization Device)" → ✅ VRT=Voltage Ride-Through, SCR=Short-Circuit Ratio(계통강도) — 근거: `sessions/2026-06-08T07-19-19/bess-risk-manager.md`
 - ❌ "KEPCO 계통영향평가(EIA)" → ✅ EIA는 환경영향평가 약어이며 계통영향평가(grid impact study)와 별개 — 약어 충돌 금지 — 근거: `sessions/2026-06-08T07-19-19/bess-risk-manager.md`
+- ❌ 계통연계 리스크에서 "**SCR(Static Synchronization Device)** 성능"으로 다시 풀어 씀(위 약어 환각 항목 재발, 2026-10-10) → ✅ SCR = **Short-Circuit Ratio**(계통강도). 템플릿 문구를 복사할 때 약어 풀이도 함께 검증한다(가드레일 §2) — 근거: `sessions/2026-10-10T02-21-09/bess-risk-manager.md`
+- ❌ 배터리 가격을 **삼각분포(-10%~+25%)** 로 모델링한다고 선언한 뒤 비관 시나리오(90th percentile)를 "**배터리 가격 30% 상승**"으로 제시 → ✅ 백분위 값은 입력 분포의 범위 안에 있어야 한다. 상한이 +25%인 삼각분포의 P90은 +25%를 넘을 수 없으므로, 시나리오 값은 선언한 분포에서 실제로 산출하거나 분포 범위를 수정한다(가드레일 §5-9 단조성·§5-7 단일값) — 근거: `sessions/2026-10-10T02-21-09/bess-risk-manager.md`
+- ❌ 지체상금을 "**상한 ₹500,000/일**"로 표기(일당 요율과 총 상한을 한 값으로 혼동)하고, 낙관 시나리오를 "지체상금 면제"로 설정 → ✅ LD는 **일당(또는 주당) 요율**과 **총 상한(계약금액 대비 %)** 을 분리 표기하고, 계약 조항 값은 bess-contract-specialist 소유값을 인용한다. 시나리오는 지연일수 분포 × 요율로 산출하며 상한에서 절단한다(가드레일 §4 역할 경계) — 근거: `sessions/2026-10-10T02-21-09/bess-risk-manager.md`
+- ❌ 라운드 2 리스크 평가를 가능성·영향의 **정성 등급만**(높음/중간, 또는 한자 **高/中**)으로 기술하고 Score·Owner·기한 없이 우선순위를 판정 → ✅ 위 Risk Register 표기 규약대로 **P(1~5) × I(1~5) = Score**·등급·Owner·대응전략·기한을 채운 뒤 우선순위를 매기고, 등급 문자는 한국어(높음/중간/낮음) 또는 Critical·High·Medium·Low로 쓴다(가드레일 §4 출력 품질·도메인 필수 산출물) — 근거: `sessions/2026-10-15T05-46-52/bess-risk-manager.md`, `sessions/2026-10-10T02-21-09/bess-risk-manager.md`
+- ❌ 대상 시장을 정하지 않은 사고위험 분석에서 화재·폭발 이격거리 근거로 **AS 5139(AU)** 를 단독 인용 → ✅ 시장 코드를 먼저 확정하고 해당 시장 규격만 인용한다(US=NFPA 855, AU=AS/NZS 5139:2019, KR=소방청 ESS 화재안전기준). 이격거리 수치는 bess-fire-engineer 소유값(가드레일 §1.1·§4) — 근거: `sessions/2026-10-15T05-46-52/bess-risk-manager.md`
 
 ## 리스크 분류 체계 (Risk Breakdown Structure)
 

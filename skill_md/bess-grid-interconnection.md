@@ -153,7 +153,11 @@ PCS전문가 ──PCS 제어설정──▶ 계통연계(시운전엔지니어)
 - Type 2(Solar+BESS) 연계 추가 시험: PV 발전량 기반 자동 충전 로직 시험 + 잉여전력 제어 시험 — 근거: `sessions/2026-06-17T06-33-53/bess-grid-interconnection.md`
 - 보호계전기 정정값은 연계 전압등급(22.9 kV MV vs 154 kV HV)에 따라 달라지므로, 연계 전압 미확정 시 `[요확인] 연계 전압(kV)` 태그를 발행한 뒤 보호협조 시뮬레이션 결과를 첨부한다 — 근거: `sessions/2026-08-01T13-40-09/bess-grid-interconnection.md`
 - 보조금·정책 의존 가정은 정책 중단 시나리오를 병기해야 한다(보조금 지속성 미검증 상태의 비용 구조 결론 금지) — 근거: `sessions/2026-08-02T03-24-37/bess-grid-interconnection_critic.md`
+- 계통연계 착수 전 **필수 입력 3종 체크**(미확보 시 setpoint 산출 불가): ①**연계 전압(kV)** — 시장별 예시 KR MV 22.9 kV · JP HEPCO 66 kV ②**보호계전기 정정값** — 계통 운영자 협의로 확보 ③**BESS Type 1~4** — 특히 **Type 4(변전소 내)는 IEC 61850 추가 요건** 발생 — 근거: `sessions/2026-08-30T23-26-43/bess-grid-interconnection.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ **보호 기능 약어 4종 동시 오역**: "LVRT(**저전압 제한 반응**), HVRT(**고전압 제한 반응**), FFR(**고장 전류 제한**), VRT(**고장 전압 제한**)" → ✅ **LVRT/HVRT = Low/High Voltage Ride-Through**(저·고전압 **사고 통과**), **VRT = Voltage Ride-Through**, **FFR = Fast Frequency Response**(고속 주파수 응답)다. "제한"으로 오역하면 시험 목적이 **통과 능력 검증 → 제한값 설정**으로 뒤바뀌어 절차서 전체가 무효가 된다(가드레일 §2 — 동일 도메인 재발) — 근거: `sessions/2026-08-30T23-26-43/bess-grid-interconnection.md`
+- ❌ **"EN 50549 시리즈(유럽): 특히 고압 시스템에 대한 요건을 포함"** → ✅ EN 50549-**1은 LV(저압)** 배전망 연계, **-2는 MV(중압)** 배전망 연계이며 둘 다 HV(송전) 규격이 아니다(가드레일 §3.1) — 근거: `sessions/2026-08-30T23-26-43/bess-grid-interconnection.md`
+- ❌ 계통연계 산출물에 **LVRT/HVRT setpoint·보호계전기 정정·ROCOF 수치가 0건**이고 [요확인] 3항목으로 종결(2026-08-30 지적의 재발) → ✅ 입력 미확보 시에도 **시장 기준값**(KR: LVRT 0.0 pu 150 ms 유지 / HVRT 1.3 pu 100 ms / OFR 51.5 Hz 200 ms / UFR 47.5 Hz 140 ms / ROCOF 2.5 Hz/s — 가드레일 §3.4)을 **기준선으로 제시**하고 프로젝트 확정값만 `[요확인]`으로 남긴다(가드레일 §4) — 근거: `sessions/2026-08-30T23-26-43/bess-grid-interconnection.md`
 - ❌ 세션 **제목과 본문 전반**에서 VRT를 "**Virtual Synchronization Transformer**"로 표기 → ✅ **VRT = Voltage Ride-Through**. §2 사전이 금지어로 명시한 오역의 정면 재발이며, 상위 과제명·지시문이 틀린 경우에는 **정정 사유를 먼저 밝히고** 올바른 정의로 진행한다(§4 지시문 오류 전파 금지) — 근거: `sessions/2026-08-28T12-15-50/bess-grid-interconnection.md`
 - ❌ KR 계통연계 요건 근거로 **JEAC 9701-2020**(JP)을 병기 → ✅ KR은 **KEPCO 분산형전원 배전계통 연계 기술기준 + 계통연계규정 + KEC**다. 해외 규격은 "(참고용, 국내 적용 아님)" 명시(§1.1 재발 — 동일 도메인 반복) — 근거: `sessions/2026-08-28T12-15-50/bess-grid-interconnection.md`
 - ❌ 근거 표기를 템플릿 문구 "**`1차 데이터·규격 소스` 참조**" 그대로 3회 인용 → ✅ 실제 규격 조항 번호 또는 `sessions/...` 경로로 치환한다. 미치환 템플릿 문구는 자리표시자로 간주해 발행 금지(§4 자리표시자 토큰 — 신규 유형) — 근거: `sessions/2026-08-28T12-15-50/bess-grid-interconnection.md`
@@ -176,6 +180,11 @@ PCS전문가 ──PCS 제어설정──▶ 계통연계(시운전엔지니어)
 - ❌ IEC 62271-100/101을 "분산형 에너지 자원(DER) 통합 일반 요구사항" 표준으로 인용 → ✅ IEC 62271 시리즈는 고전압 개폐장치(교류 회로차단기·정격) 표준이며 DER 계통연계 일반요건과 무관, DER 통합 요건은 IEEE 1547 / IEC 62933 시리즈가 소관 — 근거: `sessions/2026-07-13T16-22-55/bess-grid-interconnection.md`
 - ❌ ENA EREC G99 Issue 6(영국 전용 그리드코드)을 EU/RO 시장 LVRT 근거로 인용 → ✅ EU/RO는 EU RfG 2016/631(Type B~D)·EN 50549-2·ANRE Order 적용, G99 Issue 6은 UK 전용(유지시간 140ms가 우연히 유사해도 규격 출처 혼용 금지) — 근거: `sessions/2026-08-16T00-03-02/bess-grid-interconnection.md`
 - ❌ US IEEE 1547-2018 LVRT(0.0pu) 유지시간을 "100ms"로 기재 → ✅ IEEE 1547-2018 Category II는 0.0pu 시 1.0s(Momentary cessation 후 복귀), 0.65pu는 10.0s이며 100ms대는 HVRT(1.20pu→0.16s)만 해당 — 근거: `sessions/2026-08-16T00-03-02/bess-grid-interconnection.md`
+- ❌ FFR을 "**Frequency Follower Relay**"로 풀이(재발, 2026-09-24) → ✅ **FFR = Fast Frequency Response**(고속 주파수 응답)이며 계전기가 아니다(가드레일 §2 FFR 항목 — 누적 3변형) — 근거: `sessions/2026-09-24T02-17-55/bess-grid-interconnection.md`
+- ❌ LVRT/HVRT를 "**보호 장치**(고급형 보호 릴레이, 예: SEL)"로 분류하고 릴레이 정정으로 설정 → ✅ LVRT/HVRT는 **PCS(인버터) 제어의 사고 통과 능력**이며 pcs-expert의 제어 파라미터로 구현한다. 보호 릴레이는 OVR/UVR·OFR/UFR **트립 정정**을 담당하고, 트립값이 ride-through 요구 구간을 침범하지 않도록 협조한다 — 근거: `sessions/2026-09-24T02-17-55/bess-grid-interconnection.md`
+- ❌ OFR/UFR 정정 근거로 "**JEAC 9701-2020 ±0.5%/s**"를 인용하고, 시장 미확정 상태에서 JEAC(JP)·KEPCO(KR)·AS 4777.2(AU)를 한 절에 병기(§1.1 재발) → ✅ ±0.5%/s는 **출력 복귀 기울기**(본 문서 재사용 지식)이며 주파수 계전 정정이 아니다. OFR/UFR은 **Hz·시간**으로 표기(KR 기준선 OFR 51.5 Hz/200 ms, UFR 47.5 Hz/140 ms)하고, 시장 코드 확정 후 해당 시장 규격만 인용 — 근거: `sessions/2026-09-24T02-17-55/bess-grid-interconnection.md`
+- ❌ 단락전류 보호를 "**과도 전류 보호 장치 (IFR, UFR)**"로 표기 → ✅ **UFR은 저주파수 계전기(ANSI 81U)** 이고 "IFR"은 표준 약어가 아니다. 단락·과전류 보호는 **ANSI 50/51(OCR)** 로 표기 — 근거: `sessions/2026-09-24T02-17-55/bess-grid-interconnection.md`
+- ❌ 계통연계 세션이 **IRA 인센티브의 한국 시장 적용**(R&D·공급망·정책 권고)으로 채워지고 LVRT/HVRT·보호 정정·ROCOF setpoint 0건(재발) → ✅ IRA(US) 세액공제는 미국 내 설치·생산분 대상이며 KR 계통연계 요건과 무관하다(§1.1). 계통연계 산출물은 §3.4 KR setpoint 기준선을 최소 1개 수치로 제시(§4) — 근거: `sessions/2026-09-22T03-51-50/bess-grid-interconnection.md`
 
 ## 핵심 역량 및 업무 범위 (핵심 원칙)
 

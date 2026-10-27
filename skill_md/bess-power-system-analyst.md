@@ -182,6 +182,9 @@ bess-power-system-analyst
 - ❌ KR 22.9 kV 전압강하 허용을 "±5%"로 제시(케이블 도메인 MV ≤3%와 충돌) → ✅ 계통 **공급전압 유지범위**(±5%)와 케이블 **설계 전압강하 한계**(HV ≤2% / MV ≤3% / LV ≤5%)를 분리 인용하고, 케이블 수치는 cable-engineer 소관값을 따른다 — 근거: `sessions/2026-08-01T13-40-09/bess-power-system-analyst.md`
 - ❌ KR VRT를 "0%V 150ms 후 90% 회복"으로 US와 동일 기재 → ✅ KR 정식값(LVRT 0.0pu 140ms 연속운전)으로 통일, VRT는 grid-interconnection 표 참조 — 근거: `sessions/2026-06-08T20-24-13/bess-power-system-analyst.md`
 - ❌ 수치/근거 없는 서술형 결론("단락전류는 정격 초과 가능", "분석 결과 중요") → ✅ 비정량 결론 금지, 정량 결론 원칙 강제 — 근거: `sessions/2026-05-11T14-24-48/bess-power-system-analyst.md`
+- ❌ 계통해석 세션 4건이 공급망·그리드포밍 보도 해설, 자동화 도구의 **MTTR·가용률**, AI 배터리 수명예측으로 채워지고 **조류·단락·보호협조·고조파·과도안정도 산출 0건**(재발, 2026-09-20~24) → ✅ 소유 지표를 최소 1개 수치로 결론화한다. MTTR·가용률은 facility-manager·om-expert, 수명예측 모델은 aiml-engineer 소관이며 계통해석은 그 결과를 입력으로만 인용(가드레일 §4 도메인 필수 산출물 결여) — 근거: `sessions/2026-09-20T07-01-45/bess-power-system-analyst.md`, `sessions/2026-09-21T01-16-02/bess-power-system-analyst.md`, `sessions/2026-09-21T03-24-19/bess-power-system-analyst.md`, `sessions/2026-09-24T02-17-55/bess-power-system-analyst.md`
+- ❌ "**IRA 인센티브**의 **한국 시장** 적용 전략", "한국 기업들이 IRA의 **보조금** 지원을 통해 원자재 공급망 구축" → ✅ IRA(US)의 ITC(IRC §48/§48E)·45X는 **미국 내 설치·생산분**에 대한 세액공제이며 KR 프로젝트에 적용되지 않는다. KR 세제는 조특법(bess-tax-korea), IRA 적격성 판단은 bess-tax-incentive 소관(가드레일 §1.1) — 근거: `sessions/2026-09-22T03-51-50/bess-power-system-analyst.md`
+- ❌ "BESS와 연계된 시스템에서는 **전압 변동이 주파수 안정성에 큰 영향**" → ✅ 계통해석에서 주파수 안정도는 **유효전력(P) 수급·관성**, 전압 안정도는 **무효전력(Q) 수급**으로 분리 판정한다. 케이블 최적화 효과는 전압강하(%)·손실(kW)로 정량화하고 주파수 안정도 개선으로 확대하지 않는다 — 근거: `sessions/2026-09-25T16-08-22/bess-power-system-analyst.md`
 
 ## 해석 유형별 상세
 

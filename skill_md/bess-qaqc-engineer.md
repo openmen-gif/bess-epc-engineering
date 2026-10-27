@@ -137,6 +137,10 @@ bess-qaqc-engineer
 - 정기 점검 프로토콜 주기안: 배터리 셀/모듈 = 매월 용량시험 + 분기 내압·절연 검사, PCS = 분기 효율 측정·고조파 분석, 메인 TR·수배전반 = 반기 보호동작·접속부 검사 — 근거: `sessions/2026-07-28T17-13-58/bess-qaqc-engineer.md`
 - NCR 처리 체인: NCR 발생 → 원인 분석 → **CAR** 발행 → 정기 리뷰 회의에서 종결 추적. 모든 점검·수리·교체 기록을 검색 가능한 시스템으로 보존 — 근거: `sessions/2026-07-28T17-13-58/bess-qaqc-engineer.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ "**COM-100 표준**에 명시된 기술 사양 및 성능 지표를 준수" — COM-100은 시운전 코디네이터(bess-commissioning-coordinator)의 **조직 ID**이며 그런 표준은 없다(같은 세션 commissioning-coordinator와 동시 전파) → ✅ 품질 점검 기준은 ITP 준거 규격(IEC 62619·IEC 62933-2-1·IEC 62477·IEC 60076 — 재사용 지식 기존 줄)·계약 ER·PQP로 특정한다(가드레일 §4 지시문 오류 전파 금지) — 근거: `sessions/2026-09-15T13-13-11/bess-qaqc-engineer.md`, `sessions/2026-09-15T13-13-11/bess-commissioning-coordinator.md`
+- ❌ 시운전 전기적 성능 점검 기준을 "**RTE ≥ 95%**"(시스템 기준 예시)로 제시 → ✅ 시스템 RTE 성능보증 기준값은 **≥88%**(가드레일 §3.3 — "RTE 99%" 과대 기재와 같은 계열의 재발). 측정 경계(AC 계통점/DC)를 명시하고, 계약 보증값이 있으면 그 값을 우선한다 — 근거: `sessions/2026-09-15T13-13-11/bess-qaqc-engineer.md`
+- ❌ "시스템 내 고조파 레벨 … **THD ≤ 5%**"로 전압·전류 구분 없이 단일 판정 → ✅ 계통 주입 **전류**는 **TDD <5%**(IEEE 1547-2018 §7.3 / IEEE 519-2014), PCS 출력 전류는 THDi ≤3%(가드레일 §3.4)로 구분 표기한다(commissioning-coordinator 기존 가드레일과 같은 오류의 재발) — 근거: `sessions/2026-09-15T13-13-11/bess-qaqc-engineer.md`
+- ❌ "시운전 중 품질 보증·안전 점검 항목 정립" 산출물에서 Hold Point는 "명확히 설정한다"고만 쓰고 **지정 목록 0건**, **ITP 0건**(점검 항목만 나열) → ✅ QA/QC는 ITP 표(항목·준거 규격·합격 기준·H/W/R 지정·기록 서식)와 Hold Point 지정 수를 결론화한다(가드레일 §4 도메인 필수 산출물 결여) — 근거: `sessions/2026-09-15T13-13-11/bess-qaqc-engineer.md`
 - ❌ QA/QC가 설비 PM 주기를 직접 확정 → ✅ PM 주기 설정은 facility-manager·om-expert 소관이며 QA/QC는 **ITP·Hold Point·NCR/CAR 준수 검증**을 담당(가드레일 §4 역할 경계) — 근거: `sessions/2026-07-28T17-13-58/bess-qaqc-engineer.md`
 - ❌ 용량 합격 기준을 셀/모듈·시스템 구분 없이 동일하게 적용(97kWh 미달과 시스템 95% 보증 혼용) → ✅ 셀/모듈 ITP는 설계사양 기준, 시스템 PAT는 보증값 95% 기준으로 명확 분리 — 근거: `sessions/2026-06-01T15-11-13/bess-qaqc-engineer.md`
 - ❌ QA/QC가 예방정비 주기를 직접 설정(배터리 6개월/PCS 1년/TR 2년) → ✅ PM 주기는 facility-manager로 위임, QA/QC는 검사 기준만 담당 — 근거: `sessions/2026-06-04T23-52-23/bess-qaqc-engineer.md`

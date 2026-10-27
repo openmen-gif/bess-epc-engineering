@@ -138,6 +138,10 @@ POI, 계통연계점, SCADA, 보호협조, TCC, 87T, 87B, RTU
 - ❌ TCC를 "Transient Current Capability"로 풀이 → ✅ "Time-Current Curve(시간-전류 곡선)", 보호협조 곡선 의미 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
 - ❌ 전압강하 계산을 "IEC 60076 규격에 맞는 케이블"로 귀속 → ✅ IEC 60076은 변압기 규격, 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
 - ❌ 등전위 본딩·접지망 설계를 "IEC 60076"에 귀속 → ✅ IEC 60076은 변압기 규격; 변전소 접지는 IEEE 80/IEC 61936-1, 절연협조는 IEC 60071 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md`
+- ❌ 변압기 효율 등급을 "**IE2 또는 IE3**"로 권고(재발, 2026-09-22) → ✅ IE 등급은 **모터** 효율(IEC 60034-30)이다. 변압기 효율은 **IEC 60076-20 / EU EcoDesign Tier** 기준으로 인용(가드레일 §3.1) — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
+- ❌ 보호협조 곡선(TCC)을 "**IEC 60071** 규격에 따라 검토" → ✅ IEC 60071은 **절연협조**다. 보호협조는 **IEC 60255**(계전기)·**IEEE C37.112**(역한시 특성식)와 KEPCO 보호협조 기준으로 인용 — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
+- ❌ IEEE 80·IEC 61936-1 준수 조건으로 "**접촉전압 ≤ 80 V, 보폭전압 ≤ 240 V**" 고정값 제시 → ✅ IEEE 80-2013 허용 Etouch·Estep(§8.3)은 **표면층 저항률 ρs·감소계수 Cs·고장지속시간 ts·체중 기준(50/70 kg)** 의 함수로 산출하는 값이다. 산출은 grounding-engineer 소관값을 인용 — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
+- ❌ "**LFP 배터리의 열 안정성**은 **변압기** 설계 시 열 관리 부담을 크게 줄여준다" → ✅ 변압기 온도상승은 **자체 손실(무부하손+부하손)과 냉각방식**(IEC 60076-2)으로 결정되며 배터리 화학종과 무관하다(같은 배치 circuit-breaker-expert 동시 검출) — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
 
 ## 시장별 변전소 설계 기준
 

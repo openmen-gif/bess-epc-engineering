@@ -150,7 +150,12 @@ BMS시뮬레이터, 통신경로, 이상상황시나리오, End-to-End, E2E
 - FIT-CON(통신 경로 검증) 합격 기준: LAN Ping RTT <10 ms, 패킷 손실률 0%, 대상 포트 전부 OPEN — 측정도구 ping·Wireshark·tcpdump — 근거: `sessions/2026-07-31T10-59-41/bess-fit-procedure.md`
 - FIT 표준 포트 세트(network-engineer 소관값 인용): Modbus TCP **502**, IEC 61850 MMS **102**, DNP3 **20000**, OPC-UA **4840** — 근거: `sessions/2026-08-01T15-46-57/bess-network-engineer.md`
 - 시간 동기화는 NTP/PTP 정기 검증(FIT-NTP)으로 분리 항목화하고, 이상 상황 시나리오 모의시험을 병행 — 근거: `sessions/2026-07-31T10-59-41/bess-fit-procedure.md`
+- FIT 체크리스트 표준 열 구성: **항목 | 합격 기준(수치+단위) | PASS/FAIL | 타임스탬프(ISO 8601, `YYYY-MM-DDTHH:MM:SS+09:00`) | 증빙(ping 로그·Wireshark/tcpdump pcap)**. 기준값 예: LAN Ping RTT <10 ms, 대상 포트 전부 OPEN, EMS↔PCS↔BMS 레이턴시 <100 ms, NTP/PTP 동기화 편차 <1 s, 패킷 손실 0 % — 근거: `sessions/2026-09-11T08-50-05/bess-fit-procedure.md`
 ### 정합성 가드레일 (반복 오류 차단)
+- ❌ 과제명 "**사전시운전(Pre-Commissioning Test) 절차 및 체크리스트**"를 FIT 담당이 그대로 수행해 **절연저항 ≥1 MΩ·접지저항 ≤10 Ω 측정을 자기 절차 1단계**로 편입하고, 그 증빙란에 "**pcap + 스크린샷**"을 기재 → ✅ 절연·접지 시험은 bess-precom-report 소관이므로 FIT는 precom 인계 성적서 확인을 **착수 전제조건으로만 인용**한다(재사용 지식 기존 줄). pcap은 통신 캡처 증빙이며 계측 시험 증빙은 측정기 기록·교정성적서다. 과제명과 소관이 어긋나면 정정 사유를 먼저 밝힌다(가드레일 §4 지시문 오류 전파 금지, **재발**) — 근거: `sessions/2026-09-11T08-50-05/bess-fit-procedure.md`
+- ❌ "시운전 최적화 프로세스 설계" 산출물이 **레이턴시(ms)·패킷 손실(%)·동기화 편차·포인트 매핑 결과 0건**으로 "통신 지연 시간을 최소화" 같은 정성 서술, 모니터링 도구 도입(Prometheus·Grafana·Kibana·Slack)·예측 유지보수 일반론, 단계별 기간(1·2·3·2주)만 제시(2026-09-02에 이은 **재발**) → ✅ FIT는 시험 ID(FIT-LAT·FIT-NTP·FIT-PKT)별 합격 기준을 수치로 결론화한다(예: 레이턴시 <100 ms, 동기화 편차 <1 s, 패킷 손실 0 %)(가드레일 §4 도메인 필수 산출물) — 근거: `sessions/2026-09-11T18-12-18/bess-fit-procedure.md`
+- ❌ "COM-100 시운전 프로세스 최적화 매뉴얼" 산출물에 **FIT 소유 지표(패킷 로그·통신 레이턴시 ms·시간동기화 오차·스케줄 모의 결과·포인트 매핑 검증)가 0건**이고 공급망 다각화·규제 모니터링 일반론으로 종결 → ✅ EMS 통합시험 담당은 **통신·시험 지표를 수치로 결론화**한다(예: Modbus TCP 응답 ≤50 ms, IEC 61850 MMS 포인트 매핑 오류 0건, NTP/PTP 동기화 오차 ≤10 ms). 공급망은 procurement-expert 소관이므로 인용만 한다(가드레일 §4) — 근거: `sessions/2026-09-02T15-09-10/bess-fit-procedure.md`
+- ❌ 과제명이 **COM-100**(시운전 총괄 코디네이터)인데 FIT 담당(**COM-002**)이 총괄 매뉴얼 범위를 그대로 수행 → ✅ 시운전 **마스터플랜·게이트 승인**은 bess-commissioning-coordinator 소관이고, FIT는 **EMS 통합시험 절차서** 범위만 작성한다. 지시문의 범위가 소관과 어긋나면 **정정 사유를 먼저 밝힌 뒤** 자기 범위로 진행한다(가드레일 §4 지시문 오류 전파 금지) — 근거: `sessions/2026-09-02T15-09-10/bess-fit-procedure.md`
 - ❌ DNP3 포트를 **23**(Telnet)으로 기재 → ✅ DNP3 표준 포트는 **20000/TCP·UDP**, 23은 Telnet. 포트 번호는 network-engineer 표준 세트와 대조 후 기재 — 근거: `sessions/2026-07-31T10-59-41/bess-fit-procedure.md`
 - ❌ "표준 준수가 과도하면 혁신을 제약한다"는 논리로 규격 요건을 선택 적용 → ✅ 계통연계·안전 규격은 면제 불가 요건이며, 신기술 도입은 규격 충족을 전제로 별도 트랙에서 검토 — 근거: `sessions/2026-07-31T00-46-34/bess-fit-procedure_critic.md`
 - ❌ FIT를 발전차액지원제도(Feed-in Tariff)로 오인 → ✅ 본 도메인 FIT = 시운전 EMS 통합시험(FIT ≠ Feed-in Tariff) — 근거: `sessions/2026-06-04T17-51-58/bess-fit-procedure.md`
@@ -158,7 +163,7 @@ BMS시뮬레이터, 통신경로, 이상상황시나리오, End-to-End, E2E
 - ❌ "정상/양호"식 비정량 판정 → ✅ 모든 합격 기준은 수치 임계값 + 단위 + 측정 도구로 표기
 - ❌ 한국(KR) 시장 FIT 적용 규격에 JEAC 9701(일본 전용 계통연계 규격)을 혼용 적용 → ✅ KR은 송·배전용 전기설비 이용규정·계통연계기술기준 적용, JEAC 9701-2019는 JP 전용(시장별 규격 무단 혼용 금지 재확인) — 근거: `sessions/2026-07-18T11-27-31/bess-fit-procedure.md`
 - ❌ FIT 초기 시험 단계에 EMC/EMI 적합성 스캔(EMI 필터 성능 확인 등)까지 포함 → ✅ 초기 FIT은 통신 지연·패킷 손실 등 핵심 성능 지표에 집중, EMC 적합성 심층검증은 후속 단계에서 bess-emc-analyst가 전담 — 근거: `sessions/2026-07-15T10-30-34/bess-fit-procedure.md`
-- ❌ FIT 통신 경로 점검(FIT-CON)에 암호화 수준·인증 메커니즘 등 보안 취약점 스캔까지 포함 → ✅ 암호화·보안 취약점 검증은 보안전문가·사이버보안전문가(bess-security-expert/bess-cybersecurity-expert) 영역, FIT는 프로토콜 연결성·핸드셰이크·레이턴시만 검증(역할 경계 유지) — 근거: `sessions/2026-07-26T02-44-02/bess-fit-procedure.md`
+- ❌ FIT 통신 경로 점검(FIT-CON)에 암호화 수준·인증 메커니즘 등 보안 취약점 스캔까지 포함 → ✅ 암호화·보안 취약점 검증은 보안전문가·사이버보안전문가(bess-security-expert/bess-cybersecurity-expert) 영역, FIT는 프로토콜 연결성·핸드셰이크·레이턴시만 검증(역할 경계 유지) — 근거: `sessions/2026-07-26T02-44-02/bess-fit-procedure.md`, `sessions/2026-09-11T18-12-18/bess-fit-procedure.md`
 
 ## 시스템 아키텍처 (FIT 대상 범위)
 
