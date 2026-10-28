@@ -508,7 +508,7 @@ with tab_gantt:
                 fig_g.add_shape(
                     type="rect",
                     x0=t["start"], x1=t["end"],
-                    y0=y_pos - 0.35, y1=y_pos + 0.35,
+                    y0=y_pos - 0.22, y1=y_pos + 0.18,
                     fillcolor=t["color"],
                     opacity=0.15 if t["is_project"] else 0.25,
                     line=dict(
@@ -527,7 +527,7 @@ with tab_gantt:
                     fig_g.add_shape(
                         type="rect",
                         x0=t["start"], x1=prog_end,
-                        y0=y_pos - 0.35, y1=y_pos + 0.35,
+                        y0=y_pos - 0.22, y1=y_pos + 0.18,
                         fillcolor=t["color"],
                         opacity=0.9,
                         line=dict(width=0),
@@ -546,6 +546,14 @@ with tab_gantt:
                     hoverinfo="text",
                     showlegend=False,
                 ))
+                # 작업명은 y축 눈금 대신 막대 위 라벨로 — 고정 왼쪽 여백(220px)이 폰에서
+                # 플롯을 97px 로 밀어내던 문제(412px 뷰포트 실측) 해소
+                fig_g.add_annotation(
+                    x=0, xref="paper", xanchor="left", xshift=0 if t["is_project"] else 14,
+                    y=y_pos + 0.38, yanchor="middle",
+                    text=f"<b>{t['task'].strip()}</b>" if t["is_project"] else t["task"].strip(),
+                    showarrow=False, font=dict(color="#c9d1d9", size=12 if t["is_project"] else 11),
+                )
 
             # Today line (use shape instead of add_vline for compatibility)
             _today = date.today()
@@ -560,16 +568,17 @@ with tab_gantt:
 
             fig_g.update_yaxes(
                 tickvals=list(range(n)),
-                ticktext=list(reversed(task_labels)),
+                showticklabels=False,   # 라벨은 막대 위 annotation (모바일 폭 확보)
                 showgrid=False,
+                range=[-0.6, n - 0.35],
             )
             fig_g.update_xaxes(type="date", showgrid=True, gridcolor="rgba(255,255,255,0.1)")
             fig_g.update_layout(
                 title="프로젝트 일정 현황" if not is_en else "Project Schedule Overview",
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 font_color="#c9d1d9",
-                height=max(400, 50 * n),
-                margin=dict(l=220, r=30, t=50, b=50),
+                height=max(400, 58 * n),
+                margin=dict(l=10, r=10, t=50, b=50),
                 xaxis_title="",
                 yaxis_title="",
             )
@@ -620,7 +629,15 @@ with tab_gantt:
                 val = next((ph.get("progress", 0) for ph in ph_list if ph.get("name") == pn), 0)
                 row.append(val)
             hm_data.append(row)
-            hm_labels.append(proj["name"])
+            # 긴 프로젝트명은 공백 기준 ~10자 줄바꿈 — y 라벨 폭이 폰에서 플롯을 밀어내지 않도록
+            _lines, _cur = [], ""
+            for _w in proj["name"].split():
+                if _cur and len(_cur) + 1 + len(_w) > 10:
+                    _lines.append(_cur); _cur = _w
+                else:
+                    _cur = f"{_cur} {_w}".strip()
+            _lines.append(_cur)
+            hm_labels.append("<br>".join(_lines))
 
         if hm_data:
             ph_display = ["Design","Procurement","Construction","Commissioning"] if is_en else phase_kos
@@ -629,11 +646,14 @@ with tab_gantt:
                 colorscale="Blues", zmin=0, zmax=100,
                 text=[[f"{v}%" for v in row] for row in hm_data],
                 texttemplate="%{text}",
-                colorbar=dict(title="%"),
+                # 색상 막대는 아래 가로 배치 — 세로 막대가 폰 폭을 잡아먹지 않도록
+                colorbar=dict(title="%", orientation="h", y=-0.25, yanchor="top", thickness=10, len=0.8),
             ))
+            _max_lines = max(lbl.count("<br>") + 1 for lbl in hm_labels)
             fig_hm.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)", font_color="#c9d1d9",
-                height=max(200, 50 * len(hm_labels)),
-                margin=dict(l=10, r=10, t=10, b=10),
+                height=max(240, (34 + 16 * _max_lines) * len(hm_labels) + 90),
+                margin=dict(l=10, r=10, t=10, b=70),
             )
+            fig_hm.update_yaxes(automargin=True, tickfont=dict(size=11))
             st.plotly_chart(fig_hm, use_container_width=True)
