@@ -16,6 +16,7 @@ from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils.theme import PALETTE, CBAR
+from utils import engineering_params as EP
 from utils.sim_physics import (
     heat2d_transient, stratification_profile,
     airflow_trajectories, build_animation, fmt_time,
@@ -391,9 +392,15 @@ def run_container_thermal_module():
         k2.metric(t("p9_avg_temp"), f"{avg:.1f} °C")
         k3.metric(t("p9_hotspot"),  f"X={hx*dx:.1f}m, Y={hy*dy:.1f}m")
 
-        if   peak <= 45: st.success(t("p9_hvac_ok"))
-        elif peak <= 55: st.warning(t("p9_hvac_warn"))
-        else:            st.error(t("p9_hvac_crit"))
+        # 셀 Tmax 권장 35 / 허용 45 °C (bess-cfd-analyst) — 공기 온도라 셀 판정의 하한 스크리닝 (이전 45/55 °C)
+        if   peak <= EP.CELL_TMAX_REC_C:   st.success(t("p9_hvac_ok"))
+        elif peak <= EP.CELL_TMAX_ALLOW_C: st.warning(t("p9_hvac_warn"))
+        else:                              st.error(t("p9_hvac_crit"))
+        lo_t, hi_t = EP.CONTAINER_MEAN_TARGET_C
+        if not (lo_t <= avg <= hi_t):
+            st.caption(f"평균 {avg:.1f} °C — HVAC 제어 목표 {lo_t:.0f}~{hi_t:.0f} °C 밖 (bess-cfd-analyst)"
+                       if st.session_state.get('lang', 'KO') == 'KO' else
+                       f"Mean {avg:.1f} °C — outside HVAC control target {lo_t:.0f}–{hi_t:.0f} °C (bess-cfd-analyst)")
 
         st.markdown("---")
 
@@ -461,14 +468,15 @@ def run_container_thermal_module():
                 name="배터리 랙" if not is_en else "Battery Rack",
                 hovertemplate="Rack X=%{x:.1f}m Y=%{y:.1f}m<extra></extra>",
             )
-            # 45 °C HVAC-adequacy reference plane (same limit as KPI banner)
+            # 45 °C 셀 허용 상한 참조 평면 (KPI 배너와 같은 EP.CELL_TMAX_ALLOW_C)
+            _lim = EP.CELL_TMAX_ALLOW_C
             limit45 = go.Surface(
-                x=[0.0, con_l], y=[0.0, con_w], z=[[45.0, 45.0], [45.0, 45.0]],
+                x=[0.0, con_l], y=[0.0, con_w], z=[[_lim, _lim], [_lim, _lim]],
                 colorscale=[[0, "rgba(248,81,73,0.25)"], [1, "rgba(248,81,73,0.25)"]],
                 showscale=False,
-                name="한계 45 °C" if not is_en else "45 °C limit",
-                hovertemplate=("HVAC 적정성 한계 45 °C<extra></extra>" if not is_en
-                               else "HVAC adequacy limit 45 °C<extra></extra>"),
+                name=f"셀 허용 상한 {_lim:.0f} °C" if not is_en else f"Cell allowable {_lim:.0f} °C",
+                hovertemplate=(f"셀 허용 상한 {_lim:.0f} °C (권장 {EP.CELL_TMAX_REC_C:.0f} °C)<extra></extra>" if not is_en
+                               else f"Cell allowable limit {_lim:.0f} °C (recommended {EP.CELL_TMAX_REC_C:.0f} °C)<extra></extra>"),
             )
             base_data = [_t1_surf(snapshots[0]), limit45, rack_trace]
             if vent_x:
@@ -499,8 +507,8 @@ def run_container_thermal_module():
             )
             st.plotly_chart(fig3d, use_container_width=True, key="th_chart")
             st.caption(
-                "■ = 배터리 랙 | ◆ = HVAC 덕트 | 높이·색상 = 온도 | 빨간 평면 = 45 °C 한계 | ▶ 재생 = 실시간(초) 가열 진행 | 드래그로 회전" if not is_en
-                else "■ = Battery racks | ◆ = HVAC ducts | red plane = 45 °C limit | ▶ Play = heat-up in physical seconds | Drag to rotate"
+                f"■ = 배터리 랙 | ◆ = HVAC 덕트 | 높이·색상 = 온도 | 빨간 평면 = 셀 허용 상한 {_lim:.0f} °C | ▶ 재생 = 실시간(초) 가열 진행 | 드래그로 회전" if not is_en
+                else f"■ = Battery racks | ◆ = HVAC ducts | red plane = cell allowable {_lim:.0f} °C | ▶ Play = heat-up in physical seconds | Drag to rotate"
             )
         # ── Tab 2: Animated single horizontal slice (floor → ceiling) ──────────
         with tab2:

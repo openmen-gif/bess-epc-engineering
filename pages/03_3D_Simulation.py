@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils.theme import AX3D, DARK_LAYOUT, CBAR
+from utils import engineering_params as EP
 from utils.sim_physics import (
     heat2d_transient, bearing_pressure, seismic_pulse,
     smoke_layer_series, plume_particles,
@@ -19,7 +20,9 @@ from utils.sim_physics import (
 CFD_L, CFD_W, CFD_H = 15.0, 15.0, 4.0     # enclosure dims [m]
 CFD_NX = CFD_NY = 30
 CFD_SNAPS = list(range(0, 1801, 60))   # s — 0~30분, 60초 균일 31프레임(부드러운 재생/스크럽)
-THERMAL_LIMIT_C = 50.0                     # design verification limit
+# 셀 허용 상한(공기 기준 스크리닝 — 셀 온도 ≥ 공기 온도이므로 공기가 넘으면 확정 Fail), 권장 35 °C
+THERMAL_LIMIT_C = EP.CELL_TMAX_ALLOW_C     # 45 °C — bess-cfd-analyst 공냉 판정표 (이전 50 °C)
+THERMAL_REC_C   = EP.CELL_TMAX_REC_C       # 35 °C
 
 STR_HCG   = 1.5                            # container C.G. height above pad [m]
 STR_ALLOW = 45.0                           # allowable bearing pressure [kN/m²]
@@ -64,7 +67,7 @@ def _T():
             "cfd_hover":    ("<b>Position</b><br>X (E-W): %{x:.1f} m<br>Y (N-S): %{y:.1f} m<br>"
                              "<b>Air Temp: %{z:.1f} °C</b><extra></extra>"),
             "cfd_m_peak":   "Peak Temp (steady)", "cfd_m_mean": "Bulk Mean Temp", "cfd_m_dt": "ΔT vs Ambient",
-            "cfd_pass":     lambda pk: f"✅ Peak {pk:.1f} °C ≤ {THERMAL_LIMIT_C:.0f} °C — HVAC capacity adequate.",
+            "cfd_pass":     lambda pk: f"✅ Peak {pk:.1f} °C ≤ {THERMAL_REC_C:.0f} °C (recommended) — HVAC capacity adequate.",
             "cfd_fail":     lambda pk: f"❌ Peak {pk:.1f} °C > {THERMAL_LIMIT_C:.0f} °C — increase HVAC capacity or redistribute heat sources.",
             "cfd_limit_lbl": f"{THERMAL_LIMIT_C:.0f} °C design limit",
             "cfd_rack_lbl": "Battery/PCS skid",
@@ -221,7 +224,7 @@ def _T():
             "cfd_hover":    ("<b>위치</b><br>X (동서): %{x:.1f} m<br>Y (남북): %{y:.1f} m<br>"
                              "<b>공기 온도: %{z:.1f} °C</b><extra></extra>"),
             "cfd_m_peak":   "최고 온도 (정상상태)", "cfd_m_mean": "평균 온도", "cfd_m_dt": "주변온도 대비 ΔT",
-            "cfd_pass":     lambda pk: f"✅ 최고 {pk:.1f} °C ≤ {THERMAL_LIMIT_C:.0f} °C — HVAC 용량 적정.",
+            "cfd_pass":     lambda pk: f"✅ 최고 {pk:.1f} °C ≤ {THERMAL_REC_C:.0f} °C (권장) — HVAC 용량 적정.",
             "cfd_fail":     lambda pk: f"❌ 최고 {pk:.1f} °C > {THERMAL_LIMIT_C:.0f} °C — HVAC 증설 또는 발열원 재배치 필요.",
             "cfd_limit_lbl": f"설계 한계 {THERMAL_LIMIT_C:.0f} °C",
             "cfd_rack_lbl": "배터리/PCS 스키드",
@@ -442,10 +445,21 @@ if role == T["roles"][0]:
         st.metric(T["cfd_m_peak"], f"{peak_T:.1f} °C")
         st.metric(T["cfd_m_mean"], f"{mean_T:.1f} °C")
         st.metric(T["cfd_m_dt"],   f"+{peak_T - ambient_temp:.1f} °C")
-        if peak_T <= THERMAL_LIMIT_C:
+        ko = st.session_state.get("lang", "KO") == "KO"
+        if peak_T <= THERMAL_REC_C:
             st.success(T["cfd_pass"](peak_T))
+        elif peak_T <= THERMAL_LIMIT_C:
+            # 공기가 35~45 °C 면 셀은 그 이상 — 셀 열모델(벤더)로 Tmax 확인 필요
+            st.warning(f"⚠️ 최고 공기온도 {peak_T:.1f} °C — 셀 권장 {THERMAL_REC_C:.0f} °C 초과, 허용 {THERMAL_LIMIT_C:.0f} °C 이내. "
+                       "셀 온도는 공기보다 높으므로 벤더 셀 열모델로 Tmax 확인 필요." if ko else
+                       f"⚠️ Peak air {peak_T:.1f} °C — above cell recommendation {THERMAL_REC_C:.0f} °C, within "
+                       f"{THERMAL_LIMIT_C:.0f} °C allowable. Cells run hotter than air — verify Tmax with the vendor cell thermal model.")
         else:
             st.error(T["cfd_fail"](peak_T))
+        st.caption((f"판정 기준: 셀 Tmax ≤{THERMAL_REC_C:.0f} °C 권장 / ≤{THERMAL_LIMIT_C:.0f} °C 허용 (bess-cfd-analyst). "
+                    "여기 값은 공기 온도라 셀 판정의 하한 스크리닝입니다.") if ko else
+                   (f"Criteria: cell Tmax ≤{THERMAL_REC_C:.0f} °C recommended / ≤{THERMAL_LIMIT_C:.0f} °C allowable "
+                    "(bess-cfd-analyst). Values here are air temperature — a lower-bound screen for cells."))
         if st.button(T["cfd_run"]):
             st.success(T["cfd_result"](peak_T, mean_T))
 

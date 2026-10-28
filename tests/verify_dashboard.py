@@ -126,6 +126,54 @@ def run_airflow_checks():
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# 3b. 스킬 기준값 정합 (2026-10-28) — engineering_params 가 스킬 앵커를 재현하고,
+#     스킬 사본(skill_md/)에 그 기준 문구가 아직 있는지 확인. 스킬이 자라 기준이
+#     바뀌면 여기서 FAIL 로 드러나므로 engineering_params 를 같이 갱신한다.
+# ══════════════════════════════════════════════════════════════════════════
+def run_skill_criteria_checks():
+    from utils import engineering_params as EP
+
+    check("열화: 캘린더 앵커 25°C·10년 = 15%", abs(EP.calendar_loss_pct(25, 10) - 15.0) < 1e-6,
+          f"{EP.calendar_loss_pct(25, 10):.3f}%")
+    check("열화: 캘린더 앵커 45°C·5년 = 15%", abs(EP.calendar_loss_pct(45, 5) - 15.0) < 1e-6,
+          f"{EP.calendar_loss_pct(45, 5):.3f}%")
+    check("열화: 사이클 앵커 7,000×80% DoD = 20%", abs(EP.cycle_loss_pct(5600) - 20.0) < 1e-6)
+    s = [EP.soh_pct(25, y, 1.0, 0.8) for y in (5, 10, 15, 20)]
+    check("열화: SOH 연차 단조 감소", all(a > b for a, b in zip(s, s[1:])), " > ".join(f"{v:.1f}" for v in s))
+    check("소화: Water Mist 40ft 60m³ (30+60분, 0.10) = 540 L",
+          abs(EP.WATER_MIST_DENSITY_DEFAULT * 60 * (EP.WATER_MIST_BATTERY_DISCHARGE_MIN
+                                                    + EP.WATER_MIST_COOLING_EXT_MIN) - 540.0) < 1e-9)
+    check("케이블: 단락 S = I√t/k (25kA·0.5s·Cu) ≈ 123.6 mm²",
+          abs(EP.sc_min_area_mm2(25, 0.5, EP.SC_K["XLPE-Cu"]) - 123.6) < 0.1)
+    check("케이블: 전압등급 0.69→LV, 22.9→MV, 154→HV",
+          [EP.voltage_class(v) for v in (0.69, 22.9, 154.0)] == ["LV", "MV", "HV"])
+
+    def page(name):
+        with open(os.path.join(DASH, "pages", name), encoding="utf-8") as f:
+            return f.read()
+    check("03 열 한계 = EP 셀 허용(45°C), 50°C 하드코딩 없음",
+          "THERMAL_LIMIT_C = EP.CELL_TMAX_ALLOW_C" in page("03_3D_Simulation.py"))
+    check("09 열 판정 = EP 셀 권장·허용", "EP.CELL_TMAX_REC_C" in page("09_Container_Thermal.py")
+          and "peak <= 55" not in page("09_Container_Thermal.py"))
+    check("05 배터리 구역 기본 약제 = Water Mist",
+          "index=0 if battery_room else" in page("05_CBOP_Engineer.py")
+          and page("05_CBOP_Engineer.py").count("Water Mist (NFPA 750)") >= 1)
+    check("04 케이블 3중 검증(전압강하·단락·허용전류)",
+          all(k in page("04_EBOP_Engineer.py") for k in ("sc_min_area_mm2", "i_base", "VDROP_LIMIT_PCT")))
+
+    anchors = {
+        "bess-cfd-analyst.md": "≤ 35°C (권장) / ≤ 45°C (허용)",
+        "bess-battery-expert.md": "25°C 보관 10년 후 잔존 ≈85%",
+        "bess-cable-engineer.md": "XLPE-Cu k=143",
+        "bess-fire-engineer.md": "0.07~0.15 L/min/m³",
+    }
+    for fname, needle in anchors.items():
+        p = os.path.join(DASH, "skill_md", fname)
+        ok = os.path.exists(p) and needle in open(p, encoding="utf-8").read()
+        check(f"스킬 사본 기준 유지: {fname}", ok, "" if ok else f"'{needle}' 없음 — 스킬 갱신 시 engineering_params 재검토")
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # 4. 전 페이지 × 한/영 AppTest 렌더
 # ══════════════════════════════════════════════════════════════════════════
 def run_render_checks():
@@ -152,6 +200,7 @@ def main():
     run_formula_checks()
     run_fire_semantics_checks()
     run_airflow_checks()
+    run_skill_criteria_checks()
     if not FAST:
         run_render_checks()
     fails = [r for r in results if r[0] == "FAIL"]

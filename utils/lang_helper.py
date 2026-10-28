@@ -6,6 +6,7 @@ Usage in any page:
     st.title(t("page_title"))
 """
 import streamlit as st
+from utils.engineering_params import CELL_TMAX_REC_C as _T_REC, CELL_TMAX_ALLOW_C as _T_ALLOW
 
 # All translatable strings, keyed by string ID
 _TRANSLATIONS = {
@@ -174,8 +175,8 @@ _TRANSLATIONS = {
     "p6_aux":        {"KO": "보조 전력 사용",                   "EN": "Aux Power Usage"},
     "p6_monthly":    {"KO": "#### 월별 충·방전 프로파일 (MWh)", "EN": "#### Monthly Charge / Discharge Profile (MWh)"},
     "p6_soh_title":  {"KO": "배터리 SOH 추적 (State of Health)", "EN": "Battery State of Health (SOH) Tracking"},
-    "p6_soh_desc":   {"KO": "등가 풀싸이클(EFC) 진행에 따른 용량 열화 추적.",
-                      "EN": "Track capacity degradation over Equivalent Full Cycles (EFC)."},
+    "p6_soh_desc":   {"KO": "온도·사이클·방전심도에 따른 연차별 SOH 예측 (캘린더 + 사이클 열화, ±3%).",
+                      "EN": "Year-by-year SOH forecast from temperature, cycling and DoD (calendar + cycle fade, ±3%)."},
     "p6_anomaly":    {"KO": "셀 불균형 & 이상 탐지",            "EN": "Cell Imbalance & Anomaly Detection"},
     "p6_hmap":       {"KO": "#### 랙 × 모듈 온도 히트맵 (°C)", "EN": "#### Rack vs Module Temperature Heatmap (°C)"},
     "p6_detect":     {"KO": "🔍 Isolation Forest 이상 탐지 실행", "EN": "🔍 Run Isolation Forest Anomaly Detection"},
@@ -250,7 +251,8 @@ _TRANSLATIONS = {
     "p5_fire_conc":   {"KO": "설계 농도 (%)",                   "EN": "Design Concentration (%)"},
     "p5_fire_qty":    {"KO": "필요 약제량 (kg)",                 "EN": "Required Agent (kg)"},
     "p5_fire_cy":     {"KO": "실린더 수 (50 kg 기준)",           "EN": "Cylinders Required (50 kg each)"},
-    "p5_fire_note":   {"KO": "⚠️ NFPA 2001 / ISO 14520 기준 간이식 적용", "EN": "⚠️ Simplified NFPA 2001 / ISO 14520 formula applied"},
+    "p5_fire_note":   {"KO": "⚠️ Water Mist = NFPA 750, 가스계 = NFPA 2001 / ISO 14520 간이식 — 배터리실 기본은 Water Mist",
+                       "EN": "⚠️ Water Mist = NFPA 750, gaseous agents = simplified NFPA 2001 / ISO 14520 — battery rooms default to Water Mist"},
 
     # ─ Container Thermal Simulation (09) ─────────────────────────────
     "p9_caption":     {"KO": "🔥 배터리 컨테이너 내부 열유동 시뮬레이션", "EN": "🔥 Battery Container Internal Thermal Flow Simulation"},
@@ -272,9 +274,9 @@ _TRANSLATIONS = {
     "p9_max_temp":    {"KO": "최고 내부 온도",                    "EN": "Peak Internal Temp"},
     "p9_avg_temp":    {"KO": "평균 내부 온도",                    "EN": "Avg Internal Temp"},
     "p9_hotspot":     {"KO": "핫스팟 위치",                       "EN": "Hotspot Location"},
-    "p9_hvac_ok":     {"KO": "✅ HVAC 용량 적정 — 최고온도 45°C 이하", "EN": "✅ HVAC adequate — peak below 45°C"},
-    "p9_hvac_warn":   {"KO": "⚠️ 최고온도 45~55°C — HVAC 증설 권고", "EN": "⚠️ Peak 45–55°C — Increase HVAC capacity"},
-    "p9_hvac_crit":   {"KO": "🚨 위험! 최고온도 55°C 초과 — 즉시 조치 필요", "EN": "🚨 Critical! Peak above 55°C — Immediate action required"},
+    "p9_hvac_ok":     {"KO": f"✅ HVAC 용량 적정 — 최고 공기온도 {_T_REC:.0f}°C 이하 (셀 권장)", "EN": f"✅ HVAC adequate — peak air ≤{_T_REC:.0f}°C (cell recommendation)"},
+    "p9_hvac_warn":   {"KO": f"⚠️ 최고 공기온도 {_T_REC:.0f}~{_T_ALLOW:.0f}°C — 셀 권장 초과, 벤더 셀 열모델로 Tmax 확인·HVAC 증설 검토", "EN": f"⚠️ Peak air {_T_REC:.0f}–{_T_ALLOW:.0f}°C — above cell recommendation; verify cell Tmax with vendor model, consider more HVAC"},
+    "p9_hvac_crit":   {"KO": f"🚨 최고 공기온도 {_T_ALLOW:.0f}°C 초과 — 셀 허용 상한 초과(Fail), HVAC 증설 필요", "EN": f"🚨 Peak air above {_T_ALLOW:.0f}°C — exceeds cell allowable limit (Fail), increase HVAC"},
     "p9_floor_title": {"KO": "컨테이너 바닥면 온도 분포 (°C)",    "EN": "Container Floor Temperature Distribution (°C)"},
     "p9_sec_title":   {"KO": "수직 단면 온도 분포 (°C)",          "EN": "Vertical Cross-Section Temperature (°C)"},
     "p9_air_title":   {"KO": "컨테이너 내부 공기 흐름 벡터장",    "EN": "Container Internal Airflow Vector Field"},

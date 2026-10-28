@@ -9,6 +9,7 @@ from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.standards_helper import get_standards
 from utils.auth_helper import require_auth, sidebar_user_info
+from utils import engineering_params as EP
 
 
 # ── Market → Voltage mapping ─────────────────────────────────────────────────
@@ -130,23 +131,76 @@ def run_ebop_engineer_module():
         st.subheader(t("p4_cable_title"))
         col1, col2 = st.columns(2)
 
+        # 케이블 사이징 3중 검증: ①허용전류 ②전압강하 ③단락 열적강도 — 하나라도 Fail 이면 상위 단면적
+        # (bess-ebop-engineer 핵심 규칙, 판정값은 소유 도메인 bess-cable-engineer)
+        is_ko = st.session_state.get('lang', 'KO') == 'KO'
+        circuit_opts = [hv] + [s.strip() for s in lv_opts.get(hv, "0.69kV").split("/")]
         with col1:
+            circuit_v   = st.selectbox("회로 선간전압" if is_ko else "Circuit line voltage",
+                                       circuit_opts, index=len(circuit_opts) - 1)
+            V_line      = _parse_kv(circuit_v)
+            v_class     = EP.voltage_class(V_line / 1000.0)
             current     = st.number_input(t("p4_cable_i"), min_value=1.0, value=200.0, step=10.0)
             length      = st.number_input(t("p4_cable_l"), min_value=1.0, value=100.0, step=10.0)
-            voltage_drop = st.slider(t("p4_cable_drop"), 1.0, 10.0, 3.0, 0.5)
+            voltage_drop = st.slider(t("p4_cable_drop"), 1.0, 10.0, EP.VDROP_LIMIT_PCT[v_class], 0.5,
+                                     key=f"vdrop_{v_class}")
             material    = st.selectbox(t("p4_cable_mat"), [t("p4_cable_cu"), t("p4_cable_al")])
-            rho = 1.72e-8 if "Cu" in material or "동" in material else 2.82e-8
+            is_cu = "Cu" in material or "동" in material
+            rho = 1.72e-8 if is_cu else 2.82e-8
+            st.markdown("**" + ("단락 열적강도" if is_ko else "Short-circuit withstand") + "**")
+            i_sc  = st.number_input("단락전류 I_sc (kA)" if is_ko else "Fault current I_sc (kA)",
+                                    min_value=0.1, max_value=100.0, value=25.0, step=0.5)
+            t_clr = st.number_input("차단 시간 t (s)" if is_ko else "Clearing time t (s)",
+                                    min_value=0.02, max_value=3.0, value=0.5, step=0.05)
+            k_key = "XLPE-Cu" if is_cu else "XLPE-Al"
+            st.markdown("**" + ("허용전류 (선정 단면적의 공인 테이블 값)" if is_ko
+                                else "Ampacity (tabulated value for the selected size)") + "**")
+            i_base = st.number_input("기준 허용전류 I_base (A) — IEC 60502/60287·NEC 310.16 표" if is_ko
+                                     else "Base ampacity I_base (A) — IEC 60502/60287 · NEC 310.16 table",
+                                     min_value=0.0, value=None, step=5.0, placeholder="—")
+            k_der = st.number_input("디레이팅 ∏k (온도·그룹·토양·깊이, ≤1)" if is_ko
+                                    else "Derating ∏k (temp·group·soil·depth, ≤1)",
+                                    min_value=0.1, max_value=1.0, value=0.8, step=0.05)
 
         with col2:
-            V_line   = _parse_kv(hv)
             V_drop   = V_line * (voltage_drop / 100.0)
             # 3상 전압강하 ΔV(L-L) = √3·I·L·R′ — 왕복 계수 2는 DC/단상용이라 √3으로 교정
             # (리액턴스 X 무시 — 저항 지배 가정의 스크리닝 값)
-            min_area = (rho * np.sqrt(3.0) * length * current) / V_drop * 1e6
-            std_areas = [16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400, 500]
-            rec_area  = next((a for a in std_areas if a >= min_area), std_areas[-1])
-            st.metric(t("p4_cable_area"), f"{min_area:.1f} mm²")
-            st.success(f"**{t('p4_cable_std')}:** {rec_area} mm²")
+            vd_area  = (rho * np.sqrt(3.0) * length * current) / V_drop * 1e6
+            sc_area  = EP.sc_min_area_mm2(i_sc, t_clr, EP.SC_K[k_key])
+            min_area = max(vd_area, sc_area)
+            std_areas = [16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400, 500, 630, 800, 1000]
+            rec_area  = next((a for a in std_areas if a >= min_area), None)
+            st.caption(f"{circuit_v} → **{v_class}** · " +
+                       (f"전압강하 기준 {EP.VDROP_LIMIT_PCT[v_class]:.0f}% (bess-cable-engineer)" if is_ko
+                        else f"voltage-drop limit {EP.VDROP_LIMIT_PCT[v_class]:.0f}% (bess-cable-engineer)"))
+            st.metric(("② 전압강하 최소 단면적" if is_ko else "② Min area — voltage drop"), f"{vd_area:.1f} mm²")
+            st.metric(("③ 단락 열적강도 최소 단면적" if is_ko else "③ Min area — short-circuit"),
+                      f"{sc_area:.1f} mm²", help=f"S = I·√t / k, k = {EP.SC_K[k_key]:.0f} ({k_key}, IEC 60364-4-43)")
+            if rec_area is None:
+                st.error("단일 케이블 표준 단면적(1,000 mm²) 초과 — 병렬 케이블 검토 필요" if is_ko
+                         else "Exceeds 1,000 mm² single-core size — consider parallel cables")
+            else:
+                st.success(f"**{t('p4_cable_std')}:** {rec_area} mm² "
+                           + ("(②·③ 중 큰 값)" if is_ko else "(max of ② and ③)"))
+            # ① 허용전류 — U = I_load / (I_base·∏k) ≤ 1/1.25 (설계여유 1.25배)
+            if i_base:
+                u = current / (i_base * k_der)
+                st.metric("① 이용률 U" if is_ko else "① Utilisation U", f"{u:.2f}",
+                          help=f"U = I_load / (I_base × ∏k), 설계여유 {EP.AMPACITY_DESIGN_MARGIN}배 → U ≤ {1/EP.AMPACITY_DESIGN_MARGIN:.2f}")
+                if u <= 1.0 / EP.AMPACITY_DESIGN_MARGIN:
+                    st.success("① 허용전류 Pass" if is_ko else "① Ampacity Pass")
+                elif u <= 1.0:
+                    st.warning("① 허용전류 여유 부족 (U > 0.8) — 상위 단면적 권고" if is_ko
+                               else "① Ampacity margin short (U > 0.8) — upsize recommended")
+                else:
+                    st.error("① 허용전류 Fail (U > 1.0) — 상위 단면적 재선정" if is_ko
+                             else "① Ampacity Fail (U > 1.0) — upsize")
+            else:
+                st.info("① 허용전류: 위 권장 단면적의 공인 테이블 I_base 를 입력하면 판정합니다 "
+                        "(앱은 테이블 값을 추정하지 않음)" if is_ko else
+                        "① Ampacity: enter the tabulated I_base for the recommended size to get a verdict "
+                        "(the app does not estimate table values)")
 
     # ── Grounding ───────────────────────────────────────────────────
     with tab3:

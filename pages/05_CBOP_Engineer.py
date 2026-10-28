@@ -10,6 +10,7 @@ from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.standards_helper import get_standards
 from utils.auth_helper import require_auth, sidebar_user_info
+from utils import engineering_params as EP
 
 
 def run_cbop_engineer_module():
@@ -136,9 +137,12 @@ def run_cbop_engineer_module():
     with tab4:
         st.subheader(t("p5_fire_title"))
         st.caption(t("p5_fire_note"))
+        is_ko = st.session_state.get('lang', 'KO') == 'KO'
 
         fc1, fc2 = st.columns(2)
-        agent_opts  = ["FM-200 (HFC-227ea)", "Novec 1230 (FK-5-1-12)", "CO₂ (고농도)", "질소 (N₂)"]
+        # 배터리 컨테이너 기본 = Water Mist(NFPA 750), 청정약제는 PCS실·EMS실용 — bess-fire-engineer "소화 시스템 비교"
+        WATER_MIST = "Water Mist (NFPA 750)"
+        agent_opts  = [WATER_MIST, "FM-200 (HFC-227ea)", "Novec 1230 (FK-5-1-12)", "CO₂ (고농도)", "질소 (N₂)"]
         # Design concentration by agent (%, as fraction of volume)
         agent_conc  = {"FM-200 (HFC-227ea)": 7.9, "Novec 1230 (FK-5-1-12)": 5.9,
                        "CO₂ (고농도)": 34.0, "질소 (N₂)": 40.6}
@@ -155,12 +159,39 @@ def run_cbop_engineer_module():
                          "제어실" if st.session_state.get('lang','KO')=='KO' else "Control Room",
                          "전체 컨테이너" if st.session_state.get('lang','KO')=='KO' else "Full Container"]
             room = st.selectbox(t("p5_fire_room"), room_opts)
+            battery_room = room in (room_opts[0], room_opts[3])  # 배터리셀실·전체 컨테이너
             vol  = st.number_input(t("p5_fire_vol"),  min_value=1.0, max_value=5000.0, value=120.0, step=10.0)
-            agent = st.selectbox(t("p5_fire_agent"), agent_opts)
-            conc  = st.number_input(t("p5_fire_conc"), min_value=1.0, max_value=50.0,
-                                    value=agent_conc.get(agent, 7.9), step=0.1)
+            # 구역별 기본 약제: 배터리 구역 → Water Mist, PCS·제어실 → Novec 1230
+            agent = st.selectbox(t("p5_fire_agent"), agent_opts, index=0 if battery_room else 2)
+            if agent == WATER_MIST:
+                lo, hi = EP.WATER_MIST_DENSITY_LPM_M3
+                wm_dens = st.number_input("방출밀도 (L/min/m³)" if is_ko else "Discharge density (L/min/m³)",
+                                          min_value=lo, max_value=hi, value=EP.WATER_MIST_DENSITY_DEFAULT, step=0.01)
+                wm_dis  = st.number_input("방출 시간 (분)" if is_ko else "Discharge time (min)",
+                                          min_value=EP.WATER_MIST_MIN_DISCHARGE_MIN, max_value=240.0,
+                                          value=EP.WATER_MIST_BATTERY_DISCHARGE_MIN, step=5.0)
+                wm_ext  = st.number_input("냉각 연장 시간 (분)" if is_ko else "Cooling extension (min)",
+                                          min_value=0.0, max_value=240.0,
+                                          value=EP.WATER_MIST_COOLING_EXT_MIN, step=10.0)
+            else:
+                conc  = st.number_input(t("p5_fire_conc"), min_value=1.0, max_value=50.0,
+                                        value=agent_conc.get(agent, 7.9), step=0.1)
 
         with fc2:
+          if agent == WATER_MIST:
+            # NFPA 750: Q = 방출밀도 × 보호체적 × (방출 + 냉각 연장) — 실시험 인증값 우선
+            flow_lpm = wm_dens * vol
+            water_l  = flow_lpm * (wm_dis + wm_ext)
+            st.metric("펌프 토출량 (L/min)" if is_ko else "Pump flow (L/min)", f"{flow_lpm:.1f}")
+            st.metric("소요 수원 (L)" if is_ko else "Required water (L)", f"{water_l:,.0f}")
+            st.success(
+                "✅ 배터리 구역 권장 방식 — 냉각으로 열폭주 확산·재발화 억제 (NFPA 750). "
+                "실제 펌프는 동시 작동 컨테이너 수 × 단위유량 + 안전율로 산정"
+                if is_ko else
+                "✅ Recommended for battery areas — cooling limits propagation and re-ignition (NFPA 750). "
+                "Size the pump for simultaneous containers × unit flow + safety factor"
+            )
+          else:
             # NFPA 2001 소요량 — 할로카본(저농도): W = V·(C/(100−C))·(1/s)
             #                    불활성(고농도): V_agent = V·ln(100/(100−C)), W = V_agent·ρ
             density = agent_dens.get(agent, 7.29)
@@ -184,6 +215,19 @@ def run_cbop_engineer_module():
             else:
                 st.error(f"🚨 {agent} — 고농도, 인명 위험 농도" if st.session_state.get('lang','KO')=='KO'
                          else f"🚨 {agent} — High concentration, fatal exposure risk")
+
+            # 배터리 구역에 가스계 선택 시 — 냉각·재발화 억제 한계 경고
+            if battery_room:
+                st.warning(
+                    "⚠️ 배터리 구역에 가스계 약제를 선택했습니다 — 청정약제는 PCS실·EMS실용이며 "
+                    "열폭주 냉각·재발화 억제에 한계가 있습니다. 배터리 구역은 Water Mist(NFPA 750)가 기본입니다."
+                    if is_ko else
+                    "⚠️ Gaseous agent selected for a battery area — clean agents are meant for PCS/EMS rooms and "
+                    "have limited cooling / re-ignition control. Battery areas default to Water Mist (NFPA 750)."
+                )
+            if agent.startswith("FM-200"):
+                st.caption(f"FM-200 GWP = {EP.FM200_GWP:,} — 규제 강화 추세" if is_ko
+                           else f"FM-200 GWP = {EP.FM200_GWP:,} — tightening regulation")
 
     st.markdown("---")
     st.subheader(t("regional_std"))
