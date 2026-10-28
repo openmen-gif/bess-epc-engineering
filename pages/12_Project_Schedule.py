@@ -53,7 +53,8 @@ def _phase_status_opts():
 
 
 # ── 헤더 ──────────────────────────────────────────────────────────────────────
-st.caption("🛤️ **BESS EPC Workflow:** ... → **[12: Project Schedule]**")
+st.caption("🛤️ **BESS EPC Workflow:** ... → **[12: Project Schedule]**" if is_en
+           else "🛤️ **BESS EPC 워크플로우:** ... → **[12: 프로젝트 공정]**")
 st.title("📅 " + ("Project Schedule Manager" if is_en else "프로젝트 공정 관리"))
 
 # ── 계정/권한 안내 ─────────────────────────────────────────────────────────────
@@ -629,31 +630,29 @@ with tab_gantt:
                 val = next((ph.get("progress", 0) for ph in ph_list if ph.get("name") == pn), 0)
                 row.append(val)
             hm_data.append(row)
-            # 긴 프로젝트명은 공백 기준 ~10자 줄바꿈 — y 라벨 폭이 폰에서 플롯을 밀어내지 않도록
-            _lines, _cur = [], ""
-            for _w in proj["name"].split():
-                if _cur and len(_cur) + 1 + len(_w) > 10:
-                    _lines.append(_cur); _cur = _w
-                else:
-                    _cur = f"{_cur} {_w}".strip()
-            _lines.append(_cur)
-            hm_labels.append("<br>".join(_lines))
+            # y 라벨은 짧은 번호(P1…) — 프로젝트명 라벨이 폰 폭의 ~25%를 차지해 표가 오른쪽으로 밀리던 문제.
+            # 전체 이름은 hover와 표 아래 범례로 제공
+            hm_labels.append(f"P{len(hm_labels) + 1}")
 
         if hm_data:
             ph_display = ["Design","Procurement","Construction","Commissioning"] if is_en else phase_kos
+            hm_names = [p["name"] for p in projects]
             fig_hm = go.Figure(go.Heatmap(
                 z=hm_data, x=ph_display, y=hm_labels,
                 colorscale="Blues", zmin=0, zmax=100,
                 text=[[f"{v}%" for v in row] for row in hm_data],
                 texttemplate="%{text}",
+                customdata=[[n] * len(ph_display) for n in hm_names],
+                hovertemplate="%{customdata}<br>%{x}: %{z}%<extra></extra>",
                 # 색상 막대는 아래 가로 배치 — 세로 막대가 폰 폭을 잡아먹지 않도록
                 colorbar=dict(title="%", orientation="h", y=-0.25, yanchor="top", thickness=10, len=0.8),
             ))
-            _max_lines = max(lbl.count("<br>") + 1 for lbl in hm_labels)
             fig_hm.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)", font_color="#c9d1d9",
-                height=max(240, (34 + 16 * _max_lines) * len(hm_labels) + 90),
+                height=max(240, 56 * len(hm_labels) + 110),
                 margin=dict(l=10, r=10, t=10, b=70),
             )
-            fig_hm.update_yaxes(automargin=True, tickfont=dict(size=11))
+            # P1이 맨 위에 오도록 (범례 순서와 일치)
+            fig_hm.update_yaxes(automargin=True, autorange="reversed", tickfont=dict(size=12))
             st.plotly_chart(fig_hm, use_container_width=True)
+            st.caption("  ·  ".join(f"**{lbl}** {nm}" for lbl, nm in zip(hm_labels, hm_names)))
