@@ -103,14 +103,20 @@ _log.info("HF_TOKEN source: BESS_HF_TOKEN=%s, HF_TOKEN=%s, using=%s",
 if _HF_TOKEN and not _USERS_FILE.exists():
     _hf_download()
 
-# ── Fingerprint-based session persistence (no external components) ────────────
+# ── Token-cookie session persistence ──────────────────────────────────────────
+# 예전 방식(IP+User-Agent 지문)은 같은 공유기·같은 브라우저면 남의 세션이 복원되는
+# 결함이 있었다. 지금은 로그인 때 무작위 토큰을 발급해 쿠키에 담고, 서버에는 토큰의
+# SHA-256 만 저장한다. 지문은 가입 속도 제한(_check_register_rate)에만 쓴다.
 _SESSION_FILE = _USERS_FILE.parent / "sessions.json"
 _SESSION_LOCK = _USERS_FILE.parent / "sessions.json.lock"
+_SESSION_COOKIE = "bess_session"
+_SESSION_TTL_SECONDS = 86400
+_SESSION_MAX = 200
 import time as _time
 
 
 def _client_fingerprint() -> str:
-    """Create a fingerprint from request headers (IP + User-Agent)."""
+    """Create a fingerprint from request headers (IP + User-Agent). Rate limiting only."""
     try:
         headers = st.context.headers
         ip = headers.get("X-Forwarded-For", headers.get("X-Real-Ip", "unknown"))
@@ -132,60 +138,126 @@ def _load_sessions() -> dict:
     return {}
 
 
-def _save_sessions(store: dict) -> None:
+def _mutate_sessions(fn) -> bool:
+    """세션 저장소 read-modify-write 를 잠금 한 번 안에서 원자적으로 수행 (tmp + os.replace).
+    읽기 실패를 빈 저장소로 오인해 덮어쓰지 않도록 예외는 그대로 실패로 보고한다."""
     try:
         with FileLock(_SESSION_LOCK, timeout=3):
-            with open(_SESSION_FILE, "w", encoding="utf-8") as f:
+            store = {}
+            if _SESSION_FILE.exists():
+                with open(_SESSION_FILE, "r", encoding="utf-8") as f:
+                    store = json.load(f)
+            if not isinstance(store, dict):
+                store = {}
+            fn(store)
+            tmp = _SESSION_FILE.with_suffix(".json.tmp")
+            with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(store, f, ensure_ascii=False, indent=2)
+            os.replace(tmp, _SESSION_FILE)
+        return True
     except Exception as e:
-        _log.warning("Session store save failed: %s", e)
-
-
-def restore_session_by_fingerprint() -> bool:
-    """Restore session from server-side fingerprint store."""
-    fp = _client_fingerprint()
-    if not fp:
+        _log.error("Session store update failed: %s", e)
         return False
+
+
+def _token_key(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _cookie_token() -> str:
+    try:
+        return st.context.cookies.get(_SESSION_COOKIE, "") or ""
+    except Exception:
+        return ""
+
+
+def _issue_session_token(username: str) -> None:
+    """로그인 성공 시 토큰 발급 — 서버엔 해시만, 쿠키 기록은 다음 렌더에서 emit_session_cookie()."""
+    token = secrets.token_urlsafe(32)
+    now = _time.time()
+
+    def _add(store: dict) -> None:
+        # 만료분 정리 + 상한 유지 (가장 오래된 것부터)
+        for k in [k for k, v in store.items()
+                  if not isinstance(v, dict) or now - v.get("ts", 0) > _SESSION_TTL_SECONDS]:
+            del store[k]
+        if len(store) >= _SESSION_MAX:
+            for k in sorted(store, key=lambda k: store[k].get("ts", 0))[: len(store) - _SESSION_MAX + 1]:
+                del store[k]
+        store[_token_key(token)] = {"u": username, "ts": now}
+
+    if not _mutate_sessions(_add):
+        return  # 저장 실패 시 쿠키를 심지 않는다 (이번 탭 로그인은 유지, 새로고침 복원만 불가)
+    st.session_state["_auth_token"] = token
+    st.session_state["_auth_cookie_op"] = "set"
+
+
+def emit_session_cookie() -> None:
+    """대기 중인 쿠키 기록/삭제를 브라우저에 반영 (높이 0 컴포넌트, 실행당 1회)."""
+    op = st.session_state.pop("_auth_cookie_op", None)
+    if not op:
+        return
+    if op == "set":
+        token = st.session_state.get("_auth_token", "")
+        if not token:
+            return
+        cookie = f"{_SESSION_COOKIE}={token}; path=/; max-age={_SESSION_TTL_SECONDS}; SameSite=Lax; Secure"
+    else:
+        cookie = f"{_SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax; Secure"
+    import streamlit.components.v1 as _components
+    # 토큰은 token_urlsafe(영숫자·-·_)라 JS 문자열에 그대로 넣어도 안전하다
+    _components.html(
+        "<script>try{window.parent.document.cookie=%s}catch(e){document.cookie=%s}</script>"
+        % (json.dumps(cookie), json.dumps(cookie)),
+        height=0,
+    )
+
+
+def restore_session() -> bool:
+    """쿠키 토큰으로 서버 세션 복원. 역할·이름은 저장 시점이 아니라 현재 users.json 기준."""
+    token = _cookie_token()
+    if not token:
+        return False
+    key = _token_key(token)
     store = _load_sessions()
-    session = store.get(fp)
-    if not session:
+    session = store.get(key)
+    if not isinstance(session, dict):
         return False
-    # Expire after 24 hours
-    if _time.time() - session.get("ts", 0) > 86400:
-        store.pop(fp, None)
-        _save_sessions(store)
+    if _time.time() - session.get("ts", 0) > _SESSION_TTL_SECONDS:
+        _mutate_sessions(lambda s: s.pop(key, None))
         return False
-    # Verify user still exists
     users = _load_users()
-    if session["u"] not in users:
-        store.pop(fp, None)
-        _save_sessions(store)
+    user = users.get(session.get("u", ""))
+    if not user:
+        _mutate_sessions(lambda s: s.pop(key, None))
         return False
     st.session_state["auth_user"] = session["u"]
-    st.session_state["auth_role"] = session["r"]
-    st.session_state["auth_name"] = session["n"]
-    _log.info("Session restored for user=%s via fingerprint", session["u"])
+    st.session_state["auth_role"] = user.get("role", "viewer")
+    st.session_state["auth_name"] = user.get("name", session["u"])
+    st.session_state["_auth_token"] = token
+    _log.info("Session restored for user=%s via token cookie", session["u"])
     return True
 
 
-def save_session_fingerprint() -> None:
-    """Save current session to server-side fingerprint store."""
-    fp = _client_fingerprint()
-    if not fp:
-        return
-    store = _load_sessions()
-    store[fp] = {
-        "u": st.session_state.get("auth_user", ""),
-        "r": st.session_state.get("auth_role", ""),
-        "n": st.session_state.get("auth_name", ""),
-        "ts": _time.time(),
-    }
-    # Prune old sessions (keep max 50)
-    if len(store) > 50:
-        sorted_keys = sorted(store, key=lambda k: store[k].get("ts", 0))
-        for k in sorted_keys[:-30]:
+def _revoke_session_token() -> bool:
+    tokens = {st.session_state.get("_auth_token", ""), _cookie_token()} - {""}
+    if not tokens:
+        return True
+
+    def _drop(store: dict) -> None:
+        for tok in tokens:
+            store.pop(_token_key(tok), None)
+
+    return _mutate_sessions(_drop)
+
+
+def revoke_user_sessions(username: str) -> bool:
+    """해당 사용자의 모든 서버 세션 폐기 — 비밀번호·역할 변경, 계정 삭제 시 호출."""
+    def _drop(store: dict) -> None:
+        for k in [k for k, v in store.items() if isinstance(v, dict) and v.get("u") == username]:
             del store[k]
-    _save_sessions(store)
+
+    return _mutate_sessions(_drop)
 
 
 # ── Role definitions ───────────────────────────────────────────────────────────
@@ -217,6 +289,10 @@ PAGE_MIN_ROLE: dict[str, str] = {
 
 # ── Internal helpers ───────────────────────────────────────────────────────────
 
+# OWASP 2023 권고(PBKDF2-HMAC-SHA256 600,000회). 이보다 낮은 저장값은 로그인 때 재해시된다.
+_PBKDF2_ITERATIONS = 600_000
+
+
 def _hash_password(password: str) -> str:
     """Generate a PBKDF2-HMAC-SHA256 hash with a random 16-byte salt."""
     salt = secrets.token_hex(16)
@@ -224,9 +300,19 @@ def _hash_password(password: str) -> str:
         "sha256",
         password.encode("utf-8"),
         bytes.fromhex(salt),
-        100000
+        _PBKDF2_ITERATIONS
     ).hex()
-    return f"pbkdf2:sha256:100000${salt}${hashed}"
+    return f"pbkdf2:sha256:{_PBKDF2_ITERATIONS}${salt}${hashed}"
+
+
+def _needs_rehash(stored_hash: str) -> bool:
+    """레거시 SHA-256 이거나 반복 횟수가 현재 기준 미만이면 True."""
+    if "$" not in stored_hash:
+        return True
+    try:
+        return int(stored_hash.split("$", 1)[0].split(":")[2]) < _PBKDF2_ITERATIONS
+    except (IndexError, ValueError):
+        return True
 
 
 def _verify_password(password: str, stored_hash: str) -> bool:
@@ -259,10 +345,16 @@ def _load_users() -> dict:
         if _USERS_FILE.exists():
             with open(_USERS_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        # First run: create default admin account
+        # First run: create default admin account — 초기 비밀번호는 환경변수로만 받는다
+        # (소스에 박혀 있던 기본값은 공개 저장소로 노출돼 2026-10-28 제거).
+        init_pw = os.environ.get("BESS_ADMIN_INIT_PASSWORD", "")
+        if not init_pw:
+            _log.warning("users.json 없음 + BESS_ADMIN_INIT_PASSWORD 미설정 — "
+                         "기본 관리자 계정을 만들지 않는다")
+            return {}
         default = {
             "admin": {
-                "password": _hash_password("djflsdk79"),
+                "password": _hash_password(init_pw),
                 "role": "admin",
                 "name": "관리자",
             }
@@ -307,15 +399,16 @@ def login(username: str, password: str) -> bool:
     users = _load_users()
     user = users.get(username.strip())
     if user and _verify_password(password, user["password"]):
-        # Auto-migration hook for legacy SHA256 users
-        if len(user["password"]) == 64 and "$" not in user["password"]:
+        # Auto-migration hook: legacy SHA256 or PBKDF2 below current iterations
+        if _needs_rehash(user["password"]):
             user["password"] = _hash_password(password)
             _save_users(users)
-        
+
         st.session_state["auth_user"] = username.strip()
         st.session_state["auth_role"] = user["role"]
         st.session_state["auth_name"] = user.get("name", username.strip())
         _LOGIN_ATTEMPTS.pop(username_key, None)  # Clear on success
+        _issue_session_token(username.strip())
         return True
     # Record failed attempt
     _LOGIN_ATTEMPTS.setdefault(username_key, []).append(now)
@@ -323,14 +416,12 @@ def login(username: str, password: str) -> bool:
 
 
 def logout() -> None:
-    # Remove server-side fingerprint session
-    fp = _client_fingerprint()
-    if fp:
-        store = _load_sessions()
-        store.pop(fp, None)
-        _save_sessions(store)
-    for k in ["auth_user", "auth_role", "auth_name"]:
+    # 서버 세션 폐기가 기준 — 쿠키 삭제는 다음 렌더의 emit_session_cookie() 가 보조로 수행
+    if not _revoke_session_token():
+        _log.error("Logout: server session revoke failed — cookie will still be cleared")
+    for k in ["auth_user", "auth_role", "auth_name", "_auth_token"]:
         st.session_state.pop(k, None)
+    st.session_state["_auth_cookie_op"] = "clear"
 
 
 import re as _re
@@ -387,6 +478,9 @@ def register(username: str, password: str, role: str, name: str) -> tuple[bool, 
         return False, msg
     if role not in ROLES:
         return False, "유효하지 않은 역할입니다. / Invalid role."
+    # 관리자 역할은 관리자만 부여 (UI 제한과 별개로 서버에서도 강제)
+    if role == "admin" and current_role() != "admin":
+        return False, "관리자 역할은 관리자만 부여할 수 있습니다. / Only admins can assign the admin role."
     users = _load_users()
     if username in users:
         return False, f"'{username}' 계정이 이미 존재합니다. / Account already exists."
@@ -416,6 +510,7 @@ def delete_user(username: str) -> tuple[bool, str]:
         return False, "존재하지 않는 계정입니다. / Account not found."
     del users[username]
     _save_users(users)
+    revoke_user_sessions(username)
     return True, f"'{username}' 계정이 삭제되었습니다. / Account deleted."
 
 
@@ -435,6 +530,8 @@ def update_user(username: str, new_role: str = None, new_name: str = None,
     if new_password:
         users[username]["password"] = _hash_password(new_password)
     _save_users(users)
+    if new_role or new_password:
+        revoke_user_sessions(username)  # 탈취 토큰·옛 권한 세션 무효화
     return True, f"'{username}' 정보가 업데이트되었습니다. / Account updated."
 
 
@@ -451,6 +548,10 @@ def change_password(username: str, old_pw: str, new_pw: str) -> tuple[bool, str]
         return False, "현재 비밀번호가 올바르지 않습니다. / Current password is incorrect."
     users[username]["password"] = _hash_password(new_pw)
     _save_users(users)
+    # 다른 기기의 세션(탈취 토큰 포함)을 모두 끊고, 지금 탭에는 새 토큰을 다시 발급
+    revoke_user_sessions(username)
+    if st.session_state.get("auth_user") == username:
+        _issue_session_token(username)
     return True, "비밀번호가 변경되었습니다. / Password changed successfully."
 
 
@@ -481,7 +582,10 @@ def require_auth(page_num: str = None) -> None:
     - If not logged in → show login link and stop.
     - If page_num given and role too low → show access denied and stop.
     """
+    if not is_authenticated() and not st.session_state.get("_auth_cookie_op"):
+        restore_session()  # 하위 페이지에서 새로고침해도 쿠키로 복원 (로그아웃 직후엔 건너뜀)
     if not is_authenticated():
+        emit_session_cookie()  # 로그아웃 직후 이 페이지에서 멈추므로 쿠키 삭제를 여기서 반영
         st.warning("🔒 로그인이 필요합니다. / Login required.")
         st.page_link("pages/00_Login.py", label="🔑 로그인 / Login")
         st.stop()
@@ -509,6 +613,7 @@ _sidebar_shown: bool = False
 def sidebar_user_info() -> None:
     """Render user badge + logout button in the sidebar. Safe to call multiple times."""
     global _sidebar_shown
+    emit_session_cookie()  # 로그인 직후·로그아웃 직후 쿠키 반영 (모든 페이지가 이 함수를 부른다)
     if _sidebar_shown or not is_authenticated():
         return
     _sidebar_shown = True

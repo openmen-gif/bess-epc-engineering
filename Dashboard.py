@@ -23,14 +23,11 @@ st.set_page_config(
 )
 apply_custom_css()
 
-# ── Server-side session restore (fingerprint-based, no external components) ──
-from utils.auth_helper import restore_session_by_fingerprint, save_session_fingerprint
+# ── Server-side session restore (token cookie issued at login) ──────────────
+from utils.auth_helper import restore_session
 
-if not is_authenticated():
-    restore_session_by_fingerprint()
-
-if is_authenticated():
-    save_session_fingerprint()
+if not is_authenticated() and not st.session_state.get("_auth_cookie_op"):
+    restore_session()  # 로그아웃 직후(쿠키 삭제 대기 중)엔 복원하지 않는다
 
 # ── Reset per-run sidebar dedup flag ─────────────────────────────────────────
 _auth_mod._sidebar_shown = False
