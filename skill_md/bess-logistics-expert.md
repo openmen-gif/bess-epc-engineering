@@ -1,12 +1,6 @@
 ---
 name: bess-logistics-expert
-id: "LOG-001"
-description: 물류·운송, 중량물 Heavy Lift, Incoterms, 통관, HS Code, IMDG, ADR, UN3481, 선적, 포장
-department: "재무본부 (CFO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "물류·운송, 중량물 Heavy Lift, Incoterms, 통관, HS Code, IMDG, ADR, UN3481, 선적, 포장"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -137,32 +131,6 @@ IMDG, ADR, 49 CFR, UN3480, UN3481, 리튬배터리 운송, 포장, ISPM-15,
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 위험물 운송: Li-ion = UN 3481(장비 동봉/내장 포장)/UN 3480(배터리 단독), 해상·육상 위험물 신고 필수, 호주·일본 검역 엄격 — 근거: `sessions/2026-06-05T16-47-22/bess-logistics-expert.md`
-- 물류비 3모드 구조: 해상(운임+항만료+통관), 육상 OOG/중량물(특수차량허가+통행료+핸들링), 항공(고비용, 긴급) — 근거: `sessions/2026-06-05T16-47-22/bess-logistics-expert.md`
-- 운송경로 사전조사: 교량 하중제한/터널 높이/회전반경, OOG는 특수차량 허가+현장답사 — 근거: `sessions/2026-06-05T16-47-22/bess-logistics-expert.md`
-- 중량물 특수운송 허가체계(시장별): KR 총중량 40톤 초과 시 경찰 에스코트 필수, US 주별 Oversize Permit, UK ESDAL 온라인 신청, JP 특수차량 통행허가, AU NHVR, EU 국가별 Abnormal Load 허가 — 근거: `sessions/2026-06-22T14-33-47/bess-logistics-expert.md`, `sessions/2026-06-25T13-02-38/bess-logistics-expert.md`
-- 시장별 Incoterms 실무 권고: KR·UK·EU=DDP(판매자가 통관·운송비 부담, Brexit·다국가 통관 단순화), JP=DAP(구매자가 최종 인도지 통관 관리), US=FOB 또는 DDP(Jones Act 연안운송 준수 고려), AU=DAP/DDP(장거리 내륙운송·통관 효율화) — 근거: `sessions/2026-07-22T21-47-38/bess-logistics-expert.md`
-- 중량물 운송 허가 체계(시장별): **KR** 총중량 40톤 초과 시 경찰 에스코트, **US** 주(州)별 Oversize Permit, **UK** ESDAL(Abnormal Load) 온라인 신청 — 착수 전 사전 발급 — 근거: `sessions/2026-07-27T17-19-43/bess-logistics-expert.md`
-- 통관 최적화 4축: FTA 활용 → HS 분류 정확도 → 통관 서류 체계화(C/O·Incoterms 조건별) → 운송 경로 최적화. DAP 조건은 수입국 통관 부담을 매도인에게 이전 — 근거: `sessions/2026-07-27T17-19-43/bess-logistics-expert.md`
-- 리튬배터리 위험물 운송 기본 세트: **UN 3480**(배터리 단독) / **UN 3481**(기기 동봉·기기 포함), **IMDG Code Class 9**, 목재 포장 **ISPM-15**, 고정 **Lashing**, 보험 **ICC(A) All Risks** — 화물 형태에 맞는 UN 번호를 먼저 확정한 뒤 포장·서류를 구성 — 근거: `sessions/2026-08-18T02-57-45/bess-logistics-expert.md`
-- 운송 규제·경로 제약 축(세션 정리): 특수 운송 허가 **US Oversize/Overweight Permit · EU Abnormal Load** · 경로 검토 항목 = **교량 하중 · 터널 높이 · 회전반경** · 포장은 **ISPM-15**(목재 포장 검역) + UN 위험물 규정 · 지역별 물류 허브로 운송 거리·리드타임 단축 — 근거: `sessions/2026-08-26T11-30-23/bess-logistics-expert.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ ESS 물량 운송의 위험물 규정으로 **UN 3481을 일괄 적용** → ✅ **UN 3480 = 리튬이온 배터리 단독 운송**, **UN 3481 = 기기 내장·기기와 함께 포장**이다. 배터리 랙·컨테이너 단독 선적은 **3480**(§2 사전 재발) — 근거: `sessions/2026-08-26T11-30-23/bess-logistics-expert.md`
-- ❌ 특정 기업의 "ESS 생산 능력 2배 확대"를 뉴스 1건으로 **"사실"** 라벨을 붙여 확정하고 물류 네트워크·원가 결론에 편입 → ✅ 단일 NEWS-ID 근거의 조기 확정 편입 금지(§0-7). 독립 출처 2개 확보 전에는 `[요확인]`을 유지한다 — 근거: `sessions/2026-08-26T11-30-23/bess-logistics-expert.md`
-- ❌ 배터리 컨테이너 단독 운송에 **UN 3481**을 일괄 적용("리튬 배터리와 관련 장비는 UN 3481 규정에 따라") → ✅ **UN 3480 = 리튬이온 배터리 단독**, **UN 3481 = 기기에 내장되었거나 기기와 함께 포장**된 경우다. BESS 컨테이너·랙 단독 선적은 통상 **UN 3480**이며, UN 번호에 따라 포장지침(PI 965/966/967)과 서류가 달라진다 — 근거: `sessions/2026-08-18T02-57-45/bess-logistics-expert.md`
-- ❌ **DAP를 "수입국 통관 부담을 매도인에게 이전"** 으로 설명(본 스킬 재사용 지식에 남아 있는 표기) → ✅ **DAP는 매수인이 수입통관·관세를 부담**하고, **DDP만 매도인이 수입통관·관세·부가세까지 부담**한다. Incoterms 조건은 자사가 매도인인지 매수인인지 먼저 명시한 뒤 비교한다 — 근거: `sessions/2026-08-18T02-57-45/bess-logistics-expert.md`
-- ❌ KR 중량물 운송 요건을 "총중량 **40톤 이상은 경찰 에스코트 필수**"로 단정 → ✅ 도로법상 총중량 40톤·축하중 10톤 초과 차량은 **도로관리청 운행제한 허가**가 1차 요건이고, 경찰 호송은 경로·시간대에 따른 **별도 협의** 사항이다. 허가 주체와 호송 여부를 분리 기재 — 근거: `sessions/2026-08-18T02-57-45/bess-logistics-expert.md`
-- ❌ 변압기 HS를 "8504.20 / 8504.34"로 기재 → ✅ 액체유전체 변압기는 **8504.21~23**, 기타 변압기는 8504.31~34. HS 코드는 **customs-tariff 단일 기준표**(가드레일 §3.2)를 인용만 한다 — 근거: `sessions/2026-07-27T17-19-43/bess-logistics-expert.md`
-- ❌ 대상 8개 시장(KR/JP/US/AU/UK/EU/RO/PL) 밖의 협정(한-캐나다 FTA)을 주요 최적화 경로로 제시 → ✅ 프로젝트 대상 시장에 해당하는 협정만 분석하고, 그 외는 "(참고용, 본 프로젝트 미적용)" 명시 — 근거: `sessions/2026-07-27T17-19-43/bess-logistics-expert.md`
-- ❌ "Li-ion 배터리 8501.30 / 인버터·PCS 8507.60" 단정 → ✅ HS 코드는 customs-tariff 단일 소유, 물류 도메인은 인용만(배터리=8507.60, PCS=8504.40, 8501은 전동기/발전기) — 근거: `sessions/2026-06-05T16-47-22/bess-logistics-expert.md`
-- ❌ "한-중 FTA로 배터리 관세 감면" 단정 → ✅ 한중 FTA 양허표 검증·출처 없이 관세 효과 단정 금지([요확인] 처리, 관세는 customs-tariff 위임) — 근거: `sessions/2026-06-03T14-13-46/bess-logistics-expert.md`
-- ❌ EMI 표준에 "IEEE 1584" 병기 → ✅ IEEE 1584는 아크플래시(안전) 표준으로 EMI 무관, EMI는 KS C IEC 61000 계열로 한정 — 근거: `sessions/2026-05-25T03-00-51/bess-logistics-expert.md`
-- ❌ 배터리 8501.60·PCS 8517.10/8517.30/8475.30·변압기 8507.60 등 HS코드 반복 오분류 → ✅ HS는 customs-tariff 위임, 물류는 인용만: 배터리=8507.60, PCS(정지형 변환기)=8504.40, 변압기=8504.2x/8504.34, 8501=전동기/발전기·8517=통신기기(BESS 무관) — 근거: `sessions/2026-06-19T01-59-02/bess-logistics-expert.md`, `sessions/2026-06-25T15-04-05/bess-logistics-expert.md`, `sessions/2026-06-25T20-04-37/bess-logistics-expert.md`
 
 ## 판정 기준 (정량) — 비정량 판정 금지
 
@@ -320,3 +288,29 @@ ADR (위험물)                   유럽 위험물 도로운송 협정 채택   
 특이사항: EU 회원국 — UCC/ADR/CBAM 체계 EU 공통 적용
          [요확인] 세부 허가 절차/소요기간은 GDDKiA 확인
 ```
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 위험물 운송: Li-ion = UN 3481(장비 동봉/내장 포장)/UN 3480(배터리 단독), 해상·육상 위험물 신고 필수, 호주·일본 검역 엄격 — 근거: `sessions/2026-06-05T16-47-22/bess-logistics-expert.md`
+- 물류비 3모드 구조: 해상(운임+항만료+통관), 육상 OOG/중량물(특수차량허가+통행료+핸들링), 항공(고비용, 긴급) — 근거: `sessions/2026-06-05T16-47-22/bess-logistics-expert.md`
+- 운송경로 사전조사: 교량 하중제한/터널 높이/회전반경, OOG는 특수차량 허가+현장답사 — 근거: `sessions/2026-06-05T16-47-22/bess-logistics-expert.md`
+- 중량물 특수운송 허가체계(시장별): KR 총중량 40톤 초과 시 경찰 에스코트 필수, US 주별 Oversize Permit, UK ESDAL 온라인 신청, JP 특수차량 통행허가, AU NHVR, EU 국가별 Abnormal Load 허가 — 근거: `sessions/2026-06-22T14-33-47/bess-logistics-expert.md`, `sessions/2026-06-25T13-02-38/bess-logistics-expert.md`
+- 시장별 Incoterms 실무 권고: KR·UK·EU=DDP(판매자가 통관·운송비 부담, Brexit·다국가 통관 단순화), JP=DAP(구매자가 최종 인도지 통관 관리), US=FOB 또는 DDP(Jones Act 연안운송 준수 고려), AU=DAP/DDP(장거리 내륙운송·통관 효율화) — 근거: `sessions/2026-07-22T21-47-38/bess-logistics-expert.md`
+- 중량물 운송 허가 체계(시장별): **KR** 총중량 40톤 초과 시 경찰 에스코트, **US** 주(州)별 Oversize Permit, **UK** ESDAL(Abnormal Load) 온라인 신청 — 착수 전 사전 발급 — 근거: `sessions/2026-07-27T17-19-43/bess-logistics-expert.md`
+- 통관 최적화 4축: FTA 활용 → HS 분류 정확도 → 통관 서류 체계화(C/O·Incoterms 조건별) → 운송 경로 최적화. DAP 조건은 수입국 통관 부담을 매도인에게 이전 — 근거: `sessions/2026-07-27T17-19-43/bess-logistics-expert.md`
+- 리튬배터리 위험물 운송 기본 세트: **UN 3480**(배터리 단독) / **UN 3481**(기기 동봉·기기 포함), **IMDG Code Class 9**, 목재 포장 **ISPM-15**, 고정 **Lashing**, 보험 **ICC(A) All Risks** — 화물 형태에 맞는 UN 번호를 먼저 확정한 뒤 포장·서류를 구성 — 근거: `sessions/2026-08-18T02-57-45/bess-logistics-expert.md`
+- 운송 규제·경로 제약 축(세션 정리): 특수 운송 허가 **US Oversize/Overweight Permit · EU Abnormal Load** · 경로 검토 항목 = **교량 하중 · 터널 높이 · 회전반경** · 포장은 **ISPM-15**(목재 포장 검역) + UN 위험물 규정 · 지역별 물류 허브로 운송 거리·리드타임 단축 — 근거: `sessions/2026-08-26T11-30-23/bess-logistics-expert.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ ESS 물량 운송의 위험물 규정으로 **UN 3481을 일괄 적용** → ✅ **UN 3480 = 리튬이온 배터리 단독 운송**, **UN 3481 = 기기 내장·기기와 함께 포장**이다. 배터리 랙·컨테이너 단독 선적은 **3480**(§2 사전 재발) — 근거: `sessions/2026-08-26T11-30-23/bess-logistics-expert.md`
+- ❌ 특정 기업의 "ESS 생산 능력 2배 확대"를 뉴스 1건으로 **"사실"** 라벨을 붙여 확정하고 물류 네트워크·원가 결론에 편입 → ✅ 단일 NEWS-ID 근거의 조기 확정 편입 금지(§0-7). 독립 출처 2개 확보 전에는 `[요확인]`을 유지한다 — 근거: `sessions/2026-08-26T11-30-23/bess-logistics-expert.md`
+- ❌ 배터리 컨테이너 단독 운송에 **UN 3481**을 일괄 적용("리튬 배터리와 관련 장비는 UN 3481 규정에 따라") → ✅ **UN 3480 = 리튬이온 배터리 단독**, **UN 3481 = 기기에 내장되었거나 기기와 함께 포장**된 경우다. BESS 컨테이너·랙 단독 선적은 통상 **UN 3480**이며, UN 번호에 따라 포장지침(PI 965/966/967)과 서류가 달라진다 — 근거: `sessions/2026-08-18T02-57-45/bess-logistics-expert.md`
+- ❌ **DAP를 "수입국 통관 부담을 매도인에게 이전"** 으로 설명(본 스킬 재사용 지식에 남아 있는 표기) → ✅ **DAP는 매수인이 수입통관·관세를 부담**하고, **DDP만 매도인이 수입통관·관세·부가세까지 부담**한다. Incoterms 조건은 자사가 매도인인지 매수인인지 먼저 명시한 뒤 비교한다 — 근거: `sessions/2026-08-18T02-57-45/bess-logistics-expert.md`
+- ❌ KR 중량물 운송 요건을 "총중량 **40톤 이상은 경찰 에스코트 필수**"로 단정 → ✅ 도로법상 총중량 40톤·축하중 10톤 초과 차량은 **도로관리청 운행제한 허가**가 1차 요건이고, 경찰 호송은 경로·시간대에 따른 **별도 협의** 사항이다. 허가 주체와 호송 여부를 분리 기재 — 근거: `sessions/2026-08-18T02-57-45/bess-logistics-expert.md`
+- ❌ 변압기 HS를 "8504.20 / 8504.34"로 기재 → ✅ 액체유전체 변압기는 **8504.21~23**, 기타 변압기는 8504.31~34. HS 코드는 **customs-tariff 단일 기준표**(가드레일 §3.2)를 인용만 한다 — 근거: `sessions/2026-07-27T17-19-43/bess-logistics-expert.md`
+- ❌ 대상 8개 시장(KR/JP/US/AU/UK/EU/RO/PL) 밖의 협정(한-캐나다 FTA)을 주요 최적화 경로로 제시 → ✅ 프로젝트 대상 시장에 해당하는 협정만 분석하고, 그 외는 "(참고용, 본 프로젝트 미적용)" 명시 — 근거: `sessions/2026-07-27T17-19-43/bess-logistics-expert.md`
+- ❌ "Li-ion 배터리 8501.30 / 인버터·PCS 8507.60" 단정 → ✅ HS 코드는 customs-tariff 단일 소유, 물류 도메인은 인용만(배터리=8507.60, PCS=8504.40, 8501은 전동기/발전기) — 근거: `sessions/2026-06-05T16-47-22/bess-logistics-expert.md`
+- ❌ "한-중 FTA로 배터리 관세 감면" 단정 → ✅ 한중 FTA 양허표 검증·출처 없이 관세 효과 단정 금지([요확인] 처리, 관세는 customs-tariff 위임) — 근거: `sessions/2026-06-03T14-13-46/bess-logistics-expert.md`
+- ❌ EMI 표준에 "IEEE 1584" 병기 → ✅ IEEE 1584는 아크플래시(안전) 표준으로 EMI 무관, EMI는 KS C IEC 61000 계열로 한정 — 근거: `sessions/2026-05-25T03-00-51/bess-logistics-expert.md`
+- ❌ 배터리 8501.60·PCS 8517.10/8517.30/8475.30·변압기 8507.60 등 HS코드 반복 오분류 → ✅ HS는 customs-tariff 위임, 물류는 인용만: 배터리=8507.60, PCS(정지형 변환기)=8504.40, 변압기=8504.2x/8504.34, 8501=전동기/발전기·8517=통신기기(BESS 무관) — 근거: `sessions/2026-06-19T01-59-02/bess-logistics-expert.md`, `sessions/2026-06-25T15-04-05/bess-logistics-expert.md`, `sessions/2026-06-25T20-04-37/bess-logistics-expert.md`

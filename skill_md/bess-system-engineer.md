@@ -1,12 +1,6 @@
 ---
 name: bess-system-engineer
-id: "SYS-001"
-description: EMS/BMS/PCS 아키텍처, SCADA, 통신프로토콜, Modbus, DNP3, IEC61850, SOC관리, 시스템통합
-department: "기술본부 (CTO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "EMS/BMS/PCS 아키텍처, SCADA, 통신프로토콜, Modbus, DNP3, IEC61850, SOC관리, 시스템통합"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -133,47 +127,6 @@ bess-system-engineer
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 통신 프로토콜 매핑: Modbus TCP(PCS-BMS), DNP3(EMS-SCADA), IEC 61850(변전소), MQTT(실시간 모니터링) — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
-- 시스템 구성요소: PCS/BMS/EMS/SCADA + 통신망 통합 아키텍처 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
-- 통신 이중화: Modbus TCP + MQTT 병행 백업 경로, 프로토콜 주기·우선순위 정의 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
-- 시뮬레이션 도구: PSS/E, ETAP, PSCAD — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
-- 통합 시운전 계층 게이트(L0~L4+E2E) 정량 합격기준: L1 통신 응답 ≤100ms·패킷손실 <0.1%, L2 데이터 정합 ±2%, L3 응답 ≤1s, EMS↔계통 AGC 신호수신→출력반영 ≤4s, E2E 충전명령→실제출력 ≤10s — 근거: `sessions/2026-06-21T10-19-16/bess-system-engineer.md`
-- 통신 성능 목표: 일반 경로 응답 ≤50ms·패킷손실 ≤0.1%, 과열감지·제어신호 등 안전 크리티컬 경로는 ≤20ms로 별도 강화 — 근거: `sessions/2026-06-19T07-48-54/bess-system-engineer.md`
-- OT/IT 분리 아키텍처: OT존(PCS·BMS·EMS·SCADA/HMI)과 IT존(Historian·Cloud API·Remote VPN) 사이 IEC 62443 존/방화벽, 보안은 NERC CIP+IEC 62443 병행(TLS 1.3+·최소권한·IDS/IPS) — 근거: `sessions/2026-06-22T08-55-56/bess-system-engineer.md`
-- 시장별 상위계통 연동 매핑: KR=KPX, US=ISO/RTO 텔레메트리+NERC CIP, JP=전력회사(HEPCO 등) Modbus TCP+LTE 백업, AU=AEMO, UK=NGESO, EU=ENTSO(각 시장 규제 기준 확인) — 근거: `sessions/2026-06-22T18-24-27/bess-system-engineer.md`
-- 통합 테스트 체크리스트는 정량 항목으로 구성: 통신 응답시간, 패킷 손실률, 데이터 정합성 — 프로토콜 조합(Modbus TCP·DNP3·IEC 61850·MQTT)별로 케이스를 분리 — 근거: `sessions/2026-08-02T01-21-59/bess-system-engineer.md`
-- 이기종 프로토콜 병행 시 중간 게이트웨이/어댑터를 두고 데이터 동기화·오류처리 전략을 사전 정의(특히 Modbus TCP ↔ MQTT 조합) — 근거: `sessions/2026-07-31T12-18-21/bess-tool-developer.md`
-- 실시간 디스패치 목표값: AGC/APC 신호 응답 **≤100 ms**, 제어 분해능 **±1%** — 통신 경로 목표(일반 ≤50 ms · 안전 크리티컬 ≤20 ms)와 계층을 분리해 관리 — 근거: `sessions/2026-08-04T02-11-59/bess-system-engineer.md`
-- 변압기 연계 시스템 통합 축: 인증 제품 한정(KS C IEC 60076 시리즈) + 다중 프로토콜 지원(Modbus TCP·DNP3·IEC 61850·MQTT) + 실시간 상태 감시(SNMP/MQTT) 및 이상 징후 자동 알림 — 근거: `sessions/2026-08-05T07-38-25/bess-system-engineer.md`
-- AI 기반 SOC/SOH·Dispatch 통합 안건에서 시스템엔지니어가 소유하는 산출물 3종: ①센서(PCS·BMS·SCADA)+외부데이터(기상·수요·가격) 통합 인터페이스 정의서 ②Modbus TCP↔MQTT 게이트웨이 동기화·오류처리 설계 ③게이트웨이 성능·이중화 경로 검증 항목이 포함된 통합시험 체크리스트. 모델 선택(LSTM/Transformer·강화학습)은 aiml-engineer 값을 인용 — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
-- 통합시험 정량 체크리스트(세션 기준값): L1 통신 응답 **≤100 ms** · 패킷 손실률 **<0.1%** · 데이터 정합성 **±2% 이내** · E2E 충전 명령 → 실제 출력 **≤10 s** — 근거: `sessions/2026-08-30T04-34-06/bess-system-engineer.md`
-- 시스템 아키텍처 3계층의 **경로 소관 분리**: ①**안전 크리티컬**(화재 감지·비상 정지·보호 연동) = 하드와이어 인터록 · **IEC 61850 GOOSE** ②**현장 제어·계측**(PCS/BMS/EMS) = **Modbus TCP(502)** · DNP3(20000) · IEC 61850 MMS(102) ③**시장·클라우드 연동**(가격·급전 지시·텔레메트리) = **REST API · 거래소 전용 인터페이스** · MQTT. 계층을 건너뛴 배선(안전 경로에 MQTT, 시장 연동에 Modbus)은 설계 결함으로 본다 — 근거: `sessions/2026-09-04T18-13-37/bess-system-engineer.md`
-- 인터페이스 설계서 포인트 행 표기 4요소: **`프로토콜, 포트, 데이터형, 갱신 주기`**(예: `Modbus TCP, Port 502, 16-bit INT, 1s 주기`, `MQTT, Port 1883/8883(TLS), JSON`) — 포인트 리스트·통합시험 체크리스트가 같은 4요소를 공유하도록 행 단위로 고정한다 — 근거: `sessions/2026-10-02T19-07-33/bess-system-engineer.md`, `sessions/2026-10-02T09-26-11/bess-system-engineer.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ **`[화재 감지 센서] → [MQTT Gateway] → [통합 안전 관리 플랫폼] → [BMS] → [EMS]`** — 안전 크리티컬 경로에 MQTT 배치(2026-08-30 동일 도메인 지적의 **재발**) → ✅ MQTT는 **브로커 경유 pub/sub**이라 결정론적 저지연·전달 보장을 제공하지 않는다. 화재 감지·비상 정지·보호 연동은 **하드와이어 인터록 + IEC 61850 GOOSE** 계열이고, MQTT는 원격 모니터링·클라우드 텔레메트리로 한정한다(가드레일 §3.4) — 근거: `sessions/2026-09-04T18-13-37/bess-system-engineer.md`
-- ❌ **전력시장 데이터 실시간 수신 경로로 "Modbus TCP와 REST API"를 병기** → ✅ **Modbus TCP(502)는 현장 기기(PCS/BMS) 인터페이스**로 거래소 시장 데이터를 받는 계층이 아니다. 시장 연동은 **REST API·거래소 전용 인터페이스**로 하고, 필드버스와 시장 인터페이스를 같은 다이어그램 화살표에 묶지 않는다 — 근거: `sessions/2026-09-04T18-13-37/bess-system-engineer.md`
-- ❌ 통신 이중화를 "**안전 크리티컬 경로 = MQTT(응답 ≤20 ms)** / 일반 경로 = Modbus TCP(≤50 ms)"로 설계 → ✅ MQTT는 브로커를 경유하는 pub/sub 프로토콜이라 결정론적 저지연을 보장하지 않는다. 안전 크리티컬 고속 경로는 **하드와이어 인터록·IEC 61850 GOOSE** 계열이고 MQTT는 원격 모니터링·클라우드 텔레메트리 용도로 한정한다 — 근거: `sessions/2026-08-30T04-34-06/bess-system-engineer.md`
-- ❌ 시스템 아키텍처의 보안 준수 근거로 **NERC CIP·ISO 27001**만 인용 → ✅ NERC CIP는 북미 BPS 등록 사업자 대상 규정, ISO 27001은 조직 단위 ISMS 인증이다. 기기·시스템의 보안 요구는 **IEC 62443-3-3(시스템)·4-2(구성요소)**로 인용한다 — 근거: `sessions/2026-08-30T04-34-06/bess-system-engineer.md`
-- ❌ 데이터흐름도·Dispatch 워크플로우·이중화 구성도를 **`https://via.placeholder.com/...` placeholder 이미지 URL 3건**으로 대체해 산출물 발행 → ✅ 도식은 텍스트 다이어그램·mermaid 또는 실제 산출 경로가 있는 파일 링크로 제출한다. placeholder URL(via.placeholder.com·example*.com)은 산출물 포함 금지(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
-- ❌ 뉴스 4건(NEWS-ID `bess-20260822-a01~a04`)을 "시장 및 기술 트렌드 반영" 절로 묶어 통합 아키텍처 권고의 근거로 사용 → ✅ 아키텍처·인터페이스 변경 근거는 사양서·시험 결과이며, 뉴스는 `[요확인]` 상태로 분리 기재한다(가드레일 §0-7) — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
-- ❌ 변압기 절연등급·열관리 요구의 근거로 "**KEC 2021 제241조**"를 인용 → ✅ KEC 240번대는 **특수설비** 계열이라 변압기 절연·온도상승 규정이 아니다. 해당 요구는 **KS C IEC 60076-2(온도상승)·60076-11(건식)** 소관이며, KEC 조문은 확인 전까지 `[요확인]`(standards-analyst·transformer-expert·facility-manager 세션에서 동일 오인용 4중 반복) — 근거: `sessions/2026-08-05T07-38-25/bess-system-engineer.md`
-- ❌ 배터리 가격 하락 추세를 선형 지속으로 가정해 원가 구조를 확정 → ✅ 원자재 가격·공급망 불안정·생산효율 개선 속도를 변수로 두고 분기·반기 단위 재평가 프로세스를 명시 — 근거: `sessions/2026-08-01T11-39-17/bess-system-engineer_critic.md`
-- ❌ 케이블 규격으로 "IEC 60070-1"(커패시터 관련) 오인용 → ✅ 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
-- ❌ "4mm² 구리 케이블로 전력손실 최소화"(MV/대용량 BESS에 비현실적, cable-engineer는 350mm²) → ✅ 타 도메인 수치는 해당 전문가(cable-engineer) 값 인용 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
-- ❌ 사이버보안 준수 표준 열거 시 IEC 61850(통신 프로토콜)을 "NERC CIP·IEC 61850 준수"처럼 보안 표준으로 혼입 → ✅ 사이버보안 표준은 NERC CIP·IEC 62443, IEC 61850은 변전소/계통 통신 프로토콜로 역할 분리 인용 — 근거: `sessions/2026-06-24T21-11-08/bess-system-engineer.md`
-- ❌ 무근거 전문가 태깅("@bess-cybersecurity (가정된 전문가 ID)" 등 존재·참여 미확인 ID 인용) → ✅ 실제 참여 전문가 ID만 인용, 없는 역할은 [요확인] 표기(무날조·근거링크) — 근거: `sessions/2026-06-22T18-24-27/bess-system-engineer.md`
-- ❌ IEC 61034을 "케이블 보호 장치에 대한 요구 사항을 정의" 규격으로 오인용 → ✅ IEC 61034은 연기밀도(Low Smoke) 측정 시험 규격이며 케이블 보호장치 규격이 아니다. 케이블 규격 인용은 케이블전문가(bess-cable-engineer) 소관(IEC 60502/60287/60364-5-52) — 근거: `sessions/2026-08-14T12-58-27/bess-system-engineer.md`
-- ❌ "Modbus TCP ↔ MQTT 게이트웨이: **안전 크리티컬 경로는 MQTT를 통해 저지연 통신 보장**"(1·2라운드 반복), 케이블 최적화 가이드라인에 "**안전 크리티컬 = MQTT(≤20 ms)**" 재기재 — 같은 배치의 09-25T09·09-26 세션은 GOOSE로 정답을 썼는데 다른 세션에서 오답이 되살아남(재발, 2026-09-24·2026-09-25) → ✅ 안전 크리티컬 경로는 **하드와이어 인터록·IEC 61850 GOOSE**, MQTT는 원격 모니터링·클라우드 텔레메트리 한정(가드레일 §3.4). `[요확인]` 절에 오답 설계를 "확인 필요"로 남겨 두는 것도 같은 오류로 본다 — 근거: `sessions/2026-09-24T02-17-55/bess-system-engineer.md`, `sessions/2026-09-25T16-08-22/bess-system-engineer.md`
-- ❌ "**FIDIC Yellow Book은 설계-시공-시험(EPC) 프로젝트에 특화**" → ✅ Yellow = **Plant & Design-Build**(시공자 설계), **EPC·Turnkey는 Silver Book**, Red = 발주자 설계(가드레일 §2 FIDIC 색상 정본표). 계약서 유형 선택·조항 설계는 bess-contract-specialist 소관이며 시스템엔지니어는 통합시험·인터페이스 요건만 제공한다 — 근거: `sessions/2026-09-21T05-34-04/bess-system-engineer.md`
-- ❌ 지역별 계약 조건 비교에 "**중국 시장**: IEC 62443·IEC 61850 준수"를 한 시장으로 편성 → ✅ 사업 대상은 **8개 시장(KR/JP/US/AU/UK/EU/RO/PL)**이며 CN은 없다. 대상 외 시장은 요청이 있을 때만 `[요확인]`으로 다루고, IEC 62443·61850은 특정 시장 규정이 아니라 국제 표준이다 — 근거: `sessions/2026-09-21T05-34-04/bess-system-engineer.md`
-- ❌ KR 정부 ESS 수주 맥락의 규제 리스크에서 "**NERC CIP 및 ISO 27001과 같은 보안 표준 준수**"를 핵심 근거로 인용(2026-08-30 지적의 재발, 2026-09-25) → ✅ NERC CIP는 북미 BPS 대상이라 KR에 적용되지 않고, ISO 27001은 조직 ISMS 인증이다. 기기·시스템 보안 요구는 **IEC 62443-3-3·4-2**, KR 법정 의무는 정보통신망법 등 시장을 먼저 특정해 인용한다(가드레일 §1.1) — 근거: `sessions/2026-09-25T09-08-29/bess-system-engineer.md`
-- ❌ LG에너지솔루션·엔비디아 AI 데이터센터 협력 보도(`bess-20260925-a01`)를 "PCS·EMS 통신 프로토콜 호환성·Modbus TCP/MQTT 병행이 논의되고 있다"는 기술 근거로 재라벨, 양극재 조달 계약 보도(`bess-20260919-a01·a03`)를 근거로 공급망 관리 시스템·비리튬 배터리 도입(옵션 B)을 본인 추천으로 결론 → ✅ NEWS-ID는 **원 보도 주제 그대로** 요약하고 통신 설계 근거는 사양서·시험 결과로 한다(가드레일 §4 NEWS-ID 라벨 무결성). 공급망·배터리 화학 선정은 bess-procurement-expert·bess-battery-expert 소관 — 근거: `sessions/2026-09-25T09-08-29/bess-system-engineer.md`, `sessions/2026-09-20T07-01-45/bess-system-engineer.md`
-- ❌ 시스템엔지니어가 케이블 경로·규격 선택 가이드라인과 "**전력 손실률 ≤1%**" 합격기준을 직접 제정(4 mm² 케이블 항목에 이은 역할 경계 재발, 2026-09-25) → ✅ 전력 케이블 사이징·경로·손실 산정은 bess-cable-engineer 소관(IEC 60287/60502) 값을 인용하고, 시스템엔지니어는 **통신 케이블 요건**(프로토콜별 매체·차폐·전력선 분리)과 통합시험 항목만 정의한다 — 근거: `sessions/2026-09-25T16-08-22/bess-system-engineer.md`
 
 ## 핵심 역량 및 업무 (EMS 핵심 기능 모듈 — 설계·통합 절차 수행)
 
@@ -442,3 +395,48 @@ BMS SOC vs. EMS SOC 편차 > 2%:
 4. 온도에 의한 디레이팅 확인 (PCS 내부 온도 >45°C 시)
 ```
 ---
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 통신 프로토콜 매핑: Modbus TCP(PCS-BMS), DNP3(EMS-SCADA), IEC 61850(변전소), MQTT(실시간 모니터링) — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- 시스템 구성요소: PCS/BMS/EMS/SCADA + 통신망 통합 아키텍처 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- 통신 이중화: Modbus TCP + MQTT 병행 백업 경로, 프로토콜 주기·우선순위 정의 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- 시뮬레이션 도구: PSS/E, ETAP, PSCAD — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- 통합 시운전 계층 게이트(L0~L4+E2E) 정량 합격기준: L1 통신 응답 ≤100ms·패킷손실 <0.1%, L2 데이터 정합 ±2%, L3 응답 ≤1s, EMS↔계통 AGC 신호수신→출력반영 ≤4s, E2E 충전명령→실제출력 ≤10s — 근거: `sessions/2026-06-21T10-19-16/bess-system-engineer.md`
+- 통신 성능 목표: 일반 경로 응답 ≤50ms·패킷손실 ≤0.1%, 과열감지·제어신호 등 안전 크리티컬 경로는 ≤20ms로 별도 강화 — 근거: `sessions/2026-06-19T07-48-54/bess-system-engineer.md`
+- OT/IT 분리 아키텍처: OT존(PCS·BMS·EMS·SCADA/HMI)과 IT존(Historian·Cloud API·Remote VPN) 사이 IEC 62443 존/방화벽, 보안은 NERC CIP+IEC 62443 병행(TLS 1.3+·최소권한·IDS/IPS) — 근거: `sessions/2026-06-22T08-55-56/bess-system-engineer.md`
+- 시장별 상위계통 연동 매핑: KR=KPX, US=ISO/RTO 텔레메트리+NERC CIP, JP=전력회사(HEPCO 등) Modbus TCP+LTE 백업, AU=AEMO, UK=NGESO, EU=ENTSO(각 시장 규제 기준 확인) — 근거: `sessions/2026-06-22T18-24-27/bess-system-engineer.md`
+- 통합 테스트 체크리스트는 정량 항목으로 구성: 통신 응답시간, 패킷 손실률, 데이터 정합성 — 프로토콜 조합(Modbus TCP·DNP3·IEC 61850·MQTT)별로 케이스를 분리 — 근거: `sessions/2026-08-02T01-21-59/bess-system-engineer.md`
+- 이기종 프로토콜 병행 시 중간 게이트웨이/어댑터를 두고 데이터 동기화·오류처리 전략을 사전 정의(특히 Modbus TCP ↔ MQTT 조합) — 근거: `sessions/2026-07-31T12-18-21/bess-tool-developer.md`
+- 실시간 디스패치 목표값: AGC/APC 신호 응답 **≤100 ms**, 제어 분해능 **±1%** — 통신 경로 목표(일반 ≤50 ms · 안전 크리티컬 ≤20 ms)와 계층을 분리해 관리 — 근거: `sessions/2026-08-04T02-11-59/bess-system-engineer.md`
+- 변압기 연계 시스템 통합 축: 인증 제품 한정(KS C IEC 60076 시리즈) + 다중 프로토콜 지원(Modbus TCP·DNP3·IEC 61850·MQTT) + 실시간 상태 감시(SNMP/MQTT) 및 이상 징후 자동 알림 — 근거: `sessions/2026-08-05T07-38-25/bess-system-engineer.md`
+- AI 기반 SOC/SOH·Dispatch 통합 안건에서 시스템엔지니어가 소유하는 산출물 3종: ①센서(PCS·BMS·SCADA)+외부데이터(기상·수요·가격) 통합 인터페이스 정의서 ②Modbus TCP↔MQTT 게이트웨이 동기화·오류처리 설계 ③게이트웨이 성능·이중화 경로 검증 항목이 포함된 통합시험 체크리스트. 모델 선택(LSTM/Transformer·강화학습)은 aiml-engineer 값을 인용 — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
+- 통합시험 정량 체크리스트(세션 기준값): L1 통신 응답 **≤100 ms** · 패킷 손실률 **<0.1%** · 데이터 정합성 **±2% 이내** · E2E 충전 명령 → 실제 출력 **≤10 s** — 근거: `sessions/2026-08-30T04-34-06/bess-system-engineer.md`
+- 시스템 아키텍처 3계층의 **경로 소관 분리**: ①**안전 크리티컬**(화재 감지·비상 정지·보호 연동) = 하드와이어 인터록 · **IEC 61850 GOOSE** ②**현장 제어·계측**(PCS/BMS/EMS) = **Modbus TCP(502)** · DNP3(20000) · IEC 61850 MMS(102) ③**시장·클라우드 연동**(가격·급전 지시·텔레메트리) = **REST API · 거래소 전용 인터페이스** · MQTT. 계층을 건너뛴 배선(안전 경로에 MQTT, 시장 연동에 Modbus)은 설계 결함으로 본다 — 근거: `sessions/2026-09-04T18-13-37/bess-system-engineer.md`
+- 인터페이스 설계서 포인트 행 표기 4요소: **`프로토콜, 포트, 데이터형, 갱신 주기`**(예: `Modbus TCP, Port 502, 16-bit INT, 1s 주기`, `MQTT, Port 1883/8883(TLS), JSON`) — 포인트 리스트·통합시험 체크리스트가 같은 4요소를 공유하도록 행 단위로 고정한다 — 근거: `sessions/2026-10-02T19-07-33/bess-system-engineer.md`, `sessions/2026-10-02T09-26-11/bess-system-engineer.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ **`[화재 감지 센서] → [MQTT Gateway] → [통합 안전 관리 플랫폼] → [BMS] → [EMS]`** — 안전 크리티컬 경로에 MQTT 배치(2026-08-30 동일 도메인 지적의 **재발**) → ✅ MQTT는 **브로커 경유 pub/sub**이라 결정론적 저지연·전달 보장을 제공하지 않는다. 화재 감지·비상 정지·보호 연동은 **하드와이어 인터록 + IEC 61850 GOOSE** 계열이고, MQTT는 원격 모니터링·클라우드 텔레메트리로 한정한다(가드레일 §3.4) — 근거: `sessions/2026-09-04T18-13-37/bess-system-engineer.md`
+- ❌ **전력시장 데이터 실시간 수신 경로로 "Modbus TCP와 REST API"를 병기** → ✅ **Modbus TCP(502)는 현장 기기(PCS/BMS) 인터페이스**로 거래소 시장 데이터를 받는 계층이 아니다. 시장 연동은 **REST API·거래소 전용 인터페이스**로 하고, 필드버스와 시장 인터페이스를 같은 다이어그램 화살표에 묶지 않는다 — 근거: `sessions/2026-09-04T18-13-37/bess-system-engineer.md`
+- ❌ 통신 이중화를 "**안전 크리티컬 경로 = MQTT(응답 ≤20 ms)** / 일반 경로 = Modbus TCP(≤50 ms)"로 설계 → ✅ MQTT는 브로커를 경유하는 pub/sub 프로토콜이라 결정론적 저지연을 보장하지 않는다. 안전 크리티컬 고속 경로는 **하드와이어 인터록·IEC 61850 GOOSE** 계열이고 MQTT는 원격 모니터링·클라우드 텔레메트리 용도로 한정한다 — 근거: `sessions/2026-08-30T04-34-06/bess-system-engineer.md`
+- ❌ 시스템 아키텍처의 보안 준수 근거로 **NERC CIP·ISO 27001**만 인용 → ✅ NERC CIP는 북미 BPS 등록 사업자 대상 규정, ISO 27001은 조직 단위 ISMS 인증이다. 기기·시스템의 보안 요구는 **IEC 62443-3-3(시스템)·4-2(구성요소)**로 인용한다 — 근거: `sessions/2026-08-30T04-34-06/bess-system-engineer.md`
+- ❌ 데이터흐름도·Dispatch 워크플로우·이중화 구성도를 **`https://via.placeholder.com/...` placeholder 이미지 URL 3건**으로 대체해 산출물 발행 → ✅ 도식은 텍스트 다이어그램·mermaid 또는 실제 산출 경로가 있는 파일 링크로 제출한다. placeholder URL(via.placeholder.com·example*.com)은 산출물 포함 금지(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
+- ❌ 뉴스 4건(NEWS-ID `bess-20260822-a01~a04`)을 "시장 및 기술 트렌드 반영" 절로 묶어 통합 아키텍처 권고의 근거로 사용 → ✅ 아키텍처·인터페이스 변경 근거는 사양서·시험 결과이며, 뉴스는 `[요확인]` 상태로 분리 기재한다(가드레일 §0-7) — 근거: `sessions/2026-08-22T18-06-06/bess-system-engineer.md`
+- ❌ 변압기 절연등급·열관리 요구의 근거로 "**KEC 2021 제241조**"를 인용 → ✅ KEC 240번대는 **특수설비** 계열이라 변압기 절연·온도상승 규정이 아니다. 해당 요구는 **KS C IEC 60076-2(온도상승)·60076-11(건식)** 소관이며, KEC 조문은 확인 전까지 `[요확인]`(standards-analyst·transformer-expert·facility-manager 세션에서 동일 오인용 4중 반복) — 근거: `sessions/2026-08-05T07-38-25/bess-system-engineer.md`
+- ❌ 배터리 가격 하락 추세를 선형 지속으로 가정해 원가 구조를 확정 → ✅ 원자재 가격·공급망 불안정·생산효율 개선 속도를 변수로 두고 분기·반기 단위 재평가 프로세스를 명시 — 근거: `sessions/2026-08-01T11-39-17/bess-system-engineer_critic.md`
+- ❌ 케이블 규격으로 "IEC 60070-1"(커패시터 관련) 오인용 → ✅ 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- ❌ "4mm² 구리 케이블로 전력손실 최소화"(MV/대용량 BESS에 비현실적, cable-engineer는 350mm²) → ✅ 타 도메인 수치는 해당 전문가(cable-engineer) 값 인용 — 근거: `sessions/2026-06-08T04-48-19/bess-system-engineer.md`
+- ❌ 사이버보안 준수 표준 열거 시 IEC 61850(통신 프로토콜)을 "NERC CIP·IEC 61850 준수"처럼 보안 표준으로 혼입 → ✅ 사이버보안 표준은 NERC CIP·IEC 62443, IEC 61850은 변전소/계통 통신 프로토콜로 역할 분리 인용 — 근거: `sessions/2026-06-24T21-11-08/bess-system-engineer.md`
+- ❌ 무근거 전문가 태깅("@bess-cybersecurity (가정된 전문가 ID)" 등 존재·참여 미확인 ID 인용) → ✅ 실제 참여 전문가 ID만 인용, 없는 역할은 [요확인] 표기(무날조·근거링크) — 근거: `sessions/2026-06-22T18-24-27/bess-system-engineer.md`
+- ❌ IEC 61034을 "케이블 보호 장치에 대한 요구 사항을 정의" 규격으로 오인용 → ✅ IEC 61034은 연기밀도(Low Smoke) 측정 시험 규격이며 케이블 보호장치 규격이 아니다. 케이블 규격 인용은 케이블전문가(bess-cable-engineer) 소관(IEC 60502/60287/60364-5-52) — 근거: `sessions/2026-08-14T12-58-27/bess-system-engineer.md`
+- ❌ "Modbus TCP ↔ MQTT 게이트웨이: **안전 크리티컬 경로는 MQTT를 통해 저지연 통신 보장**"(1·2라운드 반복), 케이블 최적화 가이드라인에 "**안전 크리티컬 = MQTT(≤20 ms)**" 재기재 — 같은 배치의 09-25T09·09-26 세션은 GOOSE로 정답을 썼는데 다른 세션에서 오답이 되살아남(재발, 2026-09-24·2026-09-25) → ✅ 안전 크리티컬 경로는 **하드와이어 인터록·IEC 61850 GOOSE**, MQTT는 원격 모니터링·클라우드 텔레메트리 한정(가드레일 §3.4). `[요확인]` 절에 오답 설계를 "확인 필요"로 남겨 두는 것도 같은 오류로 본다 — 근거: `sessions/2026-09-24T02-17-55/bess-system-engineer.md`, `sessions/2026-09-25T16-08-22/bess-system-engineer.md`
+- ❌ "**FIDIC Yellow Book은 설계-시공-시험(EPC) 프로젝트에 특화**" → ✅ Yellow = **Plant & Design-Build**(시공자 설계), **EPC·Turnkey는 Silver Book**, Red = 발주자 설계(가드레일 §2 FIDIC 색상 정본표). 계약서 유형 선택·조항 설계는 bess-contract-specialist 소관이며 시스템엔지니어는 통합시험·인터페이스 요건만 제공한다 — 근거: `sessions/2026-09-21T05-34-04/bess-system-engineer.md`
+- ❌ 지역별 계약 조건 비교에 "**중국 시장**: IEC 62443·IEC 61850 준수"를 한 시장으로 편성 → ✅ 사업 대상은 **8개 시장(KR/JP/US/AU/UK/EU/RO/PL)**이며 CN은 없다. 대상 외 시장은 요청이 있을 때만 `[요확인]`으로 다루고, IEC 62443·61850은 특정 시장 규정이 아니라 국제 표준이다 — 근거: `sessions/2026-09-21T05-34-04/bess-system-engineer.md`
+- ❌ KR 정부 ESS 수주 맥락의 규제 리스크에서 "**NERC CIP 및 ISO 27001과 같은 보안 표준 준수**"를 핵심 근거로 인용(2026-08-30 지적의 재발, 2026-09-25) → ✅ NERC CIP는 북미 BPS 대상이라 KR에 적용되지 않고, ISO 27001은 조직 ISMS 인증이다. 기기·시스템 보안 요구는 **IEC 62443-3-3·4-2**, KR 법정 의무는 정보통신망법 등 시장을 먼저 특정해 인용한다(가드레일 §1.1) — 근거: `sessions/2026-09-25T09-08-29/bess-system-engineer.md`
+- ❌ LG에너지솔루션·엔비디아 AI 데이터센터 협력 보도(`bess-20260925-a01`)를 "PCS·EMS 통신 프로토콜 호환성·Modbus TCP/MQTT 병행이 논의되고 있다"는 기술 근거로 재라벨, 양극재 조달 계약 보도(`bess-20260919-a01·a03`)를 근거로 공급망 관리 시스템·비리튬 배터리 도입(옵션 B)을 본인 추천으로 결론 → ✅ NEWS-ID는 **원 보도 주제 그대로** 요약하고 통신 설계 근거는 사양서·시험 결과로 한다(가드레일 §4 NEWS-ID 라벨 무결성). 공급망·배터리 화학 선정은 bess-procurement-expert·bess-battery-expert 소관 — 근거: `sessions/2026-09-25T09-08-29/bess-system-engineer.md`, `sessions/2026-09-20T07-01-45/bess-system-engineer.md`
+- ❌ 시스템엔지니어가 케이블 경로·규격 선택 가이드라인과 "**전력 손실률 ≤1%**" 합격기준을 직접 제정(4 mm² 케이블 항목에 이은 역할 경계 재발, 2026-09-25) → ✅ 전력 케이블 사이징·경로·손실 산정은 bess-cable-engineer 소관(IEC 60287/60502) 값을 인용하고, 시스템엔지니어는 **통신 케이블 요건**(프로토콜별 매체·차폐·전력선 분리)과 통합시험 항목만 정의한다 — 근거: `sessions/2026-09-25T16-08-22/bess-system-engineer.md`
+- ❌ GOOSE를 "**Group Operating System for Ethernet**"으로 풀이 → ✅ **GOOSE = Generic Object Oriented Substation Event**(IEC 61850-8-1, 이더넷 계층 2 멀티캐스트 이벤트 전송). 운영체제가 아니다 — 근거: `sessions/2026-10-20T00-25-05/bess-system-engineer.md`
+- ❌ "**안전 크리티컬 경로는 Modbus TCP와 MQTT 병행 사용으로 보장**", "DNP3: 안전 크리티컬 경로에서 사용" → ✅ 안전 크리티컬 경로는 **하드와이어 인터록·IEC 61850 GOOSE**이며, Modbus TCP는 현장 제어·계측, DNP3는 EMS↔SCADA 원격 감시제어, MQTT는 원격 모니터링 계층이다(기존 "안전 경로 MQTT" 항목 재발, 2026-10-20) — 근거: `sessions/2026-10-20T00-25-05/bess-system-engineer.md`
+- ❌ 프랑스 규제기관·표준을 "**Ministère de la Transition écologique et solidaires (METS)**", "**Nouvelle Norm (NN) 표준**"으로, 영국을 "**OFFICIAL 에너지 및 산업 안전 기관 (HSE)**"으로 기재 → ✅ "Nouvelle Norm"은 실재하지 않는 표준명이다. 프랑스 국가표준기구는 **AFNOR**(전기 표준은 NF 규격), 영국 HSE는 **Health and Safety Executive**다. 기관·표준명이 불확실하면 `[요확인]`을 달고, EU 회원국은 대상 시장 **EU**로 묶어 RfG·EN 규격 기준으로 기술한다(가드레일 §0-2·§1) — 근거: `sessions/2026-10-20T00-25-05/bess-system-engineer.md`
+- ❌ "각 국가의 **화재 안전 법규와 산업 표준(IEC 62443, ISO 27001 등)** 을 준수", 리스크 등급 "**中/高**" 한자 표기 → ✅ IEC 62443(산업제어 사이버보안)·ISO 27001(ISMS)은 화재 안전 규격이 아니다. 화재 안전은 시장별 NFPA 855·UL 9540A(US)·소방청 ESS 화재안전기준(KR) 등 fire-engineer 소관값을 인용하고, 등급은 높음/중간/낮음으로 표기(가드레일 §4) — 근거: `sessions/2026-10-20T00-25-05/bess-system-engineer.md`

@@ -1,12 +1,6 @@
 ---
 name: bess-ebop-engineer
-id: "EBP-001"
-description: 변압기/수배전반/케이블/접지/보호협조/전력품질, SLD, 단락전류, Arc Flash, 보조전원
-department: "기술본부 (CTO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "변압기/수배전반/케이블/접지/보호협조/전력품질, SLD, 단락전류, Arc Flash, 보조전원"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -166,32 +160,6 @@ bess-ebop-engineer
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 변압기 냉각방식 선정 ONAN/ONAF/OFAF, 전압조정은 OLTC(On-Load Tap Changer); 고효율 기준 Class H 또는 IE3 이상, LCC(수명주기비용) 기반 평가 — 근거: `sessions/2026-06-01T18-11-32/bess-ebop-engineer.md`
-- 케이블 사이징 3대 기준: 허용전류 + 전압강하 + 단락열적강도 동시 만족 — 근거: `sessions/2026-06-01T18-11-32/bess-ebop-engineer.md`
-- 시장별 전기설비 표준 매핑: KR=KEC/KS, JP=JEC/JIS, US=NEC/UL, EU=IEC — 근거: `sessions/2026-06-01T18-11-32/bess-ebop-engineer.md`
-- 보조전원: 필수부하 분석 후 UPS+DC전원 용량 산정 — 근거: `sessions/2026-06-01T18-11-32/bess-ebop-engineer.md`
-- 변압기 임피던스 Zk 설계범위 8~12%: 단락전류 제한과 전압강하 억제를 동시 만족하는 값으로 계통 임피던스와 정합 검토; 용량 여유율 5~10% (MVA=MW/PF×(1+여유율)) — 근거: `sessions/2026-06-19T16-14-58/bess-ebop-engineer.md`
-- 수배전반 접지 접촉·보폭전압 검증은 IEEE 80과 IEC 61936-1(>1kV AC 전력설비) 기준 병용; TCC 보호협조는 상위-하위 동작시간 마진 ≥0.3~0.4s 확보 — 근거: `sessions/2026-06-19T16-14-58/bess-ebop-engineer.md`
-- 수배전반 설계 근거 규격 세트: IEC 62271-200(MV 스위치기어), IEEE C37.20.1/2(금속함체 스위치기어), IEC 61936-1 + IEEE Std 80-2013(접촉전압·보폭전압 계산) — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
-- 변압기 냉각방식은 운영환경 기준으로 선정: 고온 환경은 강제냉각(ONAF)이 유리하며, ONAN/ONAF/OFAF 선택 시 장기 운영비·유지보수성을 함께 비교 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
-- 변압기·수배전반 설계 여유 축(세션 기준값): 용량 여유율 **5~10%**, 임피던스 설계 범위 **8~12%**, 접지·보호는 **IEEE Std 80-2013 + IEC 61936-1**로 접촉전압(Touch)·보폭전압(Step) 검토 — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ ONAN을 "**Off-Load** Natural Air Cooling", OFAF를 "**Off-Load** Forced Air Cooling"으로 풀어 씀 → ✅ 앞 두 글자는 **Oil**(절연유) 계열이다. **ONAN = Oil Natural Air Natural**, **OFAF = Oil Forced Air Forced**. "Off-Load"는 무전압 탭절환(**DETC**) 용어이며 냉각방식과 무관하다(§2 ONAN↔OLTC 혼용 항목의 신규 변형) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
-- ❌ "**Class H 또는 IE3 이상**의 효율 등급 변압기 사용" → ✅ 효율 = **IEC 60076-20 / EU EcoDesign Tier**(+ US DOE 10 CFR 431), 절연 = **내열 Class(A·B·F·H)**, IE 등급 = **모터** 효율(IEC 60034-30). 세 축을 한 문장에 묶지 않는다(§3.1 재발 — ebop-engineer 2회째) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
-- ❌ 변압기 임피던스 8~12% 확인 요청의 근거로 **ESS 시장 성장 보도 ID**를 부착 → ✅ 기술 파라미터의 근거는 규격 조항·벤더 시험성적이며 시장 보도가 아니다(§4 NEWS-ID 라벨 무결성) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
-- ❌ "고효율 **Class H 또는 IE3 이상** 등급의 변압기" 표기가 **재발**(같은 배치의 facility-manager 세션에서도 동시 검출) → ✅ **효율 = IEC 60076-20 / EU EcoDesign Tier**, **절연 = 내열 Class(A·B·F·H)**, **모터 효율 = IE 등급(IEC 60034-30)** 으로 축이 완전히 다르다. 세 축을 한 문장에 묶지 않는다(가드레일 §3.1) — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
-- ❌ **TCC**를 "Time Coordination Curve"로 풀어 씀 → ✅ TCC = **Time-Current Curve(시간-전류 곡선)** 이다(가드레일 §2 재발) — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
-- ❌ 배터리 화학종 뉴스('물 배터리')를 근거로 **수배전반 설계 변경**을 검토 권고 → ✅ 배터리 화학종은 수배전반(스위치기어) 설계 변수(정격전압·차단용량·IP/IK 등급·아크 내부고장 등급)와 직접 관계가 없다. 화학종 변경의 전기설비 영향은 DC 측 사양·보호협조 입력값으로 환산해 받아 반영한다 — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
-- ❌ 변압기 용량 산정에서 kW를 kVA로 직접 환산("100 kW 부하 → 105~110 kVA", 역률 미반영) → ✅ `S[kVA] = P[kW]/PF` 적용 후 여유율 5~10%를 곱하고, 사용한 역률을 명시 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
-- ❌ 변압기를 "Class H 또는 IE3 이상 고효율" 로 표기(절연등급·모터 효율등급 혼용) → ✅ 효율은 IEC 60076-20/EU EcoDesign, 절연은 내열 Class, 냉각은 ONAN/ONAF로 축을 분리 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
-- ❌ "변압기 표준화 사양 = IEC 62271-200 준수" → ✅ IEC 62271-200은 1~52kV AC 금속외함 스위치기어 표준; 변압기는 IEC 60076 계열 — 근거: `sessions/2026-06-01T13-28-38/bess-ebop-engineer.md`
-- ❌ 위치 미확정 상태에서 인센티브를 KR로 단정([요확인] 한국)하고 수치화 진행 → ✅ 대상시장 확정 전 인센티브 수치화 금지 — 근거: `sessions/2026-06-01T13-28-38/bess-ebop-engineer.md`
-- ❌ "OLTC=Optical Logic Transformer, NLTC=Negative Logic Transformer"로 풀이(비용절감 대안 제시 맥락) → ✅ OLTC=On-Load Tap Changer(부하시 탭절환기), NLTC=No-Load Tap Changer(무부하 탭절환기) — 근거: `sessions/2026-07-13T10-50-03/bess-ebop-engineer.md`
-
 ## E-BOP 범위 정의
 
 ```
@@ -226,7 +194,7 @@ E-BOP (Electrical Balance of Plant) = BESS 사이트에서 배터리·PCS 내부
 └─────────────────────────────────────────────────────┘
 ```
 
-## 핵심 역량 및 업무 범위 (주요 설계 영역)
+## 핵심 역량 및 업무 범위
 
 ### 1. 변압기 설계
 > 변압기 본체 규격은 IEC 60076 계열 (60076-1 일반, -2 온도상승, -5 단락내력, -11 건식). 스위치기어 규격(IEC 62271-200)과 혼동 금지 — 아래 정합성 가드레일 참조.
@@ -455,3 +423,29 @@ Ik3 = V_rated / (√3 × Z_total),   Z_total = Z_grid + Z_transformer + Z_cable
   Z_cable       = (R + jX) × L
 ※ 정량 단락 스터디는 계통해석 엔지니어(ETAP/SKM/DIgSILENT, IEC 60909 기반)가 수행. E-BOP는 SWG·케이블 내력 검증에 사용.
 ```
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 변압기 냉각방식 선정 ONAN/ONAF/OFAF, 전압조정은 OLTC(On-Load Tap Changer); 고효율 기준 Class H 또는 IE3 이상, LCC(수명주기비용) 기반 평가 — 근거: `sessions/2026-06-01T18-11-32/bess-ebop-engineer.md`
+- 케이블 사이징 3대 기준: 허용전류 + 전압강하 + 단락열적강도 동시 만족 — 근거: `sessions/2026-06-01T18-11-32/bess-ebop-engineer.md`
+- 시장별 전기설비 표준 매핑: KR=KEC/KS, JP=JEC/JIS, US=NEC/UL, EU=IEC — 근거: `sessions/2026-06-01T18-11-32/bess-ebop-engineer.md`
+- 보조전원: 필수부하 분석 후 UPS+DC전원 용량 산정 — 근거: `sessions/2026-06-01T18-11-32/bess-ebop-engineer.md`
+- 변압기 임피던스 Zk 설계범위 8~12%: 단락전류 제한과 전압강하 억제를 동시 만족하는 값으로 계통 임피던스와 정합 검토; 용량 여유율 5~10% (MVA=MW/PF×(1+여유율)) — 근거: `sessions/2026-06-19T16-14-58/bess-ebop-engineer.md`
+- 수배전반 접지 접촉·보폭전압 검증은 IEEE 80과 IEC 61936-1(>1kV AC 전력설비) 기준 병용; TCC 보호협조는 상위-하위 동작시간 마진 ≥0.3~0.4s 확보 — 근거: `sessions/2026-06-19T16-14-58/bess-ebop-engineer.md`
+- 수배전반 설계 근거 규격 세트: IEC 62271-200(MV 스위치기어), IEEE C37.20.1/2(금속함체 스위치기어), IEC 61936-1 + IEEE Std 80-2013(접촉전압·보폭전압 계산) — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
+- 변압기 냉각방식은 운영환경 기준으로 선정: 고온 환경은 강제냉각(ONAF)이 유리하며, ONAN/ONAF/OFAF 선택 시 장기 운영비·유지보수성을 함께 비교 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
+- 변압기·수배전반 설계 여유 축(세션 기준값): 용량 여유율 **5~10%**, 임피던스 설계 범위 **8~12%**, 접지·보호는 **IEEE Std 80-2013 + IEC 61936-1**로 접촉전압(Touch)·보폭전압(Step) 검토 — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ ONAN을 "**Off-Load** Natural Air Cooling", OFAF를 "**Off-Load** Forced Air Cooling"으로 풀어 씀 → ✅ 앞 두 글자는 **Oil**(절연유) 계열이다. **ONAN = Oil Natural Air Natural**, **OFAF = Oil Forced Air Forced**. "Off-Load"는 무전압 탭절환(**DETC**) 용어이며 냉각방식과 무관하다(§2 ONAN↔OLTC 혼용 항목의 신규 변형) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
+- ❌ "**Class H 또는 IE3 이상**의 효율 등급 변압기 사용" → ✅ 효율 = **IEC 60076-20 / EU EcoDesign Tier**(+ US DOE 10 CFR 431), 절연 = **내열 Class(A·B·F·H)**, IE 등급 = **모터** 효율(IEC 60034-30). 세 축을 한 문장에 묶지 않는다(§3.1 재발 — ebop-engineer 2회째) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
+- ❌ 변압기 임피던스 8~12% 확인 요청의 근거로 **ESS 시장 성장 보도 ID**를 부착 → ✅ 기술 파라미터의 근거는 규격 조항·벤더 시험성적이며 시장 보도가 아니다(§4 NEWS-ID 라벨 무결성) — 근거: `sessions/2026-08-28T05-20-09/bess-ebop-engineer.md`
+- ❌ "고효율 **Class H 또는 IE3 이상** 등급의 변압기" 표기가 **재발**(같은 배치의 facility-manager 세션에서도 동시 검출) → ✅ **효율 = IEC 60076-20 / EU EcoDesign Tier**, **절연 = 내열 Class(A·B·F·H)**, **모터 효율 = IE 등급(IEC 60034-30)** 으로 축이 완전히 다르다. 세 축을 한 문장에 묶지 않는다(가드레일 §3.1) — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
+- ❌ **TCC**를 "Time Coordination Curve"로 풀어 씀 → ✅ TCC = **Time-Current Curve(시간-전류 곡선)** 이다(가드레일 §2 재발) — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
+- ❌ 배터리 화학종 뉴스('물 배터리')를 근거로 **수배전반 설계 변경**을 검토 권고 → ✅ 배터리 화학종은 수배전반(스위치기어) 설계 변수(정격전압·차단용량·IP/IK 등급·아크 내부고장 등급)와 직접 관계가 없다. 화학종 변경의 전기설비 영향은 DC 측 사양·보호협조 입력값으로 환산해 받아 반영한다 — 근거: `sessions/2026-08-20T18-55-51/bess-ebop-engineer.md`
+- ❌ 변압기 용량 산정에서 kW를 kVA로 직접 환산("100 kW 부하 → 105~110 kVA", 역률 미반영) → ✅ `S[kVA] = P[kW]/PF` 적용 후 여유율 5~10%를 곱하고, 사용한 역률을 명시 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
+- ❌ 변압기를 "Class H 또는 IE3 이상 고효율" 로 표기(절연등급·모터 효율등급 혼용) → ✅ 효율은 IEC 60076-20/EU EcoDesign, 절연은 내열 Class, 냉각은 ONAN/ONAF로 축을 분리 — 근거: `sessions/2026-08-02T01-21-59/bess-ebop-engineer.md`
+- ❌ "변압기 표준화 사양 = IEC 62271-200 준수" → ✅ IEC 62271-200은 1~52kV AC 금속외함 스위치기어 표준; 변압기는 IEC 60076 계열 — 근거: `sessions/2026-06-01T13-28-38/bess-ebop-engineer.md`
+- ❌ 위치 미확정 상태에서 인센티브를 KR로 단정([요확인] 한국)하고 수치화 진행 → ✅ 대상시장 확정 전 인센티브 수치화 금지 — 근거: `sessions/2026-06-01T13-28-38/bess-ebop-engineer.md`
+- ❌ "OLTC=Optical Logic Transformer, NLTC=Negative Logic Transformer"로 풀이(비용절감 대안 제시 맥락) → ✅ OLTC=On-Load Tap Changer(부하시 탭절환기), NLTC=No-Load Tap Changer(무부하 탭절환기) — 근거: `sessions/2026-07-13T10-50-03/bess-ebop-engineer.md`

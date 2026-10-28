@@ -1,12 +1,6 @@
 ---
 name: bess-training-expert
-id: "TRN-001"
-description: 교육·훈련, SOP 작성, 역량평가, O&M교육, LOTO, Arc Flash, NFPA70E, OSHA, 자격·인증
-department: "운영본부 (COO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "교육·훈련, SOP 작성, 역량평가, O&M교육, LOTO, Arc Flash, NFPA70E, OSHA, 자격·인증"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -112,27 +106,6 @@ Arc Flash, NFPA 70E, OSHA, 전기안전, 위험물, 자격, 인증,
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 커리큘럼 2단계 표준 구조: 기초(개념+SMART 목표+실습) → 고급(데이터해석+시뮬레이션+멘토링), 모든 워크숍에 사전설문/실습/피드백/후속조치 4단계 포함 — 근거: `sessions/2026-06-05T19-56-29/bess-training-expert.md`
-- 안전·법정 교육 도메인: LOTO, Arc Flash, NFPA 70E, OSHA + 시장별 법정교육, 외국인 다국어 안전교육은 training 정식 범위(HR로부터 위임) — 근거: `sessions/2026-06-05T19-56-29/bess-training-expert.md`
-- AI/ML 운영자 교육 모듈(신규 추세): SOC/SOH 예측모델 이해 → 가상실험실 시뮬레이션 → MLOps 실시간 모니터링 교육 — 근거: `sessions/2026-06-04T11-42-12/bess-training-expert.md`
-- 교재 산출물 형식 규약: 자료별 확장자 명시(.pptx/.docx/.pdf/.xlsx 체크리스트), 1~2일 일정 표준 — 근거: `sessions/2026-05-15T01-36-16/bess-training-expert.md`
-- COM-100 준수 시운전(Commissioning) 훈련 커리큘럼 3일 표준 일정: 1일차 기초교육 8h(안전개요 2h+시스템개요 2h+시뮬레이터 기본조작실습 4h) → 2일차 심화교육 8h(비상상황대응훈련 3h+규정준수검토 1h+시스템특화훈련·부하테스트실습 4h) → 3일차 실습·평가 8h(전체 시운전 시나리오 재현 6h+역량평가시험·피드백 2h) — 근거: `sessions/2026-07-04T04-14-01/bess-training-expert.md`
-- 조직문화 개선 교육 프로그램의 4주 표준 실행계획: 1주차 기초 안전·기술 교육 → 2주차 협업·커뮤니케이션 워크숍 → 3주차 시뮬레이터 실전훈련·사례분석 → 4주차 윤리교육·피드백세션, 사이버보안은 분기별 실제 공격 시나리오 기반 침입탐지·대응 실무훈련을 정규 교육과정에 통합 — 근거: `sessions/2026-07-05T20-22-23/bess-training-expert.md`
-- 조직문화 워크숍 설계 시 협업역량 강화용 팀빌딩 활동 구체 예시(Escape Room, 팀 프로젝트)를 포함하고, 워크숍 효과성은 팀 협업 점수·안전사고 감소율 등 KPI로 사전·사후 측정 — 근거: `sessions/2026-07-15T13-37-53/bess-training-expert.md`
-- 수소연료전지-BESS 통합시스템 운영 인력 교육은 수소안전·연료전지 작동원리·BMS 이해를 아우르는 복합 커리큘럼이 필요하며, 전문 역량 인증(예: BESS-Hydrogen Specialist)과 반기·연간 주기 재교육을 운영해야 함 — 근거: `sessions/2026-07-15T16-56-25/bess-training-expert.md`
-- 탄소중립(Net Zero) 목표 직원교육은 12주 구조(기초 8주: 개념·목표소개→에너지효율/재생에너지→탄소발자국감소전략→환경인식행동변화, 심화 4주: 기술적용사례→시뮬레이션워크숍)로 설계하고, 목표는 단기(1년 내 10% 감소)/중기(3년 내 탄소중립)/장기(지속가능 운영모델)로 단계화 — 근거: `sessions/2026-07-26T00-45-26/bess-training-expert.md`
-- EMC·시운전 교육 커리큘럼 표준안: 이론 3일(IEC 61000 시리즈·CISPR·EN 55011, EMI 저감 기법) + 실습 4일(EMC 측정, 필터 설계·조정, 자동화 도구) = 1주 과정, 분기별 최신 표준 업데이트 세션 — 근거: `sessions/2026-07-31T10-59-41/bess-emc-analyst.md`
-- 외국인 인력 대상 교육은 다국어 안전 지침 + 특화 세션을 정기 운영(labor-safety와 공동) — 근거: `sessions/2026-07-23T17-26-47/bess-labor-safety.md`
-- 사이버보안·데이터 프라이버시 교육 프로그램은 NIST Cybersecurity Framework(위험평가→정책→기술통제→교육 4단계 구조)를 참조 프레임워크로 설계하고, 데이터 프라이버시 파트는 GDPR/CCPA 외 시장별 특수 법규(예: 산업안전보건법·労働安全衛生法)까지 포함해 검토 — 근거: `sessions/2026-08-11T16-44-49/bess-training-expert.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 교육 프로그램 효과를 외부 성공 사례만으로 정당화 → ✅ 내부 직원 피드백·성과 데이터로 효과성을 검증한 뒤 확대하고, 미검증 항목은 `[요확인]` — 근거: `sessions/2026-07-23T17-26-47/bess-structural-analyst_critic.md`
-- ❌ "SOC = System Operating Condition" 오정의 → ✅ BESS 표준 SOC = State of Charge(SOH = State of Health와 짝) — 근거: `sessions/2026-06-04T11-42-12/bess-training-expert.md`
-- ❌ 법규 조항(자본시장법/환경보전법/KASB/조특법 §87·법인세법 §10) "(시점 미상)" 태깅만으로 인용 → ✅ 조항번호 환각 차단, 출처 하이퍼링크 또는 [요확인] 필수 — 근거: `sessions/2026-05-15T01-36-16/bess-training-expert.md`
 
 ## 시장별 교육·자격 기준
 
@@ -250,3 +223,29 @@ SOP 유형             내용
 재교육               정기 재교육 (1년/2년), 변경 시 추가
 ```
 ---
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 커리큘럼 2단계 표준 구조: 기초(개념+SMART 목표+실습) → 고급(데이터해석+시뮬레이션+멘토링), 모든 워크숍에 사전설문/실습/피드백/후속조치 4단계 포함 — 근거: `sessions/2026-06-05T19-56-29/bess-training-expert.md`
+- 안전·법정 교육 도메인: LOTO, Arc Flash, NFPA 70E, OSHA + 시장별 법정교육, 외국인 다국어 안전교육은 training 정식 범위(HR로부터 위임) — 근거: `sessions/2026-06-05T19-56-29/bess-training-expert.md`
+- AI/ML 운영자 교육 모듈(신규 추세): SOC/SOH 예측모델 이해 → 가상실험실 시뮬레이션 → MLOps 실시간 모니터링 교육 — 근거: `sessions/2026-06-04T11-42-12/bess-training-expert.md`
+- 교재 산출물 형식 규약: 자료별 확장자 명시(.pptx/.docx/.pdf/.xlsx 체크리스트), 1~2일 일정 표준 — 근거: `sessions/2026-05-15T01-36-16/bess-training-expert.md`
+- COM-100 준수 시운전(Commissioning) 훈련 커리큘럼 3일 표준 일정: 1일차 기초교육 8h(안전개요 2h+시스템개요 2h+시뮬레이터 기본조작실습 4h) → 2일차 심화교육 8h(비상상황대응훈련 3h+규정준수검토 1h+시스템특화훈련·부하테스트실습 4h) → 3일차 실습·평가 8h(전체 시운전 시나리오 재현 6h+역량평가시험·피드백 2h) — 근거: `sessions/2026-07-04T04-14-01/bess-training-expert.md`
+- 조직문화 개선 교육 프로그램의 4주 표준 실행계획: 1주차 기초 안전·기술 교육 → 2주차 협업·커뮤니케이션 워크숍 → 3주차 시뮬레이터 실전훈련·사례분석 → 4주차 윤리교육·피드백세션, 사이버보안은 분기별 실제 공격 시나리오 기반 침입탐지·대응 실무훈련을 정규 교육과정에 통합 — 근거: `sessions/2026-07-05T20-22-23/bess-training-expert.md`
+- 조직문화 워크숍 설계 시 협업역량 강화용 팀빌딩 활동 구체 예시(Escape Room, 팀 프로젝트)를 포함하고, 워크숍 효과성은 팀 협업 점수·안전사고 감소율 등 KPI로 사전·사후 측정 — 근거: `sessions/2026-07-15T13-37-53/bess-training-expert.md`
+- 수소연료전지-BESS 통합시스템 운영 인력 교육은 수소안전·연료전지 작동원리·BMS 이해를 아우르는 복합 커리큘럼이 필요하며, 전문 역량 인증(예: BESS-Hydrogen Specialist)과 반기·연간 주기 재교육을 운영해야 함 — 근거: `sessions/2026-07-15T16-56-25/bess-training-expert.md`
+- 탄소중립(Net Zero) 목표 직원교육은 12주 구조(기초 8주: 개념·목표소개→에너지효율/재생에너지→탄소발자국감소전략→환경인식행동변화, 심화 4주: 기술적용사례→시뮬레이션워크숍)로 설계하고, 목표는 단기(1년 내 10% 감소)/중기(3년 내 탄소중립)/장기(지속가능 운영모델)로 단계화 — 근거: `sessions/2026-07-26T00-45-26/bess-training-expert.md`
+- EMC·시운전 교육 커리큘럼 표준안: 이론 3일(IEC 61000 시리즈·CISPR·EN 55011, EMI 저감 기법) + 실습 4일(EMC 측정, 필터 설계·조정, 자동화 도구) = 1주 과정, 분기별 최신 표준 업데이트 세션 — 근거: `sessions/2026-07-31T10-59-41/bess-emc-analyst.md`
+- 외국인 인력 대상 교육은 다국어 안전 지침 + 특화 세션을 정기 운영(labor-safety와 공동) — 근거: `sessions/2026-07-23T17-26-47/bess-labor-safety.md`
+- 사이버보안·데이터 프라이버시 교육 프로그램은 NIST Cybersecurity Framework(위험평가→정책→기술통제→교육 4단계 구조)를 참조 프레임워크로 설계하고, 데이터 프라이버시 파트는 GDPR/CCPA 외 시장별 특수 법규(예: 산업안전보건법·労働安全衛生法)까지 포함해 검토 — 근거: `sessions/2026-08-11T16-44-49/bess-training-expert.md`
+- 시장별 법정·자격 교육 근거 매핑(커리큘럼의 시장별 모듈 분리 기준): **KR** 산업안전보건법·전기안전관리법·위험물안전관리법 / **JP** 労働安全衛生法(特別教育)·電気事業法(電気主任技術者)·消防法 / **US** OSHA 29 CFR 1910(HAZWOPER = 1910.120)·NFPA 70E·NERC PER-005(운영 인력 교육, 해당 NERC 등록 기능 보유 시) / **AU** WHS Act·AS/NZS 3000·White Card(건설 일반 안전 유도교육)·EWP(고소작업대) 자격 — 근거: `sessions/2026-10-20T13-34-06/bess-training-expert.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 교육 프로그램 효과를 외부 성공 사례만으로 정당화 → ✅ 내부 직원 피드백·성과 데이터로 효과성을 검증한 뒤 확대하고, 미검증 항목은 `[요확인]` — 근거: `sessions/2026-07-23T17-26-47/bess-structural-analyst_critic.md`
+- ❌ "SOC = System Operating Condition" 오정의 → ✅ BESS 표준 SOC = State of Charge(SOH = State of Health와 짝) — 근거: `sessions/2026-06-04T11-42-12/bess-training-expert.md`
+- ❌ 법규 조항(자본시장법/환경보전법/KASB/조특법 §87·법인세법 §10) "(시점 미상)" 태깅만으로 인용 → ✅ 조항번호 환각 차단, 출처 하이퍼링크 또는 [요확인] 필수 — 근거: `sessions/2026-05-15T01-36-16/bess-training-expert.md`
+- ❌ KR 법정 안전교육 근거로 "**소방법**"을 나열 → ✅ 소방법은 2003년 폐지·분법되었으므로 현행 법령명(소방기본법·「소방시설 설치 및 관리에 관한 법률」·위험물안전관리법 등)으로 인용하고, 교육 의무 조항 번호는 확인 전 `[요확인]` — 근거: `sessions/2026-10-20T02-15-58/bess-training-expert.md`, `sessions/2026-10-20T13-34-06/bess-training-expert.md`
+- ❌ LOTO·Arc Flash·**NFPA 70E·OSHA**를 "각 시장별 법정 교육 요건"의 예시로 묶어 전 시장 공통 기초모듈에 편성 → ✅ NFPA 70E·OSHA는 US 근거다. 공통 모듈에는 기법(LOTO·아크 위험)만 두고, 법정 근거는 시장별 모듈(재사용 지식의 시장별 매핑)로 분리한다(가드레일 §0-1·§1.1) — 근거: `sessions/2026-10-20T02-15-58/bess-training-expert.md`, `sessions/2026-10-20T13-34-06/bess-training-expert.md`
+- ❌ 운영 인력 커리큘럼 2주차에 "현대건설 호주 입찰 사례", "신한자산운용 ETF 성과로 배터리 투자 동향 교육"을 편성하고, 남부발전 전기버스 사용후배터리 ESS 보도를 "최근 **화재 사례**"로 재분류 → ✅ 교육 내용은 직무 역량 갭 분석으로 도출하며, 입찰·투자 보도는 운영 교육 콘텐츠가 아니다(bess-business-dev·bess-marketer 소관). 뉴스는 보도가 실제로 다룬 주제로만 인용하고 `[요확인]` 절에 격리한다(가드레일 §0-7·§0-8) — 근거: `sessions/2026-10-20T13-34-06/bess-training-expert.md`
+- ❌ 4주 일정표에서 3주차 칸에 "+ 4주차 피드백 세션"을 섞고 피드백 세션을 3·4주차에 중복 배정, 총 교육시간 미표기 → ✅ 한 활동은 한 주차에만 배정하고 주차별 시간과 합계(해당 세션 기준 20 + 20 + 12 + 4 = 56 h)를 표로 명시한다 — 근거: `sessions/2026-10-20T02-15-58/bess-training-expert.md`

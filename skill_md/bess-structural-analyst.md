@@ -1,12 +1,6 @@
 ---
 name: bess-structural-analyst
-id: "STR-001"
-description: 구조해석, FEM, 내진, 풍하중, 좌굴, 피로, 컨테이너구조, 기초구조, ANSYS, SAP2000, MIDAS
-department: "기술본부 (CTO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "구조해석, FEM, 내진, 풍하중, 좌굴, 피로, 컨테이너구조, 기초구조, ANSYS, SAP2000, MIDAS"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -150,40 +144,6 @@ bess-structural-analyst
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 기초 슬래브 처짐 한계 ≤25mm(절대)·≤L/500(상대), ACI 318 / KDS 14 20; 하중 조합 = 정적(자중)+동적(진동/충격)+환경(풍/지진/적설) — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
-- 메시 수렴성: 최소 3단계 비교(예 50→25→10mm)로 응력·변위 수렴 확인 필수 — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
-- 코드 매핑: 강 AISC 360·Eurocode 3, RC ACI 318·KDS 14 20, 앵커 ACI 318 Ch.17(CCD법), 피뢰 IEC 62305(접지저항 ≤1Ω), 차단/단락 IEC 60947·IEEE C37 — 근거: `sessions/2026-06-08T18-47-29/bess-structural-analyst.md`
-- 필수 [요확인] 입력: 설계 PGA/지진구역, 기본풍속 V₀·노출등급, 재료물성(항복강도/탄성계수/포아송비), 경계조건, 피로 사이클·하중범위, 벤더 중량 데이터시트 — 근거: `sessions/2026-06-08T18-47-29/bess-structural-analyst.md`
-- 내진: 지진구역별 계수 KR S=0.22g, JP Z=0.7~1.0, BESS는 필수시설로 중요도계수 I≥1.25 적용, 응답조합은 CQC 또는 SRSS — 근거: `sessions/2026-06-17T00-19-24/bess-structural-analyst.md`
-- 기초설계 규격: KDS 41 10 00(기초 설계)·KDS 41 12 00(토양 기초), 지반은 CPT/SPT로 물성 파악; 기초 슬래브 안전율 DCR≥1.5 권장, 최대변위 ≤25mm(절대)·≤L/500(상대), 메시 50→25→10mm·앵커볼트 주변 5~10mm 세분화 — 근거: `sessions/2026-06-22T05-01-10/bess-structural-analyst.md`
-- 이격거리: 컨테이너 수직 L/200·수평 L/300, 배터리 랙 셀정렬 ≤3mm, 말뚝 간격 Winkler 모델 3~5m; 내진 KDS 41 17 00 S=0.22g(1구역)·0.11g(2구역), 풍하중 ASCE 7 / KDS 41 12 00 기본풍속 V₀=30m/s 가정 예시 — 근거: `sessions/2026-06-25T06-54-00/bess-structural-analyst.md`
-- 인도(India) 신흥시장 구조규격: 콘크리트 내진 상세 인도표준(IS) 13920, 하중/풍하중 IS 875, 지진 IS 1893, 화재 관련 IS 코드 적용; 지진구역별 계수 상향(히말라야·북부 고지진구역), 해안지역 염분 부식으로 스테인리스 STS304 등 내식재 채택 — 근거: `sessions/2026-06-23T15-22-42/bess-structural-analyst.md`
-- 케이블 트레이 재료 물성(강철·알루미늄, 3개 세션 반복 확인): 강철(S235JR/S275JR) 항복강도 250~500MPa·탄성계수 200~210GPa·밀도 7,850kg/m³; 알루미늄(6061-T6) 항복강도 70~210MPa·탄성계수 69~70GPa·밀도 2,700kg/m³(경량+내식이나 강도 낮음) — 근거: `sessions/2026-07-13T07-06-41/bess-structural-analyst.md`, `sessions/2026-07-15T21-08-29/bess-structural-analyst.md`, `sessions/2026-07-16T11-43-51/bess-structural-analyst.md`
-- CFD ↔ 구조 연계 검증 절차: CFD가 산출한 열응력·압력 분포를 구조 모델에 하중으로 이입 → 응력·변형 재계산 → **DCR 재평가** → 유동 반복하중에 대한 피로 검토. 메시 수렴성은 최소 3단계(예: 50→25→10 mm)로 확인 — 근거: `sessions/2026-07-31T09-46-09/bess-structural-analyst.md`
-- 풍하중 입력 필수 2종: 설계 풍속 V₀와 지표면 조도·노출등급(ASCE 7-22 / KDS 41 12 00) — 미확정 시 `[요확인]` — 근거: `sessions/2026-07-31T09-46-09/bess-structural-analyst.md`
-- 액냉 시스템 구조 검토 축: 재료 물성(항복강도·탄성계수·포아송비) 확인 → 하중 조합(자중·활하중·풍하중·지진하중) + **CFD 산출 열응력·유동압력 이입** → 응력 분포·피로 평가. 고온·고압부는 내식·내열재(예: STS 316L) 검토 — 근거: `sessions/2026-08-03T10-09-48/bess-structural-analyst.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 구조해석 산출물에 **DCR·내진·풍하중·앵커 수치가 0건**이고 환기구 위치·크기 최적화, 자동 소화 시스템 설치, 열감지 센서 배치 권고로 대체 → ✅ 환기·소화 설비 위치는 bess-cbop-engineer·bess-fire-engineer 소관이며, 구조해석은 소유 지표(**DCR ≤1.0**, 내진·풍하중 검토 결과, 앵커 판정)를 수치로 결론화한다(§4 "structural-analyst가 화재감지·소화설비 위치 확정" 항목 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-structural-analyst.md`
-- ❌ **DCR 부등호 방향 반전 + 문서 내 상충**: 같은 산출물에서 앵커는 "안전율 **DCR ≥ 1.5**", 전 구조요소는 "**DCR ≥ 1.0** 유지"로 기재 → ✅ **DCR = Demand/Capacity 비이므로 합격 판정은 DCR ≤ 1.0**이다. 안전율(SF) 개념을 쓰려면 `SF = 1/DCR` 로 환산해 표기한다(SF ≥1.5 ⇔ **DCR ≤ 0.67**). 본 스킬의 기존 "DCR≥1.5 권장" 표기도 안전율 표기로 읽어야 하며, 산출물에는 DCR·SF 중 **하나만** 사용(가드레일 §2 DCR 정의·§5-7 문서 내 값 단일화) — 근거: `sessions/2026-08-22T08-21-14/bess-structural-analyst.md`
-- ❌ 구조해석 산출물에서 화재감지 센서·스프링클러 **설치 위치**와 구성요소 간 안전거리를 직접 확정 → ✅ 감지·소화 설계와 이격거리는 **fire-engineer** 소관값을 인용하고, 구조는 지지·응력·DCR·피로 판정으로 한정(가드레일 §4) — 근거: `sessions/2026-08-03T10-09-48/bess-structural-analyst.md`
-- ❌ 컨테이너~냉각탑 최소 이격 근거로 "**KDS 41 17 00**"을 인용 → ✅ KDS 41 17 00은 **건축물 내진설계기준**이며 화재 이격 규정이 아니다. 이격은 NFPA 855 + 현지 소방법(fire-engineer 산출값) — 근거: `sessions/2026-08-03T10-09-48/bess-structural-analyst.md`
-- ❌ 리스크 등급을 "**中 / 高**" 한자로 표기 → ✅ 산출물은 **중간 / 높음**(또는 Low·Medium·High) 한국어 표기로 통일(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-03T10-09-48/bess-structural-analyst.md`
-- ❌ 구조해석 도메인에서 인력 개발·교육 프로그램·인센티브 제도를 결론으로 제시 → ✅ 조직·교육 영역은 hr-manager·training-expert 소관이며, 구조해석은 하중·응력·DCR·피로 판정으로 한정(가드레일 §4 역할 경계) — 근거: `sessions/2026-07-23T17-26-47/bess-structural-analyst_critic.md`
-- ❌ "US 이격거리 = NFPA 308 및 ASCE 7-22" → ✅ NFPA 308은 BESS 소방 표준 아님; 화재이격은 NFPA 855(+IFC) — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
-- ❌ "컨테이너/배터리랙 이격 표준 = ISO 11901" → ✅ ISO 11901은 BESS 이격 표준 아님; 이격은 시장별 소방코드(NFPA855/AS5139/KDS) 적용 — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
-- ❌ "JP = JEAC 3605" 단독 인용 → ✅ 일본 내진은 建築基準法(건축기준법) + JEAC 계열 함께, 3605 번호 단독 신뢰 주의 — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
-- ❌ 보호계전기 "IEC 61898" 인용 → ✅ 정확한 계전기 표준은 IEC 60255 계열(번호 오기) — 근거: `sessions/2026-06-08T18-47-29/bess-structural-analyst.md`
-- ❌ 하부층을 "**자갈질 토양 (MH)**"으로 표기 → ✅ USCS에서 **MH는 고소성 실트(탄성 실트)** 이며 자갈은 **GW·GP·GM·GC**다. 토질 기호와 명칭을 USCS 원표와 대조한 뒤 표기하고, 지지층 판단은 기호가 아닌 N값·시험값으로 한다 — 근거: `sessions/2026-09-21T07-43-57/bess-structural-analyst.md`
-- ❌ CL층을 **N값 15~20·함수비 15~20%** 로 적고 "높은 수분 함량·**높은 압축성(압축지수 CI ≈ 2.0)**"으로 판정, 지지력은 "**q ≤ 250 kPa**로 높은 지지력 확인"으로 표기 → ✅ 압축지수 기호는 **Cc**이며 무기질 CL은 경험식 Cc ≈ 0.009(LL−10)으로 LL<50에서 약 **0.36 미만**, 2.0은 유기질토·이탄 수준이다. N 15~20은 매우 단단한 점토로 '고압축성' 판정과 방향이 상충하고, 지지력은 확인값(= 또는 ≥)으로 써야 하며 `≤`는 상한 표기라 방향이 반전된다(가드레일 §5 단조성·방향 검산) — 근거: `sessions/2026-09-21T07-43-57/bess-structural-analyst.md`
-- ❌ "**Winkler 모델을 기반으로 말뚝 간격을 3~5 m로 설정**"(재사용 지식 기존 줄의 '말뚝 간격 Winkler 모델 3~5m'와 같은 서술) → ✅ Winkler 모델은 **지반반력계수(스프링) 모델링 방법**이지 말뚝 간격 산정법이 아니다. 말뚝 간격은 **말뚝 직경 D 기준 중심간격(통상 2.5D~3D 이상)** 과 군말뚝 효율·침하로 정하고, 절대 m 값은 D가 정해진 뒤 산출한다 — 근거: `sessions/2026-09-21T07-43-57/bess-structural-analyst.md`
-- ❌ 구조해석 세션에서 변압기 단락전류를 "**I_sc = V_phase × √3 / Z_sc**"로 제시하고 "단락 전류를 변압기 **열적 한계의 1.25배 이하**로 유지"를 권고, 철심·권선 재료 선정까지 결론화 → ✅ 3상 대칭 단락전류는 **V_LL/(√3·Z) = V_phase/Z** 로 √3를 곱하지 않는다(가드레일 Isc 공식 √3 중복 금지). 단락 내력 판정(IEC 60076-5)·재료 선정은 transformer-expert, 단락 계산은 power-system-analyst 소관이며, 구조해석은 **단락 전자기력을 하중으로 받아** 지지·앵커 DCR을 판정하는 것으로 한정한다(역할 경계) — 근거: `sessions/2026-09-22T17-16-49/bess-structural-analyst.md`
-- ❌ "**중요도 I=1.5 적용: 설계 지진 계수 S를 1.5배로 적용**"(재사용 지식 기존 줄 'I≥1.25'와도 문서 간 상충) → ✅ 중요도계수 Ie는 지진구역계수 S를 키우는 값이 아니라 **설계 지진하중(밑면전단력 산정식)** 에 반영한다. 값은 시장별 등급으로 단일화한다 — KDS 41 17 00 **내진특등급 1.5 / 내진Ⅰ등급 1.2 / 내진Ⅱ등급 1.0**, ASCE 7 **Risk Category III 1.25 / IV 1.5** — 근거: `sessions/2026-09-22T17-16-49/bess-structural-analyst.md`
-- ❌ 변압기 열 관리 동의 근거로 "**KDS 41 17 00 및 UL 9540A 준수**"를 부착(재발, 2026-09-22 — 기존 'KDS 41 17 00 → 이격 근거' 항목의 변형) → ✅ KDS 41 17 00은 **건축물 내진설계기준**, UL 9540A는 **배터리 셀·모듈·유닛의 열폭주 전파 시험법**으로 변압기 열 관리 근거가 아니다. 변압기 온도상승은 IEC 60076-2 계열(transformer-expert 소관)을 인용한다 — 근거: `sessions/2026-09-22T17-16-49/bess-structural-analyst.md`
 
 ## 해석 유형
 
@@ -396,3 +356,39 @@ BESS 사이트 구조물 분류
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 ---
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 기초 슬래브 처짐 한계 ≤25mm(절대)·≤L/500(상대), ACI 318 / KDS 14 20; 하중 조합 = 정적(자중)+동적(진동/충격)+환경(풍/지진/적설) — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
+- 메시 수렴성: 최소 3단계 비교(예 50→25→10mm)로 응력·변위 수렴 확인 필수 — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
+- 코드 매핑: 강 AISC 360·Eurocode 3, RC ACI 318·KDS 14 20, 앵커 ACI 318 Ch.17(CCD법), 피뢰 IEC 62305(접지저항 ≤1Ω), 차단/단락 IEC 60947·IEEE C37 — 근거: `sessions/2026-06-08T18-47-29/bess-structural-analyst.md`
+- 필수 [요확인] 입력: 설계 PGA/지진구역, 기본풍속 V₀·노출등급, 재료물성(항복강도/탄성계수/포아송비), 경계조건, 피로 사이클·하중범위, 벤더 중량 데이터시트 — 근거: `sessions/2026-06-08T18-47-29/bess-structural-analyst.md`
+- 내진: 지진구역별 계수 KR S=0.22g, JP Z=0.7~1.0, BESS는 필수시설로 중요도계수 I≥1.25 적용, 응답조합은 CQC 또는 SRSS — 근거: `sessions/2026-06-17T00-19-24/bess-structural-analyst.md`
+- 기초설계 규격: KDS 41 10 00(기초 설계)·KDS 41 12 00(토양 기초), 지반은 CPT/SPT로 물성 파악; 기초 슬래브 안전율 DCR≥1.5 권장, 최대변위 ≤25mm(절대)·≤L/500(상대), 메시 50→25→10mm·앵커볼트 주변 5~10mm 세분화 — 근거: `sessions/2026-06-22T05-01-10/bess-structural-analyst.md`
+- 이격거리: 컨테이너 수직 L/200·수평 L/300, 배터리 랙 셀정렬 ≤3mm, 말뚝 간격 Winkler 모델 3~5m; 내진 KDS 41 17 00 S=0.22g(1구역)·0.11g(2구역), 풍하중 ASCE 7 / KDS 41 12 00 기본풍속 V₀=30m/s 가정 예시 — 근거: `sessions/2026-06-25T06-54-00/bess-structural-analyst.md`
+- 인도(India) 신흥시장 구조규격: 콘크리트 내진 상세 인도표준(IS) 13920, 하중/풍하중 IS 875, 지진 IS 1893, 화재 관련 IS 코드 적용; 지진구역별 계수 상향(히말라야·북부 고지진구역), 해안지역 염분 부식으로 스테인리스 STS304 등 내식재 채택 — 근거: `sessions/2026-06-23T15-22-42/bess-structural-analyst.md`
+- 케이블 트레이 재료 물성(강철·알루미늄, 3개 세션 반복 확인): 강철(S235JR/S275JR) 항복강도 250~500MPa·탄성계수 200~210GPa·밀도 7,850kg/m³; 알루미늄(6061-T6) 항복강도 70~210MPa·탄성계수 69~70GPa·밀도 2,700kg/m³(경량+내식이나 강도 낮음) — 근거: `sessions/2026-07-13T07-06-41/bess-structural-analyst.md`, `sessions/2026-07-15T21-08-29/bess-structural-analyst.md`, `sessions/2026-07-16T11-43-51/bess-structural-analyst.md`
+- CFD ↔ 구조 연계 검증 절차: CFD가 산출한 열응력·압력 분포를 구조 모델에 하중으로 이입 → 응력·변형 재계산 → **DCR 재평가** → 유동 반복하중에 대한 피로 검토. 메시 수렴성은 최소 3단계(예: 50→25→10 mm)로 확인 — 근거: `sessions/2026-07-31T09-46-09/bess-structural-analyst.md`
+- 풍하중 입력 필수 2종: 설계 풍속 V₀와 지표면 조도·노출등급(ASCE 7-22 / KDS 41 12 00) — 미확정 시 `[요확인]` — 근거: `sessions/2026-07-31T09-46-09/bess-structural-analyst.md`
+- 액냉 시스템 구조 검토 축: 재료 물성(항복강도·탄성계수·포아송비) 확인 → 하중 조합(자중·활하중·풍하중·지진하중) + **CFD 산출 열응력·유동압력 이입** → 응력 분포·피로 평가. 고온·고압부는 내식·내열재(예: STS 316L) 검토 — 근거: `sessions/2026-08-03T10-09-48/bess-structural-analyst.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 구조해석 산출물에 **DCR·내진·풍하중·앵커 수치가 0건**이고 환기구 위치·크기 최적화, 자동 소화 시스템 설치, 열감지 센서 배치 권고로 대체 → ✅ 환기·소화 설비 위치는 bess-cbop-engineer·bess-fire-engineer 소관이며, 구조해석은 소유 지표(**DCR ≤1.0**, 내진·풍하중 검토 결과, 앵커 판정)를 수치로 결론화한다(§4 "structural-analyst가 화재감지·소화설비 위치 확정" 항목 재발) — 근거: `sessions/2026-08-29T08-52-31/bess-structural-analyst.md`
+- ❌ **DCR 부등호 방향 반전 + 문서 내 상충**: 같은 산출물에서 앵커는 "안전율 **DCR ≥ 1.5**", 전 구조요소는 "**DCR ≥ 1.0** 유지"로 기재 → ✅ **DCR = Demand/Capacity 비이므로 합격 판정은 DCR ≤ 1.0**이다. 안전율(SF) 개념을 쓰려면 `SF = 1/DCR` 로 환산해 표기한다(SF ≥1.5 ⇔ **DCR ≤ 0.67**). 본 스킬의 기존 "DCR≥1.5 권장" 표기도 안전율 표기로 읽어야 하며, 산출물에는 DCR·SF 중 **하나만** 사용(가드레일 §2 DCR 정의·§5-7 문서 내 값 단일화) — 근거: `sessions/2026-08-22T08-21-14/bess-structural-analyst.md`
+- ❌ 구조해석 산출물에서 화재감지 센서·스프링클러 **설치 위치**와 구성요소 간 안전거리를 직접 확정 → ✅ 감지·소화 설계와 이격거리는 **fire-engineer** 소관값을 인용하고, 구조는 지지·응력·DCR·피로 판정으로 한정(가드레일 §4) — 근거: `sessions/2026-08-03T10-09-48/bess-structural-analyst.md`
+- ❌ 컨테이너~냉각탑 최소 이격 근거로 "**KDS 41 17 00**"을 인용 → ✅ KDS 41 17 00은 **건축물 내진설계기준**이며 화재 이격 규정이 아니다. 이격은 NFPA 855 + 현지 소방법(fire-engineer 산출값) — 근거: `sessions/2026-08-03T10-09-48/bess-structural-analyst.md`
+- ❌ 리스크 등급을 "**中 / 高**" 한자로 표기 → ✅ 산출물은 **중간 / 높음**(또는 Low·Medium·High) 한국어 표기로 통일(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-03T10-09-48/bess-structural-analyst.md`
+- ❌ 구조해석 도메인에서 인력 개발·교육 프로그램·인센티브 제도를 결론으로 제시 → ✅ 조직·교육 영역은 hr-manager·training-expert 소관이며, 구조해석은 하중·응력·DCR·피로 판정으로 한정(가드레일 §4 역할 경계) — 근거: `sessions/2026-07-23T17-26-47/bess-structural-analyst_critic.md`
+- ❌ "US 이격거리 = NFPA 308 및 ASCE 7-22" → ✅ NFPA 308은 BESS 소방 표준 아님; 화재이격은 NFPA 855(+IFC) — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
+- ❌ "컨테이너/배터리랙 이격 표준 = ISO 11901" → ✅ ISO 11901은 BESS 이격 표준 아님; 이격은 시장별 소방코드(NFPA855/AS5139/KDS) 적용 — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
+- ❌ "JP = JEAC 3605" 단독 인용 → ✅ 일본 내진은 建築基準法(건축기준법) + JEAC 계열 함께, 3605 번호 단독 신뢰 주의 — 근거: `sessions/2026-06-05T09-44-43/bess-structural-analyst.md`
+- ❌ 보호계전기 "IEC 61898" 인용 → ✅ 정확한 계전기 표준은 IEC 60255 계열(번호 오기) — 근거: `sessions/2026-06-08T18-47-29/bess-structural-analyst.md`
+- ❌ 하부층을 "**자갈질 토양 (MH)**"으로 표기 → ✅ USCS에서 **MH는 고소성 실트(탄성 실트)** 이며 자갈은 **GW·GP·GM·GC**다. 토질 기호와 명칭을 USCS 원표와 대조한 뒤 표기하고, 지지층 판단은 기호가 아닌 N값·시험값으로 한다 — 근거: `sessions/2026-09-21T07-43-57/bess-structural-analyst.md`
+- ❌ CL층을 **N값 15~20·함수비 15~20%** 로 적고 "높은 수분 함량·**높은 압축성(압축지수 CI ≈ 2.0)**"으로 판정, 지지력은 "**q ≤ 250 kPa**로 높은 지지력 확인"으로 표기 → ✅ 압축지수 기호는 **Cc**이며 무기질 CL은 경험식 Cc ≈ 0.009(LL−10)으로 LL<50에서 약 **0.36 미만**, 2.0은 유기질토·이탄 수준이다. N 15~20은 매우 단단한 점토로 '고압축성' 판정과 방향이 상충하고, 지지력은 확인값(= 또는 ≥)으로 써야 하며 `≤`는 상한 표기라 방향이 반전된다(가드레일 §5 단조성·방향 검산) — 근거: `sessions/2026-09-21T07-43-57/bess-structural-analyst.md`
+- ❌ "**Winkler 모델을 기반으로 말뚝 간격을 3~5 m로 설정**"(재사용 지식 기존 줄의 '말뚝 간격 Winkler 모델 3~5m'와 같은 서술) → ✅ Winkler 모델은 **지반반력계수(스프링) 모델링 방법**이지 말뚝 간격 산정법이 아니다. 말뚝 간격은 **말뚝 직경 D 기준 중심간격(통상 2.5D~3D 이상)** 과 군말뚝 효율·침하로 정하고, 절대 m 값은 D가 정해진 뒤 산출한다 — 근거: `sessions/2026-09-21T07-43-57/bess-structural-analyst.md`
+- ❌ 구조해석 세션에서 변압기 단락전류를 "**I_sc = V_phase × √3 / Z_sc**"로 제시하고 "단락 전류를 변압기 **열적 한계의 1.25배 이하**로 유지"를 권고, 철심·권선 재료 선정까지 결론화 → ✅ 3상 대칭 단락전류는 **V_LL/(√3·Z) = V_phase/Z** 로 √3를 곱하지 않는다(가드레일 Isc 공식 √3 중복 금지). 단락 내력 판정(IEC 60076-5)·재료 선정은 transformer-expert, 단락 계산은 power-system-analyst 소관이며, 구조해석은 **단락 전자기력을 하중으로 받아** 지지·앵커 DCR을 판정하는 것으로 한정한다(역할 경계) — 근거: `sessions/2026-09-22T17-16-49/bess-structural-analyst.md`
+- ❌ "**중요도 I=1.5 적용: 설계 지진 계수 S를 1.5배로 적용**"(재사용 지식 기존 줄 'I≥1.25'와도 문서 간 상충) → ✅ 중요도계수 Ie는 지진구역계수 S를 키우는 값이 아니라 **설계 지진하중(밑면전단력 산정식)** 에 반영한다. 값은 시장별 등급으로 단일화한다 — KDS 41 17 00 **내진특등급 1.5 / 내진Ⅰ등급 1.2 / 내진Ⅱ등급 1.0**, ASCE 7 **Risk Category III 1.25 / IV 1.5** — 근거: `sessions/2026-09-22T17-16-49/bess-structural-analyst.md`
+- ❌ 변압기 열 관리 동의 근거로 "**KDS 41 17 00 및 UL 9540A 준수**"를 부착(재발, 2026-09-22 — 기존 'KDS 41 17 00 → 이격 근거' 항목의 변형) → ✅ KDS 41 17 00은 **건축물 내진설계기준**, UL 9540A는 **배터리 셀·모듈·유닛의 열폭주 전파 시험법**으로 변압기 열 관리 근거가 아니다. 변압기 온도상승은 IEC 60076-2 계열(transformer-expert 소관)을 인용한다 — 근거: `sessions/2026-09-22T17-16-49/bess-structural-analyst.md`
+- ❌ 케이블 풍하중을 **"풍하중 q = ½·ρ·v²·C_d·A (A = 케이블 단면적)"** 로 제시하고, 케이블 재료 예시를 **"강철 케이블 σ_y ≥ 400 MPa"** 로 권고 → ✅ ½·ρ·v²는 **속도압(Pa)** 이고 여기에 C_d·A를 곱한 값은 **힘(N)** 이다. 항력 면적 A는 단면적이 아니라 **바람 방향 투영면적(외경 × 지간 길이)** 이다. 전력 케이블 도체는 Cu/Al로 구조 부재가 아니므로, 구조해석 대상은 **케이블 트레이·지지물·앵커**의 하중·처짐(L/500)·DCR이다 — 근거: `sessions/2026-10-19T11-21-46/bess-structural-analyst.md`
+- ❌ 구조해석 세션에서 변압기 사양을 **"Class H 또는 Class AE 등급의 고효율 변압기"**, 용량 **"5 MW~10 MW"**, 국내 인증 **"KEMA, KEMA-Korea"** 로 결론 → ✅ Class H는 **절연 내열등급(180 °C, IEC 60085)** 이지 효율 등급이 아니고, 변압기 용량 단위는 **MVA·kVA**다. KEMA는 네덜란드 시험소(현 KEMA Labs)이며 'KEMA-Korea' 인증은 확인되지 않는다. 변압기 사양·인증은 transformer-expert 소관이며 구조해석은 **변압기 중량·무게중심을 하중으로 받아 기초·앵커 DCR·내진**을 판정한다(역할 경계, 2026-09-22 변압기 항목의 재발) — 근거: `sessions/2026-10-19T18-07-45/bess-structural-analyst.md`

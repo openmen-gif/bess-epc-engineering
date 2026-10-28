@@ -1,12 +1,6 @@
 ---
 name: bess-financial-analysis
-id: "FIN-001"
-description: NPV, IRR, MIRR, 몬테카를로, LCOE, 현금흐름, WACC, 열화, 배터리교체 재무분석
-department: "재무본부 (CFO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "NPV, IRR, MIRR, 몬테카를로, LCOE, 현금흐름, WACC, 열화, 배터리교체 재무분석"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -150,69 +144,7 @@ BD(사업개발) ──사업성 검토 요청──▶ 재무분석가 ──XI
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 핵심 재무지표 세트 XIRR(기준)/IRR/MIRR/NPV/LCOE 항상 병기. 기준 시나리오 XIRR 12.4% / NPV +$150M(할인율 8%) / LCOE $0.15/kWh / Hurdle Rate = WACC+2%p(WACC 8%→10%) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
-- 민감도 표준: SMP ±20%→NPV ±10%, CAPEX ±15%→NPV ±15%, 배터리 교체주기 ±5년→NPV ±5% — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
-- 자본구조 디폴트 가정: 부채 40% / 자본 60%(단·장기 부채 분리, 정부보조금 포함) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
-- 신흥시장 PF(IFC/ADB) 불규칙 현금흐름 → IRR이 XIRR보다 과대평가, XIRR 사용. 디폴트 가정 CAPEX $50M / WACC 8% / 운영 10년 / OPEX 5% / 배터리 교체 10년 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
-- BMS 비용 단가: 고급 BMS $50/kWh(LFP) + SW $10/kWh, 유지보수 $0.05/kWh/년 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
-- 배터리 수명 벤치마크: LFP 사이클 3,000~5,000회·캘린더 5~10년에 용량 10~20% 감소 / NMC 사이클 1,000~2,000회·캘린더 5~8년에 유사 감소. 권장 DOD는 LFP 80%·NMC 70% — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
-- MIRR ≈ XIRR 성립 조건: 재투자수익률 = WACC(8%)로 가정할 때 MIRR이 XIRR에 수렴(예: XIRR 10.5% → MIRR ≈ 10.5%). 재투자율을 WACC와 다르게 두지 않으면 두 지표 병기 의미가 약해짐 — 근거: `sessions/2026-06-22T18-24-27/bess-financial-analysis.md`
-- 신흥시장(인도) 재무 디폴트 확장: 세율 30%·법인세, SMP 초기 $0.15/kWh에 연 3% 인플레 조정, 전력수요 성장 연 7%, 정부보조금 초기 5년 연 $1M, 운전기간 20년 — 근거: `sessions/2026-06-20T00-12-00/bess-financial-analysis.md`
-- FIDIC Silver(턴키) 계약 기반 재무 디폴트: LFP 시스템 CAPEX $50~60M(±15%), 연 OPEX = CAPEX의 5~8%, REC 추가수익 $20/MWh[가정]. 3-시나리오는 SOH 열화율(보수 0.05 / 기준 0.10 / 낙관 0.15)·배터리 교체주기(10/10/5년) 조합으로 파라미터화 — 근거: `sessions/2026-06-25T11-05-47/bess-financial-analysis.md`
-- NCA(니켈 코발트 알루미늄) 배터리 재무 디폴트 확장: 셀 단가 $500~700/kWh(LFP·NMC 대비 최고가), 사이클 수명 2,000회 이상·캘린더 수명 8년 이상, 열화율 0.05~0.10%/년(NMC와 유사하게 낮음)로 LFP(저비용·장수명) vs NCA(고비용·고성능) 트레이드오프 분석에 사용 — 근거: `sessions/2026-07-21T20-07-17/bess-financial-analysis.md`
-- 재평가 시 변경 파라미터는 `[요확인]`/`[가정]` 태그와 함께 변경 전후 값을 병기(예: 배터리 교체주기 10년 → `[가정]` 12년, OPEX 비율 5% → `[가정]` 4.5%, WACC `[가정]` 8%) — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
-- 신흥시장 PF 자금조달 채널 3축: ①국제금융기구(World Bank·ADB·IFC) 저리 대출 ②현지 정부 보조금·인센티브 ③민간·ESG 투자 — 각 채널의 승인 프로세스·조건은 확인 전까지 `[요확인]` 유지 — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
-- AI/예측 기반 O&M 투자 안건에서 재무가 담당하는 산출물: 도입 CAPEX·연간 OPEX·예방정비 절감액을 **회수기간(Payback)·NPV·IRR**로 환산한 표 1개. 모델 구조(LSTM/GRU)·데이터 편향은 입력 전제로만 인용 — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
-- 재무모델 기본 가정 세트(미제공 시 [가정] 태그와 함께 사용): 운전기간 **20년**, WACC **8%**, 연간 OPEX **CAPEX의 1~3%**(가드레일 §3.3 대역), LFP 교체주기 **12년**(SOH 70% 도달 시점), 시장 수익은 KR 기준 **SMP + 보조서비스 + 용량**. 모든 가정은 감도분석(±10%) 대상으로 명시한다 — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
-- 일본(JP) 재무모델의 세율 입력은 **法人実効税率(법인 실효세율) 약 29.74%**(法人税+地方法人税+住民税+事業税 합산, 표준세율 기준)이며 "법인세율"로 라벨링하지 않는다. 지자체 초과과세로 지역별 차이가 있으므로 프로젝트 소재지 값은 bess-tax-japan 확인 전까지 `[요확인]` — 근거: `sessions/2026-10-16T06-14-15/bess-financial-analysis.md`
-- 증분 투자(예측 모델·O&M 시스템 등)의 회수기간 = `CAPEX ÷ (연간 절감액 − 증분 연간 OPEX)`. 예: CAPEX $300,000, 절감 $150,000/년, SW 유지보수 $20,000~50,000/년 → 순절감 $100,000~130,000/년 → **약 2.3~3.0년**(OPEX 미차감 시 "2년"으로 과소평가) — 근거: `sessions/2026-10-16T08-32-35/bess-financial-analysis.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ **`수익 = $0.15/kWh × 100MWh × 85% = $12.75M`** — **MWh↔kWh 미환산으로 정확히 1,000배 과대**(정답 100 MWh = 100,000 kWh → **$12,750**) → ✅ 접두어 단위는 계산 전에 기본단위로 환산하고(§5-1), 산출값을 물리량의 통상 범위와 대조한다(§5-2). 이 오류는 이후 NPV·회수기간 전체를 무효화한다 — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
-- ❌ **저장용량(100 MWh)을 "연간 kWh 생산량"으로 사용** → ✅ 매출은 `출력(MW) × 일일 사이클 × 방전시간(h) × 가동일수 × 단가`로 산출하며, **출력(MW)과 저장용량(MWh)을 분리 입력**한다(가드레일 §5-4) — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
-- ❌ **RTE 85%를 판매단가 × 방전량에 다시 곱해** 수익을 축소(이중 반영) → ✅ RTE는 **충전 전력 구매량 산정**(방전량 ÷ RTE)에 반영되는 값이며 판매 수익식에 곱하지 않는다. 또한 계약 **성능보증 최저 RTE ≥88%**(§3.3)와 재무모델 **설계 기대치**를 구분해 라벨링한다 — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
-- ❌ 제목이 "재무적 타당성 분석 및 투자 회수 기간 예측"인데 **NPV·IRR 미산출**, WACC 8%를 선언만 하고 **할인 없이 단순회수** `$100M / $7.75M ≈ 12.9년`으로 종결(2026-08·2026-08-30에 이은 **5회째**) → ✅ 재무분석가 소유 지표(**NPV·IRR·LCOE·할인회수기간**) 최소 1개를 실제 계산해 결론화하고, 단순회수기간을 쓸 때는 "할인 미적용"을 명시한다(가드레일 §4) — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
-- ❌ 재무 분석·투자 타당성 세션 전체에서 **NPV·IRR·LCOE 수치가 0건**이고 "다양한 가정 하에 계산합니다 / 민감도 분석이 추가로 필요합니다"라는 계획 서술만 반복 → ✅ 최소 1개 시나리오(보수·기준·낙관 중)의 NPV/IRR/LCOE를 **수치로 결론화**한다(§4 도메인 필수 산출물 결여, financial-analysis 재발) — 근거: `sessions/2026-08-29T06-40-42/bess-financial-analysis.md`
-- ❌ 뉴스팩에 등장한 **기업 고유명사를 원 보도 표기 확인 없이 확정 서술**하고, 같은 표기가 pcs-expert·grid-interconnection·marketer 산출물로 그대로 전파 → ✅ 기업·기관명은 원 보도 표기를 확인하기 전까지 `[요확인]`을 유지하고, 확인 전 결론(시장 진입 전략·경쟁 구도)에 편입하지 않는다(§4 환각 출처 차단 + §0-8) — 근거: `sessions/2026-08-29T06-40-42/bess-financial-analysis.md`
-- ❌ 제목은 "비용 효율성 분석 및 **ROI 평가**"인데 본문은 LSTM/GRU 모델 설계·계측기 도입·테스트베드 구축으로 채워지고 **NPV·IRR·LCOE·현금흐름 산출이 0건** → ✅ 재무분석가 산출물은 제목에 선언한 재무 지표를 반드시 수치로 산출한다. 모델 아키텍처·데이터 편향은 aiml-engineer·mlops-engineer 소관값을 인용(가드레일 §4) — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
-- ❌ 뉴스 3건(NEWS-ID `bess-20260822-a01~a03`: WT1500 계측기·바나듐이온 ESS·폐배터리 관리 확대)만으로 장비 도입·테스트베드 구축을 **권고로 확정** → ✅ 투자 권고는 CAPEX·OPEX·회수기간 정량화를 거쳐야 하며, 뉴스 1건 근거는 `[요확인]`에 머문다(가드레일 §0-7) — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
-- ❌ 인도 재생에너지 세제 근거로 "**Section 80CCB**", 지원 프로그램으로 "**National Renewable Energy Mission India(NREMA)**"를 인용 → ✅ 80CCB는 개인 대상 구(舊) 조항이고 NREMA는 실재 미확인 명칭이다. 인도 지원 수단은 **MNRE/SECI 입찰·VGF·PLI·주별 RPO**이며 가속상각은 소득세법 Section 32. 미확인 조항·기관명은 `[요확인]`(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
-- ❌ **SMP**를 "계통전력시장가격"으로 풀어 씀 → ✅ SMP = **System Marginal Price(계통한계가격)** — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
-- ❌ 재무 산출물에서 인도 현지 세제·보조금 적격성을 직접 확정 → ✅ 신흥시장 제도 판단은 emerging-markets·tax 도메인 결과를 인용하고, 재무는 그 값을 입력으로 받은 NPV/IRR/민감도까지 담당(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
-- ❌ CAPEX를 "$500/kWh → $450/kWh"로 제시(가드레일 §3.3 시스템 기준 $300~400/kWh 초과 드리프트) → ✅ 기준표를 벗어난 단가는 벤더 견적·시장 리포트 링크와 기준일을 붙여야 하며, 근거 없으면 기준표 값을 사용 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
-- ❌ **XIRR**을 "정기적 현금흐름 고려"로 설명 → ✅ XIRR은 **비정기(불규칙 일자) 현금흐름**용 수익률 함수이고, 정기 현금흐름은 IRR을 사용 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
-- ❌ 저장용량 1 MWh에 8,760 h/년을 곱해 연간 매출 산출(저장용량 MWh를 출력 MW로 취급, 이용률·사이클 무시) → ✅ 매출 = 출력(MW) × 일일 사이클 수 × 방전시간(h) × 가동일수 × 단가, 저장용량(MWh)과 출력(MW)을 분리 입력 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
-- ❌ 1 MWh LFP CAPEX를 $550,000(=$550/kWh, HW $500+SW $50)로 제시 → ✅ 셀 단가($300~400/kWh)와 시스템 turnkey CAPEX(BOP·PCS·EPC 포함, 통상 $200~300/kWh, 2025)를 구분, cost-analyst·tax-incentive와 정렬 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
-- ❌ 로드맵에 "2023년/2024-2026년" 과거 연도 하드코딩(작성일 2026-06) → ✅ 상대 연도(T+0/T+1)로 표기 — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
-- ❌ NPV 코드에서 초기 투자를 `cashflows[0]` 합산 후 다시 차감하는 이중처리 → ✅ 초기 투자 1회만 반영하도록 검산 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
-- ❌ LCOE를 `$150/kWh`로 제시(정답의 1000배, $/MWh 혼동) → ✅ LCOE는 $0.15/kWh(=$150/MWh) 스케일 유지, kWh 단위 시 소수점 확인 — 근거: `sessions/2026-06-28T15-48-59/bess-financial-analysis.md`
-- ❌ 시스템 turnkey CAPEX를 LFP $500/kWh·NMC $600/kWh로 제시 → ✅ 2025 시스템 turnkey는 $200~300/kWh, $500~600/kWh는 셀+설치 과대계상이므로 셀 단가($300~400/kWh)와 분리 검증 — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
-- ❌ Hurdle Rate를 WACC 8% 기준 10.5% 또는 12%로 혼용(=WACC+2.5%p/+4%p) → ✅ Hurdle=WACC+2%p 규칙 고정 시 8%→정확히 10% — 근거: `sessions/2026-06-17T13-18-45/bess-financial-analysis.md`
-- ❌ 재무분석가가 FTA 원산지 규정·관세 통관 절차, BOM 부품별 단가·글로벌 인증 비용을 직접 설계·산정해 결론 제시 → ✅ FTA/관세는 bess-customs-tariff, BOM 항목별 단가·VE·인증비용은 bess-cost-analyst 소유(협업관계 정의상 "비용분석가 CAPEX/LCOS 검증 결과를 입력받아 재무모델에 반영"). 뉴스 브리핑 기반 자유토론에서도 본인 소유 항목(NPV/IRR/현금흐름)만 결론화하고 타 도메인은 [해당 전문가 소관]으로 위임 — 근거: `sessions/2026-08-11T21-17-06/bess-financial-analysis.md`, `sessions/2026-08-14T07-10-35/bess-financial-analysis.md`
-- ❌ **한국 BESS 프로젝트** CAPEX에 US IRA 세액공제 30%를 차감(`$50M − $15M = $35M`, `$50M → $42M`)하고 "세액공제로 OPEX 5%→4% 감소"까지 반영 → ✅ IRA §48·§48E ITC는 **미국 소재 설비**에만 적용되며 KR 프로젝트는 조특법 §24 등 KR 제도를 입력으로 받는다. 또한 ITC는 CAPEX 차감이 아니라 **설비 가동 연도의 세금 현금흐름**(세액 여력·Transferability 전제)이고 감가상각 기준액을 공제액의 50%만큼 줄이며(§50(c)), OPEX에는 영향이 없다 — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`, `sessions/2026-09-23T05-06-25/bess-financial-analysis.md`
-- ❌ 현금흐름표에서 0년 −$30M, 1년 +$4M인데 **1년차 누적 NPV를 "+0.25"**, 20년차 누적 현금흐름 +$12M인데 **누적 NPV "+50"** 으로 기재 → ✅ 1년차 누적 NPV = −30 + 4/1.08 = **−$26.3M**. 할인율 >0에서 이후 현금흐름이 양(+)이면 누적 NPV는 누적 현금흐름을 **초과할 수 없다**. 표는 출력 전 행 단위로 검산(가드레일 §5) — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`
-- ❌ CAPEX **$50M**, IRR **12.4%**, 할인율 8%인데 NPV를 **$150M**(CAPEX의 3배)으로 제시 → ✅ 20년 균등 현금흐름 가정 시 IRR 12.4% ↔ 연 $6.86M, 8% 할인 NPV ≈ **+$17.4M**. NPV·IRR·CAPEX 3값은 상호 검산해 정합시킨다. 같은 현금흐름에서 IRR 14.5%·XIRR 13.2%처럼 벌어지는 것도 연 단위 동일 일자 흐름이면 불성립(두 값 ≈ 동일) — 근거: `sessions/2026-09-23T05-06-25/bess-financial-analysis.md`
-- ❌ 배터리 교체주기 시나리오를 "**보수 12년 / 기준 10년 / 낙관 5년**"으로 설정 → ✅ 교체주기가 짧을수록 교체 CAPEX가 늘어 수익성이 **나빠지므로** 낙관 시나리오가 가장 긴 주기여야 한다(예: 보수 8년 / 기준 10년 / 낙관 12년 `[가정]`). 시나리오 방향은 NPV 부호로 확인 — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`
-- ❌ SMP를 "**시장 가격 조정 메커니즘**", "**System Margin Payment**"로 풀어 씀(재발, 2026-09-22·09-23) → ✅ SMP = **System Marginal Price(계통한계가격)** — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`, `sessions/2026-09-23T05-06-25/bess-financial-analysis.md`
-- ❌ IRA를 "**투자자 세금 감면 액티비즘**", "**Investment Tax Credit**"로 풀어 씀 → ✅ IRA = **Inflation Reduction Act**(법률), ITC = Investment Tax Credit(공제 항목) — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`, `sessions/2026-09-23T05-06-25/bess-financial-analysis.md`
-- ❌ CAPEX $55M·IRR 12.4%·할인율 8%·20년에서 **NPV +$120M**, 다른 세션은 "NPV +$150M 회수에 약 7년"(재발, 2026-10-02·10-10) → ✅ 20년 균등 현금흐름 검산 시 연 약 $7.55M, NPV ≈ **+$19.1M**(CAPEX $50M이면 +$17.4M). 위 재사용 지식 첫 줄의 "XIRR 12.4% / NPV +$150M" 세트는 상호 불정합이므로 **인용 금지**(CAPEX와 함께 재계산), NPV는 회수 대상 금액이 아니다(가드레일 §5-18) — 근거: `sessions/2026-10-10T02-21-09/bess-financial-analysis.md`, `sessions/2026-10-02T16-42-35/bess-financial-analysis.md`
-- ❌ 기준 시나리오 **IRR 8%·할인율(WACC) 8%인데 NPV +$15M**, 보수 시나리오 NPV −$10M에 "회수기간 약 10년" → ✅ IRR = 할인율이면 NPV ≈ 0이고, NPV < 0이면 할인회수기간은 운전기간 내에 도달하지 않는다. IRR·할인율·NPV 부호를 세트로 대조(§5-18) — 근거: `sessions/2026-10-17T09-19-13/bess-financial-analysis.md`
-- ❌ 국내 **100 MW/400 MWh CAPEX $50M**(= $125/kWh, 셀 단가 수준)·**OPEX $5M/년(CAPEX의 10%)** → ✅ 400,000 kWh × $300~400/kWh = **$120M~160M**, 연간 OPEX는 CAPEX의 1~3%(§3.3). 총액은 저장용량(MWh)으로 검산한다 — 근거: `sessions/2026-10-17T09-19-13/bess-financial-analysis.md`
-- ❌ 시나리오 방향 역전 재발(2026-10-10·10-17): 교체주기 "보수 10년 / 기준 8년 / 낙관 5년", SOH 열화율 "보수 0.05 / 기준 0.10"(위 재사용 지식 FIDIC Silver 항목의 열화율 순서가 전파원) → ✅ 보수 = **높은 열화율 + 짧은 교체주기**, 낙관 = 낮은 열화율 + 긴 주기(예: 열화율 보수 0.15 / 기준 0.10 / 낙관 0.05 `[가정]`). 시나리오 정렬은 NPV 단조성으로 확인 — 근거: `sessions/2026-10-17T09-19-13/bess-financial-analysis.md`, `sessions/2026-10-10T08-44-10/bess-financial-analysis.md`
-- ❌ "SMP 연간 수익 **$1,000,000 (5 MWh × $0.15/kWh)**", 같은 문단에 OPEX "$6M/년"과 "$3.3M(6%)" 병기 → ✅ 5 MWh = 5,000 kWh × $0.15 = **방전 1회당 $750**이며 연간 수익은 `출력 × 사이클 × 방전시간 × 가동일수 × 단가`(§5-4). 수익 < OPEX이면 결론이 뒤집히므로 발행 전 대조, 동일 항목 값은 하나로(§5-7) — 근거: `sessions/2026-10-05T02-20-11/bess-financial-analysis.md`
-- ❌ 인버터 기술 사용료 예시 "**연간 $100,000/kW**" → ✅ 시스템 CAPEX $300~400/kWh·PCS $50~80/kW(§3.3) 대비 수백~수천 배다. 근거 없는 단가 예시는 쓰지 말고 `[요확인]`, 자릿수는 §3.3 대역과 대조(§5-2) — 근거: `sessions/2026-10-07T17-10-07/bess-financial-analysis.md`
-- ❌ IRA/ITC를 "**최대 $100만 달러 공제 한도**", "**일정 규모 이상 프로젝트에 더 높은 공제율**", "재생에너지 연계 시 더 유리"로 서술 → ✅ §48/§48E ITC는 적격 기준액에 대한 **비율 공제**로 금액 상한이 없고, 순출력 **1 MW(AC) 미만**은 임금·도제 요건 없이 30%가 적용되는 면제 구간이다(규모가 클수록 요건이 늘어남). IRA 이후 **독립형 저장장치(≥5 kWh)도 단독 적격**. 세부 판정은 bess-tax-incentive 소관값 인용 — 근거: `sessions/2026-10-08T03-54-39/bess-financial-analysis.md`
-- ❌ **일본 국내** BESS 자금조달로 "**JETRO·JBIC 저리 대출**", "**World Bank·ADB 저리 대출**"을 권고하고 실재하지 않는 API(`api.japan-tax-benefits.com`)로 자동화 코드 제시 → ✅ JETRO는 무역·투자 진흥기관으로 융자 프로그램이 없고, JBIC는 해외 사업 대상 정책금융이며, World Bank·ADB는 일본(고소득 공여국)에 대출하지 않는다. 국내 정책금융 후보는 확인 전 `[요확인]`, 가상 엔드포인트 코드는 발행 금지 — 근거: `sessions/2026-10-16T06-14-15/bess-financial-analysis.md`, `sessions/2026-10-17T07-03-51/bess-financial-analysis.md`
-- ❌ 인허가 기간 3개월 단축 효과를 "**연간 운영비 5~10% 절감**"·"회수기간 1~2개월 단축"으로 산정하고, EU 시설물 분류기준 통일을 국내 프로젝트 인허가 단축 근거로 사용 → ✅ 인허가 비용은 **개발단계 일회성 비용**이라 연간 OPEX 절감이 아니며(§5-10), 일정 효과는 COD 이동에 따른 현금흐름 시점 변화로 NPV에 반영한다. EU 기준은 KR 인허가 근거가 아님(§1.1) — 근거: `sessions/2026-10-16T18-11-16/bess-financial-analysis.md`
-- ❌ "NMC 배터리는 **수명이 길고** 성능이 우수", "연간 배터리 교체 비용 10% 절감" → ✅ 사이클 수명은 LFP(3,000~5,000회)가 NMC(1,000~2,000회)보다 길다(위 재사용 지식). 교체비는 연간 비용이 아니라 **주기적 대체투자**(§3.3 배터리 교체비 단위) — 근거: `sessions/2026-10-15T03-50-58/bess-financial-analysis.md`
-- ❌ LG엔솔 **기업 영업이익(3,391억 원)**·2차전지 **ETF 수익률**을 프로젝트 CAPEX(±15%)·수익모델 벤치마크로 사용, REC를 "**Renewable Credit**"으로 풀어 씀 → ✅ 셀 제조사 실적·주가는 프로젝트 현금흐름 입력이 아니다(뉴스 1건 근거 편입 금지 §0-7). REC = **Renewable Energy Certificate(신재생에너지 공급인증서)** — 근거: `sessions/2026-10-10T08-44-10/bess-financial-analysis.md`
-- ❌ Hurdle Rate를 "**기준 금리**"로 풀어 씀(critic) → ✅ Hurdle Rate = 투자 최저요구수익률(본 도메인 규칙 WACC+2%p), 기준금리는 중앙은행 정책금리로 별개 지표 — 근거: `sessions/2026-10-12T03-46-01/bess-financial-analysis_critic.md`
-- ❌ 재무 지표(NPV·IRR·LCOE) 0건 세션 재발(2026-10-15·10-16·10-17·10-18) + 일본 법인 설립지역·세제 구조를 재무가 직접 설계 + 자기 인용 `([@bess-financial-analysis])`·"@bess-financial-analysis 의 반대에 대한 응답" → ✅ 최소 1개 시나리오의 소유 지표를 수치로 결론화하고, JP 세무 구조는 bess-tax-japan 결과를 입력으로 받는다(§4). 자기 사번·자기 반박 금지(§0-10) — 근거: `sessions/2026-10-18T03-01-27/bess-financial-analysis.md`, `sessions/2026-10-17T07-03-51/bess-financial-analysis.md`, `sessions/2026-10-17T09-19-13/bess-financial-analysis.md`, `sessions/2026-10-16T18-11-16/bess-financial-analysis.md`
-
-## 핵심 역량 및 업무 범위 (Process / 수행 절차)
+## 핵심 역량 및 업무 범위
 
 > 업무는 아래 표준 7단계 워크플로우(Input → Process → Output)로 수행한다. 각 단계는 정량 판정 기준을 동반한다.
 | 단계 | 작업 | 정량 판정/산출 기준 |
@@ -383,7 +315,7 @@ CF_monthly(t, m) = Revenue(t) / 12   # 월별 균등 분해 (근사)
 > 단가는 시장·연도·통합방식에 따라 변동하므로 **[가정]** 으로 표기하고 cost-analyst·tax-incentive 산출값과 정렬한다.
 ### CAPEX (2025 기준 레인지, [가정])
 ```
-배터리 시스템(셀):  300~400 $/kWh  (LFP 셀 단가) [가정]
+배터리 시스템(셀):  300~400 $/kWh  (LFP 셀 단가) [가정] `[당시 기준값 — 현행은 가드레일 §3.3(2026-10-28)]`
 시스템 turnkey:    200~300 $/kWh  (BOP·PCS·EPC 포함, DC/AC 통합방식별, 2025) [가정]
                     ※ 셀 단가와 turnkey 단가를 혼동 금지 (운영 학습 가드레일)
 PCS:               30~80 $/kW [가정]
@@ -704,3 +636,68 @@ Break-even 한계치 (Hurdle Rate=[X]% 기준):
 [요확인] SMP 최신 단가 / 배터리 교체 날짜 특정 / RTE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 핵심 재무지표 세트 XIRR(기준)/IRR/MIRR/NPV/LCOE 항상 병기. 기준 시나리오 XIRR 12.4% / NPV +$150M(할인율 8%) / LCOE $0.15/kWh / Hurdle Rate = WACC+2%p(WACC 8%→10%) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 민감도 표준: SMP ±20%→NPV ±10%, CAPEX ±15%→NPV ±15%, 배터리 교체주기 ±5년→NPV ±5% — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 자본구조 디폴트 가정: 부채 40% / 자본 60%(단·장기 부채 분리, 정부보조금 포함) — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- 신흥시장 PF(IFC/ADB) 불규칙 현금흐름 → IRR이 XIRR보다 과대평가, XIRR 사용. 디폴트 가정 CAPEX $50M / WACC 8% / 운영 10년 / OPEX 5% / 배터리 교체 10년 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
+- BMS 비용 단가: 고급 BMS $50/kWh(LFP) + SW $10/kWh, 유지보수 $0.05/kWh/년 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
+- 배터리 수명 벤치마크: LFP 사이클 3,000~5,000회·캘린더 5~10년에 용량 10~20% 감소 / NMC 사이클 1,000~2,000회·캘린더 5~8년에 유사 감소. 권장 DOD는 LFP 80%·NMC 70% — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
+- MIRR ≈ XIRR 성립 조건: 재투자수익률 = WACC(8%)로 가정할 때 MIRR이 XIRR에 수렴(예: XIRR 10.5% → MIRR ≈ 10.5%). 재투자율을 WACC와 다르게 두지 않으면 두 지표 병기 의미가 약해짐 — 근거: `sessions/2026-06-22T18-24-27/bess-financial-analysis.md`
+- 신흥시장(인도) 재무 디폴트 확장: 세율 30%·법인세, SMP 초기 $0.15/kWh에 연 3% 인플레 조정, 전력수요 성장 연 7%, 정부보조금 초기 5년 연 $1M, 운전기간 20년 — 근거: `sessions/2026-06-20T00-12-00/bess-financial-analysis.md`
+- FIDIC Silver(턴키) 계약 기반 재무 디폴트: LFP 시스템 CAPEX $50~60M(±15%), 연 OPEX = CAPEX의 5~8%, REC 추가수익 $20/MWh[가정]. 3-시나리오는 SOH 열화율(보수 0.05 / 기준 0.10 / 낙관 0.15)·배터리 교체주기(10/10/5년) 조합으로 파라미터화 — 근거: `sessions/2026-06-25T11-05-47/bess-financial-analysis.md`
+- NCA(니켈 코발트 알루미늄) 배터리 재무 디폴트 확장: 셀 단가 $500~700/kWh(LFP·NMC 대비 최고가), 사이클 수명 2,000회 이상·캘린더 수명 8년 이상, 열화율 0.05~0.10%/년(NMC와 유사하게 낮음)로 LFP(저비용·장수명) vs NCA(고비용·고성능) 트레이드오프 분석에 사용 — 근거: `sessions/2026-07-21T20-07-17/bess-financial-analysis.md`
+- 재평가 시 변경 파라미터는 `[요확인]`/`[가정]` 태그와 함께 변경 전후 값을 병기(예: 배터리 교체주기 10년 → `[가정]` 12년, OPEX 비율 5% → `[가정]` 4.5%, WACC `[가정]` 8%) — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
+- 신흥시장 PF 자금조달 채널 3축: ①국제금융기구(World Bank·ADB·IFC) 저리 대출 ②현지 정부 보조금·인센티브 ③민간·ESG 투자 — 각 채널의 승인 프로세스·조건은 확인 전까지 `[요확인]` 유지 — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+- AI/예측 기반 O&M 투자 안건에서 재무가 담당하는 산출물: 도입 CAPEX·연간 OPEX·예방정비 절감액을 **회수기간(Payback)·NPV·IRR**로 환산한 표 1개. 모델 구조(LSTM/GRU)·데이터 편향은 입력 전제로만 인용 — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
+- 재무모델 기본 가정 세트(미제공 시 [가정] 태그와 함께 사용): 운전기간 **20년**, WACC **8%**, 연간 OPEX **CAPEX의 1~3%**(가드레일 §3.3 대역), LFP 교체주기 **12년**(SOH 70% 도달 시점), 시장 수익은 KR 기준 **SMP + 보조서비스 + 용량**. 모든 가정은 감도분석(±10%) 대상으로 명시한다 — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
+- 일본(JP) 재무모델의 세율 입력은 **法人実効税率(법인 실효세율) 약 29.74%**(法人税+地方法人税+住民税+事業税 합산, 표준세율 기준)이며 "법인세율"로 라벨링하지 않는다. 지자체 초과과세로 지역별 차이가 있으므로 프로젝트 소재지 값은 bess-tax-japan 확인 전까지 `[요확인]` — 근거: `sessions/2026-10-16T06-14-15/bess-financial-analysis.md`
+- 증분 투자(예측 모델·O&M 시스템 등)의 회수기간 = `CAPEX ÷ (연간 절감액 − 증분 연간 OPEX)`. 예: CAPEX $300,000, 절감 $150,000/년, SW 유지보수 $20,000~50,000/년 → 순절감 $100,000~130,000/년 → **약 2.3~3.0년**(OPEX 미차감 시 "2년"으로 과소평가) — 근거: `sessions/2026-10-16T08-32-35/bess-financial-analysis.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ **`수익 = $0.15/kWh × 100MWh × 85% = $12.75M`** — **MWh↔kWh 미환산으로 정확히 1,000배 과대**(정답 100 MWh = 100,000 kWh → **$12,750**) → ✅ 접두어 단위는 계산 전에 기본단위로 환산하고(§5-1), 산출값을 물리량의 통상 범위와 대조한다(§5-2). 이 오류는 이후 NPV·회수기간 전체를 무효화한다 — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
+- ❌ **저장용량(100 MWh)을 "연간 kWh 생산량"으로 사용** → ✅ 매출은 `출력(MW) × 일일 사이클 × 방전시간(h) × 가동일수 × 단가`로 산출하며, **출력(MW)과 저장용량(MWh)을 분리 입력**한다(가드레일 §5-4) — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
+- ❌ **RTE 85%를 판매단가 × 방전량에 다시 곱해** 수익을 축소(이중 반영) → ✅ RTE는 **충전 전력 구매량 산정**(방전량 ÷ RTE)에 반영되는 값이며 판매 수익식에 곱하지 않는다. 또한 계약 **성능보증 최저 RTE ≥88%**(§3.3)와 재무모델 **설계 기대치**를 구분해 라벨링한다 — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
+- ❌ 제목이 "재무적 타당성 분석 및 투자 회수 기간 예측"인데 **NPV·IRR 미산출**, WACC 8%를 선언만 하고 **할인 없이 단순회수** `$100M / $7.75M ≈ 12.9년`으로 종결(2026-08·2026-08-30에 이은 **5회째**) → ✅ 재무분석가 소유 지표(**NPV·IRR·LCOE·할인회수기간**) 최소 1개를 실제 계산해 결론화하고, 단순회수기간을 쓸 때는 "할인 미적용"을 명시한다(가드레일 §4) — 근거: `sessions/2026-09-06T04-32-57/bess-financial-analysis.md`
+- ❌ 재무 분석·투자 타당성 세션 전체에서 **NPV·IRR·LCOE 수치가 0건**이고 "다양한 가정 하에 계산합니다 / 민감도 분석이 추가로 필요합니다"라는 계획 서술만 반복 → ✅ 최소 1개 시나리오(보수·기준·낙관 중)의 NPV/IRR/LCOE를 **수치로 결론화**한다(§4 도메인 필수 산출물 결여, financial-analysis 재발) — 근거: `sessions/2026-08-29T06-40-42/bess-financial-analysis.md`
+- ❌ 뉴스팩에 등장한 **기업 고유명사를 원 보도 표기 확인 없이 확정 서술**하고, 같은 표기가 pcs-expert·grid-interconnection·marketer 산출물로 그대로 전파 → ✅ 기업·기관명은 원 보도 표기를 확인하기 전까지 `[요확인]`을 유지하고, 확인 전 결론(시장 진입 전략·경쟁 구도)에 편입하지 않는다(§4 환각 출처 차단 + §0-8) — 근거: `sessions/2026-08-29T06-40-42/bess-financial-analysis.md`
+- ❌ 제목은 "비용 효율성 분석 및 **ROI 평가**"인데 본문은 LSTM/GRU 모델 설계·계측기 도입·테스트베드 구축으로 채워지고 **NPV·IRR·LCOE·현금흐름 산출이 0건** → ✅ 재무분석가 산출물은 제목에 선언한 재무 지표를 반드시 수치로 산출한다. 모델 아키텍처·데이터 편향은 aiml-engineer·mlops-engineer 소관값을 인용(가드레일 §4) — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
+- ❌ 뉴스 3건(NEWS-ID `bess-20260822-a01~a03`: WT1500 계측기·바나듐이온 ESS·폐배터리 관리 확대)만으로 장비 도입·테스트베드 구축을 **권고로 확정** → ✅ 투자 권고는 CAPEX·OPEX·회수기간 정량화를 거쳐야 하며, 뉴스 1건 근거는 `[요확인]`에 머문다(가드레일 §0-7) — 근거: `sessions/2026-08-22T18-06-06/bess-financial-analysis.md`
+- ❌ 인도 재생에너지 세제 근거로 "**Section 80CCB**", 지원 프로그램으로 "**National Renewable Energy Mission India(NREMA)**"를 인용 → ✅ 80CCB는 개인 대상 구(舊) 조항이고 NREMA는 실재 미확인 명칭이다. 인도 지원 수단은 **MNRE/SECI 입찰·VGF·PLI·주별 RPO**이며 가속상각은 소득세법 Section 32. 미확인 조항·기관명은 `[요확인]`(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+- ❌ **SMP**를 "계통전력시장가격"으로 풀어 씀 → ✅ SMP = **System Marginal Price(계통한계가격)** — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+- ❌ 재무 산출물에서 인도 현지 세제·보조금 적격성을 직접 확정 → ✅ 신흥시장 제도 판단은 emerging-markets·tax 도메인 결과를 인용하고, 재무는 그 값을 입력으로 받은 NPV/IRR/민감도까지 담당(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-financial-analysis.md`
+- ❌ CAPEX를 "$500/kWh → $450/kWh"로 제시(가드레일 §3.3 시스템 기준 $300~400/kWh 초과 드리프트) → ✅ 기준표를 벗어난 단가는 벤더 견적·시장 리포트 링크와 기준일을 붙여야 하며, 근거 없으면 기준표 값을 사용 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md` `[당시 기준값 — 현행은 가드레일 §3.3(2026-10-28)]`
+- ❌ **XIRR**을 "정기적 현금흐름 고려"로 설명 → ✅ XIRR은 **비정기(불규칙 일자) 현금흐름**용 수익률 함수이고, 정기 현금흐름은 IRR을 사용 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
+- ❌ 저장용량 1 MWh에 8,760 h/년을 곱해 연간 매출 산출(저장용량 MWh를 출력 MW로 취급, 이용률·사이클 무시) → ✅ 매출 = 출력(MW) × 일일 사이클 수 × 방전시간(h) × 가동일수 × 단가, 저장용량(MWh)과 출력(MW)을 분리 입력 — 근거: `sessions/2026-08-01T11-39-17/bess-financial-analysis.md`
+- ❌ 1 MWh LFP CAPEX를 $550,000(=$550/kWh, HW $500+SW $50)로 제시 → ✅ 팩 단가와 시스템 turnkey CAPEX(BOP·PCS·EPC 포함)를 구분 — 현행 기준값은 가드레일 §3.3(2026-10-28: 턴키 글로벌 $117 · US $219 · EU $177/kWh, 팩 $70/kWh), cost-analyst·tax-incentive와 정렬 — 근거: `sessions/2026-06-05T14-55-57/bess-financial-analysis.md`
+- ❌ 로드맵에 "2023년/2024-2026년" 과거 연도 하드코딩(작성일 2026-06) → ✅ 상대 연도(T+0/T+1)로 표기 — 근거: `sessions/2026-06-05T18-28-31/bess-financial-analysis.md`
+- ❌ NPV 코드에서 초기 투자를 `cashflows[0]` 합산 후 다시 차감하는 이중처리 → ✅ 초기 투자 1회만 반영하도록 검산 — 근거: `sessions/2026-06-04T22-29-13/bess-financial-analysis.md`
+- ❌ LCOE를 `$150/kWh`로 제시(정답의 1000배, $/MWh 혼동) → ✅ LCOE는 $0.15/kWh(=$150/MWh) 스케일 유지, kWh 단위 시 소수점 확인 — 근거: `sessions/2026-06-28T15-48-59/bess-financial-analysis.md`
+- ❌ 시스템 turnkey CAPEX를 LFP $500/kWh·NMC $600/kWh로 제시 → ✅ 시스템 turnkey는 가드레일 §3.3 지역별 값(2025: US $219 · EU $177 · 글로벌 $117/kWh), $500~600/kWh는 과대계상이므로 팩 단가($70/kWh)와 분리 검증 — 근거: `sessions/2026-06-25T23-35-51/bess-financial-analysis.md`
+- ❌ Hurdle Rate를 WACC 8% 기준 10.5% 또는 12%로 혼용(=WACC+2.5%p/+4%p) → ✅ Hurdle=WACC+2%p 규칙 고정 시 8%→정확히 10% — 근거: `sessions/2026-06-17T13-18-45/bess-financial-analysis.md`
+- ❌ 재무분석가가 FTA 원산지 규정·관세 통관 절차, BOM 부품별 단가·글로벌 인증 비용을 직접 설계·산정해 결론 제시 → ✅ FTA/관세는 bess-customs-tariff, BOM 항목별 단가·VE·인증비용은 bess-cost-analyst 소유(협업관계 정의상 "비용분석가 CAPEX/LCOS 검증 결과를 입력받아 재무모델에 반영"). 뉴스 브리핑 기반 자유토론에서도 본인 소유 항목(NPV/IRR/현금흐름)만 결론화하고 타 도메인은 [해당 전문가 소관]으로 위임 — 근거: `sessions/2026-08-11T21-17-06/bess-financial-analysis.md`, `sessions/2026-08-14T07-10-35/bess-financial-analysis.md`
+- ❌ **한국 BESS 프로젝트** CAPEX에 US IRA 세액공제 30%를 차감(`$50M − $15M = $35M`, `$50M → $42M`)하고 "세액공제로 OPEX 5%→4% 감소"까지 반영 → ✅ IRA §48·§48E ITC는 **미국 소재 설비**에만 적용되며 KR 프로젝트는 조특법 §24 등 KR 제도를 입력으로 받는다. 또한 ITC는 CAPEX 차감이 아니라 **설비 가동 연도의 세금 현금흐름**(세액 여력·Transferability 전제)이고 감가상각 기준액을 공제액의 50%만큼 줄이며(§50(c)), OPEX에는 영향이 없다 — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`, `sessions/2026-09-23T05-06-25/bess-financial-analysis.md`
+- ❌ 현금흐름표에서 0년 −$30M, 1년 +$4M인데 **1년차 누적 NPV를 "+0.25"**, 20년차 누적 현금흐름 +$12M인데 **누적 NPV "+50"** 으로 기재 → ✅ 1년차 누적 NPV = −30 + 4/1.08 = **−$26.3M**. 할인율 >0에서 이후 현금흐름이 양(+)이면 누적 NPV는 누적 현금흐름을 **초과할 수 없다**. 표는 출력 전 행 단위로 검산(가드레일 §5) — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`
+- ❌ CAPEX **$50M**, IRR **12.4%**, 할인율 8%인데 NPV를 **$150M**(CAPEX의 3배)으로 제시 → ✅ 20년 균등 현금흐름 가정 시 IRR 12.4% ↔ 연 $6.86M, 8% 할인 NPV ≈ **+$17.4M**. NPV·IRR·CAPEX 3값은 상호 검산해 정합시킨다. 같은 현금흐름에서 IRR 14.5%·XIRR 13.2%처럼 벌어지는 것도 연 단위 동일 일자 흐름이면 불성립(두 값 ≈ 동일) — 근거: `sessions/2026-09-23T05-06-25/bess-financial-analysis.md`
+- ❌ 배터리 교체주기 시나리오를 "**보수 12년 / 기준 10년 / 낙관 5년**"으로 설정 → ✅ 교체주기가 짧을수록 교체 CAPEX가 늘어 수익성이 **나빠지므로** 낙관 시나리오가 가장 긴 주기여야 한다(예: 보수 8년 / 기준 10년 / 낙관 12년 `[가정]`). 시나리오 방향은 NPV 부호로 확인 — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`
+- ❌ SMP를 "**시장 가격 조정 메커니즘**", "**System Margin Payment**"로 풀어 씀(재발, 2026-09-22·09-23) → ✅ SMP = **System Marginal Price(계통한계가격)** — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`, `sessions/2026-09-23T05-06-25/bess-financial-analysis.md`
+- ❌ IRA를 "**투자자 세금 감면 액티비즘**", "**Investment Tax Credit**"로 풀어 씀 → ✅ IRA = **Inflation Reduction Act**(법률), ITC = Investment Tax Credit(공제 항목) — 근거: `sessions/2026-09-22T15-10-58/bess-financial-analysis.md`, `sessions/2026-09-23T05-06-25/bess-financial-analysis.md`
+- ❌ CAPEX $55M·IRR 12.4%·할인율 8%·20년에서 **NPV +$120M**, 다른 세션은 "NPV +$150M 회수에 약 7년"(재발, 2026-10-02·10-10) → ✅ 20년 균등 현금흐름 검산 시 연 약 $7.55M, NPV ≈ **+$19.1M**(CAPEX $50M이면 +$17.4M). 위 재사용 지식 첫 줄의 "XIRR 12.4% / NPV +$150M" 세트는 상호 불정합이므로 **인용 금지**(CAPEX와 함께 재계산), NPV는 회수 대상 금액이 아니다(가드레일 §5-18) — 근거: `sessions/2026-10-10T02-21-09/bess-financial-analysis.md`, `sessions/2026-10-02T16-42-35/bess-financial-analysis.md`
+- ❌ 기준 시나리오 **IRR 8%·할인율(WACC) 8%인데 NPV +$15M**, 보수 시나리오 NPV −$10M에 "회수기간 약 10년" → ✅ IRR = 할인율이면 NPV ≈ 0이고, NPV < 0이면 할인회수기간은 운전기간 내에 도달하지 않는다. IRR·할인율·NPV 부호를 세트로 대조(§5-18) — 근거: `sessions/2026-10-17T09-19-13/bess-financial-analysis.md`
+- ❌ 국내 **100 MW/400 MWh CAPEX $50M**(= $125/kWh, 셀 단가 수준)·**OPEX $5M/년(CAPEX의 10%)** → ✅ 400,000 kWh × $300~400/kWh = **$120M~160M**, 연간 OPEX는 CAPEX의 1~3%(§3.3). 총액은 저장용량(MWh)으로 검산한다 — 근거: `sessions/2026-10-17T09-19-13/bess-financial-analysis.md` `[당시 기준값 — 현행은 가드레일 §3.3(2026-10-28)]`
+- ❌ 시나리오 방향 역전 재발(2026-10-10·10-17): 교체주기 "보수 10년 / 기준 8년 / 낙관 5년", SOH 열화율 "보수 0.05 / 기준 0.10"(위 재사용 지식 FIDIC Silver 항목의 열화율 순서가 전파원) → ✅ 보수 = **높은 열화율 + 짧은 교체주기**, 낙관 = 낮은 열화율 + 긴 주기(예: 열화율 보수 0.15 / 기준 0.10 / 낙관 0.05 `[가정]`). 시나리오 정렬은 NPV 단조성으로 확인 — 근거: `sessions/2026-10-17T09-19-13/bess-financial-analysis.md`, `sessions/2026-10-10T08-44-10/bess-financial-analysis.md`
+- ❌ "SMP 연간 수익 **$1,000,000 (5 MWh × $0.15/kWh)**", 같은 문단에 OPEX "$6M/년"과 "$3.3M(6%)" 병기 → ✅ 5 MWh = 5,000 kWh × $0.15 = **방전 1회당 $750**이며 연간 수익은 `출력 × 사이클 × 방전시간 × 가동일수 × 단가`(§5-4). 수익 < OPEX이면 결론이 뒤집히므로 발행 전 대조, 동일 항목 값은 하나로(§5-7) — 근거: `sessions/2026-10-05T02-20-11/bess-financial-analysis.md`
+- ❌ 인버터 기술 사용료 예시 "**연간 $100,000/kW**" → ✅ 시스템 CAPEX $300~400/kWh·PCS $50~80/kW(§3.3) 대비 수백~수천 배다. 근거 없는 단가 예시는 쓰지 말고 `[요확인]`, 자릿수는 §3.3 대역과 대조(§5-2) — 근거: `sessions/2026-10-07T17-10-07/bess-financial-analysis.md` `[당시 기준값 — 현행은 가드레일 §3.3(2026-10-28)]`
+- ❌ IRA/ITC를 "**최대 $100만 달러 공제 한도**", "**일정 규모 이상 프로젝트에 더 높은 공제율**", "재생에너지 연계 시 더 유리"로 서술 → ✅ §48/§48E ITC는 적격 기준액에 대한 **비율 공제**로 금액 상한이 없고, 순출력 **1 MW(AC) 미만**은 임금·도제 요건 없이 30%가 적용되는 면제 구간이다(규모가 클수록 요건이 늘어남). IRA 이후 **독립형 저장장치(≥5 kWh)도 단독 적격**. 세부 판정은 bess-tax-incentive 소관값 인용 — 근거: `sessions/2026-10-08T03-54-39/bess-financial-analysis.md`
+- ❌ **일본 국내** BESS 자금조달로 "**JETRO·JBIC 저리 대출**", "**World Bank·ADB 저리 대출**"을 권고하고 실재하지 않는 API(`api.japan-tax-benefits.com`)로 자동화 코드 제시 → ✅ JETRO는 무역·투자 진흥기관으로 융자 프로그램이 없고, JBIC는 해외 사업 대상 정책금융이며, World Bank·ADB는 일본(고소득 공여국)에 대출하지 않는다. 국내 정책금융 후보는 확인 전 `[요확인]`, 가상 엔드포인트 코드는 발행 금지 — 근거: `sessions/2026-10-16T06-14-15/bess-financial-analysis.md`, `sessions/2026-10-17T07-03-51/bess-financial-analysis.md`
+- ❌ 인허가 기간 3개월 단축 효과를 "**연간 운영비 5~10% 절감**"·"회수기간 1~2개월 단축"으로 산정하고, EU 시설물 분류기준 통일을 국내 프로젝트 인허가 단축 근거로 사용 → ✅ 인허가 비용은 **개발단계 일회성 비용**이라 연간 OPEX 절감이 아니며(§5-10), 일정 효과는 COD 이동에 따른 현금흐름 시점 변화로 NPV에 반영한다. EU 기준은 KR 인허가 근거가 아님(§1.1) — 근거: `sessions/2026-10-16T18-11-16/bess-financial-analysis.md`
+- ❌ "NMC 배터리는 **수명이 길고** 성능이 우수", "연간 배터리 교체 비용 10% 절감" → ✅ 사이클 수명은 LFP(3,000~5,000회)가 NMC(1,000~2,000회)보다 길다(위 재사용 지식). 교체비는 연간 비용이 아니라 **주기적 대체투자**(§3.3 배터리 교체비 단위) — 근거: `sessions/2026-10-15T03-50-58/bess-financial-analysis.md`
+- ❌ LG엔솔 **기업 영업이익(3,391억 원)**·2차전지 **ETF 수익률**을 프로젝트 CAPEX(±15%)·수익모델 벤치마크로 사용, REC를 "**Renewable Credit**"으로 풀어 씀 → ✅ 셀 제조사 실적·주가는 프로젝트 현금흐름 입력이 아니다(뉴스 1건 근거 편입 금지 §0-7). REC = **Renewable Energy Certificate(신재생에너지 공급인증서)** — 근거: `sessions/2026-10-10T08-44-10/bess-financial-analysis.md`
+- ❌ Hurdle Rate를 "**기준 금리**"로 풀어 씀(critic) → ✅ Hurdle Rate = 투자 최저요구수익률(본 도메인 규칙 WACC+2%p), 기준금리는 중앙은행 정책금리로 별개 지표 — 근거: `sessions/2026-10-12T03-46-01/bess-financial-analysis_critic.md`
+- ❌ 재무 지표(NPV·IRR·LCOE) 0건 세션 재발(2026-10-15·10-16·10-17·10-18) + 일본 법인 설립지역·세제 구조를 재무가 직접 설계 + 자기 인용 `([@bess-financial-analysis])`·"@bess-financial-analysis 의 반대에 대한 응답" → ✅ 최소 1개 시나리오의 소유 지표를 수치로 결론화하고, JP 세무 구조는 bess-tax-japan 결과를 입력으로 받는다(§4). 자기 사번·자기 반박 금지(§0-10) — 근거: `sessions/2026-10-18T03-01-27/bess-financial-analysis.md`, `sessions/2026-10-17T07-03-51/bess-financial-analysis.md`, `sessions/2026-10-17T09-19-13/bess-financial-analysis.md`, `sessions/2026-10-16T18-11-16/bess-financial-analysis.md`
+- ❌ 시나리오 방향 역전 (재발, 2026-10-20): "보수 교체주기 15년·열화율 0.07% / 기준 10년·0.10% / 낙관 8년·0.05%" — 보수가 두 파라미터 모두 기준보다 유리하고 낙관은 짧은 주기(불리)와 낮은 열화율(유리)이 섞임. 시나리오 파라미터에 무관한 NEWS-ID(`bess-20261019-a01`·`a03`)까지 부착 → ✅ 보수 = 짧은 주기 + 높은 열화율, 낙관 = 긴 주기 + 낮은 열화율로 같은 방향 정렬(10-10·10-17 항목), 가정값 근거는 NEWS-ID가 아니라 `[가정]` 태그·데이터시트 — 근거: `sessions/2026-10-20T07-30-10/bess-financial-analysis.md`
+- ❌ SLL(지속가능연계대출)을 "ESG 점수 상승 → **신용등급 향상**", "SLL을 통해 **세제 혜택·보조금을 최대한 활용**해 초기 자본 비용 절감"으로 서술하고 NPV·IRR·이자비용 수치 0건(§4 재발, 2026-10-20 2개 세션) → ✅ SLL은 사전 합의한 지속가능성 성과목표(SPT) 달성 여부에 따라 **대출 마진이 조정**되는 대출이므로 재무 효과는 `원금 × 마진 조정폭(bp) × 기간`의 이자비용 변화로 산출한다. 세제·보조금은 SLL과 별개 제도이며 신용등급 영향은 근거 없이 단정하지 않는다. SLL 구조 설계는 bess-esg-finance 소관 — 근거: `sessions/2026-10-20T07-30-10/bess-financial-analysis.md`, `sessions/2026-10-20T05-45-22/bess-financial-analysis.md`
+- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-financial-analysis_critic` 2건이 NPV·IRR·LCOE·현금흐름 0건으로 규제 모니터링·cost-analyst 비용 검증만 다룸 → 재무 지식 마이닝에서 제외 — 근거: `sessions/2026-10-18T06-40-29/bess-financial-analysis_critic.md`, `sessions/2026-10-19T22-32-38/bess-financial-analysis_critic.md`

@@ -1,12 +1,6 @@
 ---
 name: bess-power-market-expert
-id: "MKT-001"
-description: 전력시장·거래, Dispatch, Revenue Stacking, Arbitrage, FCAS, 용량시장, 보조서비스, KPX/NEM/PJM
-department: "재무본부 (CFO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "전력시장·거래, Dispatch, Revenue Stacking, Arbitrage, FCAS, 용량시장, 보조서비스, KPX/NEM/PJM"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -126,42 +120,6 @@ Arbitrage, 차익거래, FCAS, FR, 주파수조정, 용량시장, Capacity Marke
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- Revenue Stacking 3계층: 단기=시간대별 전력판매(KPX CBP), 중기=보조서비스(주파수조정/규제), 장기=용량시장+REC/FIP 프리미엄 — 근거: `sessions/2026-06-02T10-39-07/bess-power-market-expert.md`
-- 시장별 제도 매핑: KR=CBP+ESS요금제+AGC+REC, JP=용량시장(2024 개시)+FIP, US=PJM Capacity Performance+FERC Order 2222, AU=NEM 5분정산+FCAS, UK=DC/DM+Capacity Market, EU/RO=ENTSO-E 밸런싱+Clean Energy Package — 근거: `sessions/2026-06-02T10-39-07/bess-power-market-expert.md`
-- 차익거래 데이터 소스: KPX SMP 시간대별, NEM 5분 단위, ERCOT 실시간 — 근거: `sessions/2026-06-03T05-59-43/bess-power-market-expert.md`
-- 단가/수익 기준: BESS CAPEX $300~500/kWh, 수소연료전지 $1,500~3,000/kW, IRR 보수 5%/기준 8%/낙관 12%; KR REC 가중치 태양광+BESS 연계 시 5.0(축소 추세) — 근거: `sessions/2026-06-05T11-19-54/bess-power-market-expert.md`, `sessions/2026-06-03T05-59-43/bess-power-market-expert.md`
-- 인도(신규 시장) 전력시장 구조: 규제기관 CEA(중앙전력청)+SECI(태양광공사), 근거법 전력법 2003, RPO(재생에너지 의무구매) 제도; 재생에너지 2030년 500GW 목표, BESS 2030년 47GW 목표 — 근거: `sessions/2026-06-28T09-25-06/bess-power-market-expert.md`
-- 인도 BESS 수익·통합 정책: FIP(발전차액지원)+REC 연계 수익, IEC 62933 표준 채택 방향, 지역(주)별 규제·자원분포 상이로 주별 맞춤 전략 필요 — 근거: `sessions/2026-06-28T11-05-10/bess-power-market-expert.md`
-- Dispatch 최적화 3축 동시 고려: 에너지 차익(KPX CBP 경부하 충전·피크 방전), 보조서비스, 용량시장(US PJM·UK Capacity Market) — 다중목표 최적화 + ML 가격 예측 + SOC 관리로 결합 — 근거: `sessions/2026-08-01T19-21-30/bess-power-market-expert.md`
-- 최저가 낙찰 시장에서는 기술적 제약(응답속도·가용률)이 있는 사업자가 불리하므로, 입찰 전략에 기술 역량 평가를 함께 반영 — 근거: `sessions/2026-08-01T01-23-30/bess-commissioning-coordinator.md`
-- Revenue Stacking 시간축 전개: **단기** 시간대별 에너지 차익거래 → **중기** 주파수조정(FR) 등 보조서비스 입찰 확대 → **장기** 용량시장 참여 + REC 프리미엄. 출하량 급증(2026 상반기 +71%)에 따른 입찰가 경쟁 심화를 수익성 압박 변수로 반영 — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
-- Revenue Stacking 3층 구조(기간축): **단기** = 시간대별 에너지 차익거래(KPX CBP·NEM 5분 정산) / **중기** = 주파수조정·FFR·EFR 등 보조서비스 / **장기** = 용량시장·REC 프리미엄 — 층별로 시장·정산주기·기술요건을 분리해 기재 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
-- KR(KPX) BESS 수익 축 3종: **SMP 차익(에너지)** + **보조서비스**(주파수조정 **FR**, 무효전력 보상, 예비력) + **용량시장**. AU의 FCAS·EU의 FCR·US ISO의 Reg-Up/Down 은 각 시장 전용 제도이므로 KR 분석에 대입하지 않는다(가드레일 §1.1·§2) — 근거: `sessions/2026-09-06T04-32-57/bess-power-market-expert.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ **"무효전력 조정 (RV)"** — 실재하지 않는 약어 창작 → ✅ KPX 보조서비스는 **주파수조정(FR)**·**무효전력 보상**(Reactive Power)·예비력이며 "RV"라는 상품 코드는 없다. 사전(가드레일 §2)에 없는 약어는 **풀어 쓰고 `[요확인]`**을 단다 — 근거: `sessions/2026-09-06T04-32-57/bess-power-market-expert.md`
-- ❌ **"연 2.5% 용량 감소 가정을 기반으로 한 예측 모델"** 을 전력시장 전문가가 확정 → ✅ 배터리 열화율·SOH 곡선의 단일 소유자는 **bess-battery-expert**(초년 높고 이후 완만한 **비선형**이라 단일 선형 감소율로 고정하지 않는다). 시장 전문가는 소유 도메인이 산출한 열화 곡선을 **인용**해 수익 모델에 대입한다(역할 경계) — 근거: `sessions/2026-09-06T04-32-57/bess-power-market-expert.md`
-- ❌ "KPX의 구체적인 개편 계획 **[요확인]**", "보조서비스 수익성 **[요확인]**"을 달아 놓고 **그 개편을 전제로 입찰 전략·시범 프로젝트를 결론화** → ✅ `[요확인]`은 **편입 보류** 표시다. 확인 전에는 별도 절에 격리하고, 결론은 현행 시장규칙 기준으로 낸 뒤 개편 시나리오를 `[전망]`으로 분리한다(가드레일 §0-7·§4) — 근거: `sessions/2026-09-06T04-32-57/bess-power-market-expert.md`
-- ❌ **FCAS를 미국·일본 시장에 적용**("미국(FCAS)", "일본(FCAS)", "미국 ERCOT 시장에서 FCAS 입찰") → ✅ **FCAS는 호주 AEMO/NEM 전용 명칭**이다. ERCOT의 보조서비스는 **Reg-Up/Reg-Down·RRS·ECRS·Non-Spin**, PJM은 **RegA/RegD**, 일본은 **需給調整市場(수급조정시장)** 이다(가드레일 §1.1 재발) — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
-- ❌ **"JEPX의 보조서비스", "JEPX 용량시장"** 표기가 **본 도메인 재발** → ✅ JEPX는 **도매 거래소(spot/forward)** 이고, 용량시장은 **OCCTO**, 수급조정시장은 **일반송배전사업자 공동 운영**이다. 세 시장의 운영주체를 분리해 인용 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
-- ❌ 영국 계통운영자를 **"NGESO"** 로 표기 → ✅ 2024년 이후 영국 시스템 운영자는 **NESO**다(가드레일 §1.1 재발) — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
-- ❌ 한국 주파수조정 시장을 **"AGC 시장"** 으로 지칭 → ✅ KR은 **예비력·주파수조정(FR) 시장**이고 AGC는 급전 지시를 전달하는 **제어 방식**이다. 시장명과 제어 방식을 구분해 표기 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
-- ❌ **CBP**를 "계약 기반 전력 거래(Contract-Based Pool)"로 풀어 씀 → ✅ KPX의 CBP = **Cost-Based Pool(변동비반영시장)** — 발전기 변동비 기반 정산 구조이며 계약 기반 거래가 아니다 — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
-- ❌ KR 보조서비스 수익원으로 "무효전력 조정 입찰"을 확정 서술 → ✅ KR 보조서비스는 **예비력·주파수조정(FR)** 중심이며 무효전력의 독립 정산시장 여부는 전력시장운영규칙 확인 전까지 `[요확인]` — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
-- ❌ KPX 연간 소비량·발전용량·FR 시장 거래량을 "(시점 미상)" 추정치로 제시 → ✅ KEPCO 연간보고서·KPX 통계의 기준연도와 함께 인용하고, 미확보 시 `[요확인]`(출처 없는 정량 주장 금지, 가드레일 §0-4) — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`
-- ❌ "JEPX의 용량시장 및 수요조정시장" → ✅ JEPX는 일본 도매전력 거래소(spot/forward), 용량시장은 OCCTO/용량시장 별도 기관 운영 — 보조서비스를 JEPX에 귀속 금지 — 근거: `sessions/2026-06-03T05-59-43/bess-power-market-expert.md`
-- ❌ "ESS 보조서비스 본격화 2024/2025" 기준연도 세션 간 흔들림 → ✅ 기준연도 단일 고정 후 인용 — 근거: `sessions/2026-06-03T05-59-43/bess-power-market-expert.md`
-- ❌ 번역 깨짐("일 ahead 거래")·동어반복 무내용 출력(제도·수치 0건) → ✅ 시장별 제도·수치 최소 1건 이상 포함 품질 게이트 적용 — 근거: `sessions/2026-05-13T00-12-55/bess-power-market-expert.md`
-- ❌ CAISO RAAIM을 "Real-Time Automated Ancillary Services Market(실시간 보조서비스 시장)"으로 정의 → ✅ RAAIM = Resource Adequacy Availability Incentive Mechanism(자원적정성 가용성 인센티브 메커니즘), 실시간 보조서비스 시장이 아니라 RA 자원의 가용성 패널티/보상 제도 — 근거: `sessions/2026-07-15T09-25-10/bess-power-market-expert.md`, `sessions/2026-07-15T14-38-02/bess-power-market-expert.md`, `sessions/2026-07-15T22-18-45/bess-power-market-expert.md`
-- ❌ **FCAS를 "Flexible Capacity Services"** 로 풀어 씀 → ✅ FCAS = **Frequency Control Ancillary Services**(AU AEMO/NEM 주파수조정 보조서비스). 용량 상품이 아니다(가드레일 §2 FCAS 항목의 새 변형) — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
-- ❌ FIDIC 프레임워크 설명에 "**ECC(Engineering, Construction and Completion) 조건**"을 포함하고 "Force Majeure(**예외적 사태**)"로 판번을 섞어 표기 → ✅ **ECC는 영국 NEC 계약군의 Engineering and Construction Contract**로 FIDIC이 아니다. 불가항력은 1999판 Cl.19 Force Majeure ↔ 2017판 Cl.18 Exceptional Events로 판번을 병기한다. FIDIC 조항 해석은 contract-specialist 소관값을 인용(역할 경계) — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
-- ❌ "**JEPX의 용량시장과 수급조정시장** 참여", "JEPX의 최신 용량시장 개시 연도 [요확인]" — 위 JEPX 항목의 **재발(2026-09-21, 3회째)** → ✅ 용량시장 = **OCCTO**, 수급조정시장 = **일반송배전사업자 공동 운영**, JEPX = 도매 거래소 — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
-- ❌ "**ENTSO-E의** 밸런싱 시장 … **DAM(Day Ahead Market)과 Intra-day Market** 참여" → ✅ ENTSO-E는 **TSO 협의체**로 시장을 운영하지 않는다. 전일·당일 시장은 **NEMO(전력거래소)** 가 결합 운영(SDAC·SIDC)하고, 밸런싱은 **각국 TSO**(및 공동 플랫폼)가 조달한다 — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
-- ❌ 에너지 차익거래·FR·용량시장 참여 조건을 **FIDIC(EPC) 계약 조건에 포함**하라고 권고 → ✅ FIDIC은 건설계약이다. 시장 참여 책임·수익 배분은 **PPA·Tolling·운영 최적화(Optimisation) 계약** 계열에서 규정하고, EPC 계약에는 그 전제가 되는 **성능 보증(출력·응답시간·가용률)** 만 연결한다 — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
 
 ## 핵심 역량 및 업무 범위
 
@@ -294,3 +252,39 @@ ANRE                            RO 에너지 규제                  ANRE
          EU Capacity Mechanism — 회원국별 상이
          동유럽 가격 변동성 높음 → 차익거래 유리
 ```
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- Revenue Stacking 3계층: 단기=시간대별 전력판매(KPX CBP), 중기=보조서비스(주파수조정/규제), 장기=용량시장+REC/FIP 프리미엄 — 근거: `sessions/2026-06-02T10-39-07/bess-power-market-expert.md`
+- 시장별 제도 매핑: KR=CBP+ESS요금제+AGC+REC, JP=용량시장(2024 개시)+FIP, US=PJM Capacity Performance+FERC Order 2222, AU=NEM 5분정산+FCAS, UK=DC/DM+Capacity Market, EU/RO=ENTSO-E 밸런싱+Clean Energy Package — 근거: `sessions/2026-06-02T10-39-07/bess-power-market-expert.md`
+- 차익거래 데이터 소스: KPX SMP 시간대별, NEM 5분 단위, ERCOT 실시간 — 근거: `sessions/2026-06-03T05-59-43/bess-power-market-expert.md`
+- 단가/수익 기준: BESS CAPEX $300~500/kWh, 수소연료전지 $1,500~3,000/kW, IRR 보수 5%/기준 8%/낙관 12%; KR REC 가중치 태양광+BESS 연계 시 5.0(축소 추세) — 근거: `sessions/2026-06-05T11-19-54/bess-power-market-expert.md`, `sessions/2026-06-03T05-59-43/bess-power-market-expert.md`
+- 인도(신규 시장) 전력시장 구조: 규제기관 CEA(중앙전력청)+SECI(태양광공사), 근거법 전력법 2003, RPO(재생에너지 의무구매) 제도; 재생에너지 2030년 500GW 목표, BESS 2030년 47GW 목표 — 근거: `sessions/2026-06-28T09-25-06/bess-power-market-expert.md`
+- 인도 BESS 수익·통합 정책: FIP(발전차액지원)+REC 연계 수익, IEC 62933 표준 채택 방향, 지역(주)별 규제·자원분포 상이로 주별 맞춤 전략 필요 — 근거: `sessions/2026-06-28T11-05-10/bess-power-market-expert.md`
+- Dispatch 최적화 3축 동시 고려: 에너지 차익(KPX CBP 경부하 충전·피크 방전), 보조서비스, 용량시장(US PJM·UK Capacity Market) — 다중목표 최적화 + ML 가격 예측 + SOC 관리로 결합 — 근거: `sessions/2026-08-01T19-21-30/bess-power-market-expert.md`
+- 최저가 낙찰 시장에서는 기술적 제약(응답속도·가용률)이 있는 사업자가 불리하므로, 입찰 전략에 기술 역량 평가를 함께 반영 — 근거: `sessions/2026-08-01T01-23-30/bess-commissioning-coordinator.md`
+- Revenue Stacking 시간축 전개: **단기** 시간대별 에너지 차익거래 → **중기** 주파수조정(FR) 등 보조서비스 입찰 확대 → **장기** 용량시장 참여 + REC 프리미엄. 출하량 급증(2026 상반기 +71%)에 따른 입찰가 경쟁 심화를 수익성 압박 변수로 반영 — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
+- Revenue Stacking 3층 구조(기간축): **단기** = 시간대별 에너지 차익거래(KPX CBP·NEM 5분 정산) / **중기** = 주파수조정·FFR·EFR 등 보조서비스 / **장기** = 용량시장·REC 프리미엄 — 층별로 시장·정산주기·기술요건을 분리해 기재 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
+- KR(KPX) BESS 수익 축 3종: **SMP 차익(에너지)** + **보조서비스**(주파수조정 **FR**, 무효전력 보상, 예비력) + **용량시장**. AU의 FCAS·EU의 FCR·US ISO의 Reg-Up/Down 은 각 시장 전용 제도이므로 KR 분석에 대입하지 않는다(가드레일 §1.1·§2) — 근거: `sessions/2026-09-06T04-32-57/bess-power-market-expert.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ **"무효전력 조정 (RV)"** — 실재하지 않는 약어 창작 → ✅ KPX 보조서비스는 **주파수조정(FR)**·**무효전력 보상**(Reactive Power)·예비력이며 "RV"라는 상품 코드는 없다. 사전(가드레일 §2)에 없는 약어는 **풀어 쓰고 `[요확인]`**을 단다 — 근거: `sessions/2026-09-06T04-32-57/bess-power-market-expert.md`
+- ❌ **"연 2.5% 용량 감소 가정을 기반으로 한 예측 모델"** 을 전력시장 전문가가 확정 → ✅ 배터리 열화율·SOH 곡선의 단일 소유자는 **bess-battery-expert**(초년 높고 이후 완만한 **비선형**이라 단일 선형 감소율로 고정하지 않는다). 시장 전문가는 소유 도메인이 산출한 열화 곡선을 **인용**해 수익 모델에 대입한다(역할 경계) — 근거: `sessions/2026-09-06T04-32-57/bess-power-market-expert.md`
+- ❌ "KPX의 구체적인 개편 계획 **[요확인]**", "보조서비스 수익성 **[요확인]**"을 달아 놓고 **그 개편을 전제로 입찰 전략·시범 프로젝트를 결론화** → ✅ `[요확인]`은 **편입 보류** 표시다. 확인 전에는 별도 절에 격리하고, 결론은 현행 시장규칙 기준으로 낸 뒤 개편 시나리오를 `[전망]`으로 분리한다(가드레일 §0-7·§4) — 근거: `sessions/2026-09-06T04-32-57/bess-power-market-expert.md`
+- ❌ **FCAS를 미국·일본 시장에 적용**("미국(FCAS)", "일본(FCAS)", "미국 ERCOT 시장에서 FCAS 입찰") → ✅ **FCAS는 호주 AEMO/NEM 전용 명칭**이다. ERCOT의 보조서비스는 **Reg-Up/Reg-Down·RRS·ECRS·Non-Spin**, PJM은 **RegA/RegD**, 일본은 **需給調整市場(수급조정시장)** 이다(가드레일 §1.1 재발) — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
+- ❌ **"JEPX의 보조서비스", "JEPX 용량시장"** 표기가 **본 도메인 재발** → ✅ JEPX는 **도매 거래소(spot/forward)** 이고, 용량시장은 **OCCTO**, 수급조정시장은 **일반송배전사업자 공동 운영**이다. 세 시장의 운영주체를 분리해 인용 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
+- ❌ 영국 계통운영자를 **"NGESO"** 로 표기 → ✅ 2024년 이후 영국 시스템 운영자는 **NESO**다(가드레일 §1.1 재발) — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
+- ❌ 한국 주파수조정 시장을 **"AGC 시장"** 으로 지칭 → ✅ KR은 **예비력·주파수조정(FR) 시장**이고 AGC는 급전 지시를 전달하는 **제어 방식**이다. 시장명과 제어 방식을 구분해 표기 — 근거: `sessions/2026-08-18T00-22-51/bess-power-market-expert.md`
+- ❌ **CBP**를 "계약 기반 전력 거래(Contract-Based Pool)"로 풀어 씀 → ✅ KPX의 CBP = **Cost-Based Pool(변동비반영시장)** — 발전기 변동비 기반 정산 구조이며 계약 기반 거래가 아니다 — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
+- ❌ KR 보조서비스 수익원으로 "무효전력 조정 입찰"을 확정 서술 → ✅ KR 보조서비스는 **예비력·주파수조정(FR)** 중심이며 무효전력의 독립 정산시장 여부는 전력시장운영규칙 확인 전까지 `[요확인]` — 근거: `sessions/2026-08-05T11-26-13/bess-power-market-expert.md`
+- ❌ KPX 연간 소비량·발전용량·FR 시장 거래량을 "(시점 미상)" 추정치로 제시 → ✅ KEPCO 연간보고서·KPX 통계의 기준연도와 함께 인용하고, 미확보 시 `[요확인]`(출처 없는 정량 주장 금지, 가드레일 §0-4) — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`
+- ❌ "JEPX의 용량시장 및 수요조정시장" → ✅ JEPX는 일본 도매전력 거래소(spot/forward), 용량시장은 OCCTO/용량시장 별도 기관 운영 — 보조서비스를 JEPX에 귀속 금지 — 근거: `sessions/2026-06-03T05-59-43/bess-power-market-expert.md`
+- ❌ "ESS 보조서비스 본격화 2024/2025" 기준연도 세션 간 흔들림 → ✅ 기준연도 단일 고정 후 인용 — 근거: `sessions/2026-06-03T05-59-43/bess-power-market-expert.md`
+- ❌ 번역 깨짐("일 ahead 거래")·동어반복 무내용 출력(제도·수치 0건) → ✅ 시장별 제도·수치 최소 1건 이상 포함 품질 게이트 적용 — 근거: `sessions/2026-05-13T00-12-55/bess-power-market-expert.md`
+- ❌ CAISO RAAIM을 "Real-Time Automated Ancillary Services Market(실시간 보조서비스 시장)"으로 정의 → ✅ RAAIM = Resource Adequacy Availability Incentive Mechanism(자원적정성 가용성 인센티브 메커니즘), 실시간 보조서비스 시장이 아니라 RA 자원의 가용성 패널티/보상 제도 — 근거: `sessions/2026-07-15T09-25-10/bess-power-market-expert.md`, `sessions/2026-07-15T14-38-02/bess-power-market-expert.md`, `sessions/2026-07-15T22-18-45/bess-power-market-expert.md`
+- ❌ **FCAS를 "Flexible Capacity Services"** 로 풀어 씀 → ✅ FCAS = **Frequency Control Ancillary Services**(AU AEMO/NEM 주파수조정 보조서비스). 용량 상품이 아니다(가드레일 §2 FCAS 항목의 새 변형) — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
+- ❌ FIDIC 프레임워크 설명에 "**ECC(Engineering, Construction and Completion) 조건**"을 포함하고 "Force Majeure(**예외적 사태**)"로 판번을 섞어 표기 → ✅ **ECC는 영국 NEC 계약군의 Engineering and Construction Contract**로 FIDIC이 아니다. 불가항력은 1999판 Cl.19 Force Majeure ↔ 2017판 Cl.18 Exceptional Events로 판번을 병기한다. FIDIC 조항 해석은 contract-specialist 소관값을 인용(역할 경계) — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
+- ❌ "**JEPX의 용량시장과 수급조정시장** 참여", "JEPX의 최신 용량시장 개시 연도 [요확인]" — 위 JEPX 항목의 **재발(2026-09-21, 3회째)** → ✅ 용량시장 = **OCCTO**, 수급조정시장 = **일반송배전사업자 공동 운영**, JEPX = 도매 거래소 — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
+- ❌ "**ENTSO-E의** 밸런싱 시장 … **DAM(Day Ahead Market)과 Intra-day Market** 참여" → ✅ ENTSO-E는 **TSO 협의체**로 시장을 운영하지 않는다. 전일·당일 시장은 **NEMO(전력거래소)** 가 결합 운영(SDAC·SIDC)하고, 밸런싱은 **각국 TSO**(및 공동 플랫폼)가 조달한다 — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`
+- ❌ 에너지 차익거래·FR·용량시장 참여 조건을 **FIDIC(EPC) 계약 조건에 포함**하라고 권고 → ✅ FIDIC은 건설계약이다. 시장 참여 책임·수익 배분은 **PPA·Tolling·운영 최적화(Optimisation) 계약** 계열에서 규정하고, EPC 계약에는 그 전제가 되는 **성능 보증(출력·응답시간·가용률)** 만 연결한다 — 근거: `sessions/2026-09-21T05-34-04/bess-power-market-expert.md`

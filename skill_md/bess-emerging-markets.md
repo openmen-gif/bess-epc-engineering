@@ -1,12 +1,6 @@
 ---
 name: bess-emerging-markets
-id: "EMT-001"
-description: 인도(CEA/SECI), UAE/사우디 PIF, 동남아 ASEAN, IFC/ADB/World Bank PF, 신흥시장 그리드코드, 통화 헤지
-department: "운영본부 (COO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "인도(CEA/SECI), UAE/사우디 PIF, 동남아 ASEAN, IFC/ADB/World Bank PF, 신흥시장 그리드코드, 통화 헤지"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -129,54 +123,7 @@ bess-emerging-markets
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 인도 핵심 수치: 2030년 BESS/저장 목표 47GW(≈236GWh), PLI 셀제조 목표 50GWh, VGF 보조금, RPO 주별 의무, 입찰기관 SECI/NTPC — 근거: `sessions/2026-06-04T22-29-13/bess-emerging-markets.md`
-- 인도 관세: BCD(배터리 셀 저율/일부 면제), 태양광 셀/패널은 별개 품목으로 BCD 별도 부과(모듈>셀) — 근거: `sessions/2026-06-04T22-29-13/bess-emerging-markets.md`
-- PF 모델 비교: IFC $5M~250M(시장+3~5%, ESG PS1-8), ADB $10M~500M(시장+2~4%, SPS, 아시아 우선), ECA(K-EXIM/JBIC, OECD Arrangement), 정치리스크 MIGA — 근거: `sessions/2026-06-03T01-26-09/bess-emerging-markets.md`
-- 통화/대금 리스크: 자연헤지(현지통화 매칭)+금융헤지(CCS/Forward/NDF), DISCOM 부실 대비 Payment Security(SBLC/Escrow) — 근거: `sessions/2026-06-03T01-26-09/bess-emerging-markets.md`
-- 신흥시장 PF 기준값: IFC **Performance Standards PS1~8**, ADB **SPS 2009**, 금리 시장+3~5%, tenor 5~10년, **DSCR ≥1.20x** 유지 — 근거: `sessions/2026-07-30T21-26-06/bess-emerging-markets.md`
-- 통화·정치 리스크 정량화 3수단: 자연 헤지 비율(현지 통화 매출 매칭), Cross-Currency Swap·Forward, 정치리스크보험(**MIGA·K-SURE**) — 근거: `sessions/2026-07-30T21-26-06/bess-emerging-markets.md`
-- 인도 BESS 프로젝트 자본구조 참조 배분: Equity 40% / Sponsor Loan 30% / IFC PF 20% / ECA(K-EXIM·JBIC) 10%, 정치리스크는 MIGA 보험, 통화는 Cross-Currency Swap으로 헤지 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
-- 인도 현지 파트너 축: 공기업·발전사(NTPC·SECI) 파트너십으로 기술 이전·현지화, 국제금융기구(IFC PS1-8 / ADB SPS) 준수로 조달 신뢰성 확보 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
-- 인도 PF 구조 예시(세션 기준값): 자본 **Equity 40 / Sponsor Loan 30 / IFC PF 20 / ECA(K-EXIM·JBIC) 10**, 정치리스크는 **MIGA** 보험, **DSCR ≥1.20x**, tenor 5~10년, 환헤지는 자연헤지(현지통화 매출 매칭) + 금융헤지(CCS·Forward·NDF) 병행. 세이프가드 기준 = **IFC PS1-8 · ADB SPS 2009** — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 인도 정책명 환각 **"국가 배터리 이니셔티브(NBI)"·"국가 재생에너지 저장 프로그램(NRESP)"** — NESM 지적(2026-08·2026-08-20)에 이은 **3회째 동일 패턴**(이름만 바뀐 미확인 국가 프로그램) → ✅ 인도 BESS의 실제 집행 수단은 **VGF 스킴 · PLI(ACC 배터리) · 주별 RPO/ESO**이며, 확인되지 않은 프로그램명은 `[요확인]`으로도 쓰지 않는다(가드레일 §1.1·§4 환각 출처 차단) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
-- ❌ 인도 약어 오역 재발: **RPO="Regional Power Obligation"**(정답 **Renewable Purchase Obligation**), **VGF="Volumetric Guarantee Fund"**(정답 **Viability Gap Funding**) — 2026-08-30 지적의 동일 도메인 재발 → ✅ 사전(가드레일 §2)의 정의만 사용하고, 사전에 없으면 풀어 쓰고 `[요확인]`을 단다 — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
-- ❌ **"ASEAN PDP (아시아태평양 경제협력체 에너지 계획)"** — 삼중 오류 → ✅ **PDP**는 베트남의 **Power Development Plan**(국가별 전력개발계획), **아시아태평양 경제협력체는 APEC**(ASEAN 아님), ASEAN의 에너지 계획은 **APAEC**(ASEAN Plan of Action for Energy Cooperation)다(가드레일 §1.1) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
-- ❌ 중동 기관 오귀속: **REPDO="Renewable Energy Regulatory Directorate"**(정답 **Renewable Energy Project Development Office**, 규제기관은 **WERA**), **SPPC="Solar Power Plant Company"**(정답 **Saudi Power Procurement Company** — 2026-08 지적 재발), **"UAE Vision 2050"**(정답 UAE **Energy Strategy 2050 / Net Zero 2050**, Vision 2030은 사우디) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
-- ❌ **O&M 비용 "연간 $20만~$40만/MW"** 를 CAPEX "$100만~180만/MW"와 병기(= **연 15~30%**, 통상 대역의 약 10배) → ✅ 연간 OPEX는 통상 **CAPEX의 1~3%/년**이다. 이 대역을 벗어나면 일회성 비용을 연간으로 잘못 배치했거나 분모가 틀린 것이다(가드레일 §3.3·§5-10) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
-- ❌ 설치 비용을 **"MW당 $100만~$150만"** 으로만 제시하고 **저장용량(MWh)·지속시간(h)을 병기하지 않음** → ✅ $/MW는 지속시간 없이는 $/kWh로 환산할 수 없다. **출력(MW)과 저장용량(MWh)을 분리 입력**해 `MWh × $300~400/kWh` 로 교차 검산한다(가드레일 §5-4·§5-8) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
-- ❌ 자본구조를 **"Equity 40 / Sponsor Loan 30 / IFC PF 20 / ECA 10"** 으로 제시(2026-08-30 동일 도메인 지적 재발) → ✅ 기준값은 **Debt 40 / Equity 60**(가드레일 §3.3)이며, 다른 구조를 쓰려면 텀시트·금융자문 근거 링크를 붙인다 — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
-- ❌ **"PLI 인센티브로 셀 제조 비용이 최대 30% 절감 가능"** 을 출처 없이 확정 → ✅ 정량 주장에는 [출처]-[URL/조항]-[기준일] 3요소가 필요하며, 없으면 `[요확인]`으로 강등한다(가드레일 §0-4) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
-- ❌ **SECI**를 "State Electricity Company of India"로 풀어 씀 → ✅ **SECI = Solar Energy Corporation of India**(인도 태양광공사, 중앙정부 조달기관) — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
-- ❌ **SLDC**를 "State Level Distribution Companies"로 풀어 씀 → ✅ **SLDC = State Load Despatch Centre**(주 급전지령소). 배전회사는 **DISCOM**이며 둘은 기능이 다르다 — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
-- ❌ **VGF**를 "Value Added Fund", **RPO**를 "Regional Power Obligation"으로 표기 → ✅ **VGF = Viability Gap Funding**(사업성보전지원금), **RPO = Renewable Purchase Obligation**(재생에너지 의무구매). §2 사전에 이미 등재된 오역의 **동일 도메인 재발** — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
-- ❌ 자본구조를 "**Equity 40 / 차입 60**"으로 제시 → ✅ §3.3 단일출처 표는 **Debt 40 / Equity 60**이다. 다른 구조를 쓰려면 프로젝트별 근거(텀시트·금융자문 보고서)를 링크한다 — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
-- ❌ 사우디 규제기관을 "**Saudi Arabian Petroleum Company, SAPTCO**"로 기재하고 SPPC를 "사우디아라비아 **프로젝트 파트너십** 회사"로 오역 → ✅ **SAPTCO는 사우디 대중교통공사**(Saudi Public Transport Company)로 전력 규제와 무관하고, Saudi Aramco는 석유회사다. 전력·수도 규제는 **WERA**(Water & Electricity Regulatory Authority, 구 ECRA), 발전 조달은 **SPPC = Saudi Power Procurement Company**(전력구매공사)이며 재생E 개발은 REPDO(에너지부 산하) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
-- ❌ UAE 기관명 오역("EWEC = 에미리트 **에너지** 회사", "DEWA = 두바이 **에너지** 회사") → ✅ **EWEC = Emirates Water and Electricity Company**(아부다비 수·전력공사), **DEWA = Dubai Electricity and Water Authority**(두바이 수전력청). 기관 정식 명칭을 임의 축약·의역하지 않는다 — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
-- ❌ 동남아를 한 묶음으로 두고 "**MOIT(산업통상부)와 EGAT(전력공사)** 등이 주요 역할"로 기재 → ✅ **MOIT는 베트남 산업무역부**, **EGAT는 태국 발전공사**로 서로 다른 나라 기관이다. 베트남 전력공사는 **EVN**, 필리핀은 DOE·NGCP, 인도네시아는 **PLN** — 국가별로 기관을 분리 매핑한다(가드레일 §1.1) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
-- ❌ 약어 오역 2건: "**NDF(비표시 외화)**", "**크로스 커브리어 스왑(CCS)**" → ✅ **NDF = Non-Deliverable Forward(차액결제선물환)**, **CCS = Cross-Currency Swap(크로스 커런시 스왑)**. 금융상품 약어는 원어 확인 후 표기(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
-- ❌ 인도 지원정책을 "**국가 에너지 저장 미션(NESM)**"으로 다시 확정 서술(2026-08-05에 이어 **본 도메인 재발**), 인허가 절차에 근거 불명 "지역 에너지 계획(REP) 승인" 기재 → ✅ NESM은 정식 출범 미확인이며 실제 수단은 **VGF·PLI(ACC)·주별 RPO/ESO**다. 미확인 정책·절차명은 `[요확인]`으로 강등(가드레일 §1.1·§4) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
-- ❌ **VGF**를 "Value Added Fund"로 풀어 씀 → ✅ 인도 VGF = **Viability Gap Funding(사업성보전지원금)** — MNRE/SECI 입찰의 보조금 수단이며 "부가가치 기금"이 아니다 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
-- ❌ 100 MW / 200 MWh 프로젝트 총 비용을 "~$120M"으로 제시하면서 단위비용을 "~**$1.2/kWh**"로 기재(실제 $120M ÷ 200,000 kWh = **$600/kWh**, 500배 오차이자 기준표 $300~400/kWh 초과) → ✅ 총액÷용량으로 단위비용을 역산해 §3.3 기준표 범위와 대조한 뒤 발행(가드레일 §5-2) — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
-- ❌ 인도 지원정책을 "**국가 에너지 저장 미션(NESM)**"으로 확정 서술 → ✅ NESM은 2019년 제안 후 정식 출범이 확인되지 않는다. 실제 집행 수단은 **VGF 스킴·PLI(ACC 배터리)·주별 RPO/ESO**이며, 미확인 정책명은 `[요확인]`(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
-- ❌ **한국(KR) 시장 분석에 인도 기관·규정을 혼입** — "주관 기관: 전력거래소, 산업통상자원부(**SECI, MNRE**)", 그리드코드에 **IEGC(Indian Electricity Grid Code)**·CEA 기재 → ✅ KR 주관기관은 KPX·KEPCO·산업통상자원부, 계통기준은 KEPCO 기술기준·KEC. 시장별 기관·코드는 §1 마스터 표에 종속(가드레일 §1.1) — 근거: `sessions/2026-07-30T21-26-06/bess-emerging-markets.md`
-- ❌ 한국 전기설비 기준을 "**K-ETC**(전기설비기술기준)"로 표기 → ✅ 한국 전기설비규정은 **KEC**이며 K-ETC는 존재하지 않는 약어 — 근거: `sessions/2026-07-30T21-26-06/bess-emerging-markets.md`
-- ❌ 인도 적용표준으로 "@bess-standards-australia BS 18965"를 인용 → ✅ BS는 영국 표준이고 호주 담당이 인도 그리드코드 라우팅은 오류 — 인도 표준은 CEA/IEC 62933·IEC 61427-2/IEGC로, 표준번호 출처 명시 — 근거: `sessions/2026-06-04T22-29-13/bess-emerging-markets.md`
-- ❌ 인도 현지화 정책에 "Saudization" 혼입 → ✅ Saudization=중동(사우디), PLI/RPO/VGF/DCR=인도로 국가↔정책 귀속 고정(복붙 금지) — 근거: `sessions/2026-05-21T09-40-14/bess-emerging-markets.md`
-- ❌ "NREA/NREMP/450GW" 등 정책 약어·수치 세션 간 혼재(47GW 저장 vs 재생목표 수치) → ✅ 저장목표(47GW≈236GWh)와 재생목표(500GW급)를 구분·고정 인용 — 근거: `sessions/2026-06-03T01-26-09/bess-emerging-markets.md`
-- ❌ VRT를 "Virtual Synchronization Technology(가상 동기화 기술)"로 정의(신흥시장 그리드코드 분석) → ✅ VRT = Voltage Ride-Through(전압 사고 통과 능력) — 정의는 시장 무관 공통, bess-grid-interconnection 가드레일과 동일 원칙 적용 — 근거: `sessions/2026-07-16T21-28-13/bess-emerging-markets.md`
-- ❌ 인도 PLI(ACC 배터리 셀 제조 인센티브, 목표 50GWh)를 "2030년까지 47GW 저장 목표"의 예시인 것처럼 병기 → ✅ PLI는 배터리 **셀 제조(생산능력)** 인센티브 목표(50GWh)이고, 47GW(≈236GWh)는 별개의 BESS **배치(저장용량)** 목표 — 두 수치를 상호 예시로 혼용 금지 — 근거: `sessions/2026-08-12T09-56-45/bess-emerging-markets.md`
-- ❌ **VGF="Volumetric Growth Fund"**, **RPO="Regional Power Obligation"** — 위 VGF·RPO 오역 항목의 **재발(2026-09-22, 누적 4회째, VGF는 새 변형)** → ✅ VGF = **Viability Gap Funding**, RPO = **Renewable Purchase Obligation**. 과거 세션 경로를 출처로 달면서도 그 세션에 기록된 정정을 반영하지 않았다 — 인용 전 본 가드레일을 먼저 대조한다 — 근거: `sessions/2026-09-22T19-24-33/bess-emerging-markets.md`
-- ❌ **SLDC를 "State Level Distribution Code"** 로 풀어 CERC가 정한 계통 코드처럼 서술 → ✅ **SLDC = State Load Despatch Centre(주 급전지령소)** 로 기관이지 코드가 아니다. 인도 계통 코드는 **IEGC**(CERC 제정)이며 주 단위 코드는 각 SERC의 State Grid Code다(위 SLDC 항목의 새 변형 재발) — 근거: `sessions/2026-09-22T19-24-33/bess-emerging-markets.md`
-- ❌ 근거란에 과거 **내부 세션 파일을 외부 사실의 출처처럼 `[요확인]`과 함께** 달고, NEWS-ID와 타임존 시각을 합성한 **가짜 경로**(`sessions/2026-09-21T08:54:00+09:00/bess-20260922-a01`)를 인용 → ✅ 세션 경로는 `sessions/YYYY-MM-DDTHH-MM-SS/<domain>.md` 형식만 유효(가드레일 §4 근거 경로 형식)하고, 정책·관세 같은 외부 사실은 **[출처]-[URL/조항]-[기준일]** 3요소로 인용한다(§0-4) — 근거: `sessions/2026-09-22T19-24-33/bess-emerging-markets.md`
-</content>
-</invoke>
-
-## 핵심 역량 및 업무 범위 (수행 단계·절차)
+## 핵심 역량 및 업무 범위
 
 신흥시장 진입 분석을 다음 **6단계 절차**로 수행하며, 각 단계는 정량 판정 게이트를 통과해야 다음으로 진행한다.
 1. **시장 스크리닝** — 대상국 목록 → §정량 판정 기준으로 점수화(시장 규모, 정책 확실성, 통화·정치 리스크, 진입 장벽). 최저 통과선 미달 시 [요확인] 발행·후보 제외.
@@ -307,3 +254,50 @@ Transfer & Convertibility (T&C) — 외환 송금·환전 제한 커버 (이집�
 | 인도네시아 | TKDN(국산화율) 의무 | DNI(Negative List) 일부 제한 | TKA(외국인) 규제·BPJS 의무 | TKDN % 충족 여부 |
 | 필리핀 | 일부 분야 외국인 제한 | RE 발전 100% 허용(2022 개정) | 일반 노동법 | 토지 소유 제한(리스 구조) |
 > 국가↔현지화 정책 귀속 고정: PLI/RPO/VGF/DCR=인도, Saudization/IKTVA=사우디, Emiratisation/ICV=UAE, TKDN=인도네시아 — 복붙·혼입 금지(정합성 가드레일 참조).
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 인도 핵심 수치: 2030년 BESS/저장 목표 47GW(≈236GWh), PLI 셀제조 목표 50GWh, VGF 보조금, RPO 주별 의무, 입찰기관 SECI/NTPC — 근거: `sessions/2026-06-04T22-29-13/bess-emerging-markets.md`
+- 인도 관세: BCD(배터리 셀 저율/일부 면제), 태양광 셀/패널은 별개 품목으로 BCD 별도 부과(모듈>셀) — 근거: `sessions/2026-06-04T22-29-13/bess-emerging-markets.md`
+- PF 모델 비교: IFC $5M~250M(시장+3~5%, ESG PS1-8), ADB $10M~500M(시장+2~4%, SPS, 아시아 우선), ECA(K-EXIM/JBIC, OECD Arrangement), 정치리스크 MIGA — 근거: `sessions/2026-06-03T01-26-09/bess-emerging-markets.md`
+- 통화/대금 리스크: 자연헤지(현지통화 매칭)+금융헤지(CCS/Forward/NDF), DISCOM 부실 대비 Payment Security(SBLC/Escrow) — 근거: `sessions/2026-06-03T01-26-09/bess-emerging-markets.md`
+- 신흥시장 PF 기준값: IFC **Performance Standards PS1~8**, ADB **SPS 2009**, 금리 시장+3~5%, tenor 5~10년, **DSCR ≥1.20x** 유지 — 근거: `sessions/2026-07-30T21-26-06/bess-emerging-markets.md`
+- 통화·정치 리스크 정량화 3수단: 자연 헤지 비율(현지 통화 매출 매칭), Cross-Currency Swap·Forward, 정치리스크보험(**MIGA·K-SURE**) — 근거: `sessions/2026-07-30T21-26-06/bess-emerging-markets.md`
+- 인도 BESS 프로젝트 자본구조 참조 배분: Equity 40% / Sponsor Loan 30% / IFC PF 20% / ECA(K-EXIM·JBIC) 10%, 정치리스크는 MIGA 보험, 통화는 Cross-Currency Swap으로 헤지 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
+- 인도 현지 파트너 축: 공기업·발전사(NTPC·SECI) 파트너십으로 기술 이전·현지화, 국제금융기구(IFC PS1-8 / ADB SPS) 준수로 조달 신뢰성 확보 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
+- 인도 PF 구조 예시(세션 기준값): 자본 **Equity 40 / Sponsor Loan 30 / IFC PF 20 / ECA(K-EXIM·JBIC) 10**, 정치리스크는 **MIGA** 보험, **DSCR ≥1.20x**, tenor 5~10년, 환헤지는 자연헤지(현지통화 매출 매칭) + 금융헤지(CCS·Forward·NDF) 병행. 세이프가드 기준 = **IFC PS1-8 · ADB SPS 2009** — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 인도 정책명 환각 **"국가 배터리 이니셔티브(NBI)"·"국가 재생에너지 저장 프로그램(NRESP)"** — NESM 지적(2026-08·2026-08-20)에 이은 **3회째 동일 패턴**(이름만 바뀐 미확인 국가 프로그램) → ✅ 인도 BESS의 실제 집행 수단은 **VGF 스킴 · PLI(ACC 배터리) · 주별 RPO/ESO**이며, 확인되지 않은 프로그램명은 `[요확인]`으로도 쓰지 않는다(가드레일 §1.1·§4 환각 출처 차단) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
+- ❌ 인도 약어 오역 재발: **RPO="Regional Power Obligation"**(정답 **Renewable Purchase Obligation**), **VGF="Volumetric Guarantee Fund"**(정답 **Viability Gap Funding**) — 2026-08-30 지적의 동일 도메인 재발 → ✅ 사전(가드레일 §2)의 정의만 사용하고, 사전에 없으면 풀어 쓰고 `[요확인]`을 단다 — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
+- ❌ **"ASEAN PDP (아시아태평양 경제협력체 에너지 계획)"** — 삼중 오류 → ✅ **PDP**는 베트남의 **Power Development Plan**(국가별 전력개발계획), **아시아태평양 경제협력체는 APEC**(ASEAN 아님), ASEAN의 에너지 계획은 **APAEC**(ASEAN Plan of Action for Energy Cooperation)다(가드레일 §1.1) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
+- ❌ 중동 기관 오귀속: **REPDO="Renewable Energy Regulatory Directorate"**(정답 **Renewable Energy Project Development Office**, 규제기관은 **WERA**), **SPPC="Solar Power Plant Company"**(정답 **Saudi Power Procurement Company** — 2026-08 지적 재발), **"UAE Vision 2050"**(정답 UAE **Energy Strategy 2050 / Net Zero 2050**, Vision 2030은 사우디) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
+- ❌ **O&M 비용 "연간 $20만~$40만/MW"** 를 CAPEX "$100만~180만/MW"와 병기(= **연 15~30%**, 통상 대역의 약 10배) → ✅ 연간 OPEX는 통상 **CAPEX의 1~3%/년**이다. 이 대역을 벗어나면 일회성 비용을 연간으로 잘못 배치했거나 분모가 틀린 것이다(가드레일 §3.3·§5-10) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
+- ❌ 설치 비용을 **"MW당 $100만~$150만"** 으로만 제시하고 **저장용량(MWh)·지속시간(h)을 병기하지 않음** → ✅ $/MW는 지속시간 없이는 $/kWh로 환산할 수 없다. **출력(MW)과 저장용량(MWh)을 분리 입력**해 `MWh × $300~400/kWh` 로 교차 검산한다(가드레일 §5-4·§5-8) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md` `[당시 기준값 — 현행은 가드레일 §3.3(2026-10-28)]`
+- ❌ 자본구조를 **"Equity 40 / Sponsor Loan 30 / IFC PF 20 / ECA 10"** 으로 제시(2026-08-30 동일 도메인 지적 재발) → ✅ 기준값은 **Debt 40 / Equity 60**(가드레일 §3.3)이며, 다른 구조를 쓰려면 텀시트·금융자문 근거 링크를 붙인다 — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
+- ❌ **"PLI 인센티브로 셀 제조 비용이 최대 30% 절감 가능"** 을 출처 없이 확정 → ✅ 정량 주장에는 [출처]-[URL/조항]-[기준일] 3요소가 필요하며, 없으면 `[요확인]`으로 강등한다(가드레일 §0-4) — 근거: `sessions/2026-09-01T12-59-52/bess-emerging-markets.md`
+- ❌ **SECI**를 "State Electricity Company of India"로 풀어 씀 → ✅ **SECI = Solar Energy Corporation of India**(인도 태양광공사, 중앙정부 조달기관) — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
+- ❌ **SLDC**를 "State Level Distribution Companies"로 풀어 씀 → ✅ **SLDC = State Load Despatch Centre**(주 급전지령소). 배전회사는 **DISCOM**이며 둘은 기능이 다르다 — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
+- ❌ **VGF**를 "Value Added Fund", **RPO**를 "Regional Power Obligation"으로 표기 → ✅ **VGF = Viability Gap Funding**(사업성보전지원금), **RPO = Renewable Purchase Obligation**(재생에너지 의무구매). §2 사전에 이미 등재된 오역의 **동일 도메인 재발** — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
+- ❌ 자본구조를 "**Equity 40 / 차입 60**"으로 제시 → ✅ §3.3 단일출처 표는 **Debt 40 / Equity 60**이다. 다른 구조를 쓰려면 프로젝트별 근거(텀시트·금융자문 보고서)를 링크한다 — 근거: `sessions/2026-08-29T06-40-42/bess-emerging-markets.md`
+- ❌ 사우디 규제기관을 "**Saudi Arabian Petroleum Company, SAPTCO**"로 기재하고 SPPC를 "사우디아라비아 **프로젝트 파트너십** 회사"로 오역 → ✅ **SAPTCO는 사우디 대중교통공사**(Saudi Public Transport Company)로 전력 규제와 무관하고, Saudi Aramco는 석유회사다. 전력·수도 규제는 **WERA**(Water & Electricity Regulatory Authority, 구 ECRA), 발전 조달은 **SPPC = Saudi Power Procurement Company**(전력구매공사)이며 재생E 개발은 REPDO(에너지부 산하) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ UAE 기관명 오역("EWEC = 에미리트 **에너지** 회사", "DEWA = 두바이 **에너지** 회사") → ✅ **EWEC = Emirates Water and Electricity Company**(아부다비 수·전력공사), **DEWA = Dubai Electricity and Water Authority**(두바이 수전력청). 기관 정식 명칭을 임의 축약·의역하지 않는다 — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ 동남아를 한 묶음으로 두고 "**MOIT(산업통상부)와 EGAT(전력공사)** 등이 주요 역할"로 기재 → ✅ **MOIT는 베트남 산업무역부**, **EGAT는 태국 발전공사**로 서로 다른 나라 기관이다. 베트남 전력공사는 **EVN**, 필리핀은 DOE·NGCP, 인도네시아는 **PLN** — 국가별로 기관을 분리 매핑한다(가드레일 §1.1) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ 약어 오역 2건: "**NDF(비표시 외화)**", "**크로스 커브리어 스왑(CCS)**" → ✅ **NDF = Non-Deliverable Forward(차액결제선물환)**, **CCS = Cross-Currency Swap(크로스 커런시 스왑)**. 금융상품 약어는 원어 확인 후 표기(가드레일 §4 출력 품질) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ 인도 지원정책을 "**국가 에너지 저장 미션(NESM)**"으로 다시 확정 서술(2026-08-05에 이어 **본 도메인 재발**), 인허가 절차에 근거 불명 "지역 에너지 계획(REP) 승인" 기재 → ✅ NESM은 정식 출범 미확인이며 실제 수단은 **VGF·PLI(ACC)·주별 RPO/ESO**다. 미확인 정책·절차명은 `[요확인]`으로 강등(가드레일 §1.1·§4) — 근거: `sessions/2026-08-20T03-01-49/bess-emerging-markets.md`
+- ❌ **VGF**를 "Value Added Fund"로 풀어 씀 → ✅ 인도 VGF = **Viability Gap Funding(사업성보전지원금)** — MNRE/SECI 입찰의 보조금 수단이며 "부가가치 기금"이 아니다 — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
+- ❌ 100 MW / 200 MWh 프로젝트 총 비용을 "~$120M"으로 제시하면서 단위비용을 "~**$1.2/kWh**"로 기재(실제 $120M ÷ 200,000 kWh = **$600/kWh**, 500배 오차이자 기준표 $300~400/kWh 초과) → ✅ 총액÷용량으로 단위비용을 역산해 §3.3 기준표 범위와 대조한 뒤 발행(가드레일 §5-2) — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md` `[당시 기준값 — 현행은 가드레일 §3.3(2026-10-28)]`
+- ❌ 인도 지원정책을 "**국가 에너지 저장 미션(NESM)**"으로 확정 서술 → ✅ NESM은 2019년 제안 후 정식 출범이 확인되지 않는다. 실제 집행 수단은 **VGF 스킴·PLI(ACC 배터리)·주별 RPO/ESO**이며, 미확인 정책명은 `[요확인]`(가드레일 §4) — 근거: `sessions/2026-08-05T09-32-26/bess-emerging-markets.md`
+- ❌ **한국(KR) 시장 분석에 인도 기관·규정을 혼입** — "주관 기관: 전력거래소, 산업통상자원부(**SECI, MNRE**)", 그리드코드에 **IEGC(Indian Electricity Grid Code)**·CEA 기재 → ✅ KR 주관기관은 KPX·KEPCO·산업통상자원부, 계통기준은 KEPCO 기술기준·KEC. 시장별 기관·코드는 §1 마스터 표에 종속(가드레일 §1.1) — 근거: `sessions/2026-07-30T21-26-06/bess-emerging-markets.md`
+- ❌ 한국 전기설비 기준을 "**K-ETC**(전기설비기술기준)"로 표기 → ✅ 한국 전기설비규정은 **KEC**이며 K-ETC는 존재하지 않는 약어 — 근거: `sessions/2026-07-30T21-26-06/bess-emerging-markets.md`
+- ❌ 인도 적용표준으로 "@bess-standards-australia BS 18965"를 인용 → ✅ BS는 영국 표준이고 호주 담당이 인도 그리드코드 라우팅은 오류 — 인도 표준은 CEA/IEC 62933·IEC 61427-2/IEGC로, 표준번호 출처 명시 — 근거: `sessions/2026-06-04T22-29-13/bess-emerging-markets.md`
+- ❌ 인도 현지화 정책에 "Saudization" 혼입 → ✅ Saudization=중동(사우디), PLI/RPO/VGF/DCR=인도로 국가↔정책 귀속 고정(복붙 금지) — 근거: `sessions/2026-05-21T09-40-14/bess-emerging-markets.md`
+- ❌ "NREA/NREMP/450GW" 등 정책 약어·수치 세션 간 혼재(47GW 저장 vs 재생목표 수치) → ✅ 저장목표(47GW≈236GWh)와 재생목표(500GW급)를 구분·고정 인용 — 근거: `sessions/2026-06-03T01-26-09/bess-emerging-markets.md`
+- ❌ VRT를 "Virtual Synchronization Technology(가상 동기화 기술)"로 정의(신흥시장 그리드코드 분석) → ✅ VRT = Voltage Ride-Through(전압 사고 통과 능력) — 정의는 시장 무관 공통, bess-grid-interconnection 가드레일과 동일 원칙 적용 — 근거: `sessions/2026-07-16T21-28-13/bess-emerging-markets.md`
+- ❌ 인도 PLI(ACC 배터리 셀 제조 인센티브, 목표 50GWh)를 "2030년까지 47GW 저장 목표"의 예시인 것처럼 병기 → ✅ PLI는 배터리 **셀 제조(생산능력)** 인센티브 목표(50GWh)이고, 47GW(≈236GWh)는 별개의 BESS **배치(저장용량)** 목표 — 두 수치를 상호 예시로 혼용 금지 — 근거: `sessions/2026-08-12T09-56-45/bess-emerging-markets.md`
+- ❌ **VGF="Volumetric Growth Fund"**, **RPO="Regional Power Obligation"** — 위 VGF·RPO 오역 항목의 **재발(2026-09-22, 누적 4회째, VGF는 새 변형)** → ✅ VGF = **Viability Gap Funding**, RPO = **Renewable Purchase Obligation**. 과거 세션 경로를 출처로 달면서도 그 세션에 기록된 정정을 반영하지 않았다 — 인용 전 본 가드레일을 먼저 대조한다 — 근거: `sessions/2026-09-22T19-24-33/bess-emerging-markets.md`
+- ❌ **SLDC를 "State Level Distribution Code"** 로 풀어 CERC가 정한 계통 코드처럼 서술 → ✅ **SLDC = State Load Despatch Centre(주 급전지령소)** 로 기관이지 코드가 아니다. 인도 계통 코드는 **IEGC**(CERC 제정)이며 주 단위 코드는 각 SERC의 State Grid Code다(위 SLDC 항목의 새 변형 재발) — 근거: `sessions/2026-09-22T19-24-33/bess-emerging-markets.md`
+- ❌ 근거란에 과거 **내부 세션 파일을 외부 사실의 출처처럼 `[요확인]`과 함께** 달고, NEWS-ID와 타임존 시각을 합성한 **가짜 경로**(`sessions/2026-09-21T08:54:00+09:00/bess-20260922-a01`)를 인용 → ✅ 세션 경로는 `sessions/YYYY-MM-DDTHH-MM-SS/<domain>.md` 형식만 유효(가드레일 §4 근거 경로 형식)하고, 정책·관세 같은 외부 사실은 **[출처]-[URL/조항]-[기준일]** 3요소로 인용한다(§0-4) — 근거: `sessions/2026-09-22T19-24-33/bess-emerging-markets.md`
+</content>
+</invoke>

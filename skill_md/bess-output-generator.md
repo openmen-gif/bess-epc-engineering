@@ -1,12 +1,6 @@
 ---
 name: bess-output-generator
-id: "SCV-500"
-description: 전사 문서 표준화, 출력 형식 선택, A4/A3 인쇄, Excel/Word/PDF/Python 파일 생성
-department: "Support / Document Team"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "전사 문서 표준화, 출력 형식 선택, A4/A3 인쇄, Excel/Word/PDF/Python 파일 생성"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -121,22 +115,6 @@ bess-output-generator
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 견적서(Q)/BOM 필수항목 스키마: 부품명/부품번호/제조사/모델/단가/수량/총액/세금·운송 + 참고출처(URL+수집일) 의무 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-- A4 인쇄 표준 "옵션 A": 단면 대칭, 25mm 4-방향 여백, 헤더/푸터/페이지번호/제목행 반복 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-- 자동화 파이프라인 규약: CSV→pandas→FPDF/Excel 자동 생성, BOM↔견적 데이터 연계(변경 자동 반영), 계층 BOM 추적성 — 근거: `sessions/2026-05-21T06-28-02/bess-output-generator.md`
-- 출처 표기 규약: 모든 데이터에 [출처명]-[URL/문서참조]-[수집일] 3요소(CLAUDE.md 하이퍼링크 증거 원칙과 일치) — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-- 견적서·BOM 출력 규약: 인쇄 옵션 **A(단면 대칭, 25 mm 4-방향 여백)**, 3페이지 이상이면 점선 TOC + 페이지 번호 필수, 계산·수식은 Excel(.xlsx)로 관리하고 최종 배포본은 PDF로 고정 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
-- 견적서 필수 섹션: 요약(총 비용) / 부품 목록(부품명·부품번호·제조사·모델·단가·수량·총액·세금·운송비) / 총 비용 / **참고 출처** / `[요확인]` 항목 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 단가·수량을 공급업체 견적 기준으로만 표기하고 조회 기준일 누락 → ✅ 모든 금액 항목에 **기준일과 출처**를 병기하고, 환율 적용 시 적용일·환율값을 함께 기재 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
-- ❌ frontmatter `department: "Support / Document Team"`(영문) vs 타 도메인 "운영본부(COO 산하)" 드리프트 → ✅ 부서명 "운영본부(COO 산하)" 한글 단일 표기 — 근거: `00_Skill_MD/bess-output-generator.md`
-- ❌ 예시 출처 placeholder 환각(examplebattery.com / 2023-04-15 등 가짜 URL·과거일자) → ✅ 실제 출처로 치환 강제, example.com·과거 placeholder 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-output-generator.md`
-- ❌ bess-output-generator 세션이 BOM 원가·물량산출·IRA 관세혜택 등 콘텐츠 분석까지 수행(역할경계 위반, 2026-07-05~07-13 배치 세션 다수 반복) → ✅ 콘텐츠(단가·수치·규정해석)는 bess-epc-bom/bess-cost-analyst/bess-tax-incentive 담당, output-generator는 형식·서식 표준화만 수행 — 근거: `sessions/2026-07-05T08-50-30/bess-output-generator.md`
 
 ## 출처(Sources) 포함 원칙 (모든 출력물 필수)
 
@@ -835,7 +813,7 @@ Sources 최소     5건             10건            20건           29건+
 ```
 ---
 
-## 핵심 역량 및 업무 범위 (수행 절차)
+## 핵심 역량 및 업무 범위
 
 > 출력관리자의 핵심 업무 절차는 아래 형식별 생성 가이드(Excel/Word/Python/PDF/인쇄패키지/복합출력)와 콘텐츠×형식 매핑에 따라 수행한다.
 
@@ -1079,3 +1057,19 @@ TOC 검증 (raw `{ TOC \o "1-2" }` 필드 금지 — LibreOffice PDF 목차 누�
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 ---
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 견적서(Q)/BOM 필수항목 스키마: 부품명/부품번호/제조사/모델/단가/수량/총액/세금·운송 + 참고출처(URL+수집일) 의무 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- A4 인쇄 표준 "옵션 A": 단면 대칭, 25mm 4-방향 여백, 헤더/푸터/페이지번호/제목행 반복 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- 자동화 파이프라인 규약: CSV→pandas→FPDF/Excel 자동 생성, BOM↔견적 데이터 연계(변경 자동 반영), 계층 BOM 추적성 — 근거: `sessions/2026-05-21T06-28-02/bess-output-generator.md`
+- 출처 표기 규약: 모든 데이터에 [출처명]-[URL/문서참조]-[수집일] 3요소(CLAUDE.md 하이퍼링크 증거 원칙과 일치) — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- 견적서·BOM 출력 규약: 인쇄 옵션 **A(단면 대칭, 25 mm 4-방향 여백)**, 3페이지 이상이면 점선 TOC + 페이지 번호 필수, 계산·수식은 Excel(.xlsx)로 관리하고 최종 배포본은 PDF로 고정 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+- 견적서 필수 섹션: 요약(총 비용) / 부품 목록(부품명·부품번호·제조사·모델·단가·수량·총액·세금·운송비) / 총 비용 / **참고 출처** / `[요확인]` 항목 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 단가·수량을 공급업체 견적 기준으로만 표기하고 조회 기준일 누락 → ✅ 모든 금액 항목에 **기준일과 출처**를 병기하고, 환율 적용 시 적용일·환율값을 함께 기재 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+- ❌ frontmatter `department: "Support / Document Team"`(영문) vs 타 도메인 "운영본부(COO 산하)" 드리프트 → ✅ 부서명 "운영본부(COO 산하)" 한글 단일 표기 — 근거: `00_Skill_MD/bess-output-generator.md`
+- ❌ 예시 출처 placeholder 환각(examplebattery.com / 2023-04-15 등 가짜 URL·과거일자) → ✅ 실제 출처로 치환 강제, example.com·과거 placeholder 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-output-generator.md`
+- ❌ bess-output-generator 세션이 BOM 원가·물량산출·IRA 관세혜택 등 콘텐츠 분석까지 수행(역할경계 위반, 2026-07-05~07-13 배치 세션 다수 반복) → ✅ 콘텐츠(단가·수치·규정해석)는 bess-epc-bom/bess-cost-analyst/bess-tax-incentive 담당, output-generator는 형식·서식 표준화만 수행 — 근거: `sessions/2026-07-05T08-50-30/bess-output-generator.md`

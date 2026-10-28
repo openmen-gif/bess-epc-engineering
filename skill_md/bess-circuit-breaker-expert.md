@@ -1,12 +1,6 @@
 ---
 name: bess-circuit-breaker-expert
-id: "CBK-001"
-description: 차단기·개폐장치 사양 선정, GIS/AIS/VCB, IEC62271, IEEE C37, 단락용량, CT/VT, 피뢰기
-department: "기술본부 (CTO 산하)"
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
+description: "차단기·개폐장치 사양 선정, GIS/AIS/VCB, IEC62271, IEEE C37, 단락용량, CT/VT, 피뢰기"
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -124,51 +118,6 @@ IEC 62271, IEC 62271-100, IEEE C37, JEC 2300, KS C 4613, 단로기, DS, 접지�
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- KR 차단용량: 154kV ≥40kA(KEPCO 표준 1250A/40kA), 22.9kV 630A/25kA(KEPCO ES-5930 VCB) — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
-- 표준: IEC 62271-100(차단기), -200(금속폐쇄형), -203(GIS), IEEE C37 시리즈; KEPCO ES-5925(GIS)/ES-5930(VCB) — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
-- 피뢰기: IEC 60099-4 산화아연(MOV/ZnO)식 — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
-- 시험: FAT(공장)/SAT(현장) 검증 절차 — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
-- 보호계전 ANSI 디바이스 번호: 50(순시 과전류)·51(한시 과전류)·27(부족전압)·59(과전압)·81(주파수)·87T(변압기 차동); 선택성·보호협조 설계에 사용 — 근거: `sessions/2026-06-26T03-30-31/bess-circuit-breaker-expert.md`
-- 계기용 변성기(CT/VT)는 IEC 61869 시리즈, 절연협조는 IEC 60071-1/2 준수; GIS는 IEC 62271-203 — 근거: `sessions/2026-06-26T03-30-31/bess-circuit-breaker-expert.md`
-- EU 시장 SF6 제한: EU F-gas Regulation으로 개폐장치 SF6 사용 규제 → 무SF6/대체가스 차단기 검토 필요 — 근거: `sessions/2026-06-15T14-42-27/bess-circuit-breaker-expert.md`
-- KEPCO 계통 단락용량 기준(설계 검산용): 154 kV ≥ **40 kA**, 22.9 kV ≥ **25 kA**. 적용 규격 IEC 62271-100(차단기), IEC 60909(단락전류 계산), IEC 60071-1(절연협조), IEC 60099-4(산화아연 피뢰기) — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
-- 보호협조 검토 시 ANSI 계전기 번호 표기: 50/51(과전류), 27(부족전압), 59(과전압), 81(주파수) — TCC 곡선으로 동작 순서·시간을 정정 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
-- KR 154 kV 차단기 선정 예시(세션 기준값): KEPCO 표준 **1250 A / 40 kA**, GIS(SF6 또는 **Clean Air**), 차단시간 3사이클 = **60 Hz 50 ms / 50 Hz 60 ms**, 계전기 ANSI **50(순시 과전류)·27(부족전압)·59(과전압)·81(주파수)**, 피뢰기 **IEC 60099-4 ZnO(MOV 소자)**. EU F-gas 규제 강화로 무SF6(Clean Air) 대안을 시장별로 분기 검토 — 근거: `sessions/2026-08-30T01-02-43/bess-circuit-breaker-expert.md`
-- KEPCO 계통 차단기 사양 스냅샷(정격전류 / 차단용량): **154 kV = 1250 A / 40 kA**, **22.9 kV = 630 A / 25 kA**. 피뢰기는 **IEC 60099-4** 산화아연(ZnO). 보호계전 ANSI 번호: **50**(순시 과전류) · **51**(한시 과전류) · **27**(부족전압) · **59**(과전압) · **81**(주파수). Arc Flash 위험 평가 근거는 **IEEE 1584-2018**(입사에너지), 보호복 시험은 **IEC 61482-1-2** — 근거: `sessions/2026-09-05T00-32-48/bess-circuit-breaker-expert.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 작업 전압 레벨을 **"15 kV, 22.9 kV, 154 kV"** 로 나열 → ✅ **KR MV 표준전압은 22.9 kV**이며 **15 kV는 US 배전 등급**이다. 시장을 KR로 특정한 문서에서 US 전압 등급을 병기하지 않는다(가드레일 §3.4 "15kV 가정 금지") — 근거: `sessions/2026-09-05T00-32-48/bess-circuit-breaker-expert.md`
-- ❌ **"Isc ≥ 40 kA, Ik ≥ 40 kA"** 로 두 지표를 같은 값으로 병기하고 **Icm을 누락** → ✅ **Ik = 정격 단시간 내전류**(1 s·3 s 열적 내량), **Icu = 정격 한시 차단용량**, **Icm = 정격 투입용량**(peak, ≈2.5×Isc)로 검증 시험이 각각 다르다. 사양표에는 셋을 **행을 나누어** 기재한다(가드레일 §2·§3.4 차단기 용량 3원칙) — 근거: `sessions/2026-09-05T00-32-48/bess-circuit-breaker-expert.md`
-- ❌ IEEE 1584-2018을 인용하면서 **입사에너지(cal/cm²)·Arc Flash 경계거리·PPE 카테고리 수치가 0건** → ✅ Arc Flash 위험 평가를 근거로 차단기·보호 정정을 권고하려면 **입사에너지 산출값과 목표 차단시간(ms)** 을 함께 제시한다. 산출 입력(Isc, 작동시간, 이격거리)이 없으면 `[요확인]`으로 명시하되 요구 입력 목록을 수치 항목으로 남긴다 — 근거: `sessions/2026-09-05T00-32-48/bess-circuit-breaker-expert.md`
-- ❌ KEPCO 40 kA를 "**정격 단시간내전류 Ik**"로 라벨링 → ✅ KEPCO 154 kV ≥40 kA·22.9 kV ≥25 kA는 **차단용량(Isc)** 기준이다. **Ik(정격 단시간 내전류) / Icm(투입용량, ≈2.5×Isc peak) / Icu(정격 한시 차단용량)** 는 정의가 서로 다르며 대체 라벨로 쓰지 않는다(§3.4 차단기 용량 3원칙 — Icm 오라벨에 이은 **Ik 변형** 재발) — 근거: `sessions/2026-08-30T01-02-43/bess-circuit-breaker-expert.md`
-- ❌ **IEC 60071-1**을 "절연협조 **및 단락용량** 검토" 근거로 묶어 인용 → ✅ IEC 60071-1은 **절연협조(Insulation Co-ordination) 정의·원칙**만 다룬다. 단락용량(정격 단시간전류·차단전류)은 **IEC 62271-100**, 단락전류 계산은 **IEC 60909** 소관으로 분리 인용 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
-- ❌ 액냉 시스템 내 **과열보호기·과전압(OVP)·과전류(OCP) 소자** 설정 근거로 **IEC 62271-100 / IEEE C37 시리즈**(고압 개폐장치 규격)를 인용 → ✅ 62271-100·IEEE C37은 **고압 차단기·계전기** 규격이다. 저압·기기 내장 보호소자는 **IEC 60947**(저압 개폐기기)·**IEC 62477-1**(전력변환 안전) 계열이고, SPD는 IEC 61643 소관 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
-- ❌ 과열 보호기 설정을 "최대 허용 온도보다 약간 **낮게** 설정합니다 (예: **+10°C 마진**)"로 기재(부호 모순) → ✅ 마진은 부호를 명시한다 — 설정값 = **허용 최대온도 − 10 °C**. 방향과 부호가 어긋난 임계값은 그대로 설비 설정으로 전파되므로 발행 전 검산 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
-- ❌ **동일 4개 오류가 2026-08-04 세션에서 일괄 재발**(3사이클 50/60 ms 역전 + 같은 문서 내 상반 표기, Icm 40 kA < Isc 50 kA, "Icu는 Isc의 약 2.5배", KEPCO 154 kV 40 kA를 Icm으로 라벨) → ✅ 사양 표 발행 전 **①3사이클 = 50 Hz 60 ms / 60 Hz 50 ms ②Icm ≈ 2.5×Isc(peak) ③KEPCO 154 kV ≥40 kA·22.9 kV ≥25 kA는 차단용량(Isc) 기준** 3개를 체크리스트로 대조. 2.5배 관계는 **Icm**에만 성립하며 Icu에는 적용되지 않는다 — 근거: `sessions/2026-08-04T04-33-36/bess-circuit-breaker-expert.md`
-- ❌ Icm(정격 투입용량)을 "고장 상황에서 안전하게 **차단**할 수 있는 최대 전류"로 정의 → ✅ Icm은 **투입(making)** 능력(단락 상태 투입 시 견디는 peak 전류)이고, 차단 능력은 Icu/Isc다. 투입↔차단 동사를 뒤바꾸지 않는다 — 근거: `sessions/2026-08-04T04-33-36/bess-circuit-breaker-expert.md`
-- ❌ 3사이클 차단시간을 "50 Hz: 50 ms / 60 Hz: 60 ms"로 기재(같은 문서 내 권고절에서는 반대로 표기) → ✅ 3사이클 = **50 Hz 60 ms / 60 Hz 50 ms**. 주파수-사이클-시간 환산은 문서 내 전 구간 동일값으로 통일 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
-- ❌ 154 kV 계통 BIL을 "최소 125 kV"로 기재(125 kV BIL은 24 kV급 수준) → ✅ 154 kV급 BIL은 **650~750 kV** 범위이며, IEC 60071-1 절연협조표에서 전압등급별 값을 직접 인용 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
-- ❌ Icm(정격 투입용량) 40 kA < Isc(정격 한시 차단용량) 50 kA로 기재(peak가 rms보다 작아지는 모순) → ✅ Icm은 Isc의 약 2.5배(peak) 관계를 만족해야 하며, 두 값을 함께 제시할 때 대소관계를 검산 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
-- ❌ Icu="지속 단락 전류", Icm="최대 단락 전류"로 정의 → ✅ Icu=정격 한시 차단용량(rated ultimate breaking capacity, kA rms 대칭), Icm=정격 투입용량(rated making capacity, kA peak) — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
-- ❌ 단락전류 공식 Isc = Vphase/(√3×Zsc) (상전압에 √3 중복) → ✅ 선간전압이면 Vline/(√3×Zsc), 상전압이면 Vphase/Zsc — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
-- ❌ 154kV에 "SF6 피뢰기" 표기 → ✅ 피뢰기는 산화아연(MOV/ZnO)식(IEC 60099-4), SF6은 차단기 소호매질 — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
-- ❌ 전력케이블 규격을 "IEC 61196"으로 인용 → ✅ IEC 61196은 동축·RF 통신케이블; 전력케이블은 IEC 60502(≤30kV)/60840(30~150kV)/62067(>150kV) — 근거: `sessions/2026-06-26T03-30-31/bess-circuit-breaker-expert.md`
-- ❌ "Making Capacity=단락 상황에서의 최대전류, Breaking Capacity=정상부하에서 안전 동작 가능한 최대전류"로 정의 → ✅ Making Capacity(Icm)=투입 시 첨두전류(단락 상태로 투입해도 견디는 능력), Breaking Capacity(Icu/Isc)=실제 고장전류를 차단하는 능력(정상부하 전류와 무관) — 근거: `sessions/2026-07-05T06-47-53/bess-circuit-breaker-expert.md`, `sessions/2026-07-15T19-02-57/bess-circuit-breaker-expert.md`
-- ❌ Arc Flash 근거 규격으로 "IEC 69870-2-57"·"IEC 60070" 인용 → ✅ 존재하지 않거나 무관한 규격번호(오기); Arc Flash는 NFPA 70E + IEEE 1584-2018(입사에너지 모델) + IEC 61482-1-2(보호복)만 인용 — 근거: `sessions/2026-07-15T19-02-57/bess-circuit-breaker-expert.md`
-- ❌ 부하전류 계산식(P/(√3×V))으로 산출한 값을 "단락용량(Ics)"으로 명명 → ✅ 그 값은 정격 부하전류(In)이며, 단락용량(Isc/Icu)은 계통 임피던스 기반 별도 계산(IEC 60909) 필요 — 근거: `sessions/2026-07-16T20-20-42/bess-circuit-breaker-expert.md`
-- ❌ KEPCO 154kV GIS 정격을 "정격 한시 차단 전류(Icu): 1500A"로 표기 → ✅ KEPCO 154kV GIS 표준은 In=1250A / Icu=40kA(=40,000A) — In(A)과 Icu(kA)는 자릿수·단위가 다르므로 혼동 금지 — 근거: `sessions/2026-07-20T14-40-20/bess-circuit-breaker-expert.md`
-- ❌ 차단기 정격 산정 시 Icm(정격 투입용량)을 "Icm ≥ 최대부하전류 × 1.25"로 계산(In의 여유율 공식을 오적용) → ✅ Icm은 비대칭 첨두전류 Ip(=κ×√2×Isc)와 비교해 선정하고, "×1.25 여유율" 공식은 In(정격연속전류) ≥ 최대부하전류×1.25에만 적용 — 두 정격의 산정식을 혼용하지 않는다 — 근거: `sessions/2026-08-14T16-51-37/bess-circuit-breaker-expert.md`
-- ❌ VRT를 "Voltage Ramp Test"로 정의 → ✅ VRT는 "Voltage Ride Through"(전압 이상 시 탈락 없이 운전을 유지하는 능력)이며 LVRT/HVRT와 동일 계열 용어 — 근거: `sessions/2026-08-16T00-03-02/bess-circuit-breaker-expert.md`
-- ❌ "154 kV 변압기의 경우 KEPCO 표준에 따르면 **Ik ≥ 40 kA, Icu ≥ 25 kA**" → ✅ **25 kA는 22.9 kV 차단용량**이며 154 kV는 **≥40 kA**, 둘 다 **차단용량(Isc)** 기준이다. 전압등급 간 값 이식 + 40 kA의 Ik 라벨(§3.4 차단기 용량 3원칙 재발). 단락용량은 **차단기 정격**이지 변압기 정격이 아니다 — 근거: `sessions/2026-09-22T17-16-49/bess-circuit-breaker-expert.md`
-- ❌ 154 kV BIL "**125 kV 이상**" 재기재(재발, 2026-09-22) → ✅ 154 kV급 BIL은 **650~750 kV**(125 kV는 24 kV급) — 근거: `sessions/2026-09-22T17-16-49/bess-circuit-breaker-expert.md`
-- ❌ ANSI 번호 **한 칸 밀림**: "한시 과전류 계전기(**27**), 부족전압(**59**), 과전압(**81**)" + "**Isc(정격 전류)**: 1250 A", "정격 전류(**Ics**)" → ✅ **51**=한시 과전류, **27**=부족전압, **59**=과전압, **81**=주파수. 1250 A는 **In(정격전류)** 이고 Isc는 차단용량(kA), **Ics는 IEC 60947-2 저압 차단기의 정격 사용 단락차단용량**이다 — 근거: `sessions/2026-09-26T09-27-26/bess-circuit-breaker-expert.md`
-- ❌ 같은 문서에서 분석절 "60 Hz 50 ms / 50 Hz 60 ms", 권고절 "**50 Hz 50 ms / 60 Hz 60 ms**"로 역전(재발, 2026-09-26) → ✅ 3사이클 = **50 Hz 60 ms / 60 Hz 50 ms**로 문서 전 구간 통일(§5-7) — 근거: `sessions/2026-09-26T09-27-26/bess-circuit-breaker-expert.md`
-- ❌ "**AIS: KEPCO ES-5930 기준, 동일 사양 적용**"(1250 A / 40 kA) → ✅ KEPCO **ES-5930은 22.9 kV VCB**(630 A / 25 kA), **ES-5925는 154 kV GIS**(1250 A / 40 kA)다. 개폐장치 형식·전압등급이 다른 사양을 복사 적용하지 않는다 — 근거: `sessions/2026-09-26T09-27-26/bess-circuit-breaker-expert.md`
-- ❌ CFD 시뮬레이션을 수치 없이 "수행한 결과"로 서술하고 **배터리 모듈 부하전류**로 154 kV 차단기 정격을 결정, 또는 **LFP 열안정성이 변압기 과열 관리와 직접 연관**된다고 동의 → ✅ 154 kV 차단기는 **POI 계통 단락전류(IEC 60909)·부하전류**로 선정하고, CFD 결과는 cfd-analyst 산출값(°C·m/s)으로만 인용한다. 배터리 화학종은 변압기 온도상승(IEC 60076-2)의 변수가 아니다 — 근거: `sessions/2026-09-26T09-27-26/bess-circuit-breaker-expert.md`, `sessions/2026-09-22T17-16-49/bess-circuit-breaker-expert.md`
 
 ## 시장별 차단기·개폐장치 기준
 
@@ -404,3 +353,48 @@ Step 4. 아크 플래시 (Arc Flash) 검토
 VCB FAT, GIS 시험, 아크 플래시(IEEE 1584), 보호 계전기 정정,
 51/50/27/59/81/87T/67 계전기, 선택성, 차단용량 마진, KEPCO 계전기, SF6-free
 ---
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- KR 차단용량: 154kV ≥40kA(KEPCO 표준 1250A/40kA), 22.9kV 630A/25kA(KEPCO ES-5930 VCB) — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
+- 표준: IEC 62271-100(차단기), -200(금속폐쇄형), -203(GIS), IEEE C37 시리즈; KEPCO ES-5925(GIS)/ES-5930(VCB) — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
+- 피뢰기: IEC 60099-4 산화아연(MOV/ZnO)식 — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
+- 시험: FAT(공장)/SAT(현장) 검증 절차 — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
+- 보호계전 ANSI 디바이스 번호: 50(순시 과전류)·51(한시 과전류)·27(부족전압)·59(과전압)·81(주파수)·87T(변압기 차동); 선택성·보호협조 설계에 사용 — 근거: `sessions/2026-06-26T03-30-31/bess-circuit-breaker-expert.md`
+- 계기용 변성기(CT/VT)는 IEC 61869 시리즈, 절연협조는 IEC 60071-1/2 준수; GIS는 IEC 62271-203 — 근거: `sessions/2026-06-26T03-30-31/bess-circuit-breaker-expert.md`
+- EU 시장 SF6 제한: EU F-gas Regulation으로 개폐장치 SF6 사용 규제 → 무SF6/대체가스 차단기 검토 필요 — 근거: `sessions/2026-06-15T14-42-27/bess-circuit-breaker-expert.md`
+- KEPCO 계통 단락용량 기준(설계 검산용): 154 kV ≥ **40 kA**, 22.9 kV ≥ **25 kA**. 적용 규격 IEC 62271-100(차단기), IEC 60909(단락전류 계산), IEC 60071-1(절연협조), IEC 60099-4(산화아연 피뢰기) — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
+- 보호협조 검토 시 ANSI 계전기 번호 표기: 50/51(과전류), 27(부족전압), 59(과전압), 81(주파수) — TCC 곡선으로 동작 순서·시간을 정정 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
+- KR 154 kV 차단기 선정 예시(세션 기준값): KEPCO 표준 **1250 A / 40 kA**, GIS(SF6 또는 **Clean Air**), 차단시간 3사이클 = **60 Hz 50 ms / 50 Hz 60 ms**, 계전기 ANSI **50(순시 과전류)·27(부족전압)·59(과전압)·81(주파수)**, 피뢰기 **IEC 60099-4 ZnO(MOV 소자)**. EU F-gas 규제 강화로 무SF6(Clean Air) 대안을 시장별로 분기 검토 — 근거: `sessions/2026-08-30T01-02-43/bess-circuit-breaker-expert.md`
+- KEPCO 계통 차단기 사양 스냅샷(정격전류 / 차단용량): **154 kV = 1250 A / 40 kA**, **22.9 kV = 630 A / 25 kA**. 피뢰기는 **IEC 60099-4** 산화아연(ZnO). 보호계전 ANSI 번호: **50**(순시 과전류) · **51**(한시 과전류) · **27**(부족전압) · **59**(과전압) · **81**(주파수). Arc Flash 위험 평가 근거는 **IEEE 1584-2018**(입사에너지), 보호복 시험은 **IEC 61482-1-2** — 근거: `sessions/2026-09-05T00-32-48/bess-circuit-breaker-expert.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 작업 전압 레벨을 **"15 kV, 22.9 kV, 154 kV"** 로 나열 → ✅ **KR MV 표준전압은 22.9 kV**이며 **15 kV는 US 배전 등급**이다. 시장을 KR로 특정한 문서에서 US 전압 등급을 병기하지 않는다(가드레일 §3.4 "15kV 가정 금지") — 근거: `sessions/2026-09-05T00-32-48/bess-circuit-breaker-expert.md`
+- ❌ **"Isc ≥ 40 kA, Ik ≥ 40 kA"** 로 두 지표를 같은 값으로 병기하고 **Icm을 누락** → ✅ **Ik = 정격 단시간 내전류**(1 s·3 s 열적 내량), **Icu = 정격 한시 차단용량**, **Icm = 정격 투입용량**(peak, ≈2.5×Isc)로 검증 시험이 각각 다르다. 사양표에는 셋을 **행을 나누어** 기재한다(가드레일 §2·§3.4 차단기 용량 3원칙) — 근거: `sessions/2026-09-05T00-32-48/bess-circuit-breaker-expert.md`
+- ❌ IEEE 1584-2018을 인용하면서 **입사에너지(cal/cm²)·Arc Flash 경계거리·PPE 카테고리 수치가 0건** → ✅ Arc Flash 위험 평가를 근거로 차단기·보호 정정을 권고하려면 **입사에너지 산출값과 목표 차단시간(ms)** 을 함께 제시한다. 산출 입력(Isc, 작동시간, 이격거리)이 없으면 `[요확인]`으로 명시하되 요구 입력 목록을 수치 항목으로 남긴다 — 근거: `sessions/2026-09-05T00-32-48/bess-circuit-breaker-expert.md`
+- ❌ KEPCO 40 kA를 "**정격 단시간내전류 Ik**"로 라벨링 → ✅ KEPCO 154 kV ≥40 kA·22.9 kV ≥25 kA는 **차단용량(Isc)** 기준이다. **Ik(정격 단시간 내전류) / Icm(투입용량, ≈2.5×Isc peak) / Icu(정격 한시 차단용량)** 는 정의가 서로 다르며 대체 라벨로 쓰지 않는다(§3.4 차단기 용량 3원칙 — Icm 오라벨에 이은 **Ik 변형** 재발) — 근거: `sessions/2026-08-30T01-02-43/bess-circuit-breaker-expert.md`
+- ❌ **IEC 60071-1**을 "절연협조 **및 단락용량** 검토" 근거로 묶어 인용 → ✅ IEC 60071-1은 **절연협조(Insulation Co-ordination) 정의·원칙**만 다룬다. 단락용량(정격 단시간전류·차단전류)은 **IEC 62271-100**, 단락전류 계산은 **IEC 60909** 소관으로 분리 인용 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
+- ❌ 액냉 시스템 내 **과열보호기·과전압(OVP)·과전류(OCP) 소자** 설정 근거로 **IEC 62271-100 / IEEE C37 시리즈**(고압 개폐장치 규격)를 인용 → ✅ 62271-100·IEEE C37은 **고압 차단기·계전기** 규격이다. 저압·기기 내장 보호소자는 **IEC 60947**(저압 개폐기기)·**IEC 62477-1**(전력변환 안전) 계열이고, SPD는 IEC 61643 소관 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
+- ❌ 과열 보호기 설정을 "최대 허용 온도보다 약간 **낮게** 설정합니다 (예: **+10°C 마진**)"로 기재(부호 모순) → ✅ 마진은 부호를 명시한다 — 설정값 = **허용 최대온도 − 10 °C**. 방향과 부호가 어긋난 임계값은 그대로 설비 설정으로 전파되므로 발행 전 검산 — 근거: `sessions/2026-08-21T16-01-30/bess-circuit-breaker-expert.md`
+- ❌ **동일 4개 오류가 2026-08-04 세션에서 일괄 재발**(3사이클 50/60 ms 역전 + 같은 문서 내 상반 표기, Icm 40 kA < Isc 50 kA, "Icu는 Isc의 약 2.5배", KEPCO 154 kV 40 kA를 Icm으로 라벨) → ✅ 사양 표 발행 전 **①3사이클 = 50 Hz 60 ms / 60 Hz 50 ms ②Icm ≈ 2.5×Isc(peak) ③KEPCO 154 kV ≥40 kA·22.9 kV ≥25 kA는 차단용량(Isc) 기준** 3개를 체크리스트로 대조. 2.5배 관계는 **Icm**에만 성립하며 Icu에는 적용되지 않는다 — 근거: `sessions/2026-08-04T04-33-36/bess-circuit-breaker-expert.md`
+- ❌ Icm(정격 투입용량)을 "고장 상황에서 안전하게 **차단**할 수 있는 최대 전류"로 정의 → ✅ Icm은 **투입(making)** 능력(단락 상태 투입 시 견디는 peak 전류)이고, 차단 능력은 Icu/Isc다. 투입↔차단 동사를 뒤바꾸지 않는다 — 근거: `sessions/2026-08-04T04-33-36/bess-circuit-breaker-expert.md`
+- ❌ 3사이클 차단시간을 "50 Hz: 50 ms / 60 Hz: 60 ms"로 기재(같은 문서 내 권고절에서는 반대로 표기) → ✅ 3사이클 = **50 Hz 60 ms / 60 Hz 50 ms**. 주파수-사이클-시간 환산은 문서 내 전 구간 동일값으로 통일 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
+- ❌ 154 kV 계통 BIL을 "최소 125 kV"로 기재(125 kV BIL은 24 kV급 수준) → ✅ 154 kV급 BIL은 **650~750 kV** 범위이며, IEC 60071-1 절연협조표에서 전압등급별 값을 직접 인용 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
+- ❌ Icm(정격 투입용량) 40 kA < Isc(정격 한시 차단용량) 50 kA로 기재(peak가 rms보다 작아지는 모순) → ✅ Icm은 Isc의 약 2.5배(peak) 관계를 만족해야 하며, 두 값을 함께 제시할 때 대소관계를 검산 — 근거: `sessions/2026-07-31T07-59-57/bess-circuit-breaker-expert.md`
+- ❌ Icu="지속 단락 전류", Icm="최대 단락 전류"로 정의 → ✅ Icu=정격 한시 차단용량(rated ultimate breaking capacity, kA rms 대칭), Icm=정격 투입용량(rated making capacity, kA peak) — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
+- ❌ 단락전류 공식 Isc = Vphase/(√3×Zsc) (상전압에 √3 중복) → ✅ 선간전압이면 Vline/(√3×Zsc), 상전압이면 Vphase/Zsc — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
+- ❌ 154kV에 "SF6 피뢰기" 표기 → ✅ 피뢰기는 산화아연(MOV/ZnO)식(IEC 60099-4), SF6은 차단기 소호매질 — 근거: `sessions/2026-06-08T18-47-29/bess-circuit-breaker-expert.md`
+- ❌ 전력케이블 규격을 "IEC 61196"으로 인용 → ✅ IEC 61196은 동축·RF 통신케이블; 전력케이블은 IEC 60502(≤30kV)/60840(30~150kV)/62067(>150kV) — 근거: `sessions/2026-06-26T03-30-31/bess-circuit-breaker-expert.md`
+- ❌ "Making Capacity=단락 상황에서의 최대전류, Breaking Capacity=정상부하에서 안전 동작 가능한 최대전류"로 정의 → ✅ Making Capacity(Icm)=투입 시 첨두전류(단락 상태로 투입해도 견디는 능력), Breaking Capacity(Icu/Isc)=실제 고장전류를 차단하는 능력(정상부하 전류와 무관) — 근거: `sessions/2026-07-05T06-47-53/bess-circuit-breaker-expert.md`, `sessions/2026-07-15T19-02-57/bess-circuit-breaker-expert.md`
+- ❌ Arc Flash 근거 규격으로 "IEC 69870-2-57"·"IEC 60070" 인용 → ✅ 존재하지 않거나 무관한 규격번호(오기); Arc Flash는 NFPA 70E + IEEE 1584-2018(입사에너지 모델) + IEC 61482-1-2(보호복)만 인용 — 근거: `sessions/2026-07-15T19-02-57/bess-circuit-breaker-expert.md`
+- ❌ 부하전류 계산식(P/(√3×V))으로 산출한 값을 "단락용량(Ics)"으로 명명 → ✅ 그 값은 정격 부하전류(In)이며, 단락용량(Isc/Icu)은 계통 임피던스 기반 별도 계산(IEC 60909) 필요 — 근거: `sessions/2026-07-16T20-20-42/bess-circuit-breaker-expert.md`
+- ❌ KEPCO 154kV GIS 정격을 "정격 한시 차단 전류(Icu): 1500A"로 표기 → ✅ KEPCO 154kV GIS 표준은 In=1250A / Icu=40kA(=40,000A) — In(A)과 Icu(kA)는 자릿수·단위가 다르므로 혼동 금지 — 근거: `sessions/2026-07-20T14-40-20/bess-circuit-breaker-expert.md`
+- ❌ 차단기 정격 산정 시 Icm(정격 투입용량)을 "Icm ≥ 최대부하전류 × 1.25"로 계산(In의 여유율 공식을 오적용) → ✅ Icm은 비대칭 첨두전류 Ip(=κ×√2×Isc)와 비교해 선정하고, "×1.25 여유율" 공식은 In(정격연속전류) ≥ 최대부하전류×1.25에만 적용 — 두 정격의 산정식을 혼용하지 않는다 — 근거: `sessions/2026-08-14T16-51-37/bess-circuit-breaker-expert.md`
+- ❌ VRT를 "Voltage Ramp Test"로 정의 → ✅ VRT는 "Voltage Ride Through"(전압 이상 시 탈락 없이 운전을 유지하는 능력)이며 LVRT/HVRT와 동일 계열 용어 — 근거: `sessions/2026-08-16T00-03-02/bess-circuit-breaker-expert.md`
+- ❌ "154 kV 변압기의 경우 KEPCO 표준에 따르면 **Ik ≥ 40 kA, Icu ≥ 25 kA**" → ✅ **25 kA는 22.9 kV 차단용량**이며 154 kV는 **≥40 kA**, 둘 다 **차단용량(Isc)** 기준이다. 전압등급 간 값 이식 + 40 kA의 Ik 라벨(§3.4 차단기 용량 3원칙 재발). 단락용량은 **차단기 정격**이지 변압기 정격이 아니다 — 근거: `sessions/2026-09-22T17-16-49/bess-circuit-breaker-expert.md`
+- ❌ 154 kV BIL "**125 kV 이상**" 재기재(재발, 2026-09-22) → ✅ 154 kV급 BIL은 **650~750 kV**(125 kV는 24 kV급) — 근거: `sessions/2026-09-22T17-16-49/bess-circuit-breaker-expert.md`
+- ❌ ANSI 번호 **한 칸 밀림**: "한시 과전류 계전기(**27**), 부족전압(**59**), 과전압(**81**)" + "**Isc(정격 전류)**: 1250 A", "정격 전류(**Ics**)" → ✅ **51**=한시 과전류, **27**=부족전압, **59**=과전압, **81**=주파수. 1250 A는 **In(정격전류)** 이고 Isc는 차단용량(kA), **Ics는 IEC 60947-2 저압 차단기의 정격 사용 단락차단용량**이다 — 근거: `sessions/2026-09-26T09-27-26/bess-circuit-breaker-expert.md`
+- ❌ 같은 문서에서 분석절 "60 Hz 50 ms / 50 Hz 60 ms", 권고절 "**50 Hz 50 ms / 60 Hz 60 ms**"로 역전(재발, 2026-09-26) → ✅ 3사이클 = **50 Hz 60 ms / 60 Hz 50 ms**로 문서 전 구간 통일(§5-7) — 근거: `sessions/2026-09-26T09-27-26/bess-circuit-breaker-expert.md`
+- ❌ "**AIS: KEPCO ES-5930 기준, 동일 사양 적용**"(1250 A / 40 kA) → ✅ KEPCO **ES-5930은 22.9 kV VCB**(630 A / 25 kA), **ES-5925는 154 kV GIS**(1250 A / 40 kA)다. 개폐장치 형식·전압등급이 다른 사양을 복사 적용하지 않는다 — 근거: `sessions/2026-09-26T09-27-26/bess-circuit-breaker-expert.md`
+- ❌ CFD 시뮬레이션을 수치 없이 "수행한 결과"로 서술하고 **배터리 모듈 부하전류**로 154 kV 차단기 정격을 결정, 또는 **LFP 열안정성이 변압기 과열 관리와 직접 연관**된다고 동의 → ✅ 154 kV 차단기는 **POI 계통 단락전류(IEC 60909)·부하전류**로 선정하고, CFD 결과는 cfd-analyst 산출값(°C·m/s)으로만 인용한다. 배터리 화학종은 변압기 온도상승(IEC 60076-2)의 변수가 아니다 — 근거: `sessions/2026-09-26T09-27-26/bess-circuit-breaker-expert.md`, `sessions/2026-09-22T17-16-49/bess-circuit-breaker-expert.md`
