@@ -11,6 +11,7 @@ from utils.auth_helper import require_auth, sidebar_user_info
 from utils.theme import AX3D, DARK_LAYOUT, CBAR
 from utils import engineering_params as EP
 from utils import design_model as DM
+from utils.fig_compact import compact
 from utils.sim_physics import (
     heat2d_transient, bearing_pressure, seismic_pulse,
     smoke_layer_series, plume_particles,
@@ -537,7 +538,7 @@ if role == T["roles"][0]:
             animated_trace_idx=[0], layout=layout,
             duration_ms=400, prefix=T["tprefix"],
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(compact(fig), use_container_width=True)
 
     with st.expander(T["cfd_method_t"]):
         st.markdown(T["cfd_method"])
@@ -634,7 +635,7 @@ elif role == T["roles"][1]:
                 animated_trace_idx=[0], layout=layout_q,
                 duration_ms=120, prefix=T["tprefix"],
             )
-            st.plotly_chart(fig_s, use_container_width=True)
+            st.plotly_chart(compact(fig_s), use_container_width=True)
 
         with tab_s2:
             st.caption(T["str_guide2"])
@@ -681,7 +682,7 @@ elif role == T["roles"][1]:
                 font=dict(color="#c9d1d9"),
                 legend=dict(font=dict(color="#c9d1d9")),
             )
-            st.plotly_chart(fig_b, use_container_width=True)
+            st.plotly_chart(compact(fig_b), use_container_width=True)
 
     with st.expander(T["str_method_t"]):
         st.markdown(T["str_method"])
@@ -787,7 +788,7 @@ else:
             animated_trace_idx=[0, 1], layout=layout_f,
             duration_ms=300, prefix=T["tprefix"],
         )
-        st.plotly_chart(fig_fds, use_container_width=True)
+        st.plotly_chart(compact(fig_fds), use_container_width=True)
 
     with st.expander(T["fds_method_t"]):
         st.markdown(T["fds_method"])

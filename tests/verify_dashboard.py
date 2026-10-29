@@ -275,6 +275,47 @@ def run_design_model_checks():
           SL.check_layout(lay_t)["trench_fits"] is False and SL.check_layout(SL.build_layout(10, 3, trench_w=0.6))["trench_fits"])
     check("배치: PCS 수 > 인클로저 수 → pcs_clipped 표시", SL.build_layout(3, 8)["metrics"]["pcs_clipped"] is True)
 
+    # 구조 뷰 — 기초 패드·트렌치 지중 박스, 패드 순간격, 기준안 차이
+    lay_s = SL.build_layout(20, 5, unit_gap=3.0, trench_w=0.6)
+    pads = SL.pad_boxes(lay_s, 7.05, 3.44)
+    encs = [b for b in lay_s["boxes"] if b["kind"] == "enc"]
+    centered = all(abs((p["x"] + p["dx"] / 2) - (e["x"] + e["dx"] / 2)) < 1e-9 and
+                   abs((p["y"] + p["dy"] / 2) - (e["y"] + e["dy"] / 2)) < 1e-9 for p, e in zip(pads, encs))
+    tb = SL.trench_boxes(lay_s, 1.2)
+    n_seg_s = sum(len(pl) - 1 for pl in lay_s["trench"])
+    check("구조 뷰: 패드 = 인클로저 수·중심 일치·z −0.3~0, 트렌치 박스 = 선분 수·깊이 −1.2 m",
+          len(pads) == len(encs) and centered and all(p["z0"] == -SL.PAD_T and p["dz"] == 0 for p in pads)
+          and len(tb) == n_seg_s and all(t["z0"] == -1.2 and min(t["dx"], t["dy"]) >= 0.6 - 1e-9 for t in tb),
+          f"pad {len(pads)}/{len(encs)} trench {len(tb)}/{n_seg_s}")
+    g_ok = SL.pad_clear_gap(lay_s, 7.05, 3.44)
+    g_bad = SL.pad_clear_gap(SL.build_layout(20, 5, unit_gap=0.5), 7.05, 3.44)
+    check("구조 뷰: 패드 순간격 = 이격 3 m − 여유 1 m = 2.0 m, 이격 0.5 m 면 −0.5 m(겹침)",
+          abs(g_ok - 2.0) < 1e-9 and abs(g_bad + 0.5) < 1e-9, f"{g_ok:.2f} / {g_bad:.2f}")
+    dm_ = SL.diff_metrics(SL.build_layout(24, 6)["metrics"], lay_s["metrics"])
+    check("기준안 비교: 인클로저 20→24 = +4기 (+20.0%), 면적 증가",
+          dm_["n_enc"][2] == 4 and abs(dm_["n_enc"][3] - 20.0) < 1e-9 and dm_["site_area_m2"][2] > 0,
+          f"{dm_['n_enc']} area Δ{dm_['site_area_m2'][3]:+.1f}%")
+    ex_, ey_, ez_ = SL.edge_arrays(encs[:2])
+    check("구조 뷰: 모서리선 박스당 상·하 링 2 + 수직 4 = 24 점(구분자 포함)", len(ex_) == 2 * 24 == len(ey_) == len(ez_),
+          str(len(ex_)))
+
+    # 차트 전송량 — 수치 배열만 반올림, Mesh 인덱스·스칼라 보존
+    import plotly.graph_objects as go
+    from utils.fig_compact import compact
+    rng = np.random.default_rng(0)
+    zz = 25 + rng.random((40, 40)) * 20
+    fig_c = go.Figure([go.Surface(z=zz, opacity=0.123456), go.Mesh3d(x=[0.123456] * 3, y=[0, 1, 0], z=[0, 0, 1],
+                                                                       i=[0], j=[1], k=[2])],
+                      frames=[go.Frame(data=[go.Surface(z=zz + 1)])])
+    full, cd = len(fig_c.to_json()), compact(fig_c)
+    small = len(json.dumps(go.Figure(cd).to_plotly_json(), cls=__import__("plotly").utils.PlotlyJSONEncoder))
+    zc = np.asarray(cd["data"][0]["z"])
+    check("전송량: 반올림 후 크기 ≤ 원본 50%·값 오차 ≤ 0.005·인덱스·스칼라 보존",
+          small <= 0.5 * full and float(np.abs(zc - zz).max()) <= 0.005 + 1e-12
+          and list(cd["data"][1]["i"]) == [0] and cd["data"][0]["opacity"] == 0.123456
+          and np.asarray(cd["frames"][0]["data"][0]["z"]).shape == (40, 40),
+          f"{full/1024:.0f}KB → {small/1024:.0f}KB")
+
     if FAST:
         return
     # 값 전파 사슬 — 01 입력 → 02 실행 → 05 실행 → 3D 입력 (실제 페이지를 AppTest 로 실행)
@@ -296,6 +337,33 @@ def run_design_model_checks():
     s05, e05 = run_page("05_CBOP_Engineer.py", {**base, **{k: s02[k] for k in
                         ("num_containers", "num_pcs", "batt_unit_mwh", "pcs_unit_mw", "design_model") if k in s02}})
     n05 = (s05.get("design_model") or {}).get("cbop", {}).get("values", {}).get("n_enc")
+    # 냉방부하 외피 = 인클로저 수 × 1기 UA × ΔT (예전엔 플랜트 전체에 1기분만 더했다)
+    cv = (s05.get("design_model") or {}).get("cbop", {}).get("values", {})
+    ua1 = EP.enc_ua_kw_k(6.05, 2.44)
+    exp_load = (cv.get("bat_heat_kw", 0) + cv.get("pcs_heat_kw", 0)) * (1 + cv.get("hvac_safety_pct", 0) / 100.0) \
+        + n05 * ua1 * cv.get("hvac_dt_k", 0) if n05 else None
+    check("05 냉방부하: 외피 = 인클로저 수 × U·A × ΔT (1기 UA 0.197 kW/K)",
+          exp_load is not None and cv.get("hvac_dt_k", 0) > 0 and abs(cv.get("hvac_load_kw", 0) - exp_load) < 1e-6
+          and abs(cv.get("env_ua_kw_k", 0) - ua1) < 1e-9 and abs(ua1 - 0.19690) < 1e-4,
+          f"load={cv.get('hvac_load_kw', 0):.1f} kW 기대={exp_load or 0:.1f} UA={ua1:.4f} n={n05}")
+    # 13 화면: 기준안 저장 → 유닛 이격 3.048→6 m 변경 → 구조 뷰 — 면적 Δ 표시·패드/트렌치 트레이스·예외 0
+    at13 = AppTest.from_file(os.path.join(DASH, "pages", "13_Site_Layout_3D.py"), default_timeout=180)
+    for k, v in {**base, **{k: s05[k] for k in ("num_containers", "num_pcs", "design_model") if k in s05}}.items():
+        at13.session_state[k] = v
+    at13.run()
+    at13.button[0].click().run()
+    at13.number_input(key="sl_gap_US").set_value(6.0).run()
+    at13.radio(key="sl_view").set_value("구조 (기초·트렌치)").run()
+    spec13 = json.loads(at13.get("plotly_chart")[0].proto.spec)
+    names13 = [t.get("name") for t in spec13["data"]]
+    d_area = at13.metric[0].proto.body if at13.metric else ""
+    delta13 = at13.metric[0].proto.delta if at13.metric else ""
+    d_enc13 = at13.metric[1].proto.delta if len(at13.metric) > 1 else "?"
+    check("13 화면: 기준안 저장 후 이격 변경 → 면적 Δ(+) 표시·변화 없는 인클로저 수는 Δ 없음(↑ 오표시 방지), "
+          "구조 뷰에 기초 패드·트렌치·기준안 윤곽",
+          not at13.exception and delta13.startswith("+") and d_enc13 == "" and {"기초 패드", "케이블 트렌치", "기준안 윤곽"} <= set(names13)
+          and spec13["layout"]["scene"]["zaxis"]["range"][0] < -1.0,
+          f"Δ={delta13} 인클로저Δ={d_enc13!r} 면적={d_area} traces={names13} err={[e.value for e in at13.exception][:1]}"[:160])
     inp = DM.layout_inputs(s05)
     n3d = sum(b["kind"] == "enc" for b in SL.build_layout(inp["n_enc"][0], inp["n_pcs"][0])["boxes"])
     check("전파: 02 인클로저 수 = 05 기본값 = 3D 박스 수", not (e02 or e05) and n02 and n02 == n05 == n3d,

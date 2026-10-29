@@ -92,6 +92,10 @@ def layout_inputs(ss=None) -> dict:
     out["enc_l"] = _dim("enc_l", 6.05, 0.5)
     out["enc_w"] = _dim("enc_w", 2.44, 0.5)
     out["trench_w"] = _dim("trench_w", 0.6, 0.05)
+    # 구조 뷰 — 05 기초 패드 평면 치수(기본 = 인클로저 + 1 m)·트렌치 깊이
+    out["pad_l"] = _dim("pad_l", out["enc_l"][0] + 1.0, 0.5)
+    out["pad_w"] = _dim("pad_w", out["enc_w"][0] + 1.0, 0.5)
+    out["trench_d"] = _dim("trench_d", 1.2, 0.1)
     out["water_m3"] = ((float(cbv["water_l"]) / 1000.0, "p05") if cbv and cbv.get("water_l")
                        else (0.0, "[가정]"))
     out["main_tr_mva"] = ((ebv["main_tr_mva"], "p04") if ebv and ebv.get("main_tr_mva")

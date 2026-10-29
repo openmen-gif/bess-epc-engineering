@@ -134,15 +134,21 @@ def run_cbop_engineer_module():
             import math
             dt = max(amb_temp - indoor_t, 0)
             base_load  = bat_heat + pcs_heat
-            # 외피 취득열 = U·A·ΔT — 40ft 컨테이너 기준 U≈2.5 W/m²K × A≈80 m² = 0.2 kW/K
-            ENV_UA_KW_PER_K = 0.2
-            total_load = base_load * (1 + safety / 100.0) + dt * ENV_UA_KW_PER_K
+            # 외피 취득열 = U·A·ΔT — 1기 UA 는 탭1 인클로저 치수로 산정, 플랜트 부하는 인클로저 수만큼 더한다
+            ENV_UA_KW_PER_K = EP.enc_ua_kw_k(max(length, 0.5), max(width, 0.5))
+            env_load   = dt * ENV_UA_KW_PER_K * num_enclosures
+            total_load = base_load * (1 + safety / 100.0) + env_load
             hvac_units = math.ceil(total_load / unit_kw)
             hvac_power = total_load / cop
 
             st.metric(t("p5_hvac_total"),  f"{total_load:.1f} kW")
             st.metric(t("p5_hvac_units"),  f"{hvac_units} ea")
             st.metric(t("p5_hvac_power"),  f"{hvac_power:.1f} kW")
+            st.caption(f"외피 취득열 {env_load:.1f} kW = {num_enclosures}기 × {ENV_UA_KW_PER_K:.3f} kW/K × ΔT {dt:.0f} K "
+                       f"(U {EP.ENC_U_W_M2K} W/m²K [가정]) · 일사·환기 부하 미포함"
+                       if st.session_state.get('lang', 'KO') == 'KO' else
+                       f"Envelope gain {env_load:.1f} kW = {num_enclosures} × {ENV_UA_KW_PER_K:.3f} kW/K × ΔT {dt:.0f} K "
+                       f"(U {EP.ENC_U_W_M2K} W/m²K [assumed]) · solar & ventilation not included")
 
             if total_load <= unit_kw * hvac_units * 0.85:
                 st.success(t("p5_hvac_ok"))

@@ -101,7 +101,7 @@ def build_layout(n_enc, n_pcs, enc_l=6.05, enc_w=2.44, unit_gap=3.0, boundary=3.
             site_area_m2=site_w * site_h, site_w_m=site_w, site_h_m=site_h,
             trench_len_m=trench_len, longest_cable_m=max(runs), n_enc=n_enc, n_pcs=n_pcs,
             blocks_cols=cols, blocks_rows=rows, enc_per_block=per, tank_m3=water_m3,
-            pcs_clipped=pcs_clipped,
+            pcs_clipped=pcs_clipped, row_gap_m=row_gap + (block_dep - enc_w),
         ),
         params=dict(unit_gap=unit_gap, boundary=boundary, aisle=aisle, tr_clear=tr_clear,
                     enc_l=enc_l, enc_w=enc_w),
@@ -158,14 +158,79 @@ def mesh_arrays(boxes):
     xs, ys, zs, ii, jj, kk = [], [], [], [], [], []
     for n, b in enumerate(boxes):
         x0, y0, x1, y1, z1 = b["x"], b["y"], b["x"] + b["dx"], b["y"] + b["dy"], b["dz"]
+        z0 = b.get("z0", 0.0)
         xs += [x0, x1, x1, x0, x0, x1, x1, x0]
         ys += [y0, y0, y1, y1, y0, y0, y1, y1]
-        zs += [0, 0, 0, 0, z1, z1, z1, z1]
+        zs += [z0, z0, z0, z0, z1, z1, z1, z1]
         o = 8 * n
         ii += [o + v for v in _I]
         jj += [o + v for v in _J]
         kk += [o + v for v in _K]
     return xs, ys, zs, ii, jj, kk
+
+
+def edge_arrays(boxes, top_only=False):
+    """박스 모서리 선 (Scatter3d 1 트레이스용, 박스 사이는 None 으로 끊음). top_only = 윗면 사각형만."""
+    xs, ys, zs = [], [], []
+    for b in boxes:
+        x0, y0, x1, y1 = b["x"], b["y"], b["x"] + b["dx"], b["y"] + b["dy"]
+        z0, z1 = b.get("z0", 0.0), b["dz"]
+        ring = [(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]
+        for z in ((z1,) if top_only else (z0, z1)):
+            xs += [p[0] for p in ring] + [None]
+            ys += [p[1] for p in ring] + [None]
+            zs += [z] * 5 + [None]
+        if not top_only:
+            for px, py in ring[:4]:
+                xs += [px, px, None]
+                ys += [py, py, None]
+                zs += [z0, z1, None]
+    return xs, ys, zs
+
+
+# ── 구조 뷰: 지중 기초 패드·케이블 트렌치 (05 토목 값) ─────────────────────────────
+PAD_T = 0.3   # [가정] 기초 패드 두께 — 05 는 평면 치수만 산정
+
+
+def pad_boxes(layout, pad_l, pad_w, pad_t=PAD_T):
+    """인클로저마다 중심을 맞춘 기초 패드 (z = -pad_t ~ 0)."""
+    out = []
+    for b in layout["boxes"]:
+        if b["kind"] != "enc":
+            continue
+        cx, cy = b["x"] + b["dx"] / 2.0, b["y"] + b["dy"] / 2.0
+        out.append(dict(kind="pad", label="PAD-" + b["label"][4:], x=cx - pad_l / 2.0, y=cy - pad_w / 2.0,
+                        dx=pad_l, dy=pad_w, z0=-pad_t, dz=0.0))
+    return out
+
+
+def trench_boxes(layout, depth):
+    """트렌치 중심선(직각 폴리라인)을 폭 trench_w · 깊이 depth 의 지중 박스로."""
+    hw = layout["trench_w"] / 2.0
+    out = []
+    for pl in layout["trench"]:
+        for (x0, y0), (x1, y1) in zip(pl, pl[1:]):
+            xa, xb, ya, yb = min(x0, x1) - hw, max(x0, x1) + hw, min(y0, y1) - hw, max(y0, y1) + hw
+            out.append(dict(kind="trench", label="TRENCH", x=xa, y=ya, dx=xb - xa, dy=yb - ya, z0=-depth, dz=0.0))
+    return out
+
+
+def pad_clear_gap(layout, pad_l, pad_w):
+    """이웃 인클로저 기초 패드 사이 순간격 [m] — 음수면 패드끼리 겹침(일체 기초 검토)."""
+    p, m = layout["params"], layout["metrics"]
+    gx = p["unit_gap"] - (pad_l - p["enc_l"]) if m["enc_per_block"] > 1 else float("inf")
+    gy = m["row_gap_m"] - (pad_w - p["enc_w"]) if m["blocks_rows"] > 1 else float("inf")
+    return min(gx, gy)
+
+
+def diff_metrics(cur, base):
+    """기준안 대비 변화 — {key: (현재, 기준, 차이, 차이%)}."""
+    out = {}
+    for k in ("site_area_m2", "trench_len_m", "longest_cable_m", "n_enc", "n_pcs"):
+        c, b = cur.get(k), base.get(k)
+        if isinstance(c, (int, float)) and isinstance(b, (int, float)):
+            out[k] = (c, b, c - b, (c - b) / b * 100.0 if b else 0.0)
+    return out
 
 
 # ── DXF R12 (ASCII) — 외부 의존성 없이 평면도 출력 ──────────────────────────────────

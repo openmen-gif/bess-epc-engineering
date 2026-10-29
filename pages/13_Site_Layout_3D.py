@@ -4,8 +4,11 @@ try:
 except Exception:
     pass
 
+from datetime import datetime
+
 import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
+from utils.fig_compact import compact
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils import engineering_params as EP
 from utils import design_model as DM
@@ -47,7 +50,9 @@ def run_site_layout_module():
     names = {
         "n_enc": L("인클로저 수", "Enclosures"), "n_pcs": L("PCS 스키드 수", "PCS skids"),
         "enc_l": L("인클로저 길이 (m)", "Enclosure length (m)"), "enc_w": L("인클로저 폭 (m)", "Enclosure width (m)"),
-        "trench_w": L("트렌치 폭 (m)", "Trench width (m)"), "water_m3": L("소방 수원 (m³)", "Fire water (m³)"),
+        "trench_w": L("트렌치 폭 (m)", "Trench width (m)"), "trench_d": L("트렌치 깊이 (m)", "Trench depth (m)"),
+        "pad_l": L("기초 패드 길이 (m)", "Pad length (m)"), "pad_w": L("기초 패드 폭 (m)", "Pad width (m)"),
+        "water_m3": L("소방 수원 (m³)", "Fire water (m³)"),
         "main_tr_mva": L("주변압기 (MVA)", "Main TR (MVA)"), "cable_area_mm2": L("케이블 단면적 (mm²)", "Cable size (mm²)"),
         "target_market": L("목표 시장", "Target market"),
     }
@@ -94,21 +99,47 @@ def run_site_layout_module():
                           trench_w=inp["trench_w"][0], water_m3=inp["water_m3"][0])
     m, chk = lay["metrics"], SL.check_layout(lay)
 
+    # ── 기준안 비교 — 설계값을 바꾸기 전 배치를 저장해 두면 변화량·이전 윤곽을 함께 보여준다 ──────
+    base = st.session_state.get("sl_baseline")
+    k1, k2 = st.columns(2)
+    if k1.button(L("📌 현재 배치를 기준안으로 저장", "📌 Save current layout as baseline"), use_container_width=True):
+        base = {"metrics": dict(m), "ts": datetime.now().strftime("%H:%M"),
+                "boxes": [{k: x[k] for k in ("kind", "x", "y", "dx", "dy", "dz")} for x in lay["boxes"]]}
+        st.session_state["sl_baseline"] = base
+    if base and k2.button(L("기준안 지우기", "Clear baseline"), use_container_width=True):
+        st.session_state.pop("sl_baseline", None)
+        base = None
+    dlt = SL.diff_metrics(m, base["metrics"]) if base else {}
+
+    def _delta(key, unit, nd=0):
+        # 변화 0 이면 표시하지 않는다 — Streamlit 은 '-' 로 시작하지 않는 문자열을 전부 ↑ 로 그린다
+        if key not in dlt or abs(dlt[key][2]) < 1e-9:
+            return None
+        _, _, dv, dp = dlt[key]
+        return f"{dv:+,.{nd}f} {unit} ({dp:+.1f}%)"
+
     # ── 지표 ───────────────────────────────────────────────────────────────
     a, b, c, d = st.columns(4)
-    a.metric(L("부지 면적", "Site area"), f"{m['site_area_m2']:,.0f} m²",
-             help=f"{m['site_w_m']:.1f} × {m['site_h_m']:.1f} m")
+    a.metric(L("부지 면적", "Site area"), f"{m['site_area_m2']:,.0f} m²", delta=_delta("site_area_m2", "m²"),
+             delta_color="inverse", help=f"{m['site_w_m']:.1f} × {m['site_h_m']:.1f} m")
     b.metric(L("인클로저 / PCS", "Enclosures / PCS"), f"{m['n_enc']} / {m['n_pcs']}",
+             delta=_delta("n_enc", L("기", "units")), delta_color="off",
              help=L(f"블록 {m['blocks_cols']}열 × {m['blocks_rows']}행, 블록당 최대 {m['enc_per_block']}기",
                     f"{m['blocks_cols']} × {m['blocks_rows']} blocks, ≤{m['enc_per_block']} per block"))
-    c.metric(L("트렌치 총연장", "Total trench"), f"{m['trench_len_m']:,.0f} m")
+    c.metric(L("트렌치 총연장", "Total trench"), f"{m['trench_len_m']:,.0f} m", delta=_delta("trench_len_m", "m"),
+             delta_color="inverse")
     d.metric(L("최장 케이블 경로", "Longest cable route"), f"{m['longest_cable_m']:,.1f} m",
+             delta=_delta("longest_cable_m", "m", 1), delta_color="inverse",
              help=L("PCS → 주변압기 직각 경로 길이 (여장·단말 미포함)",
                     "PCS → main TR orthogonal route (no slack/termination allowance)"))
+    if base:
+        st.caption(L(f"Δ = {base['ts']} 저장한 기준안 대비 (Δ 없음 = 기준안과 같음) · 3D 의 회색 점선 = 기준안 윤곽",
+                     f"Δ = vs baseline saved at {base['ts']} (no Δ = unchanged) · grey dashed outline in 3D = baseline"))
 
     # ── 3D ────────────────────────────────────────────────────────────────
-    view = st.radio(L("시점", "View"), [L("등각", "Isometric"), L("위에서", "Top")], horizontal=True,
-                    key="sl_view", label_visibility="collapsed")
+    views = [L("등각", "Isometric"), L("위에서", "Top"), L("구조 (기초·트렌치)", "Structure (pads·trench)")]
+    view = st.radio(L("시점", "View"), views, horizontal=True, key="sl_view", label_visibility="collapsed")
+    struct = view == views[2]
     fig = go.Figure()
     for kind, (kn, en, col) in _KIND.items():
         bx = [x for x in lay["boxes"] if x["kind"] == kind]
@@ -125,38 +156,81 @@ def run_site_layout_module():
             if kind == "tank":
                 t_ += f"<br>{m['tank_m3']:.1f} m³"
             hover += [t_] * 8
-        fig.add_trace(go.Mesh3d(x=xs, y=ys, z=zs, i=ii, j=jj, k=kk, color=col, opacity=0.9,
+        fig.add_trace(go.Mesh3d(x=xs, y=ys, z=zs, i=ii, j=jj, k=kk, color=col, opacity=0.25 if struct else 0.9,
                                 name=L(kn, en), hovertext=hover, hoverinfo="text", flatshading=True,
                                 showlegend=True))
-    tx, ty = [], []
-    for pl in lay["trench"]:
-        tx += [p[0] for p in pl] + [None]
-        ty += [p[1] for p in pl] + [None]
+    # 장비 모서리선 — 박스가 많아도 1 트레이스 (구조 뷰에선 지상 장비를 윤곽으로 읽게)
+    ex, ey, ez = SL.edge_arrays(lay["boxes"])
+    fig.add_trace(go.Scatter3d(x=ex, y=ey, z=ez, mode="lines", line=dict(color="#0d1117", width=2),
+                               hoverinfo="skip", showlegend=False))
     cable = inp["cable_area_mm2"][0]
-    fig.add_trace(go.Scatter3d(x=tx, y=ty, z=[0.05 if v is not None else None for v in tx], mode="lines",
-                               line=dict(color="#f0883e", width=5),
-                               name=L("케이블 트렌치", "Cable trench"),
-                               hovertext=L(f"트렌치 폭 {inp['trench_w'][0]:.2f} m", f"trench {inp['trench_w'][0]:.2f} m wide")
-                               + (f" · {cable} mm²" if cable else ""), hoverinfo="text"))
+    tw, td = inp["trench_w"][0], inp["trench_d"][0]
+    t_hover = (L(f"트렌치 폭 {tw:.2f} m · 깊이 {td:.2f} m", f"trench {tw:.2f} m wide · {td:.2f} m deep")
+               + (f" · {cable} mm²" if cable else ""))
+    if struct:   # 지중 구조 — 05 기초 패드·트렌치 실치수
+        pads = SL.pad_boxes(lay, inp["pad_l"][0], inp["pad_w"][0])
+        tbx = SL.trench_boxes(lay, td)
+        for bxs, col, nm, hv in ((pads, "#8b949e", L("기초 패드", "Foundation pads"),
+                                  L(f"패드 {inp['pad_l'][0]:.2f} × {inp['pad_w'][0]:.2f} m · 두께 {SL.PAD_T} m [가정]",
+                                    f"pad {inp['pad_l'][0]:.2f} × {inp['pad_w'][0]:.2f} m · {SL.PAD_T} m thick [assumed]")),
+                                 (tbx, "#f0883e", L("케이블 트렌치", "Cable trench"), t_hover)):
+            if bxs:
+                xs, ys, zs, ii, jj, kk = SL.mesh_arrays(bxs)
+                fig.add_trace(go.Mesh3d(x=xs, y=ys, z=zs, i=ii, j=jj, k=kk, color=col, opacity=0.95,
+                                        name=nm, hovertext=hv, hoverinfo="text", flatshading=True, showlegend=True))
+    else:
+        tx, ty = [], []
+        for pl in lay["trench"]:
+            tx += [p[0] for p in pl] + [None]
+            ty += [p[1] for p in pl] + [None]
+        fig.add_trace(go.Scatter3d(x=tx, y=ty, z=[0.05 if v is not None else None for v in tx], mode="lines",
+                                   line=dict(color="#f0883e", width=5),
+                                   name=L("케이블 트렌치", "Cable trench"), hovertext=t_hover, hoverinfo="text"))
+    if base:     # 기준안 윤곽 — 윗면 사각형만 (가볍게)
+        bx_, by_, bz_ = SL.edge_arrays(base["boxes"], top_only=True)
+        fig.add_trace(go.Scatter3d(x=bx_, y=by_, z=bz_, mode="lines",
+                                   line=dict(color="#c9d1d9", width=2, dash="dash"),
+                                   name=L("기준안 윤곽", "Baseline outline"), hoverinfo="skip"))
     fx = [p[0] for p in lay["fence"]]
     fy = [p[1] for p in lay["fence"]]
     fig.add_trace(go.Scatter3d(x=fx + [None] + fx, y=fy + [None] + fy,
                                z=[0] * len(fx) + [None] + [EP.FENCE_HEIGHT_M] * len(fx), mode="lines",
                                line=dict(color="#8b949e", width=3), name=L("울타리·부지경계", "Fence / boundary"),
                                hoverinfo="skip"))
-    w, h = lay["site"]
+    # 기준안이 더 크면 축 범위를 넓혀 이전 윤곽이 잘리지 않게
+    bw = max([x["x"] + x["dx"] for x in base["boxes"]], default=0.0) if base else 0.0
+    bh = max([x["y"] + x["dy"] for x in base["boxes"]], default=0.0) if base else 0.0
+    w, h = max(lay["site"][0], bw), max(lay["site"][1], bh)
     zmax = max(w, h) * 0.25
-    eye = dict(x=0.0, y=-0.01, z=2.2) if view in ("위에서", "Top") else dict(x=-0.95, y=-1.1, z=0.75)
+    zmin = -(max(td, SL.PAD_T) + 0.5) if struct else 0.0
+    if struct:   # 지중 1~2 m 가 부지 수백 m 에 묻히지 않게 — 지상은 최고 장비 높이까지만, 수직 과장
+        zmax = max(x["dz"] for x in lay["boxes"]) + 0.5
+    eye = {views[1]: dict(x=0.0, y=-0.01, z=2.2), views[2]: dict(x=-1.1, y=-1.25, z=0.35)}.get(
+        view, dict(x=-0.95, y=-1.1, z=0.75))
     fig.update_layout(
         scene=dict(xaxis=dict(title="x (m)", range=[0, w]), yaxis=dict(title="y (m)", range=[0, h]),
-                   zaxis=dict(title="z (m)", range=[0, zmax]),
-                   aspectmode="manual", aspectratio=dict(x=w / max(w, h), y=h / max(w, h), z=zmax / max(w, h)),
+                   zaxis=dict(title="z (m)", range=[zmin, zmax]),
+                   aspectmode="manual",
+                   aspectratio=dict(x=w / max(w, h), y=h / max(w, h),
+                                    z=0.25 if struct else (zmax - zmin) / max(w, h)),
                    camera=dict(eye=eye)),
         paper_bgcolor="rgba(0,0,0,0)", font_color="#c9d1d9", height=480,
         margin=dict(l=0, r=0, t=10, b=0),
         legend=dict(orientation="h", y=-0.02, x=0, font=dict(size=11)),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(compact(fig), use_container_width=True)
+    if struct:
+        gap = SL.pad_clear_gap(lay, inp["pad_l"][0], inp["pad_w"][0])
+        if gap < 0:
+            st.warning(L(f"⚠️ 이웃 기초 패드가 {-gap:.2f} m 겹칩니다 — 일체 기초(매트)로 검토하거나 유닛 이격을 넓히세요.",
+                         f"⚠️ Adjacent pads overlap by {-gap:.2f} m — consider a combined mat or wider separation."))
+        ex = 0.25 * max(w, h) / (zmax - zmin)
+        st.caption((L(f"기초 패드 순간격 최소 {gap:.2f} m · " if 0 <= gap != float("inf") else
+                      ("이웃 기초 패드 없음 · " if gap == float("inf") else ""),
+                      f"Min clear gap between pads {gap:.2f} m · " if 0 <= gap != float("inf") else
+                      ("No adjacent pads · " if gap == float("inf") else "")))
+                   + L(f"트렌치·패드 치수 = 05 토목 BOP · 수직 {ex:.0f}배 과장",
+                       f"trench & pad sizes from 05 CBOP · vertical ×{ex:.0f} exaggerated"))
 
     # ── 배치 검사 ───────────────────────────────────────────────────────────
     ok = chk["overlaps"] == 0 and chk["unit_ok"] and chk["tr_ok"] and chk["boundary_ok"]

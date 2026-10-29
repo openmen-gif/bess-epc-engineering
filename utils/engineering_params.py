@@ -47,6 +47,18 @@ WATER_MIST_COOLING_EXT_MIN = 60.0          # 냉각 연장 (스킬 예시: 30분
 FM200_GWP = 3220
 
 
+# ── 냉방부하 외피 취득열 (bess-cbop-engineer.md "HVAC 냉방 부하 산정 공식" Q_envelope = U·A·ΔT) ──
+# 스킬 공식은 U 값을 특정하지 않는다 — 단열 패널 컨테이너 스크리닝 값
+ENC_U_W_M2K = 2.5       # [가정] 외피 열관류율
+ENC_HEIGHT_M = 2.9      # [가정] 20ft HC 인클로저 높이 (site_layout.ENC_H 와 동일)
+
+
+def enc_ua_kw_k(length_m: float, width_m: float, height_m: float = ENC_HEIGHT_M) -> float:
+    """인클로저 1기 외피 U·A [kW/K] — A = 6면 표면적 (20ft 6.05×2.44×2.9 → 78.8 m² → 0.197 kW/K)."""
+    area = 2.0 * (length_m * width_m + length_m * height_m + width_m * height_m)
+    return ENC_U_W_M2K * area / 1000.0
+
+
 # ── 부지 배치 이격 (값 소유: bess-fire-engineer "시장별 이격거리 기준", 배치 반영: bess-cbop-engineer) ──
 # 이격은 UL 9540A 시험 결과·AHJ·보험사 요건으로 가감되는 값 — 여기 값은 스크리닝 기본값이다.
 # tag: "" = 스킬 표 명시값, "[요확인]" = 조건부(시험·위험물·국가별) 값이라 현장 확인 필요,
