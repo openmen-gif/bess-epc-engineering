@@ -268,8 +268,8 @@ def run_design_model_checks():
     pc = DM.per_container({DM.DM_KEY: {"cbop": {"values": dict(n_enc=10, bat_heat_kw=300.0, pcs_heat_kw=200.0,
                                                               hvac_installed_kw=900.0, hvac_safety_pct=15,
                                                               hvac_dt_k=15.0, env_ua_kw_k=0.2), "sig": {}}}})
-    check("설계 모델: 컨테이너 HVAC = 배터리 30 kW×1.15 + 0.2×15 = 37.5 kW (PCS 발열 제외)",
-          abs(pc["hvac_kw"] - 37.5) < 1e-9, f"{pc['hvac_kw']:.2f} kW")
+    check("설계 모델: 컨테이너 HVAC = (배터리 30 kW + 0.2×15) × 1.15 = 37.95 kW (PCS 발열 제외, 안전율 전체 적용)",
+          abs(pc["hvac_kw"] - 37.95) < 1e-9, f"{pc['hvac_kw']:.2f} kW")
     lay_t = SL.build_layout(10, 3, unit_gap=0.9144, trench_w=2.64)
     check("배치: 트렌치 2.64 m > 이격 0.91 m 이면 trench_fits=False",
           SL.check_layout(lay_t)["trench_fits"] is False and SL.check_layout(SL.build_layout(10, 3, trench_w=0.6))["trench_fits"])
@@ -340,9 +340,9 @@ def run_design_model_checks():
     # 냉방부하 외피 = 인클로저 수 × 1기 UA × ΔT (예전엔 플랜트 전체에 1기분만 더했다)
     cv = (s05.get("design_model") or {}).get("cbop", {}).get("values", {})
     ua1 = EP.enc_ua_kw_k(6.05, 2.44)
-    exp_load = (cv.get("bat_heat_kw", 0) + cv.get("pcs_heat_kw", 0)) * (1 + cv.get("hvac_safety_pct", 0) / 100.0) \
-        + n05 * ua1 * cv.get("hvac_dt_k", 0) if n05 else None
-    check("05 냉방부하: 외피 = 인클로저 수 × U·A × ΔT (1기 UA 0.197 kW/K)",
+    exp_load = (cv.get("bat_heat_kw", 0) + cv.get("pcs_heat_kw", 0) + n05 * ua1 * cv.get("hvac_dt_k", 0)) \
+        * (1 + cv.get("hvac_safety_pct", 0) / 100.0) if n05 else None
+    check("05 냉방부하: (발열 + 인클로저 수 × U·A × ΔT) × (1+안전율) (1기 UA 0.197 kW/K)",
           exp_load is not None and cv.get("hvac_dt_k", 0) > 0 and abs(cv.get("hvac_load_kw", 0) - exp_load) < 1e-6
           and abs(cv.get("env_ua_kw_k", 0) - ua1) < 1e-9 and abs(ua1 - 0.19690) < 1e-4,
           f"load={cv.get('hvac_load_kw', 0):.1f} kW 기대={exp_load or 0:.1f} UA={ua1:.4f} n={n05}")

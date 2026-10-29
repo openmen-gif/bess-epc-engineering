@@ -137,7 +137,8 @@ def run_cbop_engineer_module():
             # 외피 취득열 = U·A·ΔT — 1기 UA 는 탭1 인클로저 치수로 산정, 플랜트 부하는 인클로저 수만큼 더한다
             ENV_UA_KW_PER_K = EP.enc_ua_kw_k(max(length, 0.5), max(width, 0.5))
             env_load   = dt * ENV_UA_KW_PER_K * num_enclosures
-            total_load = base_load * (1 + safety / 100.0) + env_load
+            # 안전율은 외피 포함 전체 부하에 곱한다 — bess-cbop-engineer "HVAC_capacity = Q_total × SF"
+            total_load = (base_load + env_load) * (1 + safety / 100.0)
             hvac_units = math.ceil(total_load / unit_kw)
             hvac_power = total_load / cop
 
