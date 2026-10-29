@@ -119,7 +119,7 @@ def per_container(ss=None) -> dict:
         # 컨테이너 HVAC = (배터리 발열 + 외피 1기분 U·A·ΔT) × (1+안전율) — 05 와 같은 식(Q_total × SF).
         # 05 플랜트 냉방부하(PCS 스키드 발열 포함)를 대수로 나누면 컨테이너 HVAC 가 과대해져 09 과열을 놓친다
         out["hvac_kw"] = ((out["heat_kw"] + float(cbv.get("env_ua_kw_k", 0.2)) * float(cbv.get("hvac_dt_k", 0.0)))
-                          * (1 + float(cbv.get("hvac_safety_pct", 15.0)) / 100.0))
+                          * (1 + float(cbv.get("hvac_safety_pct", 20.0)) / 100.0))
     if cbv.get("pad_l") and cbv.get("pad_w"):
         out["pad_l"], out["pad_w"] = max(float(cbv["pad_l"]), 0.5), max(float(cbv["pad_w"]), 0.5)
     return out

@@ -342,9 +342,10 @@ def run_design_model_checks():
     ua1 = EP.enc_ua_kw_k(6.05, 2.44)
     exp_load = (cv.get("bat_heat_kw", 0) + cv.get("pcs_heat_kw", 0) + n05 * ua1 * cv.get("hvac_dt_k", 0)) \
         * (1 + cv.get("hvac_safety_pct", 0) / 100.0) if n05 else None
-    check("05 냉방부하: (발열 + 인클로저 수 × U·A × ΔT) × (1+안전율) (1기 UA 0.197 kW/K)",
+    check("05 냉방부하: (발열 + 인클로저 수 × U·A × ΔT) × (1+안전율 기본 20%) (1기 UA 0.197 kW/K)",
           exp_load is not None and cv.get("hvac_dt_k", 0) > 0 and abs(cv.get("hvac_load_kw", 0) - exp_load) < 1e-6
-          and abs(cv.get("env_ua_kw_k", 0) - ua1) < 1e-9 and abs(ua1 - 0.19690) < 1e-4,
+          and abs(cv.get("env_ua_kw_k", 0) - ua1) < 1e-9 and abs(ua1 - 0.19690) < 1e-4
+          and cv.get("hvac_safety_pct") == 20,
           f"load={cv.get('hvac_load_kw', 0):.1f} kW 기대={exp_load or 0:.1f} UA={ua1:.4f} n={n05}")
     # 13 화면: 기준안 저장 → 유닛 이격 3.048→6 m 변경 → 구조 뷰 — 면적 Δ 표시·패드/트렌치 트레이스·예외 0
     at13 = AppTest.from_file(os.path.join(DASH, "pages", "13_Site_Layout_3D.py"), default_timeout=180)

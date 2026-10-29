@@ -126,7 +126,8 @@ def run_cbop_engineer_module():
                                         min_value=-10.0, max_value=60.0, step=1.0)
             indoor_t  = st.number_input(t("p5_hvac_indoor"), value=25.0,
                                         min_value=15.0, max_value=35.0, step=1.0)
-            safety    = st.slider(t("p5_hvac_safety"), 5, 30, 15, step=5)
+            # 기본 20% — bess-cbop-engineer "안전율 1.2~1.3" 하한
+            safety    = st.slider(t("p5_hvac_safety"), 5, 30, 20, step=5)
             cop       = st.number_input(t("p5_hvac_cop"), min_value=2.0, max_value=5.0, value=3.0, step=0.1)
             unit_kw   = st.number_input(t("p5_hvac_unit_kw"), min_value=5.0, max_value=500.0, value=50.0, step=5.0)
 
