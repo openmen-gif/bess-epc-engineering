@@ -284,6 +284,7 @@ PAGE_MIN_ROLE: dict[str, str] = {
     "10": "engineer",
     "11": "engineer",
     "12": "engineer",
+    "13": "viewer",
 }
 
 

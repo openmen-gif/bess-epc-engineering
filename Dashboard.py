@@ -180,6 +180,7 @@ def _home():
     render_phase_avg_chart(_kpi)
 
 
+# expanded=True — 접힌 메뉴의 'View N more' 버튼은 Streamlit 고정 영문이라 한국어 모드에서도 영어로 보였다.
 # ── Dynamic navigation based on role ─────────────────────────────────────────
 # 메뉴 제목은 언어 선택(사이드바 라디오 — nav 구성보다 먼저 실행됨)을 따라간다.
 # st.Page의 URL 경로는 파일명에서 파생되므로 title 변경은 링크를 깨지 않는다.
@@ -203,11 +204,12 @@ _p09 = st.Page("pages/09_Container_Thermal.py",       title=_pt("09 컨테이너
 _p10 = st.Page("pages/10_Fire_Spread.py",             title=_pt("10 화재 확산", "10 Fire Spread"),            icon="🔥")
 _p11 = st.Page("pages/11_Cyber_Security.py",          title=_pt("11 사이버 보안", "11 Cyber Security"),       icon="🔒")
 _p12 = st.Page("pages/12_Project_Schedule.py",        title=_pt("12 프로젝트 공정", "12 Project Schedule"),   icon="📅")
+_p13 = st.Page("pages/13_Site_Layout_3D.py",           title=_pt("13 3D 부지 배치", "13 Site Layout 3D"),     icon="📐")
 _p_market = st.Page("pages/00_Market_Dashboard.py",  title=_pt("마켓 대시보드", "Dashboard: Market"),        icon="📈")
 
-_viewer_pages   = [_p01, _p02, _p03, _p04, _p05, _p06]
+_viewer_pages   = [_p01, _p02, _p03, _p04, _p05, _p06, _p13]
 _engineer_pages = [_p07, _p08, _p09, _p10, _p11, _p12]
-_sec_basic = _pt("📋 도구 01~06", "📋 Tools 01~06")
+_sec_basic = _pt("📋 도구 01~06 · 13", "📋 Tools 01~06 · 13")
 _sec_adv   = _pt("🔧 도구 07~12", "🔧 Tools 07~12")
 
 role   = st.session_state.get("auth_role", "")
@@ -220,20 +222,20 @@ elif role == "admin":
         "":         [_home_pg, _p_market, _login_pg],
         _sec_basic: _viewer_pages,
         _sec_adv:   _engineer_pages,
-    })
+    }, expanded=True)
 elif role == "engineer":
     nav = st.navigation({
         "":         [_home_pg, _p_market],
         _sec_basic: _viewer_pages,
         _sec_adv:   _engineer_pages,
-    })
+    }, expanded=True)
 elif role == "viewer":
     nav = st.navigation({
         "":         [_home_pg, _p_market],
         _sec_basic: _viewer_pages,
-    })
+    }, expanded=True)
 else:
-    nav = st.navigation([_home_pg, _p_market, _login_pg])
+    nav = st.navigation([_home_pg, _p_market, _login_pg], expanded=True)
 
 nav.run()
 

@@ -10,6 +10,7 @@ from utils.css_loader import apply_custom_css
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils.theme import AX3D, DARK_LAYOUT, CBAR
 from utils import engineering_params as EP
+from utils import design_model as DM
 from utils.sim_physics import (
     heat2d_transient, bearing_pressure, seismic_pulse,
     smoke_layer_series, plume_particles,
@@ -434,8 +435,15 @@ if role == T["roles"][0]:
         st.subheader(T["cfd_params"])
         default_amb = st.session_state.get("site_temp_max", 35.0)
         ambient_temp  = st.slider(T["cfd_ambient"], min_value=-20.0, max_value=55.0, value=float(default_amb))
-        hvac_capacity = st.slider(T["cfd_hvac"], min_value=10, max_value=100, value=40)
-        heat_loss     = st.number_input(T["cfd_heat"], value=30.0, min_value=1.0, max_value=500.0)
+        # 05 토목 BOP 를 실행했으면 컨테이너 1기당 발열·HVAC 설치용량을 기본값으로 (설계 모델)
+        _pc = DM.per_container()
+        _hv = int(min(max(round(_pc["hvac_kw"]), 10), 100)) if _pc.get("hvac_kw") else 40
+        _hl = float(min(max(_pc["heat_kw"], 1.0), 500.0)) if _pc.get("heat_kw") else 30.0
+        hvac_capacity = st.slider(T["cfd_hvac"], min_value=10, max_value=100, value=_hv)
+        heat_loss     = st.number_input(T["cfd_heat"], value=_hl, min_value=1.0, max_value=500.0)
+        if _pc.get("heat_kw"):
+            st.caption(("📐 05 설계값 — 컨테이너 1기당 (총 {n}기)" if st.session_state.get("lang", "KO") == "KO"
+                        else "📐 From 05 — per container ({n} units)").format(n=_pc["n_enc"]))
 
         times, snaps, src_cells, vent_cells = _run_cfd(float(ambient_temp), float(heat_loss), float(hvac_capacity))
         T_final = snaps[-1]
@@ -547,8 +555,11 @@ elif role == T["roles"][1]:
         live_load  = st.number_input(T["str_live"],    value=3.0,  step=0.5)
         wind_load  = st.number_input(T["str_wind"],    value=12.0, step=1.0)
         seismic_g  = st.slider(T["str_seismic"], min_value=0.05, max_value=0.4, value=0.2, step=0.05)
-        pad_w      = st.number_input(T["str_padw"],    value=6.05, step=0.1, min_value=0.5)
-        pad_l      = st.number_input(T["str_padl"],    value=3.44, step=0.1, min_value=0.5)
+        _pc = DM.per_container()   # 05 패드 치수 — 긴 변이 편심 방향(pad_w)
+        pad_w      = st.number_input(T["str_padw"],    value=float(_pc.get("pad_l", 6.05)), step=0.1, min_value=0.5)
+        pad_l      = st.number_input(T["str_padl"],    value=float(_pc.get("pad_w", 3.44)), step=0.1, min_value=0.5)
+        if _pc.get("pad_l"):
+            st.caption("📐 05 설계값 (기초 패드)" if st.session_state.get("lang", "KO") == "KO" else "📐 From 05 (equipment pad)")
 
         # 등가정적 지진 횡하중 V = Cs·W — dead_load는 이미 중량(kN/m²)이므로 g 재곱셈 금지
         seismic_load = dead_load * seismic_g

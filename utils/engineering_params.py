@@ -47,6 +47,41 @@ WATER_MIST_COOLING_EXT_MIN = 60.0          # 냉각 연장 (스킬 예시: 30분
 FM200_GWP = 3220
 
 
+# ── 부지 배치 이격 (값 소유: bess-fire-engineer "시장별 이격거리 기준", 배치 반영: bess-cbop-engineer) ──
+# 이격은 UL 9540A 시험 결과·AHJ·보험사 요건으로 가감되는 값 — 여기 값은 스크리닝 기본값이다.
+# tag: "" = 스킬 표 명시값, "[요확인]" = 조건부(시험·위험물·국가별) 값이라 현장 확인 필요,
+#      "[가정]" = 스킬 표에 정량값이 없어(State별·조례별 상이 등) 보수값을 대입한 항목 포함
+SEPARATION_BY_MARKET = {
+    # 정본: bess-fire-engineer.md "시장별 이격거리 기준" 표 (bess-cbop-engineer.md "이격거리 기준" 표와 교차)
+    "US": dict(unit_m=3.048, boundary_m=3.048, tag="[요확인]",
+               src="NFPA 855 §4.1.4 — UL 9540A 미시험 시 ≥10 ft(3 m), 시험 입증 시 ≥3 ft(0.9 m)까지 단축 · "
+                   "부지경계 FM Global 10 ft(3 m)"),
+    "KR": dict(unit_m=3.0, boundary_m=6.0, tag="",
+               src="소방청·KFI ESS 화재안전기준 — 컨테이너 간 ≥3 m · 부지경계 ≥6 m (2층 이상 건물 ≥9 m)"),
+    "AU": dict(unit_m=3.0, boundary_m=3.0, tag="[가정]",
+               src="AS/NZS 5139:2019 컨테이너 간 ≥3 m · 부지경계는 State별 상이 → 3 m [가정]"),
+    "UK": dict(unit_m=3.0, boundary_m=3.0, tag="[가정]",
+               src="NFCC BESS Guidance 2023 ≥3 m 권고 · 부지경계는 화재위험평가 기반 → 3 m [가정]"),
+    "JP": dict(unit_m=3.0, boundary_m=3.0, tag="[요확인]",
+               src="消防法·危険物令 ≥3 m(위험물 보유 시) · 부지경계는 조례별 상이 → 3 m [가정]"),
+    "EU": dict(unit_m=5.0, boundary_m=5.0, tag="[요확인]",
+               src="국가 소방법 ≥3~5 m(국가별) → 보수값 5 m · 부지경계 국가별 상이 → 5 m [가정]"),
+}
+# 변압기 이격은 IEC 61936-1·FM Global DS 5-4 에서 절연유량·내화등급별로 정한다(fire-engineer) — 값 미특정
+TRANSFORMER_CLEARANCE_M = 5.0           # [가정] 조항·값 확인 전 스크리닝 값
+ACCESS_AISLE_M = 6.0                    # [가정] 블록 행 사이 소방·유지보수 차량 통로
+FENCE_HEIGHT_M = 2.1                    # bess-cbop-engineer 울타리 높이 ≥2.1 m 권장
+
+
+def market_key(target_market: str) -> str:
+    """'US (ERCOT)' → 'US'. 미지정·미지원은 KR."""
+    m = str(target_market or "").upper()
+    for k in SEPARATION_BY_MARKET:
+        if m.startswith(k):
+            return k
+    return "KR"
+
+
 # ── 운영 KPI (bess-data-analyst.md 재사용 지식 "운영 KPI 정량 임계 세트") ────────────
 # 계약 성능보증 값이 있으면 그것이 우선 — 미제공 시 [가정]
 KPI_AVAILABILITY_MIN_PCT = 97.0

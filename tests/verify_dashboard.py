@@ -174,6 +174,147 @@ def run_skill_criteria_checks():
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# 3c. 설계 모델 → 3D 부지 배치 (2026-10-29): 순수 함수 검사 + 페이지 간 값 전파 사슬
+# ══════════════════════════════════════════════════════════════════════════
+def run_design_model_checks():
+    import json
+    from utils import engineering_params as EP
+    from utils import design_model as DM
+    from utils import site_layout as SL
+
+    SEP = EP.SEPARATION_BY_MARKET
+    check("이격: US 미시험 기본 10 ft = 3.048 m (3 ft 단축은 UL 9540A 입증 시)",
+          abs(SEP["US"]["unit_m"] - 10 * 0.3048) < 1e-9 and abs(SEP["US"]["boundary_m"] - 10 * 0.3048) < 1e-9)
+    # 정본 표 값 대조 — 스킬 사본 표에 해당 행이 있고, 코드 값이 그 행 수치와 같아야 한다
+    fire = open(os.path.join(DASH, "skill_md", "bess-fire-engineer.md"), encoding="utf-8").read()
+    rows = {"KR": ("소방시설법 / ESS 안전기준 | ≥3m | ≥6m |", (3.0, 6.0)),
+            "US": ("≥3ft(0.9m), 미시험 시 ≥10ft(3m)", (3.048, None)),
+            "AU": ("AS/NZS 5139:2019 / CFA | ≥3m |", (3.0, None))}
+    bad = [k for k, (needle, (u, b)) in rows.items()
+           if needle not in fire or abs(SEP[k]["unit_m"] - u) > 1e-9 or (b is not None and abs(SEP[k]["boundary_m"] - b) > 1e-9)]
+    check("이격: KR 3/6 m · US 10 ft · AU 3 m = fire-engineer 정본 표", not bad, f"불일치 {bad}")
+    check("이격: 정본 표에 정량값 없는 부지경계는 [가정] 표기 (AU·UK·JP·EU)",
+          all("[가정]" in SEP[k]["src"] or SEP[k]["tag"] == "[가정]" for k in ("AU", "UK", "JP", "EU")))
+    check("이격: 시장 키 'US (ERCOT)'→US, 미지정→KR",
+          EP.market_key("US (ERCOT)") == "US" and EP.market_key(None) == "KR")
+
+    # 배치 기하 — 대수·이격·수조 크기를 바꿔도 겹침 0, 이격 기준 충족, 인클로저 수 보존
+    bad = []
+    for n_enc, n_pcs, gap, bnd, tank in [(1, 1, 3, 3, 0), (7, 3, 0.9144, 3.048, 0), (87, 25, 0.9144, 3.048, 0.54),
+                                         (250, 60, 3, 3, 150), (40, 80, 3, 3, 0)]:
+        lay = SL.build_layout(n_enc, n_pcs, unit_gap=gap, boundary=bnd, water_m3=tank)
+        c = SL.check_layout(lay)
+        n_box = sum(b["kind"] == "enc" for b in lay["boxes"])
+        if not (c["overlaps"] == 0 and c["unit_ok"] and c["tr_ok"] and c["boundary_ok"] and n_box == n_enc):
+            bad.append((n_enc, n_pcs, c, n_box))
+    check("배치: 5개 사례 겹침 0·유닛/변압기/경계 이격 충족·인클로저 수 보존", not bad, str(bad)[:120])
+    lay = SL.build_layout(20, 5)
+    check("배치: 최장 케이블 경로 > 0 이고 트렌치 총연장 이상 아님",
+          0 < lay["metrics"]["longest_cable_m"] <= lay["metrics"]["trench_len_m"],
+          f"{lay['metrics']['longest_cable_m']:.1f} / {lay['metrics']['trench_len_m']:.1f} m")
+
+    # DXF — 엔티티 수 = 박스 4선 + 트렌치 선분 + 울타리 4선, 라벨 = 박스 수
+    dxf = SL.to_dxf(lay)
+    n_seg = sum(len(pl) - 1 for pl in lay["trench"])
+    exp_lines = 4 * len(lay["boxes"]) + n_seg + 4
+    try:
+        import ezdxf, io as _io
+        doc = ezdxf.read(_io.StringIO(dxf))
+        msp = doc.modelspace()
+        got = (len(msp.query("LINE")), len(msp.query("TEXT")))
+        check("DXF: ezdxf 파싱 성공·엔티티 수 일치", got == (exp_lines, len(lay["boxes"])), f"{got} vs {(exp_lines, len(lay['boxes']))}")
+    except ImportError:
+        lines = dxf.split("\n")
+        got = (sum(1 for a, b in zip(lines, lines[1:]) if a == "0" and b == "LINE"),
+               sum(1 for a, b in zip(lines, lines[1:]) if a == "0" and b == "TEXT"))
+        check("DXF: 엔티티 수 일치 (ezdxf 미설치 — 구조 검사)", got == (exp_lines, len(lay["boxes"])), str(got))
+
+    # 설계 모델 — stale 판정 · JSON 왕복
+    ss = {"capacity_mw": 100.0, "duration_h": 4.0, "rte_percent": 88.0, "aux_loss_percent": 2.5,
+          "epc_margin": 5.0, "target_market": "US (ERCOT)"}
+    DM.record("system", {"num_containers": 95, "num_pcs": 25}, ss)
+    st0 = DM.status("system", ss)
+    ss["capacity_mw"] = 120.0
+    check("설계 모델: 상류 입력 변경 시 ok → stale", (st0, DM.status("system", ss)) == ("ok", "stale"))
+    j1 = DM.export_json(ss)
+    ss2 = {"widget_capacity_mw": 1.0}
+    DM.import_json(j1, ss2)
+    strip = lambda s: {k: v for k, v in json.loads(s).items() if k != "exported"}
+    check("설계 모델: JSON 왕복 동일 + 01 위젯 상태 초기화",
+          strip(DM.export_json(ss2)) == strip(j1) and "widget_capacity_mw" not in ss2)
+    try:
+        DM.import_json('{"schema": "other"}', {})
+        check("설계 모델: 다른 형식 JSON 거부", False)
+    except ValueError:
+        check("설계 모델: 다른 형식 JSON 거부", True)
+    rej = []
+    for bad_json in ('[]', '{"schema": "%s", "sections": [1, 2]}' % DM.SCHEMA,
+                     '{"schema": "%s", "sections": {"cbop": 1}}' % DM.SCHEMA,
+                     '{"schema": "%s", "project": {"capacity_mw": "abc"}}' % DM.SCHEMA,
+                     '{"schema": "%s", "project": {"capacity_mw": NaN}}' % DM.SCHEMA,
+                     '{"schema": "%s", "project": {"target_market": 123}}' % DM.SCHEMA,
+                     '{"schema": "%s", "sections": {"cbop": {"values": {"n_enc": "abc"}}}}' % DM.SCHEMA):
+        try:
+            DM.import_json(bad_json, {})
+            rej.append(bad_json[:30])
+        except ValueError:
+            pass
+    check("설계 모델: 리스트·잘못된 sections·비숫자·NaN·섹션 문자열 값 JSON 7종 ValueError", not rej, f"통과됨 {rej}")
+    ss3 = {"num_containers": 60, DM.DM_KEY: {"cbop": {"values": {"n_enc": 60}, "sig": {}}}}
+    DM.import_json('{"schema": "%s", "project": {"capacity_mw": 200.0}, "sections": {}}' % DM.SCHEMA, ss3)
+    check("설계 모델: 불러오기 시 이전 프로젝트 값 초기화 (잔류 n_enc 60 없음)",
+          "num_containers" not in ss3 and DM.layout_inputs(ss3)["n_enc"][1] == "[가정]",
+          str(DM.layout_inputs(ss3)["n_enc"]))
+    pc = DM.per_container({DM.DM_KEY: {"cbop": {"values": dict(n_enc=10, bat_heat_kw=300.0, pcs_heat_kw=200.0,
+                                                              hvac_installed_kw=900.0, hvac_safety_pct=15,
+                                                              hvac_dt_k=15.0, env_ua_kw_k=0.2), "sig": {}}}})
+    check("설계 모델: 컨테이너 HVAC = 배터리 30 kW×1.15 + 0.2×15 = 37.5 kW (PCS 발열 제외)",
+          abs(pc["hvac_kw"] - 37.5) < 1e-9, f"{pc['hvac_kw']:.2f} kW")
+    lay_t = SL.build_layout(10, 3, unit_gap=0.9144, trench_w=2.64)
+    check("배치: 트렌치 2.64 m > 이격 0.91 m 이면 trench_fits=False",
+          SL.check_layout(lay_t)["trench_fits"] is False and SL.check_layout(SL.build_layout(10, 3, trench_w=0.6))["trench_fits"])
+    check("배치: PCS 수 > 인클로저 수 → pcs_clipped 표시", SL.build_layout(3, 8)["metrics"]["pcs_clipped"] is True)
+
+    if FAST:
+        return
+    # 값 전파 사슬 — 01 입력 → 02 실행 → 05 실행 → 3D 입력 (실제 페이지를 AppTest 로 실행)
+    from streamlit.testing.v1 import AppTest
+
+    def run_page(name, state):
+        at = AppTest.from_file(os.path.join(DASH, "pages", name), default_timeout=180)
+        for k, v in state.items():
+            at.session_state[k] = v
+        at.run()
+        errs = [e.value for e in at.exception]
+        out = {k: at.session_state[k] for k in at.session_state.filtered_state}
+        return out, errs
+
+    base = dict(auth_user="tester", auth_role="admin", lang="KO", capacity_mw=100.0, duration_h=4.0,
+                target_market="US (ERCOT)", rte_percent=88.0, aux_loss_percent=2.5, epc_margin=5.0)
+    s02, e02 = run_page("02_System_Engineering.py", base)
+    n02 = (s02.get("design_model") or {}).get("system", {}).get("values", {}).get("num_containers")
+    s05, e05 = run_page("05_CBOP_Engineer.py", {**base, **{k: s02[k] for k in
+                        ("num_containers", "num_pcs", "batt_unit_mwh", "pcs_unit_mw", "design_model") if k in s02}})
+    n05 = (s05.get("design_model") or {}).get("cbop", {}).get("values", {}).get("n_enc")
+    inp = DM.layout_inputs(s05)
+    n3d = sum(b["kind"] == "enc" for b in SL.build_layout(inp["n_enc"][0], inp["n_pcs"][0])["boxes"])
+    check("전파: 02 인클로저 수 = 05 기본값 = 3D 박스 수", not (e02 or e05) and n02 and n02 == n05 == n3d,
+          f"02={n02} 05={n05} 3D={n3d}" + (f" err={(e02 or e05)[0]}"[:80] if (e02 or e05) else ""))
+    check("전파: 3D 입력 출처 = 05·02 (가정값 아님)", inp["n_enc"][1] == "p05" and inp["n_pcs"][1] == "p02",
+          f"{inp['n_enc'][1]}/{inp['n_pcs'][1]}")
+    # stale 세탁 방지 — 02 를 100 MW 로 실행 후 01 을 200 MW 로 바꾸고 02 를 다시 열지 않은 채 05 실행
+    s05b, e05b = run_page("05_CBOP_Engineer.py", {**base, "capacity_mw": 200.0, **{k: s02[k] for k in
+                          ("num_containers", "num_pcs", "batt_unit_mwh", "pcs_unit_mw", "design_model") if k in s02}})
+    n05b = (s05b.get("design_model") or {}).get("cbop", {}).get("values", {}).get("n_enc")
+    check("전파: 02 가 stale 이면 05 는 옛 02 수량(121)을 쓰지 않음 (200 MW 자체 산정)",
+          not e05b and n05b and n05b != n02 and n05b > n02, f"02(100MW)={n02} 05(200MW)={n05b}")
+    s04, e04 = run_page("04_EBOP_Engineer.py", {**base, "dm_cable_length_m": 166.0})
+    got = (s04.get("design_model") or {}).get("ebop", {}).get("values", {}).get("cable_length_m")
+    check("되돌림: 3D 최장 경로 166 m → 04 케이블 길이 기록 (접지 탭 length 덮어쓰기 없음)",
+          not e04 and got == 166.0, f"{got}")
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # 4. 전 페이지 × 한/영 AppTest 렌더
 # ══════════════════════════════════════════════════════════════════════════
 def run_render_checks():
@@ -201,6 +342,7 @@ def main():
     run_fire_semantics_checks()
     run_airflow_checks()
     run_skill_criteria_checks()
+    run_design_model_checks()
     if not FAST:
         run_render_checks()
     fails = [r for r in results if r[0] == "FAIL"]

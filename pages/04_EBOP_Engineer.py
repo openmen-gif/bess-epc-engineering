@@ -10,6 +10,7 @@ from utils.lang_helper import t
 from utils.standards_helper import get_standards
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils import engineering_params as EP
+from utils import design_model as DM
 
 
 # ── Market → Voltage mapping ─────────────────────────────────────────────────
@@ -141,7 +142,14 @@ def run_ebop_engineer_module():
             V_line      = _parse_kv(circuit_v)
             v_class     = EP.voltage_class(V_line / 1000.0)
             current     = st.number_input(t("p4_cable_i"), min_value=1.0, value=200.0, step=10.0)
-            length      = st.number_input(t("p4_cable_l"), min_value=1.0, value=100.0, step=10.0)
+            # 13 3D 부지 배치에서 '최장 케이블 길이 적용'을 누르면 그 실측 경로 길이가 기본값이 된다
+            dm_len = st.session_state.get("dm_cable_length_m")
+            length      = st.number_input(t("p4_cable_l"), min_value=1.0,
+                                          value=float(round(dm_len, 1)) if dm_len else 100.0, step=10.0)
+            cable_len = length   # 접지 탭이 같은 이름 length 를 다시 쓰므로 따로 보존
+            if dm_len:
+                st.caption(f"📐 13 3D 부지 배치 최장 경로 {dm_len:.1f} m 적용" if is_ko
+                           else f"📐 Longest route from 13 Site Layout 3D: {dm_len:.1f} m")
             voltage_drop = st.slider(t("p4_cable_drop"), 1.0, 10.0, EP.VDROP_LIMIT_PCT[v_class], 0.5,
                                      key=f"vdrop_{v_class}")
             material    = st.selectbox(t("p4_cable_mat"), [t("p4_cable_cu"), t("p4_cable_al")])
@@ -201,6 +209,11 @@ def run_ebop_engineer_module():
                         "(앱은 테이블 값을 추정하지 않음)" if is_ko else
                         "① Ampacity: enter the tabulated I_base for the recommended size to get a verdict "
                         "(the app does not estimate table values)")
+
+    DM.record("ebop", dict(main_tr_mva=selected if isinstance(selected, (int, float)) else None,
+                           target_mva=target_mva, hv=hv, lv=lv_opts.get(hv, "0.69kV"),
+                           cable_circuit=circuit_v, cable_length_m=cable_len,
+                           cable_area_mm2=rec_area, cable_min_area_mm2=min_area))
 
     # ── Grounding ───────────────────────────────────────────────────
     with tab3:

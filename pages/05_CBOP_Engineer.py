@@ -11,6 +11,7 @@ from utils.lang_helper import t
 from utils.standards_helper import get_standards
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils import engineering_params as EP
+from utils import design_model as DM
 
 
 def run_cbop_engineer_module():
@@ -42,8 +43,23 @@ def run_cbop_engineer_module():
             required_dc = (target_ac_energy * (1 + aux_loss)) / rte * (1 + epc_margin)
             _batt_unit = st.session_state.get('batt_unit_mwh', 5.015)
             default_containers = max(int(np.ceil(required_dc / _batt_unit)), 1)
+            # 02 시스템 설계 결과(DoD·EOL SOH·편도효율 반영)가 현재 01 입력 기준일 때만 우선 — 두 페이지 수량 불일치 방지.
+            # 01 이 바뀐 뒤 02 를 다시 열지 않았으면(stale) 옛 수량을 쓰지 않고 자체 식 + 경고
+            _sys_state = DM.status("system")
+            _n02 = st.session_state.get('num_containers') if _sys_state == "ok" else None
+            if _n02:
+                default_containers = int(_n02)
 
             num_enclosures = st.number_input(t("p5_num_enc"), min_value=1, value=default_containers, step=1)
+            if _n02:
+                st.caption("02 시스템 설계 산정값 적용" if st.session_state.get('lang', 'KO') == 'KO'
+                           else "Using 02 System Engineering result")
+            elif _sys_state == "stale":
+                st.warning("⚠️ 01 입력이 바뀐 뒤 02 시스템 설계를 다시 열지 않아 05 간이식으로 산정했습니다 — "
+                           "02 를 다시 열면 DoD·수명말 SOH 를 반영한 수량으로 맞춰집니다."
+                           if st.session_state.get('lang', 'KO') == 'KO' else
+                           "⚠️ 01 inputs changed since 02 last ran — using 05's simplified sizing. "
+                           "Re-open 02 to sync the DoD/EOL-SOH based count.")
             soil_bearing   = st.slider(t("p5_soil"),  50, 300, 150)
             wind_speed     = st.number_input(t("p5_wind"), 20, 80, 45)
 
@@ -228,6 +244,20 @@ def run_cbop_engineer_module():
             if agent.startswith("FM-200"):
                 st.caption(f"FM-200 GWP = {EP.FM200_GWP:,} — 규제 강화 추세" if is_ko
                            else f"FM-200 GWP = {EP.FM200_GWP:,} — tightening regulation")
+
+    _fire = dict(fire_agent=agent, fire_volume_m3=vol)
+    if agent == WATER_MIST:
+        _fire.update(water_l=water_l, pump_lpm=flow_lpm)
+    else:
+        _fire.update(agent_kg=qty_kg)
+    # n_enc 산정 근거 — 02 결과 / 02 stale 이라 05 간이식 / 05 간이식(02 미실행). 13 표가 stale 을 ⚠️로 띄운다
+    _basis = "p02" if _n02 else ("p05-stale" if _sys_state == "stale" else "p05")
+    DM.record("cbop", dict(n_enc=int(num_enclosures), n_enc_basis=_basis, enc_l=length, enc_w=width, enc_weight_t=weight,
+                           pad_l=pad_length, pad_w=pad_width, bearing_ratio=ratio,
+                           trench_w=trench_width, trench_d=trench_depth,
+                           bat_heat_kw=bat_heat, pcs_heat_kw=pcs_heat, hvac_load_kw=total_load,
+                           hvac_units=hvac_units, hvac_installed_kw=hvac_units * unit_kw,
+                           hvac_safety_pct=safety, hvac_dt_k=dt, env_ua_kw_k=ENV_UA_KW_PER_K, **_fire))
 
     st.markdown("---")
     st.subheader(t("regional_std"))

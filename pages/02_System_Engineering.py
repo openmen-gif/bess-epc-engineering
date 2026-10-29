@@ -10,6 +10,7 @@ from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.standards_helper import get_standards
 from utils.auth_helper import require_auth, sidebar_user_info
+from utils import design_model as DM
 
 
 def run_system_engineering_module():
@@ -103,6 +104,10 @@ def run_system_engineering_module():
         st.session_state['num_pcs'] = int(num_pcs)
         st.session_state['required_dc_nameplate'] = required_dc_nameplate
         st.session_state['energy_mwh'] = energy_mwh
+        DM.record("system", dict(num_containers=int(num_containers), num_pcs=int(num_pcs),
+                                 pcs_unit_mw=pcs_unit_mw, batt_unit_mwh=batt_unit_mwh,
+                                 required_dc_mwh=required_dc_nameplate, power_mw=power_mw,
+                                 energy_mwh=energy_mwh))
 
     st.markdown("---")
     st.subheader(t("regional_std"))

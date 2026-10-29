@@ -17,6 +17,7 @@ from utils.lang_helper import t
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils.theme import PALETTE, CBAR
 from utils import engineering_params as EP
+from utils import design_model as DM
 from utils.sim_physics import (
     heat2d_transient, stratification_profile,
     airflow_trajectories, build_animation, fmt_time,
@@ -211,18 +212,25 @@ def run_container_thermal_module():
         )
         # 기본값은 '단일 컨테이너' 대표값 — 3.44 MWh급 0.5C 발열 ≈ 50 kW.
         # (기존 플랜트 총량 ×50 kW/MW 기본은 단일 컨테이너 형상에 2,500 kW를 넣어 항상 과열 판정)
+        # 05 토목 BOP 를 실행했으면 컨테이너 1기당 발열·HVAC 설치용량·외형을 기본값으로 (설계 모델)
+        _pc = DM.per_container()
         bat_kw = st.number_input(
             t("p9_bat_heat"), min_value=1.0, max_value=5000.0,
-            value=50.0, step=10.0,
+            value=float(min(max(_pc.get("heat_kw", 50.0), 1.0), 5000.0)), step=10.0,
         )
         # HVAC 기본 60 kW — 발열 기본(50 kW)을 상회하는 적정 설계 출발점
         hvac_kw = st.number_input(
             t("p9_hvac_cap"), min_value=1.0, max_value=3000.0,
-            value=60.0, step=5.0,
+            value=float(min(max(_pc.get("hvac_kw", 60.0), 1.0), 3000.0)), step=5.0,
         )
+        if _pc:
+            st.caption(("📐 05 설계값 — 컨테이너 1기당 (총 {n}기)" if st.session_state.get("lang", "KO") == "KO"
+                        else "📐 From 05 — per container ({n} units)").format(n=_pc["n_enc"]))
     with c2:
-        con_l = st.number_input(t("p9_con_l"), min_value=3.0,  max_value=30.0, value=12.19, step=0.5)
-        con_w = st.number_input(t("p9_con_w"), min_value=1.5,  max_value=10.0, value=2.44,  step=0.1)
+        con_l = st.number_input(t("p9_con_l"), min_value=3.0,  max_value=30.0,
+                                value=float(min(max(_pc.get("enc_l") or 12.19, 3.0), 30.0)), step=0.5)
+        con_w = st.number_input(t("p9_con_w"), min_value=1.5,  max_value=10.0,
+                                value=float(min(max(_pc.get("enc_w") or 2.44, 1.5), 10.0)),  step=0.1)
         con_h = st.number_input(t("p9_con_h"), min_value=1.5,  max_value=5.0,  value=2.59,  step=0.1)
     with c3:
         n_racks = int(st.number_input(t("p9_racks"), min_value=1, max_value=50, value=8, step=1))
