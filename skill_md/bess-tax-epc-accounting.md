@@ -168,4 +168,4 @@ EPC 매출 인식 옵션:
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ KR 법인세 "24% + 지방세 2.4%" vs tax-korea의 "21~24%" 불일치 → ✅ 본 문서(24%+2.4%)가 정확, tax-korea 정렬 기준으로 채택 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md` vs `sessions/2026-06-08T01-43-37/bess-tax-korea.md`
 - ❌ KR에 "신재생에너지 관련 ITC(투자세액공제)" 표현 사용(ITC는 US IRA 용어) → ✅ 한국은 조특법 §24 시설투자세액공제로 표기, US→KR 용어 오적용 금지 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
-- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-tax-epc-accounting_critic`이 법인세·VAT·매출인식(POC)·PE 판단 0건으로 EMC 노이즈 필터 신뢰성·emc-analyst 비평만 수행 → 세무·회계 지식 마이닝에서 제외 — 근거: `sessions/2026-10-19T03-15-34/bess-tax-epc-accounting_critic.md`
+- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-tax-epc-accounting_critic`이 법인세·VAT·매출인식(POC)·PE 판단 0건으로 EMC 노이즈 필터 신뢰성·emc-analyst 비평만 수행 → 세무·회계 지식 마이닝에서 제외 — 근거: `sessions/2026-10-19T03-15-34/bess-tax-epc-accounting_critic.md`, `sessions/2026-10-22T19-27-10/bess-tax-epc-accounting_critic.md`(Pillar 2 "모니터링" 1줄 외 법인세·VAT·POC·PE 판단 0건, 본문은 미국↔한국 인증 상호인정 비평, 재발), `sessions/2026-10-23T09-27-20/bess-tax-epc-accounting_critic.md`(근로자 안전교육·환경 지속가능성·cost-analyst 교육비만 비평, 세무 지표 0건, 재발, 2026-10-23)

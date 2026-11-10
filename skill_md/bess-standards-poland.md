@@ -203,3 +203,4 @@ EU 규정 (상위 — 직접 적용)
 - ❌ 독일 비교열에 "**BDE**(Bundesvereinbarung für Elektrotechnik)", "**EnEV**(Elektrizitätsgesetz)" 기재 → ✅ 독일 전기기술 표준은 **VDE/DIN VDE**(예: VDE-AR-N 4110/4120), 에너지산업법은 **EnWG**. EnEV는 건물 에너지절약령으로 전력법이 아니다 — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`
 - ❌ 세션 1건뿐, 보호계전기 표 미완(110kV 과전압만) → ✅ 추가 세션 누적·검증 후 보호계전기 정정값 확정 — 근거: `sessions/2026-05-25T04-45-20/bess-standards-poland.md`
 - ❌ 폴란드 연간 전력소비량(~180 TWh)·ESS 시장 연평균성장률(15%+) 등을 출처·시점 없이 확정 수치로 제시 → ✅ 폴란드 통계청·Wood Mackenzie 등 공식 통계 인용 전까지 [요확인] 태그 유지, "시점 미상" 추정치를 확정 사실처럼 기재 금지 — 근거: `sessions/2026-07-23T05-49-05/bess-standards-poland.md`
+- ❌ "**PN-EN 62271 시리즈** = 고압 전기 설비 표준으로 **고압 장치 및 변압기** 관련 요구사항 포함" → ✅ (PN-)EN 62271은 **고압 개폐장치·제어장치**(차단기·단로기·GIS 등) 시리즈이고, 변압기는 **(PN-)EN 60076** 시리즈다. 위 재사용 지식의 "PN-EN 62271/60076 시리즈" 병기는 두 시리즈를 구분한 표기로 읽는다 — 근거: `sessions/2026-11-11T02-10-10/bess-standards-poland.md`

@@ -352,6 +352,12 @@ BESS 용어집, 기술 용어 번역, 계약 서류 번역, 회의 통역,
 > 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
 ### 재사용 지식 (세션 누적)
 - 세션 미축적 — 공통 가드레일 준수, 향후 용어사전(glossary) 정의 및 번역 산출 누적 필요
+- KO·EN·JA 3열 용어집 확정 행(일본 업계 관용 표기): 계통연계 = Grid Interconnection = **系統連系**, 전력변환장치 = Power Conversion System(PCS) = **パワーコンディショナ**(약칭 パワコン), 배터리 관리 시스템 = Battery Management System(BMS) = **バッテリー管理システム(BMS)**. 용어집에는 비고란에 적용 범위(문서 유형·시장)를 함께 적는다 — 근거: `sessions/2026-10-20T22-37-12/bess-translator.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - 해당 없음
 - ❌ 번역·통역 시 특정 국가 표준(예: 미국 IEEE 1547-2018)이나 시장 구분(예: 미국 CAISO/ERCOT, 영국 잉글랜드·스코틀랜드·웨일스·북아일랜드)을 타 지역에도 동일 적용되는 것처럼 옮김 → ✅ 원문 규격·시장 구분은 해당 관할범위 내에서만 유효함을 원문 병기로 명시하고 임의로 일반화하지 않음 — 근거: `sessions/2026-07-20T09-18-57/bess-translator_critic.md`, `sessions/2026-07-23T05-49-05/bess-translator_critic.md`
+- ❌ BESS의 일본어 대역을 "**蓄電池エネルギー貯蓄システム**"으로 용어집에 확정 → ✅ **貯蓄**은 금전 저축을 뜻한다. 에너지 저장은 **貯蔵**이며, 일본 업계·규격 관용 표기는 **蓄電システム**(정치용은 定置用蓄電システム) 또는 電力貯蔵システム이다. 일본어 용어는 JIS·메이커 카탈로그 표기로 대조 후 등재 — 근거: `sessions/2026-10-20T22-37-12/bess-translator.md`
+- ❌ "영어 계약 문서는 **능동태를 선호**"라고 쓰고 예시로 "We will perform the commissioning 대신 **Commissioning shall be conducted by us**"(수동태)를 권장 → ✅ 설명과 예시가 서로 반대다. 계약 영어는 의무 주체를 주어로 둔 **"The Contractor shall perform the commissioning."** 형태(능동태 + shall)가 표준이다. 예시는 규칙 문장과 같은 방향인지 확인 후 싣는다 — 근거: `sessions/2026-10-20T22-37-12/bess-translator.md`
+- ❌ 일본어 경어 예시로 "系統連系を行います" 대신 "**系統連系を行っております**"를 쓰라고 권장 → ✅ ～ております는 **진행·지속(겸양)** 표현이라 "실시할 예정"을 "실시하고 있다"로 **사실관계가 바뀐다**. 예정 사항은 「行います」 또는 겸양 「実施いたします」로 쓰고, 경어 수준 조정이 시제·진행 여부를 바꾸지 않게 한다 — 근거: `sessions/2026-10-20T22-37-12/bess-translator.md`
+- ❌ "화재방지형 설계"를 "**Fire-Resistant Design**"으로 번역 → ✅ fire-resistant는 **내화(구조물이 화열을 견딤)** 개념이고, 화재 예방·확산 방지는 **fire prevention / fire protection design**이다. 원문 의미(예방 vs 내화)를 확인해 구분 번역한다 — 근거: `sessions/2026-10-20T22-37-12/bess-translator.md`
+- ❌ 용어 기준 출처로 "**한국전기공사협회(Korea Electrical Installation Engineers Association, KEIA)**", "**일본전기공사협회(JEIE)**" 표준 용어를 제시 → ✅ 해당 영문명·약어는 확인되지 않으므로 `[요확인]`으로 두고, 다국어 전기 용어의 1차 기준은 **IEC 60050(국제전기기술용어, Electropedia)** 과 시장별 국가규격 용어편을 인용한다. 협회명은 공식 영문명을 대조한 뒤 쓴다(가드레일 §2) — 근거: `sessions/2026-10-20T22-37-12/bess-translator.md`

@@ -1067,9 +1067,12 @@ TOC 검증 (raw `{ TOC \o "1-2" }` 필드 금지 — LibreOffice PDF 목차 누�
 - 자동화 파이프라인 규약: CSV→pandas→FPDF/Excel 자동 생성, BOM↔견적 데이터 연계(변경 자동 반영), 계층 BOM 추적성 — 근거: `sessions/2026-05-21T06-28-02/bess-output-generator.md`
 - 출처 표기 규약: 모든 데이터에 [출처명]-[URL/문서참조]-[수집일] 3요소(CLAUDE.md 하이퍼링크 증거 원칙과 일치) — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
 - 견적서·BOM 출력 규약: 인쇄 옵션 **A(단면 대칭, 25 mm 4-방향 여백)**, 3페이지 이상이면 점선 TOC + 페이지 번호 필수, 계산·수식은 Excel(.xlsx)로 관리하고 최종 배포본은 PDF로 고정 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+- 통합 보고서 자동 생성기의 자동 검증 4항목: ①수식 오류값(`#REF!`·`#DIV/0!`) 스캔 ②모든 수치의 출처 3요소([출처명]-[URL/문서]-[수집일]) 존재 ③여백 옵션 A/B/C 중 선택값 적용 ④3페이지 이상이면 점선 TOC·페이지 번호 생성 — 근거: `sessions/2026-10-22T01-03-29/bess-output-generator.md`
 - 견적서 필수 섹션: 요약(총 비용) / 부품 목록(부품명·부품번호·제조사·모델·단가·수량·총액·세금·운송비) / 총 비용 / **참고 출처** / `[요확인]` 항목 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ 단가·수량을 공급업체 견적 기준으로만 표기하고 조회 기준일 누락 → ✅ 모든 금액 항목에 **기준일과 출처**를 병기하고, 환율 적용 시 적용일·환율값을 함께 기재 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
 - ❌ frontmatter `department: "Support / Document Team"`(영문) vs 타 도메인 "운영본부(COO 산하)" 드리프트 → ✅ 부서명 "운영본부(COO 산하)" 한글 단일 표기 — 근거: `00_Skill_MD/bess-output-generator.md`
 - ❌ 예시 출처 placeholder 환각(examplebattery.com / 2023-04-15 등 가짜 URL·과거일자) → ✅ 실제 출처로 치환 강제, example.com·과거 placeholder 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-output-generator.md`
 - ❌ bess-output-generator 세션이 BOM 원가·물량산출·IRA 관세혜택 등 콘텐츠 분석까지 수행(역할경계 위반, 2026-07-05~07-13 배치 세션 다수 반복) → ✅ 콘텐츠(단가·수치·규정해석)는 bess-epc-bom/bess-cost-analyst/bess-tax-incentive 담당, output-generator는 형식·서식 표준화만 수행 — 근거: `sessions/2026-07-05T08-50-30/bess-output-generator.md`
+- ❌ 생성 파일 저장 위치를 "**`/mnt/user-data/outputs/`** 경로에 저장 후 전달"로 명시 → ✅ 이 조직의 산출물 저장 규칙은 `output/` 번호 폴더(예: `02_reports/`, `10_tools/`)와 비-Python 결과물용 `02. 작업중/`이며, 파일명은 `[프로젝트코드]_[문서유형]_v[버전]_[YYYYMMDD]`를 따른다(00_Skill_MD/CLAUDE.md "출력 저장 경로"). 다른 실행 환경의 경로를 표준으로 옮겨 적지 않는다 — 근거: `sessions/2026-10-22T01-03-29/bess-output-generator.md`
+- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-output-generator_critic`이 출력 지표(형식·여백·TOC·출처 표기·파일명 규칙) 0건으로 각국 배터리 재활용 규제·cost-analyst LFP/NMC 단가만 비평 → 출력 지식 마이닝에서 제외 — 근거: `sessions/2026-10-21T06-08-58/bess-output-generator_critic.md` · 재발 `sessions/2026-11-09T16-03-06/bess-output-generator_critic.md`
