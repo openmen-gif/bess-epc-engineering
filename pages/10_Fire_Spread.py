@@ -10,6 +10,7 @@ propagation (SFPE point-source radiation + lumped rack heating) + go.Frames
    large-scale fire testing.
 """
 import streamlit as st
+from utils.engineering_viewer import render_viewer, fire_payload
 try:
     st.set_page_config(page_title="BESS EPC Platform", layout="wide", initial_sidebar_state="auto")
 except Exception:
@@ -339,6 +340,11 @@ def run_fire_spread_module():
 
     st.markdown("---")
 
+    st.subheader("소방 · 랙 단위 3D 재생" if not is_en else "Fire protection · rack-level 3D playback")
+    render_viewer(fire_payload(times, frames, T_frames, cfg["spacing"],
+                              language="EN" if is_en else "KO", agent=cfg["agent"], response=cfg["response"]))
+    st.caption("랙 간격·온도·6단계 상태는 현재 해석 결과와 연결됩니다. 파랑은 화염 억제 중(내부 열폭주 지속), 회색은 소진입니다. 화염 형상은 설명용입니다."
+               if not is_en else "Rack spacing, temperature and six states follow the current analysis. Blue = flame knockdown (internal TR ongoing); grey = burned out. Flame geometry is illustrative.")
     tab1, tab2, tab3 = st.tabs([
         "🔥 " + ("3D 확산 애니메이션"        if not is_en else "3D Spread Animation"),
         "📈 " + ("확산 면적 추이"             if not is_en else "Spread Area Over Time"),

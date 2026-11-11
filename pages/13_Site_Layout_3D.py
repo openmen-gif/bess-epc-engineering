@@ -13,6 +13,7 @@ from utils.auth_helper import require_auth, sidebar_user_info
 from utils import engineering_params as EP
 from utils import design_model as DM
 from utils import site_layout as SL
+from utils.engineering_viewer import render_viewer, site_payload
 
 _KIND = {  # 종류 → (한글, 영문, 색)
     "enc":  ("배터리 인클로저", "Battery enclosure", "#3fb950"),
@@ -136,6 +137,12 @@ def run_site_layout_module():
         st.caption(L(f"Δ = {base['ts']} 저장한 기준안 대비 (Δ 없음 = 기준안과 같음) · 3D 의 회색 점선 = 기준안 윤곽",
                      f"Δ = vs baseline saved at {base['ts']} (no Δ = unchanged) · grey dashed outline in 3D = baseline"))
 
+    st.subheader(L("실물형 3D · 설계 모델 탐색", "Spatial 3D · design model explorer"))
+    render_viewer(site_payload(lay, inp["pad_l"][0], inp["pad_w"][0], inp["trench_d"][0],
+                               language="KO" if ko else "EN", baseline=base))
+    st.caption(L("설비 클릭 → 치수·좌표 확인 / 평면·정면·단면 / 두 점 거리 측정. 외벽·문·환기구·도로는 시각화용 상세입니다.",
+                 "Click equipment for dimensions / plan, front and section views / point-to-point measurement. Panels, doors, vents and roads are illustrative details."))
+    st.subheader(L("정량 배치도 · 기초 및 트렌치", "Analytical layout · foundations and trenches"))
     # ── 3D ────────────────────────────────────────────────────────────────
     views = [L("등각", "Isometric"), L("위에서", "Top"), L("구조 (기초·트렌치)", "Structure (pads·trench)")]
     view = st.radio(L("시점", "View"), views, horizontal=True, key="sl_view", label_visibility="collapsed")

@@ -1,0 +1,13 @@
+{
+  "name": "epc-engineering-viewer",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "esbuild engineering-viewer.js --bundle --minify --format=iife --outfile=engineering-viewer.bundle.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.65.0",
+    "three": "0.184.0"
+  }
+}

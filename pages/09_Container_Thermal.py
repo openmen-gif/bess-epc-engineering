@@ -5,6 +5,7 @@
 Battery Container Internal 3D Thermal Flow Simulation
 """
 import streamlit as st
+from utils.engineering_viewer import render_viewer, thermal_payload
 try:
     st.set_page_config(page_title="BESS EPC Platform", layout="wide", initial_sidebar_state="auto")
 except Exception:
@@ -431,6 +432,18 @@ def run_container_thermal_module():
         )
         _ar_phys = dict(x=con_l / con_w, y=1.0, z=con_h / con_w)
 
+        _sp_exhaust = tuple((round(float(v[0]) * dx, 3), round(float(v[1]) * dy, 3)) for v in sim_exhaust)
+        _sp_intake = tuple((round(float(v[0]) * dx, 3), round(float(v[1]) * dy, 3)) for v in sim_intake)
+        _sp_racks = tuple((round(float(s[0]) * dx, 3), round(float(s[1]) * dy, 3)) for s in sources)
+        _sp_flow = _airflow_traj_cached(T_floor, _sp_exhaust, _sp_intake, _sp_racks,
+                                      float(con_l), float(con_w), float(con_h), float(amb),
+                                      st.session_state.get("af_wake_gain", 1.0))
+        st.subheader("랙 · 열 · 공기 흐름 3D" if not is_en else "Rack · thermal · airflow 3D")
+        render_viewer(thermal_payload(con_l, con_w, con_h, snap_times, snapshots, sources, sim_vents,
+                                     language="EN" if is_en else "KO", airflow=_sp_flow,
+                                     cell_centers=False, intake=sim_intake))
+        st.caption("저장된 해석 결과: 공기 온도는 깊이 평균값, 공기 궤적은 최종 열장 기반 운동학 모델입니다. 랙 상세 형상은 가정입니다."
+                   if not is_en else "Stored analysis: depth-averaged air temperature; kinematic air trajectories use the final thermal field. Rack details are illustrative.")
         tab1, tab2, tab3 = st.tabs([
             "🧊 " + ("3D 온도 Surface"   if not is_en else "3D Temperature Surface"),
             "🏗️ " + ("수평 단면 슬라이스" if not is_en else "Horizontal Slice Views"),

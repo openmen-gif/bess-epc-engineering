@@ -12,6 +12,7 @@ from utils.theme import AX3D, DARK_LAYOUT, CBAR
 from utils import engineering_params as EP
 from utils import design_model as DM
 from utils.fig_compact import compact
+from utils.engineering_viewer import render_viewer, thermal_payload, smoke_payload, structural_payload
 from utils.sim_physics import (
     heat2d_transient, bearing_pressure, seismic_pulse,
     smoke_layer_series, plume_particles,
@@ -473,6 +474,8 @@ if role == T["roles"][0]:
             st.success(T["cfd_result"](peak_T, mean_T))
 
     with col2:
+        render_viewer(thermal_payload(CFD_L, CFD_W, CFD_H, times, snaps, src_cells, vent_cells,
+                                     language=st.session_state.get("lang", "KO")))
         st.subheader(T["cfd_viewer"])
         st.caption(T["cfd_guide"])
 
@@ -588,7 +591,8 @@ elif role == T["roles"][1]:
         with tab_s1:
             st.caption(T["str_guide1"])
 
-            t_hist = np.linspace(0.0, 8.0, 33)
+            # 0.25 s sampling at 2 Hz hits only sine zero-crossings; use 0.125 s.
+            t_hist = np.linspace(0.0, 8.0, 65)
             pulse  = seismic_pulse(t_hist, f_hz=2.0, decay=0.5)
             cmax_q = max(total_combo * (1.0 + 6.0 * e_max / pad_w) * 1.05, STR_ALLOW * 1.05)
 
@@ -602,9 +606,13 @@ elif role == T["roles"][1]:
                 )
 
             frames_q = []
+            spatial_pressures = []
             for p in pulse:
                 xs_q, ys_q, Qf = bearing_pressure(total_combo, e_max * p, 0.0, pad_w, pad_l, nx=30, ny=30)
+                spatial_pressures.append(Qf)
                 frames_q.append([_q_surf(Qf)])
+            render_viewer(structural_payload(pad_w, pad_l, t_hist, spatial_pressures, e_max * pulse,
+                                            language=st.session_state.get("lang", "KO")))
             xs_q, ys_q, Q0 = bearing_pressure(total_combo, e_max * pulse[0], 0.0, pad_w, pad_l, nx=30, ny=30)
 
             limit_q = go.Surface(
@@ -717,6 +725,9 @@ else:
             st.success(T["fds_pass"](z_eq) if z_eq >= TENABLE_Z else T["fds_fail"](z_eq))
 
     with col2:
+        render_viewer(smoke_payload(res, FDS_L, FDS_W, FDS_H,
+                                   language=st.session_state.get("lang", "KO"),
+                                   q_mw=q_mw, u_fan=float(vent_speed)))
         st.subheader(T["fds_viewer"])
         st.caption(T["fds_guide"])
 
