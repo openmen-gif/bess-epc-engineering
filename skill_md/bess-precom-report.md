@@ -467,5 +467,5 @@ bess-precom-report
 - 사전시운전 단계 구분(스케줄 기준): Pre-Com(절연·접지 시험) **2주** → 통합 시운전 **1주** → 성능시험(PAT) **1주** → 안정화 운전 **72~168시간** — 근거: `sessions/2026-07-31T12-18-21/bess-scheduler.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ 사전시운전 절차서에 시험 합격 기준을 정성 서술("정상 작동 확인")로 기재 → ✅ 절연저항·접지저항·계전기 동작시간 등 **수치 + 단위 + 판정식**으로 합격 기준을 명시(전 스킬 공통 원칙) — 근거: `sessions/2026-07-31T12-18-21/bess-scheduler.md`
-- ❌ 사전시운전 critic이 절연저항·접지저항·계전기 시험·LOTO 언급 **0건**으로 규제 모니터링 전담 인력·화재예방 시스템 수명주기 비용(cost-analyst 비평)만 권고(도메인 무관 대체) → ✅ precom critic은 **시험 항목별 합격 기준(수치+단위+판정식)·측정 조건(DC 인가 전압)·LOTO 절차 누락 여부**를 기준으로 비평하고, 무관 산출물은 마이닝에서 제외한다(가드레일 §0-9) — 근거: `sessions/2026-10-20T04-00-13/bess-precom-report_critic.md`, `sessions/2026-10-21T13-57-09/bess-precom-report_critic.md`, `sessions/2026-10-21T23-19-19/bess-precom-report_critic.md`
+- ❌ 사전시운전 critic이 절연저항·접지저항·계전기 시험·LOTO 언급 **0건**으로 규제 모니터링 전담 인력·화재예방 시스템 수명주기 비용(cost-analyst 비평)만 권고(도메인 무관 대체) → ✅ precom critic은 **시험 항목별 합격 기준(수치+단위+판정식)·측정 조건(DC 인가 전압)·LOTO 절차 누락 여부**를 기준으로 비평하고, 무관 산출물은 마이닝에서 제외한다(가드레일 §0-9) — 근거: `sessions/2026-10-20T04-00-13/bess-precom-report_critic.md`, `sessions/2026-10-21T13-57-09/bess-precom-report_critic.md`, `sessions/2026-10-21T23-19-19/bess-precom-report_critic.md`, `sessions/2026-11-12T16-33-58/bess-precom-report_critic.md`(문서 자동화 보안·규정 준수와 training-expert 교육 범위만 비평, 시험 합격 기준 0건, 2026-11-12)
 - 해당 없음

@@ -176,8 +176,10 @@ IT인프라, 서버, Cloud, AWS, Azure, GCP, DB, PostgreSQL, CI/CD, 백업, DR, 
 - 클라우드 보안 기준값: 저장 데이터 **AES-256**, 전송 **TLS 1.3**, 최소권한 원칙(PoLP) + 관리자 **MFA 의무화**, Multi-AZ 배포 + 리전 내 복제 — 근거: `sessions/2026-07-28T09-00-43/bess-it-infra.md`
 - 모니터링 스택: 메트릭 Prometheus + 시각화 Grafana, 로그 ELK 또는 클라우드 네이티브, 트레이스 Jaeger/Zipkin. 자동 확장은 CPU 70% 초과 시 트리거 + 안정화 시간 고려 — 근거: `sessions/2026-07-28T09-00-43/bess-it-infra.md`
 - 통합 보안 플랫폼(AWS Security Hub / Azure Security Center / GCP SCC) 연동으로 실시간 모니터링·자동 패치 적용 — 근거: `sessions/2026-07-28T09-00-43/bess-it-infra.md`
+- 모니터링 알림 임계값 세트(세션 기준값): **CPU 70% · 메모리 80% · 디스크 I/O 80% · 네트워크 대역폭 90%** 초과 시 알림·자동 확장 트리거, IaC는 Terraform. CI/CD 배포는 **블루-그린** + 롤백 목표 **MTTR ≤15분**(Mean Time to Recover), 비밀정보는 AWS Secrets Manager·Azure Key Vault — 근거: `sessions/2026-11-11T22-49-47/bess-it-infra.md`
 ### 정합성 가드레일 (반복 오류 차단)
 - ❌ 클라우드 리전·데이터 주권 제약을 계약서 확인 없이 "준수 중"으로 단정 → ✅ 클라우드 계약서·리전 제약 문서를 확인할 때까지 `[요확인]` 유지(GDPR·정보통신망법 적용 범위 포함) — 근거: `sessions/2026-07-28T09-00-43/bess-it-infra.md`
 - ❌ 물리보안(변압기 CCTV/출입통제)·WAF/IDS/IPS까지 직접 권고 → ✅ 물리보안 = bess-security-expert, IDS/IPS/위협 = bess-cybersecurity-expert, it-infra 소유 = 클라우드/DB/CI-CD/백업·DR/IT보안 기준선 — 근거: `sessions/2026-06-04T10-10-52/bess-it-infra.md`
 - ❌ OT 네트워크 VLAN/QoS 설계까지 제시 → ✅ OT 네트워크/VLAN은 bess-network-engineer 소유 — 근거: `sessions/2026-06-08T04-48-19/bess-it-infra.md`
 - ❌ "양호/정상/적정" 비정량 판정 → ✅ 가동률 %·RPO/RTO h·사용률 % 임계로 합·부 판정 (상단 정량표 적용) — 근거: 전 도메인 공통 가드레일
+- ❌ 뉴스 3건(Envision·ju:niz 442 MWh 협력 `bess-20261111-a01`, Calibrant Energy 금융 조달 `a02`, NTPC Green 40 GWh 입찰 `a03`)을 "모니터링 확장성·CI/CD 파이프라인 효율·반복 테스트 개선"의 근거로 재해석 → ✅ 사업 협력·금융·입찰 보도는 클라우드·CI/CD 설계 근거가 아니다. 뉴스는 과제 관련성을 먼저 판정하고 무관하면 편입하지 않는다(가드레일 §0-8, NEWS-ID 라벨 무결성) — 근거: `sessions/2026-11-11T22-49-47/bess-it-infra.md`
