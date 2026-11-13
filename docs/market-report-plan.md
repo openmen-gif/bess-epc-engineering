@@ -64,3 +64,8 @@ python3-uno and the same DOCX/PDF path before accepting the container image.
 Independent review iteration 2: PASS. Independent full suite 29 passed in
 108.62 seconds, exit 0; rendered document parity 239 items, missing 0; 13 pages
 visually reviewed, no material clipping; writing warnings 0. Deployment pending.
+
+Deployment correction: HF rejected ordinary Git push because the pinned DOCX
+and OTF files require binary storage. Use official HfApi.upload_folder on a
+git-archive snapshot instead. No force push or history rewriting. deployment.json
+records the GitHub source SHA because the HF deployment commit is now distinct.

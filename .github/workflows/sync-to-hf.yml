@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:  # 수동 실행도 가능
 
+concurrency:
+  group: hf-production
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -42,26 +46,35 @@ jobs:
           echo "✅ HF_TOKEN: ${TOKEN_LEN}자 (값은 마스킹됨)"
           echo "✅ HF_USERNAME: $HF_USERNAME"
 
-      # 2단계: HF Space로 push (실패 시 정확한 에러 표시)
-      - name: Push to Hugging Face Spaces
+      # The Hub API stores fonts/templates in supported binary storage without
+      # rewriting either repository's history.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Hub uploader
+        run: pip install huggingface_hub==1.6.0
+
+      - name: Upload tracked deployment snapshot
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USERNAME: ${{ secrets.HF_USERNAME }}
         run: |
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
+          mkdir -p "$RUNNER_TEMP/hf-deploy"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP/hf-deploy"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from huggingface_hub import HfApi
 
-          # credential을 URL에 직접 임베드 (간단 + 명시적)
-          # 경로의 owner는 'openmen-gif' 로 하드코딩 — HF_USERNAME secret 값과 무관하게 작동
-          REMOTE_URL="https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/openmen-gif/bess-epc-engineering"
-
-          echo "Pushing main to HF Space main branch..."
-          git push "$REMOTE_URL" main:main 2>&1 | \
-            sed "s/${HF_TOKEN}/***MASKED***/g"
-
-          PUSH_EXIT=${PIPESTATUS[0]}
-          if [ "$PUSH_EXIT" -ne 0 ]; then
-            echo "::error::Push failed with exit code $PUSH_EXIT"
-            exit $PUSH_EXIT
-          fi
-          echo "✅ Sync complete"
+          folder = Path(os.environ['RUNNER_TEMP']) / 'hf-deploy'
+          sha = os.environ['GITHUB_SHA']
+          (folder / 'deployment.json').write_text(json.dumps({'source_commit': sha}))
+          api = HfApi(token=os.environ['HF_TOKEN'])
+          commit = api.upload_folder(
+              repo_id='openmen-gif/bess-epc-engineering', repo_type='space',
+              folder_path=folder, ignore_patterns=['.github/**'],
+              commit_message=f'Deploy GitHub {sha}',
+          )
+          print(f'HF_COMMIT={commit.oid} SOURCE_COMMIT={sha}')
+          PY
