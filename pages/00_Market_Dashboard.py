@@ -21,11 +21,18 @@ def _format_number(n, decimals=1):
 
 def render_overview():
     st.subheader(t("mk_ov_title"))
+    from utils.market_evidence import load_references
+    current_refs = load_references()
+    newest = next(r for r in current_refs if r['id'] == 'bnef-2026')
+    st.info(f"공식 참조자료: {newest['title']} | {newest['period']} 전망 {newest['value']} {newest['unit']} "
+            f"| 발표 {newest['published_on']} | 검토 {newest['verified_on']}. "
+            "마켓 보고서에서 공식 원문과 후속 발표를 새로 조회할 수 있습니다.")
+    st.caption(f"아래 기존 시계열과 가격은 {md.DATA_SNAPSHOT_AS_OF} 기준 참조 가정입니다. 최신 공식 참조자료와 구분하십시오.")
 
     # KPIs
     curr_yr = md.LATEST_ACTUAL_YEAR
     prev_yr = curr_yr - 1
-    st.caption(f"📅 {t('mk_ov_basis')}: {curr_yr}년 실적 (vs {prev_yr})")
+    st.caption(f"📅 {t('mk_ov_basis')}: {curr_yr}년 참조 추정 (vs {prev_yr})")
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -280,23 +287,61 @@ def render_fx_commodities():
 
 def download_report():
     st.subheader(t("mk_rep_title"))
+    from utils.market_evidence import collect_evidence, load_references, reference_needs_review, reference_status
+    from datetime import datetime, timezone
+    st.markdown('### 공식 참조 데이터')
+    st.caption('통계 기간과 수집 시각을 구분합니다. 보고서를 생성할 때 공식 원문, 월별 통계 및 기준환율을 다시 조회합니다.')
+    if st.button('공식 참조자료 새로 조회', key='refresh_market_evidence'):
+        with st.spinner('공식 발표 및 최신 공개 통계를 확인하고 있습니다...'):
+            st.session_state['market_evidence'] = collect_evidence()
+    evidence = st.session_state.get('market_evidence')
+    refs = evidence['references'] if evidence else load_references()
+    now = datetime.now(timezone.utc)
+    for ref in refs:
+        ref['freshness'] = reference_status(ref, now)
+    st.dataframe(pd.DataFrame([{
+        '지표':r['label'], '기간':r['period'], '값':r['value'], '단위':r['unit'],
+        '유형':'전망' if r['kind']=='forecast' else '발표 실적',
+        '발표일':r.get('published_on') or '미확인', '검토일':r['verified_on'], '출처':r['url'],
+        '갱신 상태':{'review_due':'갱신 검토 필요','future_date':'미래 날짜 확인 필요','reviewed_reference':'검토된 참조자료'}[r['freshness']],
+        '이번 조회':{'matched':'원문 수치 확인','changed':'원문 변경 확인 필요','unavailable':'조회 실패'}.get(r.get('retrieval_status'),'미조회'),
+    } for r in refs]), use_container_width=True, hide_index=True)
+    if evidence:
+        st.caption('마지막 조회: ' + evidence['generated_at'])
+        failures = sum(reference_needs_review(r) for r in refs)
+        if failures:
+            st.warning(f'{failures}개 참조자료의 원문 또는 갱신 시점에 재검토가 필요합니다. 과거 검토값으로 구분해 표시합니다.')
+        inv = evidence['inventory']
+        if inv['status'] == 'available':
+            st.info(f"EIA 기준월 {inv['period']} | 운영 출력 {inv['mw']/1000:,.3f} GW | 신고 에너지용량 "
+                    + (f"{inv['mwh']/1000:,.3f} GWh" if inv.get('mwh') is not None else '결측으로 합산 제외'))
+        else:
+            st.warning('EIA 월별 자료를 검증하지 못했습니다. 이전 수치를 현재값으로 대체하지 않습니다.')
 
     # ── Section 1: Comprehensive Word Report ──────────────────────────
     st.markdown(f"### {t('mk_rep_section_word')}")
     with st.container(border=True):
-        st.markdown(t("mk_crep_desc"))
-        st.markdown(t("mk_crep_contents"))
+        st.markdown('HHIC 표준 보고서: 표지, 문서관리, 목차, 시장 참조자료, 공식 통계, EPC 대응, 시나리오 및 근거표')
+        st.caption('최신 발표 조회 실패와 적용 조건 미확인은 문서에 표시됩니다. Word와 PDF는 동일한 보고서에서 생성됩니다.')
 
         col_w, col_p = st.columns(2)
         with col_w:
             if st.button(t("mk_crep_gen_word"), use_container_width=True, key="btn_gen_word"):
                 with st.spinner(t("mk_crep_generating")):
                     try:
-                        from utils._report_local import generate_word_report
-                        word_path = generate_word_report()
+                        from utils.market_report import generate_word_report
+                        from pathlib import Path
+                        for old in ('dl_word_bytes','dl_pdf_bytes','dl_word_name','dl_pdf_name'):
+                            st.session_state.pop(old, None)
+                        bundle = collect_evidence()
+                        st.session_state['market_evidence'] = bundle
+                        word_path = generate_word_report(bundle=bundle)
                         with open(word_path, "rb") as f:
                             st.session_state["dl_word_bytes"] = f.read()
                             st.session_state["dl_word_name"] = word_path.split("\\")[-1] if "\\" in word_path else word_path.split("/")[-1]
+                        pdf = Path(word_path).with_suffix('.pdf')
+                        st.session_state['dl_pdf_bytes'] = pdf.read_bytes()
+                        st.session_state['dl_pdf_name'] = pdf.name
                         st.success(t("mk_rep_done"))
                     except Exception as e:
                         st.error(f"{t('mk_crep_err')}: {e}")
@@ -305,11 +350,19 @@ def download_report():
             if st.button(t("mk_crep_gen_pdf"), use_container_width=True, key="btn_gen_pdf"):
                 with st.spinner(t("mk_crep_generating")):
                     try:
-                        from utils._report_local import generate_pdf_report
-                        pdf_path = generate_pdf_report()
+                        from utils.market_report import generate_pdf_report
+                        from pathlib import Path
+                        for old in ('dl_word_bytes','dl_pdf_bytes','dl_word_name','dl_pdf_name'):
+                            st.session_state.pop(old, None)
+                        bundle = collect_evidence()
+                        st.session_state['market_evidence'] = bundle
+                        pdf_path = generate_pdf_report(bundle=bundle)
                         with open(pdf_path, "rb") as f:
                             st.session_state["dl_pdf_bytes"] = f.read()
                             st.session_state["dl_pdf_name"] = pdf_path.split("\\")[-1] if "\\" in pdf_path else pdf_path.split("/")[-1]
+                        word = Path(pdf_path).with_suffix('.docx')
+                        st.session_state['dl_word_bytes'] = word.read_bytes()
+                        st.session_state['dl_word_name'] = word.name
                         st.success(t("mk_rep_done"))
                     except Exception as e:
                         st.error(f"{t('mk_crep_err')}: {e}")

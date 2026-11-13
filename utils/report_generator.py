@@ -1,8 +1,7 @@
-"""
-Dual-mode report generator.
+"""Public report entry points use the bundled HHIC engine in both app modes.
 
-- API mode (IS_API_MODE=True):  delegates to FastAPI backend, falls back to local
-- Standalone mode:              generates reports in-process via _report_local
+The private legacy API download helper remains for explicit compatibility use;
+public Word/PDF reports must not silently revert to its old report template.
 """
 import os
 import datetime
@@ -45,30 +44,21 @@ def _download_report(report_type: str) -> str:
 # ── Standalone-mode: local generation ─────────────────────────────────────────
 
 def _local_generate_word() -> str:
-    from utils._report_local import generate_word_report as _gen
+    from utils.market_report import generate_word_report as _gen
     return _gen()
 
 
 def _local_generate_pdf() -> str:
-    from utils._report_local import generate_pdf_report as _gen
+    from utils.market_report import generate_pdf_report as _gen
     return _gen()
 
 
 # ── Public API (mode-aware with fallback) ─────────────────────────────────────
 
 def generate_word_report() -> str:
-    if IS_API_MODE:
-        try:
-            return _download_report("word")
-        except Exception:
-            pass  # fallback to local
+    # HHIC is packaged with this app; the legacy backend has a different template.
     return _local_generate_word()
 
 
 def generate_pdf_report() -> str:
-    if IS_API_MODE:
-        try:
-            return _download_report("pdf")
-        except Exception:
-            pass  # fallback to local
     return _local_generate_pdf()

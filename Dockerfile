@@ -14,6 +14,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# HHIC Korean typography is bundled so cloud rendering matches the report profile.
+RUN mkdir -p /usr/local/share/fonts/hhic \
+    && cp vendor/hhic_word/fonts/*.otf /usr/local/share/fonts/hhic/ \
+    && fc-cache -f
+
+# Fail the deployment build if the Linux Word/PDF pipeline cannot render.
+RUN python scripts/check_market_build.py
+
 # Persistent storage directory for user data (HuggingFace Spaces mounts /data)
 RUN mkdir -p /data && chmod 777 /data
 

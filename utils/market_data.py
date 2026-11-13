@@ -480,17 +480,8 @@ _CURRENT_YEAR_DYNAMIC = datetime.now().year
 
 
 def _build_year_labels(years):
-    """실적/추정/전망 라벨을 동적 부여 — 작년까지는 실적, 올해는 추정(E), 미래는 전망(F)."""
-    cy = _CURRENT_YEAR_DYNAMIC
-    labels = []
-    for y in years:
-        if y < cy:
-            labels.append(str(y))
-        elif y == cy:
-            labels.append(f"{y}E")
-        else:
-            labels.append(f"{y}F")
-    return labels
+    """Calendar passage cannot verify an estimate or forecast."""
+    return [f"{y}E" if y <= 2025 else f"{y}F" for y in years]
 
 
 YEAR_LABELS = _build_year_labels(YEARS)
@@ -937,11 +928,8 @@ REGIONAL_DATA = {
 REGIONS = list(REGIONAL_DATA.keys())
 
 def _latest_actual_year() -> int:
-    """현재 연도 기준으로 데이터가 있는 가장 최근 실적 연도를 동적으로 반환."""
-    candidate = datetime.now().year - 1
-    while candidate > 2022 and candidate not in GLOBAL_CAPACITY_GWH:
-        candidate -= 1
-    return candidate
+    """Legacy baseline is pinned; reviewed new publications live in market_references.json."""
+    return 2025
 
 LATEST_ACTUAL_YEAR = _latest_actual_year()
 

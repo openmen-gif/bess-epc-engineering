@@ -1,2 +1,3 @@
 fonts-noto-cjk
 libreoffice-writer
+python3-uno
