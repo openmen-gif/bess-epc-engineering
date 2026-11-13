@@ -80,6 +80,8 @@ Every text field in paragraphs, list items, callouts, and table cells supports i
 ```
 - `style`: `"body"` (`10.2pt` `#262633`), `"lead"` (`10.8pt` `#14141F`), or `"note"` / `"guidance"` (`9.2pt` italic `#646478`).
 - Alternatively pass `"paragraphs": ["...", "..."]` to render multiple consecutive paragraphs.
+- Local opt-in: `keep_together: true` prevents a paragraph splitting across pages;
+  `keep_with_next: true` keeps it with the next block.
 
 ### 4.3 `clause_list` / `bullet_list`
 ```json
@@ -156,6 +158,11 @@ Every text field in paragraphs, list items, callouts, and table cells supports i
 }
 ```
 - Status cells containing exact tokens (`COMPLIANT`, `OPEN`, `HOLD`, `TBC`, `CLARIFICATION`, `NON-COMPLIANT`, `REJECTED`, `준수`, `보류`, `확인 필요`, `불가`, etc.) are automatically styled as semantic status pills.
+- Local opt-in: `keep_together: true` keeps every table row together (use only for
+  tables that fit one page); `keep_with_next: true` keeps the final row with the
+  following paragraph. `compact: true` reduces vertical cell padding from 4.5pt
+  to 3pt and body paragraph padding from 1.5pt to 0.8pt. Font sizes are unchanged.
+- Figures accept `keep_with_next: true` to keep their caption with a following note.
 
 ### 4.7 `redline_comparison` / `comparison`
 ```json

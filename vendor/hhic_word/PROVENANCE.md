@@ -1,8 +1,14 @@
 # HHIC Word engine provenance
 
 Vendored from the local canonical `00_공통/skills/hhic-skills/skills/hhic-word`
-on 2026-11-13 for self-contained dashboard deployment. Engine Python files,
-references and SKILL.md are preserved without local formatting modifications.
+on 2026-11-13 for self-contained dashboard deployment.
+
+Local opt-in pagination extension, 2026-11-14: blocks.py accepts paragraph
+keep_together, table keep_together/keep_with_next/compact and figure
+keep_with_next. Defaults retain upstream behavior. Compact tables reduce only
+vertical cell/paragraph padding, preserving fonts and horizontal geometry.
+This lets application JSON prevent detached table explanations without editing
+generated Word XML. The template and all other engine files remain unchanged.
 
 The donor is `Word Template_Empty_No Project Data.docx` from the same canonical
 skill in OneDrive. SHA256:

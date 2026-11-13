@@ -208,7 +208,8 @@ class BlockRenderer:
         for t in texts:
             p = self.doc.add_paragraph()
             clear_para_numbering(p)
-            set_para_keep(p, keep_next=bool(block.get("keep_with_next", False)), keep_lines=False)
+            set_para_keep(p, keep_next=bool(block.get("keep_with_next", False)),
+                          keep_lines=bool(block.get("keep_together", False)))
             if style_kind == "lead":
                 set_para_spacing(p, before_pt=2.0, after_pt=6.0, line_mult=1.22)
                 append_rich_text(p, t, self.profile, base_size_pt=10.8, base_color=COLORS["dark_ink"], base_bold=False)
@@ -462,7 +463,9 @@ class BlockRenderer:
 
         tbl = self.doc.add_table(rows=1 + len(rows), cols=n_cols)
         set_table_layout_and_widths(tbl, widths)
-        set_table_cell_margins(tbl, top_pt=4.5, bottom_pt=4.5, left_pt=6.5, right_pt=6.5)
+        compact = bool(block.get("compact", False))
+        set_table_cell_margins(tbl, top_pt=3.0 if compact else 4.5,
+                               bottom_pt=3.0 if compact else 4.5, left_pt=6.5, right_pt=6.5)
         set_table_borders(
             tbl,
             grid_mode=grid_mode,
@@ -511,7 +514,8 @@ class BlockRenderer:
                 # Check semantic status cell
                 status_colors = classify_status_cell(val_str)
                 p = cell.paragraphs[0]
-                set_para_spacing(p, before_pt=1.5, after_pt=1.5, line_mult=1.15)
+                set_para_spacing(p, before_pt=0.8 if compact else 1.5,
+                                 after_pt=0.8 if compact else 1.5, line_mult=1.15)
 
                 if c_i < len(align_cols):
                     al = align_cols[c_i].lower()
@@ -548,7 +552,11 @@ class BlockRenderer:
                         base_bold=is_key or is_hi_row,
                     )
 
-        self._keep_table_together(tbl)
+        self._keep_table_together(tbl, max_rows=len(tbl.rows) if block.get("keep_together") else 4)
+        if block.get("keep_with_next"):
+            for cell in tbl.rows[-1].cells:
+                for p in cell.paragraphs:
+                    set_para_keep(p, keep_next=True, keep_lines=True)
         self._add_table_note(block.get("note"), block.get("source"))
 
     def _render_spec_table(self, block: Dict[str, Any]):
@@ -742,7 +750,7 @@ class BlockRenderer:
 
         caption = block.get("caption") or ""
         if caption:
-            self._add_caption("figure", caption, keep_with_next=False)
+            self._add_caption("figure", caption, keep_with_next=bool(block.get("keep_with_next", False)))
             # Center the figure caption
             self.doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
 

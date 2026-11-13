@@ -101,3 +101,51 @@ def test_figures_and_financial_calculations(tmp_path):
     text = json.dumps(spec,ensure_ascii=False)
     assert '13148' not in text and '13,148' not in text
     assert '3287' in text and '196' in text
+
+
+def test_a4_layout_keeps_content_and_groups_sections():
+    spec = build_spec(offline())
+    sections = {b['text']: b for b in spec['blocks'] if b['type'] == 'heading'}
+    assert sections['시각화 분석']['page_break_before']
+    assert sections['사업 개발 및 투자 분석']['page_break_before']
+    assert sections['시장 참조자료']['page_break_before']
+    assert all(b.get('keep_with_next') for i,b in enumerate(spec['blocks'][:-1])
+               if b['type'] == 'paragraph' and spec['blocks'][i+1]['type'] == 'table'
+               and i and spec['blocks'][i-1]['type'] == 'heading')
+
+
+def test_chart_design_uses_semantics_and_print_resolution(tmp_path):
+    from utils.market_report_charts import draw_chart
+    from utils.market_report_content import chart_definitions
+    kinds = {}
+    for definition in chart_definitions(offline()):
+        fig, kind = draw_chart(definition)
+        kinds[definition[0]] = kind
+        assert fig.dpi >= 220
+        assert fig.get_figwidth()/fig.get_figheight() >= 3
+    assert kinds['cash'] == 'waterfall'
+    assert kinds['capex'] == 'horizontal'
+    assert kinds['efficiency'] == 'line'
+    assert len(set(kinds.values())) >= 3
+
+
+def test_small_table_rows_keep_conclusion_with_them(tmp_path):
+    from docx import Document
+    path = generate_word_report(bundle=offline(), output_dir=tmp_path, render=False)
+    doc = Document(path)
+    table = next(t for t in doc.tables if t.cell(0,0).text == '단계' and len(t.rows) == 6)
+    assert all(p._p.find('w:pPr/w:keepNext',namespaces=p._p.nsmap) is not None
+               for row in table.rows for cell in row.cells for p in cell.paragraphs)
+
+
+def test_pdf_layout_rejects_detached_table_caveat():
+    from utils.market_report_layout import check_pdf_layout
+    class Page:
+        def __init__(self,text): self.text = text
+        def get_text(self): return self.text
+    spec = {'blocks':[{'type':'table','caption':'환율','rows':[['KRW','1337.13']],
+                      'keep_together':True,'keep_with_next':True},
+                      {'type':'paragraph','text':'기준환율이며 거래 호가가 아니다.'}]}
+    result = check_pdf_layout(spec,[Page('환율 KRW 1337.13'),Page('기준환율이며 거래 호가가 아니다.')])
+    assert result['errors'] == ['표 설명 분리: 환율']
+    assert check_pdf_layout(spec,[Page('환율 KRW 1337.13 기준환율이며 거래 호가가 아니다.')])['passed']

@@ -29,7 +29,7 @@ def test_market_download_generates_hhic_word_and_pdf(monkeypatch, tmp_path):
     assert not app.error, [e.value for e in app.error]
     assert app.session_state['dl_word_bytes'].startswith(b'PK')
     assert app.session_state['dl_pdf_bytes'].startswith(b'%PDF')
-    assert '_v3_' in app.session_state['dl_word_name']
+    assert '_v4_' in app.session_state['dl_word_name']
     assert len(list(tmp_path.glob('*.validation.json'))) == 1
 
 

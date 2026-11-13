@@ -82,30 +82,16 @@ def chart_definitions(bundle):
 
 def render_charts(bundle, folder):
     """Private figures and font configuration avoid concurrent Streamlit collisions."""
-    from matplotlib.figure import Figure
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
-    from matplotlib.font_manager import FontProperties
+    from utils.market_report_charts import draw_chart
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
-    font = FontProperties(fname=str(Path(__file__).resolve().parents[1] /
-                                   'vendor/hhic_word/fonts/Pretendard-Regular.otf'))
     paths = {}
     with CHART_LOCK:
-        for key,title,labels,values,unit,note in chart_definitions(bundle):
-            fig = Figure(figsize=(8,3.4),layout='constrained')
-            FigureCanvasAgg(fig)
-            ax = fig.subplots()
-            bars = ax.bar(labels,values,color=['#16476b','#438da9','#83b6bf'][:len(values)])
-            ax.axhline(0,color='#777777',linewidth=.6)
-            ax.set_title(title,fontproperties=font,fontsize=14)
-            ax.set_ylabel(unit,fontproperties=font)
-            for tick in ax.get_xticklabels()+ax.get_yticklabels():
-                tick.set_fontproperties(font)
-            ax.bar_label(bars,fmt='%.1f',padding=3,fontproperties=font,fontsize=10)
-            ax.margins(y=.22)
-            ax.spines[['top','right']].set_visible(False)
+        for definition in chart_definitions(bundle):
+            key = definition[0]
+            fig, _ = draw_chart(definition)
             path = folder / (key+'.png')
-            fig.savefig(path,dpi=160)
+            fig.savefig(path,dpi=240)
             paths[key] = str(path.resolve())
     return paths
 
@@ -123,7 +109,7 @@ def analysis_blocks(bundle, charts=None):
         d=next(d for d in chart_definitions(bundle) if d[0]==key)
         if charts and key in charts:
             blocks.append({'type':'figure','path':charts[key],'caption':d[1],'width_mm':165})
-        p(d[5])
+        blocks.append({'type':'paragraph','style':'note','text':d[5]})
     refs={r['id']:r for r in bundle['references']}
     a,b=refs['bnef-2026']['value'],refs['bnef-2027']['value']
     h('시장별 심층 분석')

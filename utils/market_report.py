@@ -58,12 +58,10 @@ def build_spec(bundle, charts=None):
     for ref in bundle['references']:
         blocks.append({'type':'heading','level':2,'text':ref['label'] + ' ' + ref['period']})
         table(ref['id'], ['항목','값'], [
-            ['규모',f"{ref['value']:g} {ref['unit']} ({KIND[ref['kind']]})"],
-            ['통계 기간',ref['period']],['집계 범위',ref['scope']],
-            ['발표일',ref.get('published_on') or '공개 페이지 발표일 미확인'],
-            ['내용 검토일',ref['verified_on']],
-            ['이번 원문 조회',STATE.get(ref.get('retrieval_status'), '미조회')],
-            ['원문 수집 시각',ref.get('retrieved_at') or '이번 조회 실패'],
+            ['규모 / 통계 기간',f"{ref['value']:g} {ref['unit']} ({KIND[ref['kind']]}) / {ref['period']}"],
+            ['집계 범위',ref['scope']],
+            ['발표일 / 내용 검토일',(ref.get('published_on') or '공개 페이지 발표일 미확인')+' / '+ref['verified_on']],
+            ['이번 원문 조회',STATE.get(ref.get('retrieval_status'), '미조회')+' / '+(ref.get('retrieved_at') or '이번 조회 실패')],
             ['갱신 상태',STATE.get(ref.get('freshness'),'확인 필요')],
         ], [35,140])
         para('출처: ' + ref['title'] + '\n' + ref['url'])
@@ -173,14 +171,15 @@ def build_spec(bundle, charts=None):
         if isinstance(value, dict):
             return {k:clean_tree(v) for k,v in value.items()}
         return value
-    blocks = clean_tree(blocks)
+    from utils.market_report_layout import arrange_a4
+    blocks = arrange_a4(clean_tree(blocks))
     return {'meta':{'doc_type':'technical_review','profile':'modern','language':'ko',
             'project_name':'BESS 시장 검토','doc_title':'BESS 시장 분석 보고서',
-            'header_title':'BESS 시장 분석','doc_number':'BESS-MKT-002','revision':'3',
+            'header_title':'BESS 시장 분석','doc_number':'BESS-MKT-002','revision':'4',
             'issue_date':created.date().isoformat(),'doc_status':'검토용',
             'include_cover':True,'include_toc':True,'abbreviations':'auto',
-            'revisions':[{'rev':'3','date':created.date().isoformat(),
-                          'description':'18개 분석 주제 및 시각화 보강','author':''}]},'blocks':blocks}
+            'revisions':[{'rev':'4','date':created.date().isoformat(),
+                          'description':'차트 디자인 및 A4 페이지 배치 개선','author':''}]},'blocks':blocks}
 
 
 def _run(args, timeout=240):
@@ -221,7 +220,7 @@ def generate_word_report(*, bundle=None, output_dir=None, render=True):
     bundle = bundle if bundle is not None else collect_evidence()
     folder = Path(output_dir) if output_dir else (Path('/data/output_reports') if Path('/data').is_dir() else ROOT/'output_reports')
     folder.mkdir(parents=True, exist_ok=True)
-    stem = 'BESS_MarketReport_v3_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + uuid4().hex[:10]
+    stem = 'BESS_MarketReport_v4_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + uuid4().hex[:10]
     docx = folder / (stem + '.docx')
     from utils.market_report_content import render_charts
     charts = render_charts(bundle, folder / (stem + '_assets'))
@@ -251,6 +250,10 @@ def generate_word_report(*, bundle=None, output_dir=None, render=True):
             blanks = [i+1 for i,p in enumerate(pages) if not p.get_text().strip()]
             if missing or blanks:
                 raise RuntimeError(f'PDF 내용 검수 실패: 제목 누락 {missing}, 빈 페이지 {blanks}')
+            from utils.market_report_layout import check_pdf_layout
+            receipt['layout_validation'] = check_pdf_layout(spec, pages)
+            if not receipt['layout_validation']['passed']:
+                raise RuntimeError('PDF 배치 검수 실패: '+str(receipt['layout_validation']['errors']))
             receipt['render_validation'] = {'renderer':'LibreOffice','pages':len(pages),
                                           'toc_and_fields_updated':True,
                                           'missing_headings':missing,'blank_pages':blanks,'passed':True}
