@@ -23,7 +23,7 @@ def _clean(text):
     return str(text).replace('—', ',').replace('·', '/').replace('`','')
 
 
-def build_spec(bundle):
+def build_spec(bundle, charts=None):
     created = datetime.fromisoformat(bundle['generated_at']).astimezone(timezone(timedelta(hours=9)))
     blocks = []
     def heading(text):
@@ -46,6 +46,14 @@ def build_spec(bundle):
         ['해석 제한','조회 시각은 통계 기준일이 아니다. 원문 수치 확인은 후속 발표 부재를 보장하지 않는다.'],
         ['검토 상태','외부 시장자료를 근거로 한 검토용 문서. 입찰 적용 조건은 확인 필요'],
     ], [35,140])
+    table('의사결정용 시장 지표', ['지표 / 기간','값 / 성격','원문 및 갱신 상태'], [
+        [r['label']+' / '+r['period'],f"{r['value']:g} {r['unit']} / {KIND[r['kind']]}",
+         r['id']+' / '+STATE.get(r.get('retrieval_status'),'미조회')+' / '+STATE.get(r.get('freshness'),'확인 필요')]
+        for r in bundle['references']], [65,45,65])
+    para('검토 의견: 글로벌 설치 전망의 확대는 사업 발굴 근거가 되지만 수주 확정량은 아니다. '
+         '미국과 호주의 신규 설치 실적은 시장 진입 검토에 활용하고, 국내 및 다른 권역은 접속권과 발주 공고를 먼저 확인한다. '
+         '팩 가격을 EPC 총액으로 적용하지 않으며, 본문의 투자 예시는 현재 가정만으로 투자성을 뒷받침하지 못한다. '
+         '조회 실패 또는 갱신 검토 필요 항목은 마지막 검토 당시의 참조값이며 최신값으로 확정하지 않는다.')
     heading('시장 참조자료')
     for ref in bundle['references']:
         blocks.append({'type':'heading','level':2,'text':ref['label'] + ' ' + ref['period']})
@@ -146,16 +154,36 @@ def build_spec(bundle):
             items.append({'no':len(items)+1,'subject':key,'clarification':'공식 데이터 수집 및 구조 재검증',
                           'impact':'해당 최신 지표 제외','status':'TBC'})
     blocks.append({'type':'open_items','caption':'확인 필요 항목','items':items})
+    # Preserve the original 18 analysis topics; source lineage follows in appendices.
+    from utils.market_report_content import analysis_blocks
+    groups = []
+    for block in blocks:
+        if block['type'] == 'heading' and block['level'] == 1:
+            groups.append([])
+        groups[-1].append(block)
+    blocks = groups[0] + analysis_blocks(bundle, charts)
+    for group in groups[1:]:
+        if group[0]['text'] not in ('EPC 사업 대응', '사업성 및 시나리오'):
+            blocks.extend(group)
+    def clean_tree(value):
+        if isinstance(value, str):
+            return _clean(value)
+        if isinstance(value, list):
+            return [clean_tree(v) for v in value]
+        if isinstance(value, dict):
+            return {k:clean_tree(v) for k,v in value.items()}
+        return value
+    blocks = clean_tree(blocks)
     return {'meta':{'doc_type':'technical_review','profile':'modern','language':'ko',
             'project_name':'BESS 시장 검토','doc_title':'BESS 시장 분석 보고서',
-            'header_title':'BESS 시장 분석','doc_number':'BESS-MKT-002','revision':'2',
+            'header_title':'BESS 시장 분석','doc_number':'BESS-MKT-002','revision':'3',
             'issue_date':created.date().isoformat(),'doc_status':'검토용',
             'include_cover':True,'include_toc':True,'abbreviations':'auto',
-            'revisions':[{'rev':'2','date':created.date().isoformat(),
-                          'description':'공식 참조자료 및 데이터 기준 구분','author':''}]},'blocks':blocks}
+            'revisions':[{'rev':'3','date':created.date().isoformat(),
+                          'description':'18개 분석 주제 및 시각화 보강','author':''}]},'blocks':blocks}
 
 
-def _run(args, timeout=120):
+def _run(args, timeout=240):
     result = subprocess.run(args, capture_output=True, text=True, encoding='utf-8', errors='replace',
                             timeout=timeout, env={**os.environ,'PYTHONIOENCODING':'utf-8'})
     if result.returncode:
@@ -193,9 +221,11 @@ def generate_word_report(*, bundle=None, output_dir=None, render=True):
     bundle = bundle if bundle is not None else collect_evidence()
     folder = Path(output_dir) if output_dir else (Path('/data/output_reports') if Path('/data').is_dir() else ROOT/'output_reports')
     folder.mkdir(parents=True, exist_ok=True)
-    stem = 'BESS_MarketReport_v2_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + uuid4().hex[:10]
+    stem = 'BESS_MarketReport_v3_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + uuid4().hex[:10]
     docx = folder / (stem + '.docx')
-    spec = build_spec(bundle)
+    from utils.market_report_content import render_charts
+    charts = render_charts(bundle, folder / (stem + '_assets'))
+    spec = build_spec(bundle, charts)
     source = folder / (stem + '.json')
     source.write_text(json.dumps(spec,ensure_ascii=False,indent=2),encoding='utf-8')
     (folder/(stem+'.evidence.json')).write_text(json.dumps(bundle,ensure_ascii=False,indent=2),encoding='utf-8')
