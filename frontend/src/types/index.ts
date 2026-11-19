@@ -49,6 +49,7 @@ export interface SceneData {
   states?: number[][];      // 시뮬레이션 상태 프레임
   fields?: number[][][];    // 온도장 / 압력장 프레임
   power_blocks?: PowerBlock[]; // 파워 블록(1 PCS : N Battery) 구획
+  cooling_mode?: 'air' | 'liquid'; // 냉각 시스템 아키텍처 (공랭식 vs 액랭식/냉매)
 }
 
 export interface PowerBlock {

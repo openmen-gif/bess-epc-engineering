@@ -172,7 +172,10 @@ export class SceneManager {
       }
       else if (kind === 'tr') color = '#e3b341';
       else if (kind === 'tank') color = '#79c0ff';
-      else if (kind === 'rack') color = '#a371f7';
+      else if (kind === 'rack') {
+        color = '#1e293b'; // 배터리 랙: 고강도 다크 차콜 스틸 프레임
+        edgeColor = '#334155';
+      }
       else if (kind === 'ehouse') color = '#00b4d8';
       else if (kind === 'bund') color = '#6c757d';
       else if (kind === 'hydrant') color = '#e63946';
@@ -182,8 +185,8 @@ export class SceneManager {
 
       const mat = new THREE.MeshStandardMaterial({
         color,
-        roughness: kind === 'pcs' ? 0.45 : 0.75,
-        metalness: kind === 'pcs' ? 0.35 : 0.15,
+        roughness: kind === 'pcs' ? 0.45 : (kind === 'rack' ? 0.35 : 0.75),
+        metalness: kind === 'pcs' ? 0.35 : (kind === 'rack' ? 0.55 : 0.15),
         clippingPlanes: [this.clippingPlane],
       });
 
@@ -206,6 +209,44 @@ export class SceneManager {
       edgeMesh.scale.copy(mesh.scale);
       this.groups.equipment.add(edgeMesh);
       this.edges.push(edgeMesh);
+
+      // 배터리 랙 실물 세부 디테일 (8단 배터리 팩 모듈 슬릿 및 BMS 마스터 컨트롤러, 액랭 콜드플레이트)
+      if (kind === 'rack') {
+        const nModules = 8;
+        const modH = (dz * 0.82) / nModules;
+        const slitMat = new THREE.LineBasicMaterial({ color: '#64748b', transparent: true, opacity: 0.8 });
+        
+        // 8단 배터리 모듈 분할선 (전면 및 후면)
+        for (let m = 1; m < nModules; m++) {
+          const slitY = dz * 0.08 + m * modH;
+          const slitGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(x + 0.02, slitY, -y - dy + 0.01),
+            new THREE.Vector3(x + dx - 0.02, slitY, -y - dy + 0.01),
+          ]);
+          this.groups.equipment.add(new THREE.Line(slitGeo, slitMat));
+        }
+
+        // 상부 BMS 마스터 제어 트레이 및 녹색 상태 LED
+        const bmsGeo = new THREE.BoxGeometry(dx * 0.92, dz * 0.09, dy * 0.92);
+        const bmsMat = new THREE.MeshStandardMaterial({ color: '#0f172a', metalness: 0.6, roughness: 0.3 });
+        const bms = new THREE.Mesh(bmsGeo, bmsMat);
+        bms.position.set(x + dx / 2, dz * 0.94, -y - dy / 2);
+        this.groups.equipment.add(bms);
+
+        // 녹색 정상 가동 LED 인디케이터
+        const ledGeo = new THREE.SphereGeometry(dx * 0.03, 8, 8);
+        const ledMat = new THREE.MeshBasicMaterial({ color: '#10b981' });
+        const led = new THREE.Mesh(ledGeo, ledMat);
+        led.position.set(x + dx * 0.85, dz * 0.94, -y - dy * 0.98);
+        this.groups.equipment.add(led);
+
+        // 하부 액랭 콜드 플레이트 (알루미늄 열교환 베이스)
+        const cpGeo = new THREE.BoxGeometry(dx * 0.96, dz * 0.05, dy * 0.96);
+        const cpMat = new THREE.MeshStandardMaterial({ color: '#38bdf8', metalness: 0.8, roughness: 0.2 });
+        const cp = new THREE.Mesh(cpGeo, cpMat);
+        cp.position.set(x + dx / 2, dz * 0.03, -y - dy / 2);
+        this.groups.equipment.add(cp);
+      }
 
       // PCS 상부 3상 고전압 연계 부싱
       if (kind === 'pcs') {
@@ -233,6 +274,42 @@ export class SceneManager {
         this.groups.utilities.add(ringMesh);
       }
     });
+
+    // ── 액랭식(Liquid Cooled) 냉매 순환 매니폴드 배관 및 칠러 유닛 렌더링 ──
+    const rackBoxes = this.sceneData.boxes.filter(b => b.kind === 'rack');
+    if (rackBoxes.length > 0) {
+      // 랙 열을 따라 흐르는 이중 매니폴드 파이프라인 (청색 공급관, 적색 환수관)
+      const minX = Math.min(...rackBoxes.map(b => b.x));
+      const maxX = Math.max(...rackBoxes.map(b => b.x + b.dx));
+      const avgY = rackBoxes.reduce((acc, b) => acc + b.y + b.dy / 2, 0) / rackBoxes.length;
+
+      // 1. 청색 냉매 공급관 (Coolant Supply Header - 20~23°C)
+      const supplyPoints = [
+        new THREE.Vector3(minX - 0.5, 0.08, -avgY + 0.35),
+        new THREE.Vector3(maxX + 0.5, 0.08, -avgY + 0.35),
+      ];
+      const supCurve = new THREE.LineCurve3(supplyPoints[0], supplyPoints[1]);
+      const supGeo = new THREE.TubeGeometry(supCurve, 32, 0.025, 8, false);
+      const supMat = new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.5, roughness: 0.3 });
+      this.groups.utilities.add(new THREE.Mesh(supGeo, supMat));
+
+      // 2. 적색 냉매 환수관 (Coolant Return Header - 25~28°C)
+      const returnPoints = [
+        new THREE.Vector3(minX - 0.5, 0.16, -avgY + 0.35),
+        new THREE.Vector3(maxX + 0.5, 0.16, -avgY + 0.35),
+      ];
+      const retCurve = new THREE.LineCurve3(returnPoints[0], returnPoints[1]);
+      const retGeo = new THREE.TubeGeometry(retCurve, 32, 0.025, 8, false);
+      const retMat = new THREE.MeshStandardMaterial({ color: '#ef4444', metalness: 0.5, roughness: 0.3 });
+      this.groups.utilities.add(new THREE.Mesh(retGeo, retMat));
+
+      // 3. 컨테이너 단부 액체 칠러 펌프 스키드 유닛 (Liquid Chiller Skid Unit)
+      const chGeo = new THREE.BoxGeometry(0.8, this.sceneData.size[2] * 0.85, 1.2);
+      const chMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.7, roughness: 0.3 });
+      const chiller = new THREE.Mesh(chGeo, chMat);
+      chiller.position.set(minX - 0.9, (this.sceneData.size[2] * 0.85) / 2, -avgY);
+      this.groups.equipment.add(chiller);
+    }
 
     // 파워 블록(Power Block: 1 PCS + N Battery) 바닥 구획선 렌더링
     if (this.sceneData.power_blocks && this.sceneData.power_blocks.length > 0) {

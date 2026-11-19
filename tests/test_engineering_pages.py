@@ -427,6 +427,72 @@ def test_create_section_figures():
     assert "Section B-B" in fig_b.layout.title.text
 
 
+def test_power_block_ratio_selection():
+    """BESS 파워블록 연계 비율 (1:1, 1:2, 1:3, 1:4, 2:3, Auto) 정합성 검증."""
+    import math
+    from utils import site_layout as SL
+
+    n_bat = 12
+    ratio_map = {
+        "1:1": math.ceil(n_bat / 1),   # 12
+        "1:2": math.ceil(n_bat / 2),   # 6
+        "1:3": math.ceil(n_bat / 3),   # 4
+        "1:4": math.ceil(n_bat / 4),   # 3
+        "2:3": math.ceil(n_bat * 2 / 3), # 8
+    }
+
+    for ratio_name, expected_pcs in ratio_map.items():
+        lay = SL.build_layout(n_bat, expected_pcs, include_infra=True)
+        assert lay["metrics"]["n_enc"] == n_bat
+        assert lay["metrics"]["n_pcs"] == expected_pcs
+        assert len(lay["power_blocks"]) > 0
+        # 각 파워블록에 배정된 인클로저 수의 합계가 총 배터리 수와 일치
+        total_enc_in_pb = sum(pb["n_enc"] for pb in lay["power_blocks"])
+        assert total_enc_in_pb == n_bat
+
+
+def test_liquid_cooling_architecture():
+    """액체 냉각(Liquid Chilled) vs 공랭식 듀얼 아키텍처 및 실물 8단 랙 메쉬 검증."""
+    import importlib
+    from utils.engineering_viewer import thermal_payload
+    p9 = importlib.import_module("pages.09_Container_Thermal")
+    make_3d_rack_meshes = p9.make_3d_rack_meshes
+
+    # 1. thermal_payload의 cooling_mode 검증
+    times = [0.0, 10.0]
+    snaps = [np.zeros((10, 10)), np.ones((10, 10))]
+    src = [(2, 2), (5, 5)]
+    vents = [(0, 0), (9, 9)]
+
+    p_liq = thermal_payload(10, 10, 3, times, snaps, src, vents, is_liquid=True)
+    assert p_liq["cooling_mode"] == "liquid"
+
+    p_air = thermal_payload(10, 10, 3, times, snaps, src, vents, is_liquid=False)
+    assert p_air["cooling_mode"] == "air"
+
+    # 2. make_3d_rack_meshes 검증 (액랭식: 랙 프레임 + 8단 모듈 슬릿 + 냉매 배관 + 칠러 스키드)
+    sources = [(2, 2), (4, 4), (6, 6)]
+    dx, dy, con_h = 0.5, 0.5, 2.8
+
+    liq_traces = make_3d_rack_meshes(sources, dx, dy, con_h, is_liquid=True)
+    trace_names = [t.name for t in liq_traces]
+
+    # 실물 8단 모듈 랙 프레임 및 슬릿 라인 존재
+    assert any("배터리 랙" in name for name in trace_names)
+    assert any("8단 배터리" in name for name in trace_names)
+    # 액랭식 전용 메쉬: 냉매 공급/환수 배관, 칠러 스키드 존재
+    assert any("냉매" in name for name in trace_names)
+    assert any("칠러" in name for name in trace_names)
+
+    # 3. 공랭식일 때 냉매 배관/칠러 스키드가 제외되는지 검증
+    air_traces = make_3d_rack_meshes(sources, dx, dy, con_h, is_liquid=False)
+    air_trace_names = [t.name for t in air_traces]
+    assert any("배터리 랙" in name for name in air_trace_names)
+    assert not any("냉매" in name for name in air_trace_names)
+    assert not any("칠러" in name for name in air_trace_names)
+
+
+
 
 
 

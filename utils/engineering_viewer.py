@@ -41,13 +41,15 @@ def site_payload(layout, pad_l, pad_w, trench_d, language="KO", baseline=None):
 
 
 def thermal_payload(length, width, height, times, snapshots, sources, vents,
-                    language="KO", airflow=None, cell_centers=True, intake=()):
+                    language="KO", airflow=None, cell_centers=True, intake=(),
+                    is_liquid=True):
     fields = _numbers(snapshots)
     if len(fields) != len(times) or not fields:
         raise ValueError("Thermal frames and times must match")
     ny, nx = np.asarray(fields[0]).shape
     d = _base("thermal", [length, width, height], language)
-    d.update(times=_numbers(times), fields=fields, grid=[nx, ny])
+    d.update(times=_numbers(times), fields=fields, grid=[nx, ny],
+             cooling_mode="liquid" if is_liquid else "air")
     offset = 0.5 if cell_centers else 0.0
     # Keep narrow-container racks inside the enclosure at boundary grid cells.
     for i, cell in enumerate(sources):

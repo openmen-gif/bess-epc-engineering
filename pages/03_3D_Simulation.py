@@ -51,6 +51,9 @@ def _T():
             # CFD
             "cfd_info":     "Analyzing airflow, heat dissipation, and HVAC sizing for Battery Enclosures.",
             "cfd_params":   "Simulation Parameters",
+            "cooling_mode": "Cooling System Architecture",
+            "cooling_liquid": "Liquid Chilled (Cold Plate + Chiller Skid)",
+            "cooling_air":  "Forced Air (HVAC Ducts)",
             "cfd_ambient":  "Ambient Temp (°C)",
             "cfd_hvac":     "HVAC Capacity (kW)",
             "cfd_heat":     "Inverter/Battery Heat Loss (kW)",
@@ -208,6 +211,9 @@ def _T():
             # CFD
             "cfd_info":     "배터리 인클로저 내 기류, 열방출, HVAC 용량을 분석합니다.",
             "cfd_params":   "시뮬레이션 파라미터",
+            "cooling_mode": "냉각 방식 아키텍처",
+            "cooling_liquid": "액랭식 (콜드플레이트 + 칠러 스키드)",
+            "cooling_air":  "공랭식 (HVAC 강제순환)",
             "cfd_ambient":  "주변 온도 (°C)",
             "cfd_hvac":     "HVAC 용량 (kW)",
             "cfd_heat":     "인버터/배터리 발열 (kW)",
@@ -435,6 +441,14 @@ if role == T["roles"][0]:
     col1, col2 = st.columns([1, 3])
     with col1:
         st.subheader(T["cfd_params"])
+        cooling_opt = st.radio(
+            T["cooling_mode"],
+            options=[T["cooling_liquid"], T["cooling_air"]],
+            index=0,
+            horizontal=True,
+            help="액랭식: 배터리 셀 발열의 ~85%를 콜드플레이트와 칠러로 직접 흡수 | 공랭식: 공기 대류로 냉각",
+        )
+        is_liquid = (cooling_opt == T["cooling_liquid"])
         default_amb = st.session_state.get("site_temp_max", 35.0)
         ambient_temp  = st.slider(T["cfd_ambient"], min_value=-20.0, max_value=55.0, value=float(default_amb))
         # 05 토목 BOP 를 실행했으면 컨테이너 1기당 발열·HVAC 설치용량을 기본값으로 (설계 모델)
@@ -447,7 +461,9 @@ if role == T["roles"][0]:
             st.caption(("📐 05 설계값 — 컨테이너 1기당 (총 {n}기)" if st.session_state.get("lang", "KO") == "KO"
                         else "📐 From 05 — per container ({n} units)").format(n=_pc["n_enc"]))
 
-        times, snaps, src_cells, vent_cells = _run_cfd(float(ambient_temp), float(heat_loss), float(hvac_capacity))
+        # 액랭식일 때 셀 발열의 85%는 액체 루프로 직접 배출되어 공기 중 잔여 발열은 15% 수준
+        eff_heat_loss = heat_loss * 0.18 if is_liquid else heat_loss
+        times, snaps, src_cells, vent_cells = _run_cfd(float(ambient_temp), float(eff_heat_loss), float(hvac_capacity))
         T_final = snaps[-1]
         peak_T  = float(T_final.max())
         mean_T  = float(T_final.mean())
@@ -475,7 +491,8 @@ if role == T["roles"][0]:
 
     with col2:
         render_viewer(thermal_payload(CFD_L, CFD_W, CFD_H, times, snaps, src_cells, vent_cells,
-                                     language=st.session_state.get("lang", "KO")))
+                                     language=st.session_state.get("lang", "KO"),
+                                     is_liquid=is_liquid))
         st.subheader(T["cfd_viewer"])
         st.caption(T["cfd_guide"])
 

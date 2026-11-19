@@ -119,6 +119,23 @@ def run_site_layout_module():
             help=L("부하 중심: 주변압기를 남측 중앙에 두어 MV 케이블 최장 경로와 트렌치 총연장을 25~35% 단축합니다.",
                    "Load Center: Centers the main TR along the south band, cutting MV cable route by 25-35%.")
         )
+
+        pb_ratio_opts = [
+            L("02 시스템 설계값 자동 연동 (Auto from 02 System Eng)", "Auto from 02 System Engineering"),
+            L("1 : 2 (PCS 1대당 배터리 2대 - 0.5C 표준형) [권장]", "1 : 2 (1 PCS : 2 Batteries - 0.5C Standard) [Recommended]"),
+            L("1 : 4 (PCS 1대당 배터리 4대 - 0.25C 장주기 대칭형)", "1 : 4 (1 PCS : 4 Batteries - 0.25C Long-Duration Symmetric)"),
+            L("1 : 3 (PCS 1대당 배터리 3대 - 3.45MW 대용량형)", "1 : 3 (1 PCS : 3 Batteries - 3.45MW High-Cap)"),
+            L("1 : 1 (PCS 1대당 배터리 1대 - 1C 고출력 단독형)", "1 : 1 (1 PCS : 1 Battery - 1C High-Power)"),
+            L("2 : 3 (PCS 2대당 배터리 3대 - 듀얼 인버터 공유형)", "2 : 3 (2 PCS : 3 Batteries - Dual-Inverter Shared)"),
+            L("사용자 직접 지정 (Custom)", "Custom Manual Entry"),
+        ]
+        pb_choice = st.selectbox(
+            L("⚡ 파워블록 연계 비율 (PCS : Battery Ratio)", "Power Block Coupling Ratio (PCS : Bat)"),
+            pb_ratio_opts, index=0, key="sl_pb_ratio",
+            help=L("실제 BESS 현장의 표준 파워블록 연계 비율(1:1, 1:2, 1:3, 1:4, 2:3)을 선택하여 PCS 대수와 구획을 자동 재편합니다.",
+                   "Selects industry standard power block coupling ratio (1:1, 1:2, 1:3, 1:4, 2:3) to size PCS skids.")
+        )
+
         include_ehouse = st.checkbox(
             L("E-House (수배전반 및 제어실 40ft HC) 포함 [권장]", "Include E-House (Switchgear & Control Room 40ft HC) [Recommended]"),
             value=True,
@@ -136,12 +153,47 @@ def run_site_layout_module():
     topology_val = "center_fed" if "Center-Fed" in topo_choice or "중앙" in topo_choice else "linear"
     tr_pos_val = "center" if "Center" in tr_pos_choice or "중심" in tr_pos_choice else "corner"
 
-    lay = SL.build_layout(inp["n_enc"][0], inp["n_pcs"][0], inp["enc_l"][0], inp["enc_w"][0],
+    # 파워블록 연계 비율에 따른 PCS 수량 동적 산출
+    import math
+    n_enc_val = int(inp["n_enc"][0])
+    raw_n_pcs = int(inp["n_pcs"][0])
+
+    if "1 : 2" in pb_choice:
+        effective_n_pcs = max(1, math.ceil(n_enc_val / 2))
+        ratio_tag = "1:2"
+    elif "1 : 4" in pb_choice:
+        effective_n_pcs = max(1, math.ceil(n_enc_val / 4))
+        ratio_tag = "1:4"
+    elif "1 : 3" in pb_choice:
+        effective_n_pcs = max(1, math.ceil(n_enc_val / 3))
+        ratio_tag = "1:3"
+    elif "1 : 1" in pb_choice:
+        effective_n_pcs = n_enc_val
+        ratio_tag = "1:1"
+    elif "2 : 3" in pb_choice:
+        effective_n_pcs = max(1, math.ceil(n_enc_val * 2 / 3))
+        ratio_tag = "2:3"
+    elif "사용자" in pb_choice or "Custom" in pb_choice:
+        custom_pcs = st.number_input(L("PCS 스키드 수량 직접 지정", "Custom PCS Count"),
+                                     min_value=1, max_value=n_enc_val, value=raw_n_pcs, step=1,
+                                     key="sl_custom_pcs")
+        effective_n_pcs = int(custom_pcs)
+        ratio_tag = f"1:{n_enc_val / effective_n_pcs:.1f}"
+    else:
+        effective_n_pcs = raw_n_pcs
+        ratio_tag = f"1:{n_enc_val / max(1, raw_n_pcs):.1f}"
+
+    lay = SL.build_layout(n_enc_val, effective_n_pcs, inp["enc_l"][0], inp["enc_w"][0],
                           unit_gap=unit_gap, boundary=boundary, aisle=aisle, tr_clear=tr_clear,
                           trench_w=inp["trench_w"][0], water_m3=inp["water_m3"][0],
                           topology=topology_val, tr_pos=tr_pos_val, include_ehouse=include_ehouse,
                           include_infra=include_infra)
     m, chk = lay["metrics"], SL.check_layout(lay)
+
+    st.info(L(f"🔋 **파워블록 연계 최적화 ({ratio_tag}):** 배터리 인클로저 **{n_enc_val}기**에 PCS **{effective_n_pcs}대**를 매칭하여 "
+              f"총 **{m['power_blocks_count']}개**의 독립 파워블록을 형성했습니다. (블록당 배터리 평균 {m['enc_per_pcs_ratio']:.1f}기 · DC 케이블 최대 {m['dc_max_cable_m']:.1f}m · 불균형 {m['dc_cable_imbalance_m']:.1f}m)",
+              f"🔋 **Power Block Interconnection ({ratio_tag}):** {n_enc_val} Enclosures paired with {effective_n_pcs} PCS skids "
+              f"forming {m['power_blocks_count']} power blocks. (Avg {m['enc_per_pcs_ratio']:.1f} Bat/PCS · Max DC {m['dc_max_cable_m']:.1f}m · Imbalance {m['dc_cable_imbalance_m']:.1f}m)"))
 
     # ── 기준안 비교 — 설계값을 바꾸기 전 배치를 저장해 두면 변화량·이전 윤곽을 함께 보여준다 ──────
     base = st.session_state.get("sl_baseline")
