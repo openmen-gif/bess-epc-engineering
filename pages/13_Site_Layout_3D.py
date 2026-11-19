@@ -236,19 +236,32 @@ def run_site_layout_module():
     st.caption(L("설비 클릭 → 치수·좌표 확인 / 평면·정면·단면 / 두 점 거리 측정. 외벽·문·환기구·도로는 시각화용 상세입니다.",
                  "Click equipment for dimensions / plan, front and section views / point-to-point measurement. Panels, doors, vents and roads are illustrative details."))
     st.subheader(L("정량 배치도 · 기초 및 트렌치", "Analytical layout · foundations and trenches"))
-    # ── 3D ────────────────────────────────────────────────────────────────
+    # ── 3D 컨트롤 및 옵션 ──────────────────────────────────────────────────
     views = [L("등각", "Isometric"), L("위에서", "Top"), L("구조 (기초·트렌치)", "Structure (pads·trench)")]
-    vc_col1, vc_col2 = st.columns([3, 2])
+    vc_col1, vc_col2, vc_col3 = st.columns([2.5, 2.5, 2.0])
     with vc_col1:
         view = st.radio(L("시점", "View"), views, horizontal=True, key="sl_view", label_visibility="collapsed")
     with vc_col2:
-        show_hydrant_cov = st.checkbox(
-            L("🚒 소화전 40m 방수반경 가시화", "🚒 Show Hydrant 40m Coverage"),
+        scale_opts = [L("1:1 실척 (True Scale)", "1:1 True Scale"), L("수직 3배 강조", "Vertical ×3")]
+        scale_mode = st.radio(L("스케일", "Scale"), scale_opts, horizontal=True, key="sl_scale", label_visibility="collapsed")
+    with vc_col3:
+        show_heavy_eq = st.checkbox(
+            L("🚜 중장비 활동반경 시뮬레이션", "🚜 Equipment Radius"),
             value=True,
-            help=L("NFPA 24 기준 옥외 소화전 40m 유효 방호 구역을 붉은색 링 및 반투명 돔으로 표시합니다.",
-                   "Displays 40m hose stream coverage circles and domes around fire hydrants (NFPA 24).")
-        ) if m.get("include_infra") else False
+            help=L("50T 크레인 인양 반경(20m, 아우트리거 7.5m) 및 3.5T 지게차 회전 반경(3.8m) 시뮬레이션",
+                   "Simulate 50T crane lifting radius (20m) and 3.5T forklift turning radius (3.8m)")
+        )
+    
+    show_hydrant_cov = st.checkbox(
+        L("🚒 소화전 40m 방수반경 가시화", "🚒 Show Hydrant 40m Coverage"),
+        value=True,
+        help=L("NFPA 24 / NFPC 109 기준 옥외 소화전 40m 유효 방호 구역을 붉은색 링 및 반투명 돔으로 표시합니다.",
+               "Displays 40m hose stream coverage circles and domes around fire hydrants (NFPA 24).")
+    ) if m.get("include_infra") else False
+
     struct = view == views[2]
+    is_true_scale = (scale_mode == scale_opts[0])
+
     fig = go.Figure()
     for kind, (kn, en, col) in _KIND.items():
         bx = [x for x in lay["boxes"] if x["kind"] == kind]
@@ -279,7 +292,7 @@ def run_site_layout_module():
                 t_ += L(f"<br>우수 및 소방 오염수 차집 저류조 ({m.get('basin_m3', 0)} m³)",
                         f"<br>Emergency Retention Basin ({m.get('basin_m3', 0)} m³)")
             hover += [t_] * 8
-        fig.add_trace(go.Mesh3d(x=xs, y=ys, z=zs, i=ii, j=jj, k=kk, color=col, opacity=0.25 if struct else 0.9,
+        fig.add_trace(go.Mesh3d(x=xs, y=ys, z=zs, i=ii, j=jj, k=kk, color=col, opacity=0.35 if struct else 0.9,
                                 name=L(kn, en), hovertext=hover, hoverinfo="text", flatshading=True,
                                 showlegend=True))
     # 장비 모서리선 — 박스가 많아도 1 트레이스 (구조 뷰에선 지상 장비를 윤곽으로 읽게)
@@ -299,7 +312,7 @@ def run_site_layout_module():
                                  (tbx, "#f0883e", L("케이블 트렌치", "Cable trench"), t_hover)):
             if bxs:
                 xs, ys, zs, ii, jj, kk = SL.mesh_arrays(bxs)
-                fig.add_trace(go.Mesh3d(x=xs, y=ys, z=zs, i=ii, j=jj, k=kk, color=col, opacity=0.95,
+                fig.add_trace(go.Mesh3d(x=xs, y=ys, z=zs, i=ii, j=jj, k=kk, color=col, opacity=0.85,
                                         name=nm, hovertext=hv, hoverinfo="text", flatshading=True, showlegend=True))
     else:
         tx, ty = [], []
@@ -320,6 +333,18 @@ def run_site_layout_module():
                                z=[0] * len(fx) + [None] + [EP.FENCE_HEIGHT_M] * len(fx), mode="lines",
                                line=dict(color="#8b949e", width=3), name=L("울타리·부지경계", "Fence / boundary"),
                                hoverinfo="skip"))
+    
+    # ── 지표면 기준면 (GL ±0.00m Ground Plane) ──
+    # 현실감 있는 토공/지표면 레벨 확립
+    gw, gh = lay["site"][0], lay["site"][1]
+    fig.add_trace(go.Mesh3d(
+        x=[0, gw, gw, 0], y=[0, 0, gh, gh], z=[0.0, 0.0, 0.0, 0.0],
+        i=[0, 0], j=[1, 2], k=[2, 3],
+        color="#334155", opacity=0.18,
+        name=L("지표면 GL ±0.00m (Ground Level)", "GL ±0.00m Ground Level"),
+        hoverinfo="skip", showlegend=True
+    ))
+
     if show_hydrant_cov and m.get("include_infra"):
         # 소화전 40m 지표면 원형 링
         hx, hy, hz = SL.hydrant_coverage_circles(lay, radius_m=40.0)
@@ -338,6 +363,26 @@ def run_site_layout_module():
                 name=L("소화전 40m 방호구역 (돔)", "Hydrant 40m Coverage Dome"),
                 hoverinfo="skip", showlegend=True
             ))
+
+    # 중장비 시뮬레이션 (50T 크레인 20m 붐 및 7.5m 아우트리거 베이스)
+    heavy_eq_result = None
+    if show_heavy_eq:
+        heavy_eq_result = SL.heavy_equipment_simulation(lay)
+        c_xs, c_ys, c_zs = heavy_eq_result["crane_circles"]
+        o_xs, o_ys, o_zs = heavy_eq_result["outrigger_boxes"]
+        fig.add_trace(go.Scatter3d(
+            x=c_xs, y=c_ys, z=c_zs, mode="lines",
+            line=dict(color="#eab308", width=4, dash="dash"),
+            name=L("50T 크레인 인양반경 (R=20m)", "50T Crane 20m Lift Radius"),
+            hoverinfo="skip"
+        ))
+        fig.add_trace(go.Scatter3d(
+            x=o_xs, y=o_ys, z=o_zs, mode="lines",
+            line=dict(color="#f59e0b", width=3),
+            name=L("크레인 아우트리거 (7.5×7.5m)", "Crane Outrigger (7.5x7.5m)"),
+            hoverinfo="skip"
+        ))
+
     # 파워 블록(Power Block: 1 PCS + N Battery) 바닥 구획선 가시화
     for pb in lay.get("power_blocks", []):
         pbx = [pb["x"], pb["x"] + pb["dx"], pb["x"] + pb["dx"], pb["x"], pb["x"], None]
@@ -354,36 +399,73 @@ def run_site_layout_module():
     bw = max([x["x"] + x["dx"] for x in base["boxes"]], default=0.0) if base else 0.0
     bh = max([x["y"] + x["dy"] for x in base["boxes"]], default=0.0) if base else 0.0
     w, h = max(lay["site"][0], bw), max(lay["site"][1], bh)
-    zmax = max(w, h) * 0.25
-    zmin = -(max(td, SL.PAD_T) + 0.5) if struct else 0.0
-    if struct:   # 지중 1~2 m 가 부지 수백 m 에 묻히지 않게 — 지상은 최고 장비 높이까지만, 수직 과장
-        zmax = max(x["dz"] for x in lay["boxes"]) + 0.5
+    
+    # 현실 1:1 실척 vs 수직 강조 축 범위 계산
+    zmax_eq = max([x["dz"] for x in lay["boxes"]], default=3.0) + 1.0
+    zmin_eq = -(td + 0.5) if struct else -0.5
     eye = {views[1]: dict(x=0.0, y=-0.01, z=2.2), views[2]: dict(x=-1.1, y=-1.25, z=0.35)}.get(
         view, dict(x=-0.95, y=-1.1, z=0.75))
-    fig.update_layout(
-        scene=dict(xaxis=dict(title="x (m)", range=[0, w]), yaxis=dict(title="y (m)", range=[0, h]),
-                   zaxis=dict(title="z (m)", range=[zmin, zmax]),
-                   aspectmode="manual",
-                   aspectratio=dict(x=w / max(w, h), y=h / max(w, h),
-                                    z=0.25 if struct else (zmax - zmin) / max(w, h)),
-                   camera=dict(eye=eye)),
-        paper_bgcolor="rgba(0,0,0,0)", font_color="#c9d1d9", height=480,
-        margin=dict(l=0, r=0, t=10, b=0),
-        legend=dict(orientation="h", y=-0.02, x=0, font=dict(size=11)),
-    )
+
+    if is_true_scale:
+        # 현실 공학 1:1 실척 (True Scale: 1m x 1m x 1m 가 왜곡 없이 정확하게 1:1 물리 비례 유지)
+        fig.update_layout(
+            scene=dict(
+                xaxis=dict(title="x (m)", range=[0, w]),
+                yaxis=dict(title="y (m)", range=[0, h]),
+                zaxis=dict(title="z (m)", range=[zmin_eq, zmax_eq]),
+                aspectmode="data",  # 1:1 현실 실척
+                camera=dict(eye=eye)
+            ),
+            paper_bgcolor="rgba(0,0,0,0)", font_color="#c9d1d9", height=500,
+            margin=dict(l=0, r=0, t=10, b=0),
+            legend=dict(orientation="h", y=-0.02, x=0, font=dict(size=11)),
+        )
+    else:
+        # 수직 3배 강조 모드 (지중 트렌치와 패드 높이를 시각적으로 돋보이게 표시)
+        z_aspect = 0.08 if not struct else 0.12
+        fig.update_layout(
+            scene=dict(
+                xaxis=dict(title="x (m)", range=[0, w]),
+                yaxis=dict(title="y (m)", range=[0, h]),
+                zaxis=dict(title="z (m)", range=[zmin_eq, zmax_eq]),
+                aspectmode="manual",
+                aspectratio=dict(x=w / max(w, h), y=h / max(w, h), z=z_aspect),
+                camera=dict(eye=eye)
+            ),
+            paper_bgcolor="rgba(0,0,0,0)", font_color="#c9d1d9", height=500,
+            margin=dict(l=0, r=0, t=10, b=0),
+            legend=dict(orientation="h", y=-0.02, x=0, font=dict(size=11)),
+        )
+
     st.plotly_chart(compact(fig), use_container_width=True)
     if struct:
         gap = SL.pad_clear_gap(lay, inp["pad_l"][0], inp["pad_w"][0])
         if gap < 0:
             st.warning(L(f"⚠️ 이웃 기초 패드가 {-gap:.2f} m 겹칩니다 — 일체 기초(매트)로 검토하거나 유닛 이격을 넓히세요.",
                          f"⚠️ Adjacent pads overlap by {-gap:.2f} m — consider a combined mat or wider separation."))
-        ex = 0.25 * max(w, h) / (zmax - zmin)
         st.caption((L(f"기초 패드 순간격 최소 {gap:.2f} m · " if 0 <= gap != float("inf") else
                       ("이웃 기초 패드 없음 · " if gap == float("inf") else ""),
                       f"Min clear gap between pads {gap:.2f} m · " if 0 <= gap != float("inf") else
                       ("No adjacent pads · " if gap == float("inf") else "")))
-                   + L(f"트렌치·패드 치수 = 05 토목 BOP · 수직 {ex:.0f}배 과장",
-                       f"trench & pad sizes from 05 CBOP · vertical ×{ex:.0f} exaggerated"))
+                   + L(f"트렌치(깊이 {td:.1f}m) · 패드(두께 {SL.PAD_T:.2f}m) · {'1:1 현실 실척 (True Scale)' if is_true_scale else '수직 과장 모드'}",
+                       f"trench (d={td:.1f}m) · pad (t={SL.PAD_T:.2f}m) · {'1:1 True Scale' if is_true_scale else 'Exaggerated'}"))
+
+    # ── 중장비 활동 반경 시뮬레이션 결과 리포트 ──────────────────────────────
+    if heavy_eq_result:
+        st.markdown("#### " + L("🚜 시공 및 O&M 중장비 활동성 시뮬레이션 검토", "🚜 Heavy Equipment & O&M Maneuverability Simulation"))
+        eq1, eq2, eq3 = st.columns(3)
+        eq1.metric(L("50T 크레인 인양 커버리지", "50T Crane Lifting Coverage"),
+                   f"{heavy_eq_result['crane_coverage_pct']:.1f}%",
+                   f"{len(heavy_eq_result['crane_stations'])}개소 스테이션 산정")
+        eq2.metric(L("3.5T 지게차 통로 여유 폭", "Forklift Aisle Margin"),
+                   f"+{heavy_eq_result['aisle_margin_m']:.2f} m",
+                   f"통로 {heavy_eq_result['site_aisle_m']:.1f}m vs 필요 {heavy_eq_result['forklift_min_aisle_m']:.1f}m")
+        eq3.metric(L("중장비 간섭/통행 판정", "Equipment Maneuver Status"),
+                   "PASS (적합)" if heavy_eq_result["all_pass"] else "REVIEW",
+                   "회전 반경 3.8m 확보" if heavy_eq_result["forklift_pass"] else "통로 폭 협소")
+        if heavy_eq_result["all_pass"]:
+            st.success(L("✅ **중장비 시공성 검증 완료:** 50톤 크레인 아우트리거(7.5×7.5m) 설치 및 20m 붐 인양 작업 반경이 부지 도로 내 완벽히 수용되며, 배터리 랙 교체용 3.5T 지게차 회전 반경(3.8m) 대비 통로 여유 폭이 안전하게 확보되었습니다.",
+                         "✅ **Heavy Equipment Verified:** 50T crane outrigger & 20m boom reach fully accommodate all BESS blocks. Forklift turning radius clearance safe."))
 
     # ── 배치 검사 ───────────────────────────────────────────────────────────
     ok = chk["overlaps"] == 0 and chk["unit_ok"] and chk["tr_ok"] and chk["boundary_ok"]
@@ -403,6 +485,23 @@ def run_site_layout_module():
         st.warning(L("⚠️ PCS 스키드 수가 인클로저 수보다 많아 인클로저 수만큼만 배치했습니다 — 02 단위 용량을 확인하세요.",
                      "⚠️ More PCS skids than enclosures — placed one per enclosure; check 02 unit ratings."))
 
+    # ── 2D 공학 정밀 횡단면도 (Section A-A / Section B-B) ──────────────────────
+    st.markdown("---")
+    st.subheader(L("📐 2D 공학 정밀 횡단면도 (Section A-A / Section B-B)",
+                   "📐 2D Engineering Sections (Section A-A / Section B-B)"))
+    st.caption(L("실제 토목 및 전기설계 기준 GL ±0.00m 지표면, 콘크리트 패드(t=300mm), 지중 트렌치(w=800, d=1000), 배터리(h=2900mm) 및 PCS(h=2400mm) 1:1 실척 단면",
+                 "1:1 engineering sections showing GL ±0.00m, foundation pads (t=300mm), cable trench (d=1000mm), and equipment profiles."))
+
+    sec_fig_a, sec_fig_b = SL.create_section_figures(lay)
+    sec_tab1, sec_tab2 = st.tabs([
+        L("횡단면도 Section A-A (배터리·패드·트렌치·PCS)", "Section A-A (Battery·Pad·Trench·PCS)"),
+        L("종단면도 Section B-B (주변압기·방유벽·소방도로)", "Section B-B (Main TR·Bund Wall·Fire Road)")
+    ])
+    with sec_tab1:
+        st.plotly_chart(compact(sec_fig_a), use_container_width=True)
+    with sec_tab2:
+        st.plotly_chart(compact(sec_fig_b), use_container_width=True)
+
     # ── 04 로 되돌려 보내기 ─────────────────────────────────────────────────
     if st.button(L(f"📏 최장 경로 {m['longest_cable_m']:.1f} m 를 04 케이블 사이징 길이로 적용",
                    f"📏 Apply longest route {m['longest_cable_m']:.1f} m to 04 cable sizing"),
@@ -413,14 +512,17 @@ def run_site_layout_module():
 
     # ── 내보내기·불러오기 ───────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader(L("💾 내보내기 / 불러오기", "💾 Export / Import"))
+    st.subheader(L("💾 내보내기 / 불러오기 (CAD & BIM Data)", "💾 Export / Import (CAD & BIM Data)"))
+    st.caption(L("AutoCAD, BricsCAD, ZWCAD 등에서 즉시 사용 가능한 12개 전문 레이어, 치수선, 평면도 및 횡·종단면도(A-A, B-B), 표준 표제란이 포함된 DXF 내보내기",
+                 "Export professional multi-view DXF with 12 engineering layers, dimensions, plan, sections A-A/B-B, and standard title block."))
     e1, e2 = st.columns(2)
     e1.download_button(L("설계 모델 JSON", "Design model JSON"),
                        data=DM.export_json(layout_metrics={k: (round(v, 3) if isinstance(v, float) else v)
                                                            for k, v in m.items()}),
                        file_name="bess_design_model.json", mime="application/json", use_container_width=True)
-    e2.download_button(L("평면도 DXF (CAD)", "Plan DXF (CAD)"), data=SL.to_dxf(lay),
-                       file_name="bess_site_layout.dxf", mime="application/dxf", use_container_width=True)
+    e2.download_button(L("📐 전문가 멀티뷰 CAD DXF (평면+단면A-A/B-B)", "📐 Engineering Multi-View DXF (Plan+Sections)"),
+                       data=SL.to_dxf(lay, multi_view=True),
+                       file_name="bess_engineering_drawings.dxf", mime="application/dxf", use_container_width=True)
     if ko:  # 업로더 안내문·버튼은 Streamlit 고정 영문 — 한국어 모드에서만 CSS 로 문구 교체
         st.markdown("""<style>
         [data-testid=stFileUploaderDropzoneInstructions] > div > span,

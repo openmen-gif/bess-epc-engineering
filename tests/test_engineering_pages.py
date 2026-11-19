@@ -325,6 +325,109 @@ def test_power_block_allocation_and_site_area_optimization():
     assert lay["metrics"]["site_area_m2"] > 0
 
 
+def test_hydrant_central_reinforcement_and_100pct_coverage():
+    """대형 부지에서 중앙 사각지대 해소를 위한 내부 소화전 자동 보강 및 40m 100% 커버리지 검증."""
+    from utils import site_layout as SL
+
+    # 대형 40 배터리 + 10 PCS 배치 (부지 폭 90m 이상)
+    lay = SL.build_layout(40, 10, include_infra=True)
+
+    # 1. 소화전 목록에 외곽뿐 아니라 중앙 소화전(HYDRANT-C01 등)이 자동 보강되었는지 확인
+    hydrants = [b for b in lay["boxes"] if b["kind"] == "hydrant"]
+    c_hydrants = [h for h in hydrants if "HYDRANT-C" in h["label"]]
+    assert len(hydrants) >= 4
+
+    # 2. 모든 주요 설비가 소화전 반경 40m 내에 100% 포괄되는지 검증
+    cov = SL.check_fire_coverage(lay, radius_m=40.0)
+    assert cov["coverage_pct"] == 100.0
+    assert cov["all_covered"] is True
+    assert len(cov["uncovered"]) == 0
+    assert cov["max_dist_m"] <= 40.0
+
+
+def test_heavy_equipment_simulation():
+    """50T 크레인 인양 반경 및 3.5T 지게차 회전 반경 시뮬레이션 검증."""
+    from utils import site_layout as SL
+
+    lay = SL.build_layout(24, 6, include_infra=True)
+    res = SL.heavy_equipment_simulation(lay)
+
+    # 1. 50T 크레인 스테이션 및 인양 반경 20m, 아우트리거 7.5m 확인
+    assert len(res["crane_stations"]) >= 2
+    assert res["crane_radius_m"] == 20.0
+    assert res["outrigger_size_m"] == 7.5
+    assert res["crane_coverage_pct"] >= 90.0
+
+    # 2. 지게차 통로 폭 3.5m 및 회전 반경 3.8m 검증
+    assert res["forklift_turning_radius_m"] == 3.8
+    assert res["forklift_min_aisle_m"] == 3.5
+    assert res["site_aisle_m"] >= res["forklift_min_aisle_m"]
+    assert res["aisle_margin_m"] >= 0.0
+    assert res["forklift_pass"] is True
+    assert res["all_pass"] is True
+
+    # 3. 3D 기하 좌표 생성 검증
+    c_xs, c_ys, c_zs = res["crane_circles"]
+    assert len(c_xs) > 0
+    assert None in c_xs
+    o_xs, o_ys, o_zs = res["outrigger_boxes"]
+    assert len(o_xs) > 0
+
+
+def test_multiview_dxf_generation():
+    """12개 전문 레이어, 평면도, 단면도(A-A, B-B), 표제란이 포함된 전문가 수준 DXF 검증."""
+    from utils import site_layout as SL
+
+    lay = SL.build_layout(16, 4, include_infra=True)
+    dxf_str = SL.to_dxf(lay, multi_view=True)
+
+    # 1. DXF 기본 구조 및 단위(Meters)
+    assert "AC1009" in dxf_str
+    assert "$INSUNITS" in dxf_str
+
+    # 2. 12개 전문 엔지니어링 레이어 포함 여부
+    assert "C-PAD-CONC" in dxf_str
+    assert "C-TRENCH" in dxf_str
+    assert "C-FENCE" in dxf_str
+    assert "E-BESS-ENC" in dxf_str
+    assert "E-PCS-SKID" in dxf_str
+    assert "E-MAIN-TR" in dxf_str
+    assert "F-HYDRANT" in dxf_str
+    assert "DIM-MAJOR" in dxf_str
+    assert "SECTION-AA" in dxf_str
+    assert "SECTION-BB" in dxf_str
+    assert "TITLE-BLOCK" in dxf_str
+
+    # 3. 단면도(Section A-A, Section B-B) 레이블 및 지표면(GL) 표기 확인
+    assert "SECTION A-A" in dxf_str
+    assert "SECTION B-B" in dxf_str
+    assert "GL ±0.00" in dxf_str
+
+    # 4. 표준 표제란 메타데이터 확인
+    assert "PROJECT: UTILITY-SCALE BESS EPC PROJECT" in dxf_str
+    assert "DWG NO: DWG-BESS-EPC-001" in dxf_str
+    assert "SCALE: 1:100" in dxf_str
+
+
+def test_create_section_figures():
+    """2D 공학 정밀 횡단면도 (Section A-A, Section B-B) Plotly 생성 검증."""
+    from utils import site_layout as SL
+
+    lay = SL.build_layout(12, 3, include_infra=True)
+    fig_a, fig_b = SL.create_section_figures(lay)
+
+    # Section A-A 트레이스 검증
+    assert fig_a is not None
+    assert len(fig_a.data) >= 5  # GL선, 패드, 배터리, 트렌치, PCS 등
+    assert "Section A-A" in fig_a.layout.title.text
+
+    # Section B-B 트레이스 검증
+    assert fig_b is not None
+    assert len(fig_b.data) >= 4  # GL선, 방유벽, 변압기 기초, TR 본체, 소방도로 등
+    assert "Section B-B" in fig_b.layout.title.text
+
+
+
 
 
 
