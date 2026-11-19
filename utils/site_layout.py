@@ -282,27 +282,34 @@ def build_layout(n_enc, n_pcs, enc_l=6.05, enc_w=2.44, unit_gap=3.0, boundary=3.
                           dx=basin_l, dy=basin_w, dz=basin_d))
         site_h = max(site_h, basin_y + basin_w + b)
 
-        # 부지 4면 울타리 도로변을 따라 45m 간격 옥외 소화전 배치 (장비와 간섭 없는 외곽 완충대)
-        hydrant_pts = [
-            (b, 0.6),
-            (site_w - b - 0.4, 0.6),
-            (site_w - b - 0.4, site_h - 1.0),
-            (b, site_h - 1.0),
-        ]
-        # 변의 길이가 50m를 넘으면 외곽 중간 소화전 추가
-        if site_w > 50.0:
-            hydrant_pts.append((site_w / 2.0 - 0.2, 0.6))
-            hydrant_pts.append((site_w / 2.0 - 0.2, site_h - 1.0))
-        if site_h > 50.0:
-            hydrant_pts.append((0.6, site_h / 2.0 - 0.2))
-            hydrant_pts.append((site_w - 1.0, site_h / 2.0 - 0.2))
+        # 부지 4면 울타리 도로변을 따라 40~45m 간격 옥외 소화전 정규 배치 (NFPA 24 규격)
+        seg_x = max(1, math.ceil((site_w - 2 * b) / 45.0))
+        xs_perim = [b + i * (site_w - 2 * b) / seg_x for i in range(seg_x + 1)]
 
+        seg_y = max(1, math.ceil((site_h - 2 * b) / 45.0))
+        ys_perim = [b + j * (site_h - 2 * b) / seg_y for j in range(seg_y + 1)]
+
+        hydrant_pts = []
+        # 남측 도로변 (y ≈ 0.6m)
+        for hx in xs_perim:
+            hydrant_pts.append((hx - 0.2, 0.6))
+        # 북측 도로변 (y ≈ site_h - 1.0m)
+        for hx in xs_perim:
+            hydrant_pts.append((hx - 0.2, site_h - 1.0))
+        # 서측 도로변 (x ≈ 0.6m) 중간 구간
+        for hy in ys_perim[1:-1]:
+            hydrant_pts.append((0.6, hy - 0.2))
+        # 동측 도로변 (x ≈ site_w - 1.0m) 중간 구간
+        for hy in ys_perim[1:-1]:
+            hydrant_pts.append((site_w - 1.0, hy - 0.2))
+
+        # 외곽 소화전 등록
         for h_idx, (hx, hy) in enumerate(hydrant_pts, 1):
             boxes.append(dict(kind="hydrant", label=f"HYDRANT-{h_idx:02d}",
                               x=hx, y=hy, dx=0.40, dy=0.40, dz=0.85))
 
-        # ── 중앙 사각지대 해소: 40m 유효 반경 미커버 설비 검출 및 중앙 통로 소화전 자동 보강 ──
-        # NFPA 855 / NFTC 109: 모든 배터리/전기설비는 옥외소화전 반경 40m 내에 100% 포괄되어야 함
+        # ── 중앙 사각지대 해소: 40m 유효 반경 미커버 설비 분산 보강 (NFPA 855 / NFTC 109) ──
+        # 모든 배터리/전기설비는 옥외소화전 반경 40m 내에 100% 포괄되어야 함
         def _box_overlaps(px, py, pdx, pdy, existing_boxes, margin=0.3):
             for eb in existing_boxes:
                 if not (px + pdx + margin <= eb["x"] or px - margin >= eb["x"] + eb["dx"] or
@@ -311,7 +318,7 @@ def build_layout(n_enc, n_pcs, enc_l=6.05, enc_w=2.44, unit_gap=3.0, boundary=3.
             return False
 
         h_c_idx = 1
-        for _ in range(6):  # 안전 루프 (최대 6개 중앙 소화전)
+        for _ in range(8):  # 안전 루프
             cur_hydrants = [(h["x"] + h["dx"] / 2.0, h["y"] + h["dy"] / 2.0)
                             for h in boxes if h["kind"] == "hydrant"]
             uncovered = []
@@ -325,24 +332,25 @@ def build_layout(n_enc, n_pcs, enc_l=6.05, enc_w=2.44, unit_gap=3.0, boundary=3.
             if not uncovered:
                 break  # 모든 설비 40m 커버리지 100% 충족
 
-            # 미커버 설비들의 가중 중심 계산
-            avg_x = sum(u[2] for u in uncovered) / len(uncovered)
-            avg_y = sum(u[3] for u in uncovered) / len(uncovered)
+            # 단순 평균 대신 가장 고립된(가장 먼) 미커버 설비(Worst target)를 타겟팅하여
+            # 한곳에 몰리지 않고 양 끝과 중앙 사이의 빈 공간에 균등하게 분산 배치
+            worst_target = max(uncovered, key=lambda u: u[1])
+            target_cx, target_cy = worst_target[2], worst_target[3]
 
-            # 설비와 간섭 없는 행 간 통로(Aisle) Y 좌표 후보군
+            # 행 간 통로(Aisle) 중 target_cy와 가장 인접한 통로 선택
             aisle_y_candidates = []
             for r in range(1, rows):
-                # 행 간 통로 중심 y (상하 설비와 최소 1.5m 이상 이격된 안전 대역)
                 aisle_y_candidates.append(y_arr + r * (block_dep + aisle) - aisle / 2.0)
             if not aisle_y_candidates:
                 aisle_y_candidates.append(y_arr + arr_h + unit_gap / 2.0)
 
-            best_y = min(aisle_y_candidates, key=lambda y_c: abs(y_c - avg_y))
+            best_y = min(aisle_y_candidates, key=lambda y_c: abs(y_c - target_cy))
 
-            # X 좌표 탐색: avg_x를 시작으로 기존 설비와 충돌하지 않는 안전한 X좌표 탐색
+            # target_cx 주변에서 설비와 간섭 없는 안전한 X좌표 탐색
             cand_x = None
-            for offset in [0.0, 1.0, -1.0, 2.0, -2.0, 3.5, -3.5, 5.0, -5.0]:
-                test_x = max(b + 0.5, min(site_w - b - 1.0, avg_x + offset - 0.2))
+            cand_y = None
+            for offset in [0.0, 1.2, -1.2, 2.5, -2.5, 4.0, -4.0, 6.0, -6.0, 8.0, -8.0]:
+                test_x = max(b + 0.5, min(site_w - b - 1.0, target_cx + offset - 0.2))
                 test_y = max(b + 0.5, min(site_h - b - 1.0, best_y - 0.2))
                 if not _box_overlaps(test_x, test_y, 0.40, 0.40, boxes, margin=0.4):
                     cand_x = test_x
@@ -541,6 +549,9 @@ DXF_LAYERS = {
     "E-PCS-SKID": {"color": "5", "desc": "PCS & MV Transformer Skid (2.40m)"},
     "E-MAIN-TR": {"color": "6", "desc": "Main Step-Up Transformer (154/22.9kV)"},
     "E-EH-SWGR": {"color": "3", "desc": "E-House Switchgear & EMS Control Room"},
+    "E-CABLE-DC-1500V": {"color": "30", "desc": "1500V DC Battery to PCS Strings (Orange)"},
+    "E-CABLE-AC-LV": {"color": "3", "desc": "0.69kV 3-Phase AC PCS to MV TR (Green)"},
+    "E-CABLE-AC-MV": {"color": "5", "desc": "22.9kV 3-Phase MV Feeder to E-House/POI (Blue)"},
     "F-HYDRANT": {"color": "1", "desc": "Outdoor Fire Hydrant & Valve"},
     "F-COVERAGE": {"color": "1", "desc": "NFPA 855 Fire Hydrant 40m Radius Ring"},
     "F-WATER-TANK": {"color": "4", "desc": "Fire Water Storage & Pump Station"},
@@ -713,10 +724,21 @@ def to_dxf(layout: dict, multi_view: bool = False) -> str:
             dxf_line("F-HYDRANT", (cx, cy - 0.5), (cx, cy + 0.5))
             dxf_circle("F-COVERAGE", (cx, cy), 40.0)
 
-    # 1-3. 지중 케이블 트렌치 (C-TRENCH)
+    # 1-3. 지중 케이블 트렌치 (C-TRENCH) 및 전기 결선 선로 (DC 1500V / AC 0.69kV / MV 22.9kV)
     for pl in trench:
         for p, q in zip(pl, pl[1:]):
             dxf_line("C-TRENCH", p, q)
+
+    wiring_data = build_cable_wiring(layout)
+    for pl in wiring_data.get("dc_polylines_2d", []):
+        for p, q in zip(pl, pl[1:]):
+            dxf_line("E-CABLE-DC-1500V", p, q)
+    for pl in wiring_data.get("lv_polylines_2d", []):
+        for p, q in zip(pl, pl[1:]):
+            dxf_line("E-CABLE-AC-LV", p, q)
+    for pl in wiring_data.get("mv_polylines_2d", []):
+        for p, q in zip(pl, pl[1:]):
+            dxf_line("E-CABLE-AC-MV", p, q)
 
     # 1-4. 주요 외곽 치수선 (DIM-MAJOR)
     dxf_dim_linear("DIM-MAJOR", (0.0, 0.0), (site_w, 0.0), -3.0, f"SITE TOTAL WIDTH = {site_w:.2f} m")
@@ -851,106 +873,217 @@ def heavy_equipment_simulation(layout: dict) -> dict:
 
     main_targets = [b for b in boxes if b["kind"] in ("enc", "pcs")]
 
-    # 1. 크레인 설치 스테이션 산정 (남측 도로, 블록 간 작업 통로, 북측 도로망)
-    # X 좌표 후보군: 부지 폭을 따라 20~28m 간격으로 분할
-    n_x = max(2, min(4, math.ceil(site_w / 28.0)))
-    station_xs = [b + 6.0 + i * ((site_w - 2 * b - 12.0) / max(1, n_x - 1)) for i in range(n_x)]
-
-    # Y 좌표 후보군: 설비 행들의 Y 좌표들을 기반으로 통로선 추출
-    if main_targets:
-        min_y = min(t["y"] for t in main_targets)
-        max_y = max(t["y"] + t["dy"] for t in main_targets)
-        # 고유 행(row) Y 좌표 추출
-        row_ys = sorted(list(set(round(t["y"], 1) for t in main_targets)))
-        station_ys = [max(b + 2.0, min_y - 3.5)]  # 남측 메인 도로
-        # 행 간 작업 통로 (Aisle)
-        for k in range(len(row_ys) - 1):
-            station_ys.append((row_ys[k] + row_ys[k + 1]) / 2.0)
-        # 북측 순환 도로 (설비 군집 깊이가 25m 초과 시)
-        if max_y - min_y > 25.0:
-            station_ys.append(min(site_h - b - 2.0, max_y + 3.5))
-    else:
-        station_ys = [site_h / 2.0]
-
-    crane_stations = []
+    # 1. 50T 크레인 대표 작업 거점 (Primary Setup Stations, 2~4개소 정예화)
+    # 남측 진입로 및 주요 작업 통로에 실물 차체와 붐 선회 반경 배치 (출발/정차 위치 명확화)
     crane_radius = 20.0
     outrigger_w = 7.5
+    crane_l, crane_w, crane_h = 11.8, 2.55, 3.2  # 50T 올테레인 규격 (Liebherr LTM 1050-3.1급)
 
-    st_cnt = 1
-    for sy in station_ys:
-        for sx in station_xs:
-            crane_stations.append({
-                "station_id": f"CRANE-ST-{st_cnt:02d}",
-                "x": round(sx, 2),
-                "y": round(sy, 2),
-                "outrigger_w": outrigger_w,
-                "outrigger_l": outrigger_w,
-                "radius_m": crane_radius,
-                "label": f"50T Crane #{st_cnt} (R=20m)"
-            })
-            st_cnt += 1
+    crane_stations = []
+    if main_targets:
+        min_x = min(t["x"] for t in main_targets)
+        max_x = max(t["x"] + t["dx"] for t in main_targets)
+        min_y = min(t["y"] for t in main_targets)
+        max_y = max(t["y"] + t["dy"] for t in main_targets)
+
+        width_span = max_x - min_x
+        depth_span = max_y - min_y
+
+        # X 분할: 폭 25m 이하 1개, 25~55m 2개, 55m 초과 28m 간격 균등 분할
+        if width_span <= 25.0:
+            x_pts = [(min_x + max_x) / 2.0]
+        elif width_span <= 55.0:
+            x_pts = [min_x + width_span * 0.28, min_x + width_span * 0.72]
+        else:
+            num_x = max(2, int(math.ceil(width_span / 28.0)))
+            x_pts = [min_x + width_span * ((i + 0.5) / num_x) for i in range(num_x)]
+
+        # Y 분할: 50T 크레인 붐 R=20m 기준 유효 반경(약 25m 간격)으로 작업 거점(Staging Bays) 산정
+        road_y_south = max(b + 2.5, min_y - 4.5)
+        road_y_north = min(site_h - b - 2.5, max_y + 4.5)
+
+        if depth_span <= 14.0:
+            y_pts = [("남측 진입도로", road_y_south, "east")]
+        elif depth_span <= 28.0:
+            y_pts = [
+                ("남측 진입도로", road_y_south, "east"),
+                ("북측 순환도로", road_y_north, "west")
+            ]
+        else:
+            num_y_mid = max(1, int(math.ceil(depth_span / 28.0)) - 1)
+            y_pts = [("남측 진입도로", road_y_south, "east")]
+            for k in range(1, num_y_mid + 1):
+                mid_y = min_y + depth_span * (k / (num_y_mid + 1))
+                y_pts.append((f"작업통로-{k}", mid_y, "north"))
+            y_pts.append(("북측 순환도로", road_y_north, "west"))
+
+        st_idx = 1
+        for y_desc, y_val, heading in y_pts:
+            for x_val in x_pts:
+                crane_stations.append({
+                    "station_id": f"CRANE-ST-{st_idx:02d}",
+                    "x": round(x_val, 2),
+                    "y": round(y_val, 2),
+                    "outrigger_w": outrigger_w,
+                    "outrigger_l": outrigger_w,
+                    "radius_m": crane_radius,
+                    "label": f"50T 크레인 #{st_idx} ({y_desc})",
+                    "heading": heading
+                })
+                st_idx += 1
+    else:
+        crane_stations = [
+            {"station_id": "CRANE-ST-01", "x": round(site_w * 0.35, 2), "y": round(b + 3.0, 2),
+             "outrigger_w": outrigger_w, "outrigger_l": outrigger_w, "radius_m": crane_radius,
+             "label": "50T Crane #1", "heading": "east"},
+            {"station_id": "CRANE-ST-02", "x": round(site_w * 0.65, 2), "y": round(b + 3.0, 2),
+             "outrigger_w": outrigger_w, "outrigger_l": outrigger_w, "radius_m": crane_radius,
+             "label": "50T Crane #2", "heading": "east"}
+        ]
 
     # 크레인 인양 커버리지 검증
     reachable_cnt = 0
     for t in main_targets:
         cx = t["x"] + t["dx"] / 2.0
         cy = t["y"] + t["dy"] / 2.0
-        # 적어도 한 스테이션에서 20m + 오차 2m 이내이면 인양 도달 가능
-        if any(math.hypot(cx - st["x"], cy - st["y"]) <= crane_radius + 2.0 for st in crane_stations):
+        if any(math.hypot(cx - st["x"], cy - st["y"]) <= crane_radius + 2.5 for st in crane_stations):
             reachable_cnt += 1
 
     crane_coverage_pct = round((reachable_cnt / max(1, len(main_targets))) * 100.0, 1)
 
-    # 지게차 통로 적합성 판정
+    # ── 2. 이동 경로 (Access / Haul Road Trajectory) ──────────────────────
+    # 부지 출입 정문 (남서측 도로 게이트) ➔ 남측 간선도로 ➔ 작업 거점 및 통로 연결 동선
+    gate_x = max(b + 2.0, 5.0)
+    access_xs, access_ys, access_zs = [], [], []
+    # 주 간선 진입로 선분
+    access_xs.extend([gate_x, gate_x, site_w - b - 2.0, None])
+    access_ys.extend([0.0, crane_stations[0]["y"], crane_stations[0]["y"], None])
+    access_zs.extend([0.08, 0.08, 0.08, None])
+    # 각 작업 거점으로 연결되는 주행 지선
+    for st in crane_stations:
+        access_xs.extend([st["x"], st["x"], None])
+        access_ys.extend([crane_stations[0]["y"], st["y"], None])
+        access_zs.extend([0.08, 0.08, None])
+
+    # ── 3. 50T 크레인 코너 90° 좌우 회전 궤적 (Swept Path Analysis) ──────
+    # 50T 3축 크레인 규격: 최소 외륜 회전반경 R_ext = 10.5m, 내륜 반경 R_int = 5.8m (스윕 폭 4.7m)
+    crane_ext_r = 10.5
+    crane_int_r = 5.8
+    crane_swept_w = crane_ext_r - crane_int_r  # 4.7m
+    road_w_nominal = max(aisle, 6.0)
+    crane_turn_clearance = round(road_w_nominal - crane_swept_w, 2)
+    crane_turn_pass = crane_turn_clearance >= 0.8  # 최소 0.8m 안전 여유
+
+    # 코너 교차점 회전 궤적 좌표 생성 (남측 도로 -> 1차 작업 통로 90° 좌회전)
+    turn_cx = gate_x + crane_ext_r
+    turn_cy = crane_stations[0]["y"]
+    c_turn_xs, c_turn_ys, c_turn_zs = [], [], []
+    # 외륜 궤적 호 (Outer Arc)
+    for step in range(25):
+        rad = (math.pi) + (math.pi / 2.0) * (step / 24.0)  # 180° -> 270°
+        c_turn_xs.append(turn_cx + crane_ext_r * math.cos(rad))
+        c_turn_ys.append(turn_cy + crane_ext_r * math.sin(rad))
+        c_turn_zs.append(0.12)
+    c_turn_xs.append(None); c_turn_ys.append(None); c_turn_zs.append(None)
+    # 내륜 궤적 호 (Inner Arc)
+    for step in range(25):
+        rad = (math.pi) + (math.pi / 2.0) * (step / 24.0)
+        c_turn_xs.append(turn_cx + crane_int_r * math.cos(rad))
+        c_turn_ys.append(turn_cy + crane_int_r * math.sin(rad))
+        c_turn_zs.append(0.12)
+    c_turn_xs.append(None); c_turn_ys.append(None); c_turn_zs.append(None)
+
+    # ── 4. 3.5T 전동 지게차 통로 내 90° 좌우 회전 궤적 ───────────────────
+    # 차량 전폭 1.3m, 최소 회전반경 R = 3.8m, 직각 적재 소요 통로폭 Ast = 4.2m
     forklift_turning_r = 3.8
     forklift_min_aisle = 3.5
+    forklift_ast_m = 4.2  # 90° pallet stacking aisle width
     aisle_margin = round(aisle - forklift_min_aisle, 2)
     forklift_ok = aisle >= forklift_min_aisle
 
-    # 크레인 20m 링 좌표 생성 (Plotly 3D용)
+    # 지게차 90° 작업 선회 궤적 호 (통로 내 회전)
+    fk_turn_xs, fk_turn_ys, fk_turn_zs = [], [], []
+    if main_targets:
+        fk_cx = main_targets[0]["x"] + main_targets[0]["dx"] / 2.0
+        fk_cy = main_targets[0]["y"] - 1.2
+        for step in range(25):
+            rad = (math.pi / 2.0) * (step / 24.0)  # 0° -> 90°
+            fk_turn_xs.append(fk_cx + forklift_turning_r * math.cos(rad))
+            fk_turn_ys.append(fk_cy + forklift_turning_r * math.sin(rad))
+            fk_turn_zs.append(0.10)
+        fk_turn_xs.append(None); fk_turn_ys.append(None); fk_turn_zs.append(None)
+
+    # ── 5. 50T 크레인 실물 차체 메쉬 & 20m 붐 선회 링 ────────────────────
     c_xs, c_ys, c_zs = [], [], []
+    o_xs, o_ys, o_zs = [], [], []
+    body_xs, body_ys, body_zs = [], [], []
+    boom_xs, boom_ys, boom_zs = [], [], []
+
     for st in crane_stations:
+        sx, sy = st["x"], st["y"]
+        # 20m 선회 링
         for step in range(49):
             theta = 2.0 * math.pi * step / 48
-            c_xs.append(st["x"] + crane_radius * math.cos(theta))
-            c_ys.append(st["y"] + crane_radius * math.sin(theta))
+            c_xs.append(sx + crane_radius * math.cos(theta))
+            c_ys.append(sy + crane_radius * math.sin(theta))
             c_zs.append(0.15)
-        c_xs.append(None)
-        c_ys.append(None)
-        c_zs.append(None)
+        c_xs.append(None); c_ys.append(None); c_zs.append(None)
 
-    # 아우트리거 베이스 박스 좌표
-    o_xs, o_ys, o_zs = [], [], []
-    for st in crane_stations:
+        # 7.5m x 7.5m 아우트리거 베이스 및 4점 지지 패드
         hw = outrigger_w / 2.0
         opts = [
-            (st["x"] - hw, st["y"] - hw),
-            (st["x"] + hw, st["y"] - hw),
-            (st["x"] + hw, st["y"] + hw),
-            (st["x"] - hw, st["y"] + hw),
-            (st["x"] - hw, st["y"] - hw),
+            (sx - hw, sy - hw), (sx + hw, sy - hw),
+            (sx + hw, sy + hw), (sx - hw, sy + hw),
+            (sx - hw, sy - hw),
         ]
         for p in opts:
-            o_xs.append(p[0])
-            o_ys.append(p[1])
-            o_zs.append(0.12)
-        o_xs.append(None)
-        o_ys.append(None)
-        o_zs.append(None)
+            o_xs.append(p[0]); o_ys.append(p[1]); o_zs.append(0.12)
+        o_xs.append(None); o_ys.append(None); o_zs.append(None)
+
+        # 크레인 실물 차체 (11.8m x 2.55m x 3.2m 직육면체 외곽)
+        ch_l = crane_l / 2.0
+        ch_w = crane_w / 2.0
+        b_pts = [
+            (sx - ch_l, sy - ch_w, 0.1), (sx + ch_l, sy - ch_w, 0.1),
+            (sx + ch_l, sy + ch_w, 0.1), (sx - ch_l, sy + ch_w, 0.1),
+            (sx - ch_l, sy - ch_w, 0.1),
+            (sx - ch_l, sy - ch_w, crane_h), (sx + ch_l, sy - ch_w, crane_h),
+            (sx + ch_l, sy + ch_w, crane_h), (sx - ch_l, sy + ch_w, crane_h),
+            (sx - ch_l, sy - ch_w, crane_h)
+        ]
+        for pt in b_pts:
+            body_xs.append(pt[0]); body_ys.append(pt[1]); body_zs.append(pt[2])
+        body_xs.append(None); body_ys.append(None); body_zs.append(None)
+
+        # 인양 붐대 (차체 중심에서 앙각 40°로 뻗어나가는 20m 붐 라인)
+        boom_len_xy = crane_radius * 0.85
+        boom_h = 12.0
+        boom_xs.extend([sx, sx + boom_len_xy * 0.7, None])
+        boom_ys.extend([sy, sy + boom_len_xy * 0.7, None])
+        boom_zs.extend([crane_h, boom_h, None])
 
     return {
         "crane_stations": crane_stations,
         "crane_coverage_pct": crane_coverage_pct,
         "crane_radius_m": crane_radius,
+        "crane_dims": (crane_l, crane_w, crane_h),
         "outrigger_size_m": outrigger_w,
+        "crane_corner_clearance_m": crane_turn_clearance,
+        "crane_corner_pass": crane_turn_pass,
         "forklift_turning_radius_m": forklift_turning_r,
         "forklift_min_aisle_m": forklift_min_aisle,
+        "forklift_ast_m": forklift_ast_m,
         "site_aisle_m": aisle,
         "aisle_margin_m": aisle_margin,
         "forklift_pass": forklift_ok,
         "all_pass": crane_coverage_pct >= 90.0 and forklift_ok,
         "crane_circles": (c_xs, c_ys, c_zs),
         "outrigger_boxes": (o_xs, o_ys, o_zs),
+        "crane_bodies": (body_xs, body_ys, body_zs),
+        "crane_booms": (boom_xs, boom_ys, boom_zs),
+        "access_routes": (access_xs, access_ys, access_zs),
+        "crane_turning_swept": (c_turn_xs, c_turn_ys, c_turn_zs),
+        "forklift_turning_swept": (fk_turn_xs, fk_turn_ys, fk_turn_zs),
     }
 
 
@@ -1207,4 +1340,319 @@ def hydrant_coverage_dome_mesh(layout: dict, radius_m: float = 40.0, n_lat: int 
                 kk.extend([p2, p3])
 
     return xs, ys, zs, ii, jj, kk
+
+
+# ── 전기 결선 및 케이블 루트 (EBOP 3D Wiring Engine) ─────────────────────────
+def build_cable_wiring(layout: dict) -> dict:
+    """
+    BESS 플랜트의 실물형 3D 전기 결선 및 케이블 루트(EBOP) 생성 엔진.
+
+    1. DC 1500V 배터리-PCS 결선:
+       - 각 배터리 인클로저(Battery Enclosure) DC 단자함 -> 해당 파워블록 PCS DC 입력단
+       - 트렌치 내 DC 전용 구획(-0.35m)을 경유하는 3D 직각 Riser-Trench 배선
+       - 케이블 사양: DC 1,500V XLPE 단심 2가닥(DC+, DC-) per string (UL 4703)
+
+    2. LV 0.69kV 저압 3상 AC 결선:
+       - PCS 인버터 모듈 AC 출력단 -> 일체형/인접 파워블록 MV 승압변압기 1차측
+       - 케이블 사양: 0.6/1kV TFR-CV 3C×240mm² 3상 3선+접지 (KEC 규격)
+
+    3. MV 22.9kV 특고압 3상 AC 집전 선로:
+       - 파워블록 MV 변압기 2차측 -> 지선 트렌치 -> 메인 트렁크 트렌치 -> E-House 22.9kV VCB 수배전반 -> Main TR(154kV POI)
+       - 케이블 사양: 22.9kV CNCV-W / FR-CNCO-W 동심중성선 수밀형 전력케이블 (삼엽 Trefoil 포설)
+    """
+    boxes = layout["boxes"]
+    power_blocks = layout.get("power_blocks", [])
+    tr_pos = layout["params"].get("tr_pos", "center")
+    include_ehouse = layout["params"].get("include_ehouse", True)
+
+    enc_boxes = [b for b in boxes if b["kind"] == "enc"]
+    pcs_boxes = [b for b in boxes if b["kind"] == "pcs"]
+    tr_boxes = [b for b in boxes if b["kind"] == "tr"]
+    eh_boxes = [b for b in boxes if b["kind"] == "ehouse"]
+
+    # 1. DC 1500V 케이블 결선 (Battery Enclosure -> 담당 PCS)
+    dc_xs, dc_ys, dc_zs = [], [], []
+    dc_polylines_2d = []
+    dc_cables = []
+    total_dc_len = 0.0
+    dc_lengths = []
+
+    # 블록별 PCS 매핑
+    pcs_by_block = {b.get("block", 1): b for b in pcs_boxes}
+
+    for enc in enc_boxes:
+        blk = enc.get("block", 1)
+        pcs = pcs_by_block.get(blk, pcs_boxes[0] if pcs_boxes else None)
+        if not pcs:
+            continue
+
+        # 단자 좌표 산출
+        # 인클로저 DC 출력함: 인클로저 중심, 하부 z=0.45m
+        enc_x = enc["x"] + enc["dx"] * 0.5
+        enc_y = enc["y"] + 0.35
+        enc_z = 0.45
+        trench_z = -0.35
+
+        # PCS DC 차단기 인입단: PCS 전면 하부 z=0.55m
+        pcs_x = pcs["x"] + pcs["dx"] * 0.30
+        pcs_y = pcs["y"] + 0.35
+        pcs_z = 0.55
+
+        # 3D 직각 경로 (인클로저 단자 -> 지중 트렌치 -> 트렌치 코너 -> PCS 진입 -> PCS 단자)
+        pts = [
+            (enc_x, enc_y, enc_z),
+            (enc_x, enc_y, trench_z),
+            (enc_x, pcs_y, trench_z),
+            (pcs_x, pcs_y, trench_z),
+            (pcs_x, pcs_y, pcs_z)
+        ]
+
+        # 3D Scatter3d 선분
+        for p in pts:
+            dc_xs.append(p[0])
+            dc_ys.append(p[1])
+            dc_zs.append(p[2])
+        dc_xs.append(None); dc_ys.append(None); dc_zs.append(None)
+
+        # 2D 평면 선분 (DXF용)
+        dc_polylines_2d.append([(p[0], p[1]) for p in pts])
+
+        # 맨해튼 선로 거리 + 단말/여장 1.5m
+        seg_len = (abs(enc_z - trench_z) +
+                   abs(enc_y - pcs_y) +
+                   abs(enc_x - pcs_x) +
+                   abs(pcs_z - trench_z) + 1.5)
+        total_dc_len += seg_len
+        dc_lengths.append(seg_len)
+
+        # 1500V DC 전압강하 (300A, 300mm2 Cu, R=0.0601 ohm/km)
+        vdrop_v = 2.0 * 300.0 * (0.0601 / 1000.0) * seg_len
+        vdrop_pct = (vdrop_v / 1500.0) * 100.0
+
+        dc_cables.append({
+            "from": enc["label"],
+            "to": pcs["label"],
+            "block": blk,
+            "voltage": "1,500V DC",
+            "spec": "DC 1500V XLPE 1C×300mm²×2",
+            "length_m": round(seg_len, 2),
+            "vdrop_pct": round(vdrop_pct, 2)
+        })
+
+    max_dc_len = max(dc_lengths) if dc_lengths else 0.0
+    min_dc_len = min(dc_lengths) if dc_lengths else 0.0
+    max_dc_vdrop = max(c["vdrop_pct"] for c in dc_cables) if dc_cables else 0.0
+
+    # 2. LV 0.69kV 3상 AC 결선 (PCS Inverter 출력단 -> Skid 내 MV TR 1차측)
+    lv_xs, lv_ys, lv_zs = [], [], []
+    lv_polylines_2d = []
+    lv_cables = []
+    total_lv_len = 0.0
+
+    for pcs in pcs_boxes:
+        blk = pcs.get("block", 1)
+        # PCS 인버터 3상 출력단
+        p_out_x = pcs["x"] + pcs["dx"] * 0.75
+        p_out_y = pcs["y"] + pcs["dy"] * 0.50
+        p_out_z = 0.70
+
+        # 스키드 일체형 승압 변압기 1차측 부싱 (저압측)
+        tr1_x = pcs["x"] + pcs["dx"] - 0.30
+        tr1_y = pcs["y"] + pcs["dy"] * 0.50
+        tr1_z = 0.90
+
+        pts = [
+            (p_out_x, p_out_y, p_out_z),
+            (p_out_x, p_out_y, 0.20),
+            (tr1_x, tr1_y, 0.20),
+            (tr1_x, tr1_y, tr1_z)
+        ]
+        for p in pts:
+            lv_xs.append(p[0]); lv_ys.append(p[1]); lv_zs.append(p[2])
+        lv_xs.append(None); lv_ys.append(None); lv_zs.append(None)
+        lv_polylines_2d.append([(p[0], p[1]) for p in pts])
+
+        seg_len = abs(p_out_z - 0.20) + abs(p_out_x - tr1_x) + abs(tr1_z - 0.20) + 0.8
+        total_lv_len += seg_len
+        lv_cables.append({
+            "from": pcs["label"],
+            "to": f"MV-TR-0.69kV (Blk {blk})",
+            "voltage": "0.69kV AC 3-Phase",
+            "spec": "0.6/1kV TFR-CV 3C×240mm²×3조",
+            "length_m": round(seg_len, 2),
+            "rated_current_a": 2510.0
+        })
+
+    # 3. MV 22.9kV 3상 AC 집전 선로 (MV TR 2차측 -> 트렌치 -> E-House VCB -> Main TR 154kV)
+    mv_xs, mv_ys, mv_zs = [], [], []
+    mv_polylines_2d = []
+    mv_cables = []
+    total_mv_len = 0.0
+    mv_lengths = []
+
+    # 트렁크 트렌치 Y좌표 및 E-House/TR 좌표
+    y_trunk = 14.5  # 남측 트렁크 트렌치
+    eh = eh_boxes[0] if eh_boxes else None
+    main_tr = tr_boxes[0] if tr_boxes else None
+
+    eh_in_x = eh["x"] + eh["dx"] * 0.3 if eh else 20.0
+    eh_in_y = eh["y"] + eh["dy"] * 0.5 if eh else 8.0
+    eh_out_x = eh["x"] + eh["dx"] * 0.7 if eh else 25.0
+    eh_out_y = eh["y"] + eh["dy"] * 0.5 if eh else 8.0
+
+    tr_in_x = main_tr["x"] + main_tr["dx"] * 0.5 if main_tr else 25.0
+    tr_in_y = main_tr["y"] + main_tr["dy"] * 0.5 if main_tr else 5.0
+
+    for pcs in pcs_boxes:
+        blk = pcs.get("block", 1)
+        # MV 변압기 2차측 22.9kV 특고압 부싱
+        tr2_x = pcs["x"] + pcs["dx"] - 0.30
+        tr2_y = pcs["y"] + pcs["dy"] * 0.50
+        tr2_z = 1.30
+        mv_trench_z = -0.70
+
+        # 지선 트렌치 분기점 (블록 우측 간선)
+        br_x = pcs["x"] + pcs["dx"] + 1.5
+
+        # 경로: 변압기 2차측 -> 지선 트렌치(-0.7m) -> 남측 트렁크 트렌치 -> E-House VCB 인입단(0.8m)
+        pts = [
+            (tr2_x, tr2_y, tr2_z),
+            (tr2_x, tr2_y, mv_trench_z),
+            (br_x, tr2_y, mv_trench_z),
+            (br_x, y_trunk, mv_trench_z),
+            (eh_in_x, y_trunk, mv_trench_z),
+            (eh_in_x, eh_in_y, mv_trench_z),
+            (eh_in_x, eh_in_y, 0.80)
+        ]
+        for p in pts:
+            mv_xs.append(p[0]); mv_ys.append(p[1]); mv_zs.append(p[2])
+        mv_xs.append(None); mv_ys.append(None); mv_zs.append(None)
+        mv_polylines_2d.append([(p[0], p[1]) for p in pts])
+
+        seg_len = (abs(tr2_z - mv_trench_z) +
+                   abs(tr2_x - br_x) +
+                   abs(tr2_y - y_trunk) +
+                   abs(br_x - eh_in_x) +
+                   abs(y_trunk - eh_in_y) +
+                   abs(0.80 - mv_trench_z) + 3.0)
+        total_mv_len += seg_len
+        mv_lengths.append(seg_len)
+
+        # 22.9kV 전압강하 (2.5MVA당 63A, 250mm2 Cu, R=0.093 ohm/km)
+        vdrop_mv_v = math.sqrt(3) * 63.0 * (0.093 / 1000.0) * seg_len
+        vdrop_mv_pct = (vdrop_mv_v / 22900.0) * 100.0
+
+        mv_cables.append({
+            "from": f"MV-TR (Block {blk})",
+            "to": "E-House 22.9kV VCB Feeder",
+            "voltage": "22.9kV AC 3-Phase",
+            "spec": "22.9kV CNCV-W 3C×250mm²",
+            "length_m": round(seg_len, 2),
+            "vdrop_pct": round(vdrop_mv_pct, 2)
+        })
+
+    # E-House Main VCB -> 주변압기(Main TR 154kV) 22.9kV 특고압 간선
+    if eh and main_tr:
+        eh_tr_pts = [
+            (eh_out_x, eh_out_y, 0.80),
+            (eh_out_x, eh_out_y, -0.70),
+            (tr_in_x, eh_out_y, -0.70),
+            (tr_in_x, tr_in_y, -0.70),
+            (tr_in_x, tr_in_y, 1.40)
+        ]
+        for p in eh_tr_pts:
+            mv_xs.append(p[0]); mv_ys.append(p[1]); mv_zs.append(p[2])
+        mv_xs.append(None); mv_ys.append(None); mv_zs.append(None)
+        mv_polylines_2d.append([(p[0], p[1]) for p in eh_tr_pts])
+
+        eh_tr_len = (abs(0.80 - (-0.70)) + abs(eh_out_x - tr_in_x) +
+                     abs(eh_out_y - tr_in_y) + abs(1.40 - (-0.70)) + 3.0)
+        total_mv_len += eh_tr_len
+        mv_cables.append({
+            "from": "E-House Main VCB",
+            "to": "Main TR 22.9kV Low Bushing",
+            "voltage": "22.9kV AC 3-Phase",
+            "spec": "22.9kV CNCV-W 1C×400mm²×3조",
+            "length_m": round(eh_tr_len, 2),
+            "vdrop_pct": 0.05
+        })
+
+    max_mv_len = max(mv_lengths) if mv_lengths else 0.0
+    max_mv_vdrop = max(c["vdrop_pct"] for c in mv_cables) if mv_cables else 0.0
+
+    # 4. 단자 접속점 마커 (Terminal Markers)
+    tm_xs, tm_ys, tm_zs, tm_colors, tm_labels = [], [], [], [], []
+    for enc in enc_boxes:
+        tm_xs.append(enc["x"] + enc["dx"] * 0.5)
+        tm_ys.append(enc["y"] + 0.35)
+        tm_zs.append(0.45)
+        tm_colors.append("#ff5722")
+        tm_labels.append(f"DC Terminal: {enc['label']}")
+
+    for pcs in pcs_boxes:
+        # DC 입력단
+        tm_xs.append(pcs["x"] + pcs["dx"] * 0.30)
+        tm_ys.append(pcs["y"] + 0.35)
+        tm_zs.append(0.55)
+        tm_colors.append("#ff9800")
+        tm_labels.append(f"DC Breaker: {pcs['label']}")
+        # LV AC 단자
+        tm_xs.append(pcs["x"] + pcs["dx"] * 0.75)
+        tm_ys.append(pcs["y"] + pcs["dy"] * 0.50)
+        tm_zs.append(0.70)
+        tm_colors.append("#10b981")
+        tm_labels.append(f"0.69kV Inverter AC: {pcs['label']}")
+        # MV TR 2차 부싱
+        tm_xs.append(pcs["x"] + pcs["dx"] - 0.30)
+        tm_ys.append(pcs["y"] + pcs["dy"] * 0.50)
+        tm_zs.append(1.30)
+        tm_colors.append("#3b82f6")
+        tm_labels.append(f"22.9kV MV Bushing: Block {pcs.get('block', 1)}")
+
+    if eh:
+        tm_xs.append(eh_in_x)
+        tm_ys.append(eh_in_y)
+        tm_zs.append(0.80)
+        tm_colors.append("#6366f1")
+        tm_labels.append("E-House 22.9kV VCB Incoming")
+
+    if main_tr:
+        tm_xs.append(tr_in_x)
+        tm_ys.append(tr_in_y)
+        tm_zs.append(1.40)
+        tm_colors.append("#8b5cf6")
+        tm_labels.append("Main TR 22.9/154kV Low Bushing")
+
+    # 5. 트렌치 케이블 점유율 (NEC 392 기준)
+    trench_w_m = layout["params"].get("trench_w", 0.8)
+    trench_d_m = 1.0
+    trench_area_mm2 = (trench_w_m * 1000.0) * (trench_d_m * 1000.0)
+    cables_in_main_trunk = len(enc_boxes) * 2 * 804.0 + len(pcs_boxes) * 3 * 2123.0
+    trench_fill_pct = min(100.0, (cables_in_main_trunk / (trench_area_mm2 * 0.6)) * 100.0)
+
+    return {
+        "dc_line_coords": (dc_xs, dc_ys, dc_zs),
+        "lv_line_coords": (lv_xs, lv_ys, lv_zs),
+        "mv_line_coords": (mv_xs, mv_ys, mv_zs),
+        "terminal_markers": (tm_xs, tm_ys, tm_zs, tm_colors, tm_labels),
+        "dc_polylines_2d": dc_polylines_2d,
+        "lv_polylines_2d": lv_polylines_2d,
+        "mv_polylines_2d": mv_polylines_2d,
+        "dc_cables": dc_cables,
+        "lv_cables": lv_cables,
+        "mv_cables": mv_cables,
+        "metrics": {
+            "total_dc_len_m": round(total_dc_len, 1),
+            "max_dc_len_m": round(max_dc_len, 1),
+            "min_dc_len_m": round(min_dc_len, 1),
+            "dc_imbalance_m": round(max_dc_len - min_dc_len, 1),
+            "total_lv_len_m": round(total_lv_len, 1),
+            "total_mv_len_m": round(total_mv_len, 1),
+            "max_mv_len_m": round(max_mv_len, 1),
+            "dc_vdrop_pct": round(max_dc_vdrop, 2),
+            "mv_vdrop_pct": round(max_mv_vdrop, 2),
+            "trench_fill_ratio_pct": round(trench_fill_pct, 1),
+            "all_pass": (max_dc_vdrop <= 1.0) and (max_mv_vdrop <= 2.0) and (trench_fill_pct <= 40.0),
+        }
+    }
 

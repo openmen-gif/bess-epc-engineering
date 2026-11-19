@@ -373,6 +373,21 @@ def test_heavy_equipment_simulation():
     o_xs, o_ys, o_zs = res["outrigger_boxes"]
     assert len(o_xs) > 0
 
+    # 4. 50T 크레인 실물 차체, 주행 이동 경로, 90° 코너 회전 궤적 검증
+    b_xs, b_ys, b_zs = res["crane_bodies"]
+    assert len(b_xs) > 0
+    ac_xs, ac_ys, ac_zs = res["access_routes"]
+    assert len(ac_xs) > 0
+    ct_xs, ct_ys, ct_zs = res["crane_turning_swept"]
+    assert len(ct_xs) > 0
+    assert res["crane_corner_clearance_m"] >= 0.0
+    assert res["crane_corner_pass"] is True
+
+    # 5. 3.5T 지게차 90° 작업 선회 궤적 검증
+    fk_xs, fk_ys, fk_zs = res["forklift_turning_swept"]
+    assert len(fk_xs) > 0
+    assert res["forklift_ast_m"] == 4.2
+
 
 def test_multiview_dxf_generation():
     """12개 전문 레이어, 평면도, 단면도(A-A, B-B), 표제란이 포함된 전문가 수준 DXF 검증."""
@@ -490,6 +505,48 @@ def test_liquid_cooling_architecture():
     assert any("배터리 랙" in name for name in air_trace_names)
     assert not any("냉매" in name for name in air_trace_names)
     assert not any("칠러" in name for name in air_trace_names)
+
+
+def test_cable_routing_and_electrical_wiring():
+    """DC 1500V, LV 0.69kV, MV 22.9kV 3상 전기 결선 및 케이블 루트 3D 생성 검증."""
+    from utils import site_layout as SL
+
+    lay = SL.build_layout(24, 6, include_infra=True)
+    res = SL.build_cable_wiring(lay)
+
+    # 1. 케이블 선로 수량 검증
+    # 배터리 인클로저 24기에 대한 1500V DC 스트링 결선 24회선
+    assert len(res["dc_cables"]) == 24
+    # PCS 6기에 대한 0.69kV 저압 3상 AC 결선 6회선
+    assert len(res["lv_cables"]) == 6
+    # 파워블록 6개 + E-House~Main TR 22.9kV 집전 간선 7회선
+    assert len(res["mv_cables"]) >= 7
+
+    # 2. 3D 좌표 생성 검증
+    dc_xs, dc_ys, dc_zs = res["dc_line_coords"]
+    assert len(dc_xs) > 0
+    assert None in dc_xs
+    lv_xs, lv_ys, lv_zs = res["lv_line_coords"]
+    assert len(lv_xs) > 0
+    mv_xs, mv_ys, mv_zs = res["mv_line_coords"]
+    assert len(mv_xs) > 0
+    tm_xs, tm_ys, tm_zs, tm_cols, tm_lbls = res["terminal_markers"]
+    assert len(tm_xs) >= 30
+
+    # 3. 엔지니어링 KPI 메트릭스 검증
+    m = res["metrics"]
+    assert m["total_dc_len_m"] > 0
+    assert m["max_dc_len_m"] >= m["min_dc_len_m"]
+    assert m["dc_vdrop_pct"] <= 1.0  # DC 전압강하율 1.0% 이하
+    assert m["mv_vdrop_pct"] <= 2.0  # MV 22.9kV 전압강하율 2.0% 이하
+    assert m["trench_fill_ratio_pct"] <= 40.0  # NEC 392 트렌치 점유율 40% 이하
+    assert m["all_pass"] is True
+
+    # 4. 멀티뷰 DXF에 전문 전기 케이블 레이어 포함 검증
+    dxf_str = SL.to_dxf(lay, multi_view=True)
+    assert "E-CABLE-DC-1500V" in dxf_str
+    assert "E-CABLE-AC-LV" in dxf_str
+    assert "E-CABLE-AC-MV" in dxf_str
 
 
 
