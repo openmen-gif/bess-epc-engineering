@@ -161,21 +161,21 @@ TOOL_META: dict[str, dict] = {
     },
     "BESS_GanttGen_v1.0": {
         "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",
-        "desc_en": "BESS EPC Gantt Scheduler (Excel Macro Workbook v1.10 with CPM/PERT, WBS, Gantt & S-Curve).",
-        "desc_ko": "BESS EPC 통합 공정 스케줄러 (CPM/PERT 주공정선, WBS, 간트 차트, S-Curve 통합 Excel 매크로 워크북 v1.10).",
+        "desc_en": "epc_gantt_lite v0.6.2 skill-based light CPM Gantt scheduler (Excel Macro Workbook).",
+        "desc_ko": "epc_gantt_lite v0.6.2 스킬 기반 초경량 BESS 공정 스케줄러 (고속 CPM 연산 및 자동 간트 차트 Excel 매크로 워크북).",
         "icon": "📅", "ext": "xlsm",
     },
-    "EPC_GanttScheduler_BESS_200MW_v1.10": {
+    "EPC_Lite_Calculation_Blank_v0.6.2": {
         "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",
-        "desc_en": "BESS 200MW/400MWh EPC Schedule Example (101 WBS rows, Critical Path Analysis Excel v1.10).",
-        "desc_ko": "BESS 200MW/400MWh EPC 실제 공정표 예제 (101개 WBS, 주공정 CPM 분석 Excel 워크북 v1.10).",
-        "icon": "📊", "ext": "xlsm",
-    },
-    "EPC_GanttScheduler_Template_v1.10": {
-        "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",
-        "desc_en": "BESS EPC Standard Schedule Blank Template (Excel Macro Workbook v1.10 for new bids).",
-        "desc_ko": "BESS EPC 표준 공정표 공란 템플릿 (신규 입찰 및 착공 프로젝트용 Excel 매크로 워크북 v1.10).",
+        "desc_en": "epc_gantt_lite v0.6.2 blank schedule calculation template (Excel Macro Workbook).",
+        "desc_ko": "epc_gantt_lite v0.6.2 신규 공정표 계산 빈 템플릿 (구조 편집/잠긴 셀 오류 해결/초고속 1.5s 연산 엔진 내장 Blank XLSM).",
         "icon": "📋", "ext": "xlsm",
+    },
+    "EPC_Lite_Calculation_Sample_v0.6.2": {
+        "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",
+        "desc_en": "epc_gantt_lite v0.6.2 sample project schedule with 26 simulated tasks (Excel Macro Workbook).",
+        "desc_ko": "epc_gantt_lite v0.6.2 표준 샘플 공정표 (26개 가상 작업, 주공정선 CPM, A3 가로 간트 출력 지원 XLSM).",
+        "icon": "📊", "ext": "xlsm",
     },
     "BESS_RiskRegister_v1.0": {
         "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",

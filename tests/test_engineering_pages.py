@@ -550,36 +550,44 @@ def test_cable_routing_and_electrical_wiring():
 
 
 def test_tool_launcher_epc_gantt_scheduler_excel_format():
-    """08 도구 런처의 BESS_GanttGen 및 EPC Gantt Scheduler 엑셀(.xlsm) 포맷 교체 검증."""
+    """08 도구 런처의 BESS_GanttGen 및 epc_gantt_lite v0.6.2 엑셀(.xlsm) 포맷 교체 검증."""
+    import sys
     from pathlib import Path
     import importlib.util
 
     # 08_Tool_Launcher 모듈 로드
-    mod_path = Path(__file__).resolve().parents[1] / "pages" / "08_Tool_Launcher.py"
+    dash_dir = Path(__file__).resolve().parents[1]
+    if str(dash_dir) not in sys.path:
+        sys.path.insert(0, str(dash_dir))
+
+    mod_path = dash_dir / "pages" / "08_Tool_Launcher.py"
     spec = importlib.util.spec_from_file_location("tool_launcher", mod_path)
     tl = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tl)
 
     meta = tl.TOOL_META
 
-    # 1. BESS_GanttGen_v1.0 이 .xlsm 매크로 워크북 포맷으로 교체되었는지 확인
+    # 1. BESS_GanttGen_v1.0 이 .xlsm 매크로 워크북 포맷(epc_gantt_lite 0.6.2)으로 교체되었는지 확인
     assert "BESS_GanttGen_v1.0" in meta
     assert meta["BESS_GanttGen_v1.0"].get("ext") == "xlsm"
-    assert "Excel" in meta["BESS_GanttGen_v1.0"]["desc_ko"] or "엑셀" in meta["BESS_GanttGen_v1.0"]["desc_ko"]
+    assert "0.6.2" in meta["BESS_GanttGen_v1.0"]["desc_ko"] or "epc_gantt_lite" in meta["BESS_GanttGen_v1.0"]["desc_ko"]
 
-    # 2. 신규 EPC_GanttScheduler 200MW 예제 및 템플릿 등록 확인
-    assert "EPC_GanttScheduler_BESS_200MW_v1.10" in meta
-    assert meta["EPC_GanttScheduler_BESS_200MW_v1.10"]["ext"] == "xlsm"
-    assert "EPC_GanttScheduler_Template_v1.10" in meta
-    assert meta["EPC_GanttScheduler_Template_v1.10"]["ext"] == "xlsm"
+    # 2. 신규 epc_gantt_lite 0.6.2 Blank 템플릿 및 Sample 워크북 등록 확인
+    assert "EPC_Lite_Calculation_Blank_v0.6.2" in meta
+    assert meta["EPC_Lite_Calculation_Blank_v0.6.2"]["ext"] == "xlsm"
+    assert "EPC_Lite_Calculation_Sample_v0.6.2" in meta
+    assert meta["EPC_Lite_Calculation_Sample_v0.6.2"]["ext"] == "xlsm"
 
-    # 3. executables 폴더에 실제 번들된 .xlsm 파일 크기 및 무결성 확인
+    # 3. executables 폴더에 실제 번들된 epc_gantt_lite v0.6.2 .xlsm 파일 크기 및 무결성 확인
     exec_dir = Path(__file__).resolve().parents[1] / "executables"
     assert exec_dir.is_dir()
-    xlsm_files = list(exec_dir.glob("*.xlsm"))
-    assert len(xlsm_files) >= 2
-    for xf in xlsm_files:
-        assert xf.stat().st_size > 200_000  # 200KB 이상 실물 엑셀 통합문서 확인
+    blank_file = exec_dir / "EPC_Lite_Calculation_Blank_v0.6.2.xlsm"
+    sample_file = exec_dir / "EPC_Lite_Calculation_Sample_v0.6.2.xlsm"
+    gantt_gen = exec_dir / "BESS_GanttGen_v1.0.xlsm"
+
+    assert blank_file.exists() and blank_file.stat().st_size > 300_000
+    assert sample_file.exists() and sample_file.stat().st_size > 300_000
+    assert gantt_gen.exists() and gantt_gen.stat().st_size > 300_000
 
 
 
