@@ -16,8 +16,8 @@ from utils import site_layout as SL
 from utils.engineering_viewer import render_viewer, site_payload
 
 _KIND = {  # 종류 → (한글, 영문, 색)
-    "enc":        ("배터리 인클로저", "Battery enclosure", "#3fb950"),
-    "pcs":        ("PCS/MV 스키드", "PCS/MV skid", "#58a6ff"),
+    "enc":        ("배터리 인클로저", "Battery enclosure", "#f8fafc"),
+    "pcs":        ("PCS/MV 스키드", "PCS/MV skid", "#1565c0"),
     "tr":         ("주변압기 (POI)", "Main transformer (POI)", "#e3b341"),
     "bund":       ("변압기 방유제 (Bund)", "Transformer Bund Wall", "#8b949e"),
     "ehouse":     ("E-House (수배전반/제어실)", "E-House (Switchgear/Control)", "#00b4d8"),
@@ -195,10 +195,12 @@ def run_site_layout_module():
     )
     ratio_enc_pcs = m['n_enc'] / max(m['n_pcs'], 1)
     c_opt3.metric(
-        L("PCS 1기당 배터리 연계비율", "Battery per PCS Ratio"),
-        f"{ratio_enc_pcs:.1f} : 1",
-        help=L(f"블록당 평균 {ratio_enc_pcs:.1f}기 배터리 인클로저가 PCS 1기에 연계됩니다.",
-               f"Average {ratio_enc_pcs:.1f} battery enclosures connected per PCS skid.")
+        L("PCS 1기당 배터리 연계", "Battery per PCS"),
+        f"1 : {ratio_enc_pcs:.1f}",
+        delta=L(f"총 {m.get('power_blocks_count', m['n_pcs'])}개 파워블록", f"{m.get('power_blocks_count', m['n_pcs'])} Power Blocks"),
+        delta_color="normal",
+        help=L(f"블록당 평균 {ratio_enc_pcs:.1f}기 배터리 인클로저가 PCS 1기와 Center-Fed 대칭 연계됩니다.",
+               f"Average {ratio_enc_pcs:.1f} battery enclosures per PCS skid in symmetric bay.")
     )
     c_opt4.metric(
         L("E-House (수배전반/EMS)", "E-House Facility"),
@@ -336,6 +338,18 @@ def run_site_layout_module():
                 name=L("소화전 40m 방호구역 (돔)", "Hydrant 40m Coverage Dome"),
                 hoverinfo="skip", showlegend=True
             ))
+    # 파워 블록(Power Block: 1 PCS + N Battery) 바닥 구획선 가시화
+    for pb in lay.get("power_blocks", []):
+        pbx = [pb["x"], pb["x"] + pb["dx"], pb["x"] + pb["dx"], pb["x"], pb["x"], None]
+        pby = [pb["y"], pb["y"], pb["y"] + pb["dy"], pb["y"] + pb["dy"], pb["y"], None]
+        fig.add_trace(go.Scatter3d(
+            x=pbx, y=pby, z=[0.02] * 5 + [None], mode="lines",
+            line=dict(color="#1f6feb", width=3, dash="dash"),
+            name=L("파워블록(1 PCS:N Bat) 구획", "Power Block Bay Outline"),
+            hovertext=L(f"파워블록 #{pb['block']}: {pb['pcs_label']} 연계 (배터리 {pb['n_enc']}기)",
+                        f"Power Block #{pb['block']}: {pb['pcs_label']} ({pb['n_enc']} Bat)"),
+            hoverinfo="text", showlegend=(pb["block"] == 1)
+        ))
     # 기준안이 더 크면 축 범위를 넓혀 이전 윤곽이 잘리지 않게
     bw = max([x["x"] + x["dx"] for x in base["boxes"]], default=0.0) if base else 0.0
     bh = max([x["y"] + x["dy"] for x in base["boxes"]], default=0.0) if base else 0.0

@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 ENC_H = 2.9       # [가정] 20ft HC 인클로저 높이
-PCS_DIM = (6.05, 2.44, 2.9)   # [가정] PCS/MV 스키드
+PCS_DIM = (6.05, 2.44, 2.40)   # [실물 규격] PCS/MV 오픈 스키드 (배터리 컨테이너 2.9m 대비 낮은 2.4m + 상부 부싱)
 TR_DIM = (8.0, 6.0, 5.0)      # [가정] 주변압기 외형 (MVA 별 외형은 제작사 도면 확정)
 EHOUSE_DIM = (12.19, 2.44, 2.9)  # [가정] 40ft HC 수배전반(Switchgear) 및 제어실(EMS/SCADA) E-House
 PUMP_DIM = (6.05, 2.44, 2.9)      # [가정] 소방 가압 펌프실 20ft 컨테이너
@@ -70,31 +70,37 @@ def build_layout(n_enc, n_pcs, enc_l=6.05, enc_w=2.44, unit_gap=3.0, boundary=3.
     block_dep = max(enc_w, pcs_w)
     row_gap = max(aisle, unit_gap)
 
-    # 정사각형에 가장 가까운 블록 열 수
+    tank_side = math.sqrt(water_m3 / TANK_H) if water_m3 > 0 else 0.0
+    b = boundary
+    band = max(tr_w + (1.2 if include_infra else 0.0), tank_side, (eh_w if include_ehouse else 0.0))  # 남측 띠 깊이 — 방유제/대형 설비 이격대 침범 방지
+    south_eq_w = tr_l + (tr_clear + eh_l if include_ehouse else 0.0) + (tr_clear + tank_side if tank_side else 0.0)
+    if include_infra:
+        south_eq_w += (2.5 + pump_l) + (2.5 + st_l) + 2.4
+
+    # 부지 총면적 (Site_W × Site_H) 최소화 전역 최적화 알고리즘
     best = None
     for c in range(1, n_pcs + 1):
         r = math.ceil(n_pcs / c)
         w = c * block_len + (c - 1) * unit_gap
         h = r * block_dep + (r - 1) * row_gap
-        score = abs(math.log(w / h))
+        cand_site_w = max(b + w + unit_gap + b, 2 * b + south_eq_w)
+        cand_site_h = b + band + tr_clear + h + b
+        cand_area = cand_site_w * cand_site_h
+        aspect_ratio = cand_site_w / max(cand_site_h, 1e-6)
+        aspect_penalty = abs(math.log(aspect_ratio))
+        # 1순위: 부지 전체 면적 최소화, 2순위: 정사각형 근접도 (동점 시)
+        score = (round(cand_area, 2), aspect_penalty)
         if best is None or score < best[0]:
             best = (score, c, r, w, h)
     _, cols, rows, arr_w, arr_h = best
 
-    tank_side = math.sqrt(water_m3 / TANK_H) if water_m3 > 0 else 0.0
-    b = boundary
-    band = max(tr_w + (1.2 if include_infra else 0.0), tank_side, (eh_w if include_ehouse else 0.0))  # 남측 띠 깊이 — 방유제/대형 설비 이격대 침범 방지
     y_trunk = b + band + tr_clear / 2.0
     y_arr = b + band + tr_clear
     x_arr = b
 
-    south_eq_w = tr_l + (tr_clear + eh_l if include_ehouse else 0.0) + (tr_clear + tank_side if tank_side else 0.0)
-    if include_infra:
-        south_eq_w += (2.5 + pump_l) + (2.5 + st_l) + 2.4
-    site_w_est = max(x_arr + arr_w + unit_gap, 2 * b + south_eq_w) + b
-    site_w = site_w_est
+    site_w = max(x_arr + arr_w + unit_gap + b, 2 * b + south_eq_w)
 
-    boxes, trench = [], []
+    boxes, trench, power_blocks = [], [], []
 
     # 남측 설비 기본 y (방유제 1.2m 확장을 고려하여 boundary 이격 확보)
     y_south = b + (1.2 if include_infra else 0.0)
@@ -180,6 +186,14 @@ def build_layout(n_enc, n_pcs, enc_l=6.05, enc_w=2.44, unit_gap=3.0, boundary=3.
         bx = x_arr + c * (block_len + unit_gap)
         by = y_arr + r * (block_dep + row_gap)
         y_pcs = by + pcs_w / 2.0
+
+        # 파워 블록(Power Block: 1 PCS + N Battery) 바닥 구획선 정보
+        power_blocks.append(dict(
+            block=i + 1,
+            x=bx - 0.25, y=by - 0.25,
+            dx=block_len + 0.50, dy=block_dep + 0.50,
+            n_enc=cnt, pcs_label=f"PCS-{i + 1:02d}",
+        ))
 
         if is_center_fed:
             # 중앙 집중 대칭형: PCS 를 가운데 두고 배터리를 좌우 균등 배치
@@ -296,12 +310,14 @@ def build_layout(n_enc, n_pcs, enc_l=6.05, enc_w=2.44, unit_gap=3.0, boundary=3.
 
     return dict(
         boxes=boxes, trench=trench, trench_w=trench_w,
+        power_blocks=power_blocks,
         fence=[(0.0, 0.0), (site_w, 0.0), (site_w, site_h), (0.0, site_h), (0.0, 0.0)],
         site=(site_w, site_h),
         metrics=dict(
             site_area_m2=site_w * site_h, site_w_m=site_w, site_h_m=site_h,
             trench_len_m=trench_len, longest_cable_m=max(runs), n_enc=n_enc, n_pcs=n_pcs,
             blocks_cols=cols, blocks_rows=rows, enc_per_block=per, tank_m3=water_m3,
+            power_blocks_count=len(power_blocks), enc_per_pcs_ratio=round(n_enc / max(n_pcs, 1), 1),
             pcs_clipped=pcs_clipped, row_gap_m=row_gap + (block_dep - enc_w),
             topology=topology, tr_pos=tr_pos,
             include_ehouse=include_ehouse,

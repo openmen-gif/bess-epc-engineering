@@ -281,6 +281,51 @@ def test_hydrant_fire_coverage_verification():
     assert len(dii) == len(djj) == len(dkk)
 
 
+def test_power_block_allocation_and_site_area_optimization():
+    """PCS 대당 배터리 파워블록 연계 및 부지 총면적 최소화 전역 최적화 검증."""
+    from utils import site_layout as SL
+
+    # 1. 20개 배터리 + 5개 PCS (1:4 비율)
+    lay = SL.build_layout(
+        20, 5,
+        topology="center_fed",
+        tr_pos="center",
+        include_ehouse=True,
+        include_infra=True
+    )
+
+    # 파워 블록(Power Block: 1 PCS + N Battery) 구획 정보 검증
+    pb_list = lay.get("power_blocks", [])
+    assert len(pb_list) == 5
+    for i, pb in enumerate(pb_list):
+        assert pb["block"] == i + 1
+        assert pb["n_enc"] == 4  # 20 // 5 = 4기씩 정확히 연계
+        assert pb["pcs_label"] == f"PCS-{i + 1:02d}"
+        assert pb["dx"] > 0 and pb["dy"] > 0
+
+    assert lay["metrics"]["power_blocks_count"] == 5
+    assert lay["metrics"]["enc_per_pcs_ratio"] == 4.0
+
+    # 2. PCS와 배터리 인클로저 형상/치수 차별화 검증
+    pcs_boxes = [b for b in lay["boxes"] if b["kind"] == "pcs"]
+    enc_boxes = [b for b in lay["boxes"] if b["kind"] == "enc"]
+    assert len(pcs_boxes) == 5
+    assert len(enc_boxes) == 20
+
+    # PCS는 배터리 컨테이너(2.9m)와 구분되는 2.4m 높이
+    assert pcs_boxes[0]["dz"] == 2.40
+    assert enc_boxes[0]["dz"] == 2.90
+
+    # 3. 부지 기하 제약 검증 (최적화 후에도 겹침 0 및 이격거리 충족)
+    chk = SL.check_layout(lay)
+    assert chk["overlaps"] == 0
+    assert chk["unit_ok"] is True
+    assert chk["tr_ok"] is True
+    assert chk["boundary_ok"] is True
+    assert lay["metrics"]["site_area_m2"] > 0
+
+
+
 
 
 

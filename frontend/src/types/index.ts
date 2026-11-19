@@ -48,6 +48,17 @@ export interface SceneData {
   times?: number[];         // 시뮬레이션 타임스텝
   states?: number[][];      // 시뮬레이션 상태 프레임
   fields?: number[][][];    // 온도장 / 압력장 프레임
+  power_blocks?: PowerBlock[]; // 파워 블록(1 PCS : N Battery) 구획
+}
+
+export interface PowerBlock {
+  block: number;
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  n_enc: number;
+  pcs_label: string;
 }
 
 export interface ViewerProps {

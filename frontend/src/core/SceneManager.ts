@@ -164,8 +164,12 @@ export class SceneManager {
 
     boxes.forEach((boxData) => {
       const { x, y, dx, dy, dz, kind } = boxData;
-      let color = '#3fb950'; // 기본: 배터리 인클로저
-      if (kind === 'pcs') color = '#58a6ff';
+      let color = '#f8fafc'; // 기본: 배터리 인클로저 (클린 화이트)
+      let edgeColor = '#2ea44f';
+      if (kind === 'pcs') {
+        color = '#1565c0'; // PCS/MV 스키드: 딥 일렉트릭 블루
+        edgeColor = '#0d47a1';
+      }
       else if (kind === 'tr') color = '#e3b341';
       else if (kind === 'tank') color = '#79c0ff';
       else if (kind === 'rack') color = '#a371f7';
@@ -178,8 +182,8 @@ export class SceneManager {
 
       const mat = new THREE.MeshStandardMaterial({
         color,
-        roughness: 0.65,
-        metalness: 0.25,
+        roughness: kind === 'pcs' ? 0.45 : 0.75,
+        metalness: kind === 'pcs' ? 0.35 : 0.15,
         clippingPlanes: [this.clippingPlane],
       });
 
@@ -196,12 +200,23 @@ export class SceneManager {
 
       // 모서리 외곽선 생성
       const edgeGeo = new THREE.EdgesGeometry(this.cubeGeometry);
-      const edgeMat = new THREE.LineBasicMaterial({ color: '#58a6ff', transparent: true, opacity: 0.5 });
+      const edgeMat = new THREE.LineBasicMaterial({ color: edgeColor, transparent: true, opacity: 0.65 });
       const edgeMesh = new THREE.LineSegments(edgeGeo, edgeMat);
       edgeMesh.position.copy(mesh.position);
       edgeMesh.scale.copy(mesh.scale);
       this.groups.equipment.add(edgeMesh);
       this.edges.push(edgeMesh);
+
+      // PCS 상부 3상 고전압 연계 부싱
+      if (kind === 'pcs') {
+        for (let i = 0; i < 3; i++) {
+          const bushGeo = new THREE.CylinderGeometry(dx * 0.022, dx * 0.035, dz * 0.22, 12);
+          const bushMat = new THREE.MeshStandardMaterial({ color: '#8d6e63' });
+          const bush = new THREE.Mesh(bushGeo, bushMat);
+          bush.position.set(x + dx * (0.22 + i * 0.16), dz + dz * 0.11, -y - dy * 0.5);
+          this.groups.equipment.add(bush);
+        }
+      }
 
       // 소화전 40m 방수 반경 원형 링 (NFPA 24)
       if (kind === 'hydrant') {
@@ -218,6 +233,22 @@ export class SceneManager {
         this.groups.utilities.add(ringMesh);
       }
     });
+
+    // 파워 블록(Power Block: 1 PCS + N Battery) 바닥 구획선 렌더링
+    if (this.sceneData.power_blocks && this.sceneData.power_blocks.length > 0) {
+      this.sceneData.power_blocks.forEach((pb) => {
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(pb.x, 0.02, -pb.y),
+          new THREE.Vector3(pb.x + pb.dx, 0.02, -pb.y),
+          new THREE.Vector3(pb.x + pb.dx, 0.02, -pb.y - pb.dy),
+          new THREE.Vector3(pb.x, 0.02, -pb.y - pb.dy),
+          new THREE.Vector3(pb.x, 0.02, -pb.y),
+        ]);
+        const lineMat = new THREE.LineBasicMaterial({ color: '#1f6feb', transparent: true, opacity: 0.6 });
+        const line = new THREE.Line(lineGeo, lineMat);
+        this.groups.civil.add(line);
+      });
+    }
   }
 
   private initEventListeners(): void {

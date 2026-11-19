@@ -80,9 +80,9 @@ const grid=new THREE.GridHelper(Math.max(W,H)*1.2,Math.min(100,Math.max(10,Math.
 
 function equipment(b){
   const {x,y,dx,dy,dz}=b;
-  const color=b.kind==='pcs'?'#c3d4dd':b.kind==='tr'?'#829795':b.kind==='tank'?'#b8cacc':b.kind==='rack'?'#354c5e':b.kind==='ehouse'?'#00b4d8':b.kind==='bund'?'#6c757d':b.kind==='hydrant'?'#e63946':b.kind==='pump_house'?'#d90429':b.kind==='storage'?'#4a5568':b.kind==='basin'?'#2a9d8f':'#dce3e0';
+  const color=b.kind==='pcs'?'#1565c0':b.kind==='tr'?'#829795':b.kind==='tank'?'#b8cacc':b.kind==='rack'?'#354c5e':b.kind==='ehouse'?'#00b4d8':b.kind==='bund'?'#6c757d':b.kind==='hydrant'?'#e63946':b.kind==='pump_house'?'#d90429':b.kind==='storage'?'#4a5568':b.kind==='basin'?'#2a9d8f':'#f8fafc';
   const body=box(groups.equipment,x,y,0,dx,dy,dz,mat(color),D.boxes.length<220);body.userData.asset=b;pickables.push(body);
-  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(cube),new THREE.LineBasicMaterial({color:'#2a4557',transparent:true,opacity:.65,clippingPlanes:[clipping]}));edge.scale.copy(body.scale);edge.position.copy(body.position);edge.visible=false;groups.equipment.add(edge);edges.push(edge);
+  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(cube),new THREE.LineBasicMaterial({color:b.kind==='pcs'?'#0d47a1':'#2a4557',transparent:true,opacity:.65,clippingPlanes:[clipping]}));edge.scale.copy(body.scale);edge.position.copy(body.position);edge.visible=false;groups.equipment.add(edge);edges.push(edge);
   const asset={b,body,edge};assets.push(asset);
   if(labelList.length<36)labelList.push(label(b.label,x+dx/2,y+dy/2,dz+.35));
   if(b.kind==='tr'){
@@ -92,6 +92,19 @@ function equipment(b){
       const insulator=new THREE.Mesh(new THREE.CylinderGeometry(dx*.025,dx*.035,dz*.3,12),mat('#5e4740'));insulator.position.set(x+dx*(.3+i*.2),dz*.75,-y-dy*.5);groups.equipment.add(insulator);
       for(let j=0;j<5;j++)detail(groups.equipment,x+dx*(.27+i*.2),y+dy*.46,dz*(.6+j*.055),dx*.06,dy*.08,dz*.016,dark);
     }
+  } else if(b.kind==='pcs'){
+    // [실물 PCS/MV 스키드] 오픈 스키드 베이스 + 상부 3상 부싱 + 변압기 방열핀 + 인버터 환기 팬
+    detail(groups.equipment,x,y,0,dx,dy,.14,dark); // H-Beam 스키드 베이스
+    for(let i=0;i<3;i++){
+      const bush=new THREE.Mesh(new THREE.CylinderGeometry(dx*.022,dx*.035,dz*.22,12),mat('#8d6e63'));
+      bush.position.set(x+dx*(.22+i*.16),dz+dz*.11,-y-dy*.5);
+      groups.equipment.add(bush);
+    }
+    for(let k=0;k<6;k++)detail(groups.equipment,x+dx*.68,y+dy*(.08+k*.14),.15,dx*.26,dy*.06,dz*.72,steel); // TR 방열핀
+    for(let r=0;r<2;r++) for(let c=0;c<2;c++){
+      detail(groups.equipment,x+dx*(.10+c*.24),y-.02,dz*(.2+r*.36),dx*.18,dy*.03,dz*.24,dark); // 인버터 팬 그릴
+    }
+    detail(groups.equipment,x+dx*.50,y-.03,dz*.45,dx*.10,.03,dz*.20,accent); // 인버터 제어반
   } else if(b.kind==='tank'){
     // Rectangular panel tank preserves the calculated storage footprint and volume.
     for(let i=1;i<Math.min(12,Math.ceil(dx));i++)detail(groups.equipment,x+i*dx/Math.ceil(dx),y-.015,.05,.025,.025,dz-.1,steel);
@@ -101,19 +114,18 @@ function equipment(b){
   } else if(b.kind==='rack'){
     for(let k=0;k<7;k++){detail(groups.equipment,x+.04,y-.012,.15+k*dz*.115,Math.max(.05,dx-.08),.035,dz*.087,white);detail(groups.equipment,x+dx*.75,y-.035,.18+k*dz*.115,.04,.02,.025,accent);}
   } else {
-    // Corrugation, door seams, louvres and plinth remain within the equipment envelope.
+    // [배터리 인클로저] 밀폐형 클린 화이트 컨테이너 + NFPA 68 루프 방폭 해치 2개 + HVAC 칠러팩 + 녹색 LED
+    detail(groups.equipment,x+dx*.20,y+dy*.30,dz,dx*.22,dy*.40,.06,dark); // 루프 방폭 해치 1
+    detail(groups.equipment,x+dx*.58,y+dy*.30,dz,dx*.22,dy*.40,.06,dark); // 루프 방폭 해치 2
     for(let i=1;i<Math.min(34,Math.ceil(dx/.22));i++)detail(groups.equipment,x+i*dx/Math.ceil(dx/.22),y-.018,.12,.025,.025,dz-.24,white);
     for(let j=0;j<2;j++){
       detail(groups.equipment,x+dx*.035,y+dy*(.08+j*.43),.10,.025,dy*.39,dz*.88,steel);
       detail(groups.equipment,x-.015,y+dy*(.12+j*.43),.16,.035,dy*.33,dz*.8,white);
-      detail(groups.equipment,x-.04,y+dy*(.34+j*.43),dz*.32,.035,.035,dz*.4,steel);
     }
     detail(groups.equipment,x,y,dz-.08,dx,dy,.08,white);
     detail(groups.equipment,x,y,.04,dx,dy,.09,dark);
-    detail(groups.equipment,x+dx*.65,y-.027,dz*.3,dx*.25,.03,dz*.48,dark);
-    for(let k=0;k<8;k++)detail(groups.equipment,x+dx*.66,y-.045,dz*(.32+k*.054),dx*.23,.025,.025,steel);
-    detail(groups.equipment,x+dx*.08,y-.04,dz*.68,Math.min(.35,dx*.1),.02,.18,red);
-    detail(groups.equipment,x+dx*.08,y-.04,dz*.18,dx*.4,.025,.1,accent);
+    detail(groups.equipment,x+dx*.80,y-.03,dz*.25,dx*.16,.035,dz*.55,accent); // 배터리 HVAC 칠러팩
+    detail(groups.equipment,x+dx*.06,y-.025,dz*.85,dx*.70,.02,.04,mat('#2ea44f')); // 가동 상태 LED 스트립
   }
   if(b.kind==='hydrant'){
     const rPts=[];
@@ -124,6 +136,10 @@ function equipment(b){
 }
 D.boxes.forEach(equipment);
 (D.pads||[]).forEach(b=>box(groups.civil,b.x,b.y,b.z??-.3,b.dx,b.dy,b.dz,concrete));
+(D.power_blocks||[]).forEach(pb=>{
+  const pts=[[pb.x,pb.y,.02],[pb.x+pb.dx,pb.y,.02],[pb.x+pb.dx,pb.y+pb.dy,.02],[pb.x,pb.y+pb.dy,.02],[pb.x,pb.y,.02]];
+  line(groups.civil,pts,'#1f6feb',.55);
+});
 if(!isSite)box(groups.civil,0,0,-.3,W,H,.3,concrete);
 for(const path of D.trench||[]) for(let i=1;i<path.length;i++){
   const a=path[i-1],b=path[i],tw=D.trenchWidth;

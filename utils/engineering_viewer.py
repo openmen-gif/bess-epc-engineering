@@ -34,6 +34,7 @@ def site_payload(layout, pad_l, pad_w, trench_d, language="KO", baseline=None):
     d.update(boxes=layout["boxes"], pads=SL.pad_boxes(layout, pad_l, pad_w),
              trench=layout["trench"], trenchWidth=layout["trench_w"], trenchDepth=trench_d,
              fence=layout["fence"], fenceHeight=EP.FENCE_HEIGHT_M,
+             power_blocks=layout.get("power_blocks", []),
              baseline=baseline["boxes"] if baseline else [],
              metrics=layout["metrics"])
     return d
