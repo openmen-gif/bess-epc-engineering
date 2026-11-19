@@ -549,6 +549,39 @@ def test_cable_routing_and_electrical_wiring():
     assert "E-CABLE-AC-MV" in dxf_str
 
 
+def test_tool_launcher_epc_gantt_scheduler_excel_format():
+    """08 도구 런처의 BESS_GanttGen 및 EPC Gantt Scheduler 엑셀(.xlsm) 포맷 교체 검증."""
+    from pathlib import Path
+    import importlib.util
+
+    # 08_Tool_Launcher 모듈 로드
+    mod_path = Path(__file__).resolve().parents[1] / "pages" / "08_Tool_Launcher.py"
+    spec = importlib.util.spec_from_file_location("tool_launcher", mod_path)
+    tl = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tl)
+
+    meta = tl.TOOL_META
+
+    # 1. BESS_GanttGen_v1.0 이 .xlsm 매크로 워크북 포맷으로 교체되었는지 확인
+    assert "BESS_GanttGen_v1.0" in meta
+    assert meta["BESS_GanttGen_v1.0"].get("ext") == "xlsm"
+    assert "Excel" in meta["BESS_GanttGen_v1.0"]["desc_ko"] or "엑셀" in meta["BESS_GanttGen_v1.0"]["desc_ko"]
+
+    # 2. 신규 EPC_GanttScheduler 200MW 예제 및 템플릿 등록 확인
+    assert "EPC_GanttScheduler_BESS_200MW_v1.10" in meta
+    assert meta["EPC_GanttScheduler_BESS_200MW_v1.10"]["ext"] == "xlsm"
+    assert "EPC_GanttScheduler_Template_v1.10" in meta
+    assert meta["EPC_GanttScheduler_Template_v1.10"]["ext"] == "xlsm"
+
+    # 3. executables 폴더에 실제 번들된 .xlsm 파일 크기 및 무결성 확인
+    exec_dir = Path(__file__).resolve().parents[1] / "executables"
+    assert exec_dir.is_dir()
+    xlsm_files = list(exec_dir.glob("*.xlsm"))
+    assert len(xlsm_files) >= 2
+    for xf in xlsm_files:
+        assert xf.stat().st_size > 200_000  # 200KB 이상 실물 엑셀 통합문서 확인
+
+
 
 
 

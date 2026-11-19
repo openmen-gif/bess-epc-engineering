@@ -161,8 +161,21 @@ TOOL_META: dict[str, dict] = {
     },
     "BESS_GanttGen_v1.0": {
         "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",
-        "desc_en": "Gantt chart generator for BESS EPC project schedules.",
-        "desc_ko": "BESS EPC 프로젝트 일정 Gantt 차트 생성.", "icon": "📅",
+        "desc_en": "BESS EPC Gantt Scheduler (Excel Macro Workbook v1.10 with CPM/PERT, WBS, Gantt & S-Curve).",
+        "desc_ko": "BESS EPC 통합 공정 스케줄러 (CPM/PERT 주공정선, WBS, 간트 차트, S-Curve 통합 Excel 매크로 워크북 v1.10).",
+        "icon": "📅", "ext": "xlsm",
+    },
+    "EPC_GanttScheduler_BESS_200MW_v1.10": {
+        "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",
+        "desc_en": "BESS 200MW/400MWh EPC Schedule Example (101 WBS rows, Critical Path Analysis Excel v1.10).",
+        "desc_ko": "BESS 200MW/400MWh EPC 실제 공정표 예제 (101개 WBS, 주공정 CPM 분석 Excel 워크북 v1.10).",
+        "icon": "📊", "ext": "xlsm",
+    },
+    "EPC_GanttScheduler_Template_v1.10": {
+        "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",
+        "desc_en": "BESS EPC Standard Schedule Blank Template (Excel Macro Workbook v1.10 for new bids).",
+        "desc_ko": "BESS EPC 표준 공정표 공란 템플릿 (신규 입찰 및 착공 프로젝트용 Excel 매크로 워크북 v1.10).",
+        "icon": "📋", "ext": "xlsm",
     },
     "BESS_RiskRegister_v1.0": {
         "category_en": "Project Mgmt", "category_ko": "프로젝트 관리",
@@ -265,7 +278,7 @@ CATEGORY_ORDER_KO = ["엔지니어링 계산",  "시뮬레이션",    "프로젝
 
 def _get_stem(name: str) -> str:
     """Remove file extension and return the stem."""
-    for ext in ('.exe', '.EXE', '.xlsx', '.XLSX'):
+    for ext in ('.exe', '.EXE', '.xlsx', '.XLSX', '.xlsm', '.XLSM'):
         if name.endswith(ext):
             return name[:-len(ext)]
     return name
@@ -304,7 +317,7 @@ def run_tool_launcher_module():
 
     if use_local:
         exe_files = sorted(
-            [f for f in EXEC_DIR.iterdir() if f.suffix.lower() in ('.exe', '.xlsx') and f.name.startswith('BESS_')],
+            [f for f in EXEC_DIR.iterdir() if f.suffix.lower() in ('.exe', '.xlsx', '.xlsm') and (f.name.startswith('BESS_') or f.name.startswith('EPC_'))],
             key=lambda f: f.name.lower()
         )
     else:
@@ -366,13 +379,22 @@ def run_tool_launcher_module():
                 grouped[cat] = []
             grouped[cat].append((f, stem, meta))
     else:
-        # Cloud mode: use TOOL_META catalog
+        # Cloud mode: use TOOL_META catalog, with fallback to local bundled file if exists
+        root_dir = Path(__file__).resolve().parents[1]
+        bundled_dir = root_dir / "executables"
         for stem, meta in TOOL_META.items():
             cat = meta.get("category_en" if is_en else "category_ko",
                            "General Tools" if is_en else "일반 도구")
             if cat not in grouped:
                 grouped[cat] = []
-            grouped[cat].append((None, stem, meta))
+            f_cand = None
+            if bundled_dir.is_dir():
+                for ext in (meta.get("ext", "exe"), "xlsm", "xlsx", "exe"):
+                    p = bundled_dir / f"{stem}.{ext}"
+                    if p.is_file():
+                        f_cand = p
+                        break
+            grouped[cat].append((f_cand, stem, meta))
 
     category_order = CATEGORY_ORDER_EN if is_en else CATEGORY_ORDER_KO
     sorted_groups  = sorted(grouped.items(),
@@ -412,13 +434,13 @@ def run_tool_launcher_module():
                 st.markdown(f"**{stem}**")
                 st.caption(desc)
             with c3:
-                if use_local and f:
+                if f and f.is_file():
                     st.markdown(f"`{_file_size_mb(f):.1f} MB`")
                 else:
                     ext_label = meta.get("ext", "exe").upper()
                     st.markdown(f"`{ext_label}`")
             with c4:
-                if use_local and f:
+                if f and f.is_file():
                     try:
                         with open(f, "rb") as fh:
                             data = fh.read()
