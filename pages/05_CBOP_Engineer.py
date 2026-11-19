@@ -5,7 +5,9 @@ except Exception:
     pass
 
 import numpy as np
+import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.standards_helper import get_standards
@@ -253,7 +255,130 @@ def run_cbop_engineer_module():
                 st.caption(f"FM-200 GWP = {EP.FM200_GWP:,} — 규제 강화 추세" if is_ko
                            else f"FM-200 GWP = {EP.FM200_GWP:,} — tightening regulation")
 
-    _fire = dict(fire_agent=agent, fire_volume_m3=vol)
+        # ── 폭발 압력 방산 벤트 (NFPA 68 / NFPA 855 Deflagration Venting) ──
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("**💥 폭발 압력 방산 벤트 (NFPA 68 / NFPA 855 Deflagration Venting)**" if is_ko
+                    else "**💥 Explosion Pressure Relief (NFPA 68 / NFPA 855 Deflagration Venting)**")
+        vent_info = EP.deflagration_vent_area_m2(length_m=length, width_m=width, height_m=EP.ENC_HEIGHT_M)
+        vc1, vc2 = st.columns(2)
+        with vc1:
+            st.metric("인클로저 1기당 최소 방산 면적" if is_ko else "Min vent area per enclosure",
+                      f"{vent_info['vent_area_m2']} m²",
+                      help=(f"NFPA 68 식: Av = max(C·As/√Pred, V·0.02 m²/m³). "
+                            f"체적={vent_info['volume_m3']} m³, 표면적={vent_info['surface_area_m2']} m², "
+                            f"내압 Pred={vent_info['p_red_bar']} bar")
+                      if is_ko else f"NFPA 68 formula: Av = max(C·As/√Pred, V·0.02 m²/m³)")
+        with vc2:
+            st.metric("권장 루프 벤트 패널 수 (0.6×1.2m)" if is_ko else "Recommended roof panels (0.6×1.2m)",
+                      f"{vent_info['panels_req']} ea",
+                      help="표준 0.72 m² 방폭 파열판/해치 패널 기준" if is_ko else "Basis: standard 0.72 m² rupture panel")
+        st.caption("ℹ️ NFPA 855 §4.3: 배터리 열폭주 가연성 가스(H₂, CO) 폭발 시 구조체 파열 방지를 위한 지붕 방산구 설치 의무" if is_ko
+                   else "ℹ️ NFPA 855 §4.3: Mandates deflagration venting on roof to prevent catastrophic enclosure rupture from battery off-gas")
+
+        # ── 부지 규모별 소방·하이드란트·방유제·배수 인프라 ──
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("**🚒 부지 소방수·하이드란트·방유제·배수 인프라 (NFPA 855 / IEEE 980 / NFPA 24)**" if is_ko
+                    else "**🚒 Site Fire Water · Hydrants · Bund · Drainage (NFPA 855 / IEEE 980 / NFPA 24)**")
+        infra = EP.calc_site_cbop_infrastructure(
+            capacity_mwh=target_ac_energy,
+            power_mw=default_power,
+            n_enc=num_enclosures,
+            tr_mva=default_power * 1.15,
+        )
+        ic1, ic2, ic3, ic4 = st.columns(4)
+        ic1.metric("총 소방 수원 (수조)" if is_ko else "Total Fire Water Tank",
+                   f"{infra['total_fire_water_m3']:.1f} m³",
+                   help="고정식 소화 + 소화전 2구 동시 2시간 방수 + 안전여유 15% (NFPA 855)")
+        ic2.metric("옥외 소화전 수량" if is_ko else "Outdoor Hydrants",
+                   f"{infra['num_hydrants']} ea",
+                   help=f"부지 둘레 기준 {infra['hydrant_spacing_m']}m 간격 배치 (NFPA 24)")
+        ic3.metric("변압기 방유제 체적" if is_ko else "TR Bund Wall Volume",
+                   f"{infra['bund_req_m3']:.1f} m³",
+                   help=f"절연유 100%({infra['bund_oil_vol_m3']} m³) + 10분 Deluge + 강우고 150mm (IEEE 980/IEC 61936-1)")
+        ic4.metric("비상 배수 저류조" if is_ko else "Retention Basin",
+                   f"{infra['basin_vol_m3']:.1f} m³",
+                   help="소방 오염 폐수 및 폭우 유출수 차집 유수지 (NFPA 855 §4.4.5)")
+
+        # ── 토목·방재 BOP 상세 물량산출(BOQ) 및 개략 공사비(CAPEX) ──
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("**📋 토목·방재 BOP 상세 물량산출(BOQ) 및 개략 공사비(CAPEX)**" if is_ko
+                    else "**📋 Civil & Fire BOP Detailed BOQ & Estimated CAPEX**")
+        
+        # 기본 트렌치 연장 추정 (인클로저 수 및 블록 배치 연동)
+        est_trench_m = max(float(num_enclosures * 5.5 + 40.0), 50.0)
+        boq = EP.calc_cbop_boq_and_cost(
+            site_w_m=math.sqrt(num_enclosures * 150.0) * 1.25,
+            site_h_m=math.sqrt(num_enclosures * 150.0) * 0.95,
+            n_enc=num_enclosures,
+            n_pcs=max(1, math.ceil(num_enclosures / 4)),
+            pad_l=pad_length,
+            pad_w=pad_width,
+            pad_t=0.40,
+            trench_len_m=est_trench_m,
+            trench_w=trench_width,
+            trench_d=trench_depth,
+            infra=infra,
+            market=st.session_state.get('target_market', 'US'),
+        )
+
+        bc1, bc2, bc3, bc4 = st.columns(4)
+        bc1.metric("총 토목·방재 공사비" if is_ko else "Total CBOP Cost",
+                   f"${boq['total_capex_usd']:,}",
+                   delta=f"약 {boq['total_capex_krw']/1e8:.2f} 억원" if is_ko else f"approx. ₩{boq['total_capex_krw']/1e8:.2f}B",
+                   delta_color="off",
+                   help="토공사, 콘크리트패드, 방유벽, 트렌치, 소방수조/펌프, 소화전, 배관, 펜스 총합")
+        bc2.metric("총 콘크리트 타설량" if is_ko else "Total Concrete",
+                   f"{boq['quantities']['concrete_total_m3']:.1f} m³",
+                   help="기초패드(인클로저/PCS/TR/E-House) + 방유벽 + 트렌치 구조체")
+        bc3.metric("총 터파기 토공량" if is_ko else "Total Excavation",
+                   f"{boq['quantities']['excavation_total_m3']:.1f} m³",
+                   help="패드/트렌치/저류조 굴착 체적")
+        bc4.metric("외곽 펜스 및 루프 배관" if is_ko else "Fence & Loop Pipe",
+                   f"{boq['quantities']['perimeter_m']:.0f} m / {boq['quantities']['fire_pipe_m']:.0f} m",
+                   help="보안 울타리 연장 / 소화전 지하 링배관 연장")
+
+        # 공종별 소계 요약 차트 및 세부 BOQ 테이블
+        col_chart, col_tbl = st.columns([1, 2])
+        with col_chart:
+            st.markdown("##### " + ("공종별 공사비 비중" if is_ko else "Cost Breakdown by Trade"))
+            cat_df = pd.DataFrame([
+                {"Category": k, "Cost ($)": v, "Ratio (%)": round(v / boq['total_capex_usd'] * 100.0, 1)}
+                for k, v in boq["cat_summary"].items()
+            ])
+            fig_cost = px.pie(cat_df, values="Cost ($)", names="Category", hole=0.45,
+                              color_discrete_sequence=px.colors.qualitative.Safe)
+            fig_cost.update_traces(textposition='inside', textinfo='percent+label')
+            fig_cost.update_layout(showlegend=False, margin=dict(l=10, r=10, t=10, b=10), height=280)
+            st.plotly_chart(fig_cost, use_container_width=True)
+
+        with col_tbl:
+            st.markdown("##### " + ("상세 물량내역서 (BOQ Summary)" if is_ko else "Detailed BOQ Summary"))
+            boq_df = pd.DataFrame(boq["items"])
+            rename_map = {
+                "category": "공종" if is_ko else "Category",
+                "item": "품명" if is_ko else "Item",
+                "spec": "규격" if is_ko else "Specification",
+                "qty": "수량" if is_ko else "Qty",
+                "unit": "단위" if is_ko else "Unit",
+                "unit_cost": "단가($)" if is_ko else "Rate($)",
+                "cost_usd": "금액($)" if is_ko else "Amount($)",
+            }
+            disp_df = boq_df.rename(columns=rename_map)
+            st.dataframe(disp_df, use_container_width=True, height=280, hide_index=True)
+
+        csv_data = boq_df.to_csv(index=False).encode('utf-8-sig')
+        st.download_button(
+            label="📥 BOQ 내역서 CSV 다운로드" if is_ko else "📥 Download BOQ CSV",
+            data=csv_data,
+            file_name="bess_cbop_boq_summary.csv",
+            mime="text/csv",
+        )
+
+    _fire = dict(fire_agent=agent, fire_volume_m3=vol,
+                 vent_area_m2=vent_info["vent_area_m2"], vent_panels=vent_info["panels_req"],
+                 water_m3=infra["total_fire_water_m3"], num_hydrants=infra["num_hydrants"],
+                 bund_m3=infra["bund_req_m3"], basin_m3=infra["basin_vol_m3"],
+                 cbop_capex_usd=boq["total_capex_usd"], cbop_conc_m3=boq["quantities"]["concrete_total_m3"])
     if agent == WATER_MIST:
         _fire.update(water_l=water_l, pump_lpm=flow_lpm)
     else:

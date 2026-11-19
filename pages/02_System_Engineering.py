@@ -6,11 +6,13 @@ except Exception:
 
 import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
 from utils.css_loader import apply_custom_css
 from utils.lang_helper import t
 from utils.standards_helper import get_standards
 from utils.auth_helper import require_auth, sidebar_user_info
 from utils import design_model as DM
+from utils import engineering_params as EP
 
 
 def run_system_engineering_module():
@@ -108,6 +110,94 @@ def run_system_engineering_module():
                                  pcs_unit_mw=pcs_unit_mw, batt_unit_mwh=batt_unit_mwh,
                                  required_dc_mwh=required_dc_nameplate, power_mw=power_mw,
                                  energy_mwh=energy_mwh))
+
+    # ── 배터리 수명 열화 및 증설(Augmentation) 최적화 시뮬레이터 ─────────────
+    st.markdown("---")
+    st.header("🔋 배터리 수명 열화 & 증설(Augmentation) 전략 비교" if _ko
+              else "🔋 Battery Degradation & Augmentation Strategy")
+    st.caption("초기 100% 일괄 오버사이징(전략 A) 대비, 5~7년차 부분 증설(전략 B)을 통해 "
+               "초기 CAPEX 및 총 생애주기 투자비(NPV)를 절감하는 엔지니어링 분석입니다." if _ko
+               else "Compares Day-1 full oversizing (Strategy A) with mid-life augmentation (Strategy B) "
+                    "to cut upfront CAPEX and lifecycle NPV.")
+
+    with st.expander("⚙️ 열화 및 증설 시뮬레이션 파라미터" if _ko else "⚙️ Simulation Parameters", expanded=False):
+        sc1, sc2, sc3 = st.columns(3)
+        with sc1:
+            sim_years = st.slider("운영 기간 (년)" if _ko else "Project Life (Years)", 10, 25, 15, step=1)
+            sim_temp = st.slider("배터리 팩 평균 운전온도 (°C)" if _ko else "Average Operating Temp (°C)", 15.0, 40.0, 25.0, step=1.0)
+        with sc2:
+            sim_cycles = st.number_input("일일 충방전 횟수 (Cycles/day)" if _ko else "Daily Cycles", 0.5, 3.0, 1.0, step=0.1)
+            sim_cell_cost = st.number_input("배터리 셀 초기단가 ($/kWh)" if _ko else "Initial Cell Cost ($/kWh)", 50.0, 200.0, 85.0, step=5.0)
+        with sc3:
+            sim_cost_decline = st.slider("연간 배터리 단가 하락율 (%)" if _ko else "Annual Cost Decline (%)", 0.0, 10.0, 4.0, step=0.5)
+            sim_discount_rate = st.slider("할인율 (%)" if _ko else "Discount Rate (%)", 2.0, 12.0, 6.0, step=0.5)
+
+    # 시뮬레이션 계산 실행
+    aug_res = EP.simulate_battery_augmentation(
+        project_years=sim_years,
+        temp_c=sim_temp,
+        cycles_per_day=sim_cycles,
+        dod=dod,
+        required_ac_mwh=required_ac_energy,
+        eta_discharge=eta_discharge,
+        soh_eol_target=soh_eol,
+        cell_cost_per_kwh_usd=sim_cell_cost,
+        annual_cost_decline_pct=sim_cost_decline,
+        discount_rate_pct=sim_discount_rate,
+    )
+
+    # 핵심 KPI 메트릭 카드 3종
+    kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
+    with kpi_col1:
+        st.metric("초기 CAPEX 절감액" if _ko else "Upfront CAPEX Saved",
+                  f"${aug_res['initial_savings_usd']:,.0f}",
+                  delta=f"-{aug_res['initial_savings_pct']:.1f}%")
+    with kpi_col2:
+        st.metric("생애주기 투자비(NPV) 절감" if _ko else "Lifecycle NPV Saved",
+                  f"${aug_res['npv_savings_usd']:,.0f}",
+                  delta=f"-{aug_res['npv_savings_pct']:.1f}%")
+    with kpi_col3:
+        st.metric("최적 증설 시점" if _ko else "Recommended Augmentation",
+                  f"Year {aug_res['strat_b_aug_year']}",
+                  help=f"Year {aug_res['strat_b_aug_year']}에 {aug_res['strat_b_aug_mwh']:.1f} MWh 증설 권장")
+    with kpi_col4:
+        st.metric(f"{sim_years}년차 잔존 SOH" if _ko else f"Year {sim_years} SOH",
+                  f"{aug_res['soh_curve'][-1]:.1f}%",
+                  help="Arrhenius 캘린더 열화 + 사이클 처리량 열화 복합 반영")
+
+    # Plotly 시각화 차트: 연도별 공급 가능 유효 용량 추이
+    fig_aug = go.Figure()
+    fig_aug.add_trace(go.Scatter(
+        x=aug_res["years"],
+        y=aug_res["strat_a_capacities"],
+        mode="lines+markers",
+        name="[전략 A] Day-1 올인원 용량" if _ko else "[Strategy A] Day-1 All-in-one",
+        line=dict(color="#f85149", width=2.5, dash="dash"),
+    ))
+    fig_aug.add_trace(go.Scatter(
+        x=aug_res["years"],
+        y=aug_res["strat_b_capacities"],
+        mode="lines+markers",
+        name=f"[전략 B] Year {aug_res['strat_b_aug_year']} 증설 전략" if _ko else f"[Strategy B] Augmentation @ Y{aug_res['strat_b_aug_year']}",
+        line=dict(color="#3fb950", width=3),
+    ))
+    fig_aug.add_hline(
+        y=aug_res["base_target_dc_mwh"],
+        line_dash="dot",
+        line_color="#58a6ff",
+        annotation_text="계약 보증 최소 필요 용량" if _ko else "Guaranteed Min DC Capacity",
+        annotation_position="bottom right",
+    )
+    fig_aug.update_layout(
+        title="연도별 BESS 유효 공급 가능 용량 추이 (MWh)" if _ko else "Yearly Available DC Capacity (MWh)",
+        xaxis_title="운영 경과 연수 (Years)" if _ko else "Operating Years",
+        yaxis_title="유효 방전 용량 (MWh)" if _ko else "Effective Capacity (MWh)",
+        template="plotly_dark",
+        height=380,
+        margin=dict(l=40, r=40, t=50, b=40),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    st.plotly_chart(fig_aug, use_container_width=True)
 
     st.markdown("---")
     st.subheader(t("regional_std"))

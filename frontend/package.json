@@ -3,11 +3,22 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "esbuild engineering-viewer.js --bundle --minify --format=iife --outfile=engineering-viewer.bundle.js"
+    "build": "esbuild engineering-viewer.js --bundle --minify --format=iife --outfile=engineering-viewer.bundle.js",
+    "build:react": "esbuild src/index.ts --bundle --format=esm --external:react --external:react-dom --external:three --outfile=dist/bess-viewer.esm.js",
+    "build:all": "npm run build && npm run build:react",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/three": "^0.187.0",
     "esbuild": "0.28.2",
     "playwright": "1.65.0",
-    "three": "0.184.0"
+    "three": "0.184.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   }
 }

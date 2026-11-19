@@ -8,7 +8,12 @@ const [W, H, Z] = D.size, span = Math.max(W, H, Z), mode = D.mode;
 const isSite = mode === 'site', isThermal = mode === 'thermal', isFire = mode === 'fire';
 const stateNames = ko ? ['대기','가열','열폭주','화재','화염 억제 · 내부 TR 지속','소진'] : ['Normal','Heating','Thermal runaway','Fire','Knockdown · TR ongoing','Burned out'];
 const stateColors = ['#72959d','#eeb650','#ec7d32','#e84b35','#3ea6ed','#596374'];
-const kindNames = {enc:L('배터리 인클로저','Battery enclosure'),pcs:'PCS / MV',tr:L('주변압기','Main transformer'),tank:L('소방 수조','Fire water tank'),rack:L('배터리 랙','Battery rack')};
+const kindNames = {
+  enc:L('배터리 인클로저','Battery enclosure'),pcs:'PCS / MV',tr:L('주변압기','Main transformer'),
+  tank:L('소방 수조','Fire water tank'),rack:L('배터리 랙','Battery rack'),ehouse:L('E-House (수배전반/제어실)','E-House (Switchgear/Control)'),
+  bund:L('변압기 방유제','Transformer Bund Wall'),hydrant:L('옥외 소화전','Fire Hydrant'),
+  pump_house:L('소방 펌프실','Fire Pump Room'),storage:L('자재 보관소','O&M Storage'),basin:L('비상 저류조','Retention Basin')
+};
 const titles = {site:L('부지 배치 · 설계 모델','Site layout · design model'),thermal:L('열 · 공기 흐름','Thermal · airflow'),fire:L('소방 · 열폭주 전파','Fire · thermal runaway'),smoke:L('연기층 · 배연','Smoke layer · extraction'),structure:L('기초 지지압','Foundation pressure')};
 $('subtitle').textContent = titles[mode];
 $('top').textContent = L('평면','PLAN'); $('front').textContent = L('정면','FRONT');
@@ -75,7 +80,7 @@ const grid=new THREE.GridHelper(Math.max(W,H)*1.2,Math.min(100,Math.max(10,Math.
 
 function equipment(b){
   const {x,y,dx,dy,dz}=b;
-  const color=b.kind==='pcs'?'#c3d4dd':b.kind==='tr'?'#829795':b.kind==='tank'?'#b8cacc':b.kind==='rack'?'#354c5e':'#dce3e0';
+  const color=b.kind==='pcs'?'#c3d4dd':b.kind==='tr'?'#829795':b.kind==='tank'?'#b8cacc':b.kind==='rack'?'#354c5e':b.kind==='ehouse'?'#00b4d8':b.kind==='bund'?'#6c757d':b.kind==='hydrant'?'#e63946':b.kind==='pump_house'?'#d90429':b.kind==='storage'?'#4a5568':b.kind==='basin'?'#2a9d8f':'#dce3e0';
   const body=box(groups.equipment,x,y,0,dx,dy,dz,mat(color),D.boxes.length<220);body.userData.asset=b;pickables.push(body);
   const edge=new THREE.LineSegments(new THREE.EdgesGeometry(cube),new THREE.LineBasicMaterial({color:'#2a4557',transparent:true,opacity:.65,clippingPlanes:[clipping]}));edge.scale.copy(body.scale);edge.position.copy(body.position);edge.visible=false;groups.equipment.add(edge);edges.push(edge);
   const asset={b,body,edge};assets.push(asset);
@@ -109,6 +114,11 @@ function equipment(b){
     for(let k=0;k<8;k++)detail(groups.equipment,x+dx*.66,y-.045,dz*(.32+k*.054),dx*.23,.025,.025,steel);
     detail(groups.equipment,x+dx*.08,y-.04,dz*.68,Math.min(.35,dx*.1),.02,.18,red);
     detail(groups.equipment,x+dx*.08,y-.04,dz*.18,dx*.4,.025,.1,accent);
+  }
+  if(b.kind==='hydrant'){
+    const rPts=[];
+    for(let k=0;k<=48;k++){const th=k*Math.PI*2/48;rPts.push([x+dx/2+40*Math.cos(th),y+dy/2+40*Math.sin(th),.035]);}
+    line(groups.utilities,rPts,'#e63946',.65);
   }
   return asset;
 }
@@ -277,7 +287,7 @@ $('measure').onclick=()=>{measureOn=!measureOn;$('measure').classList.toggle('ac
 $('shot').onclick=()=>{renderer.render(scene,camera);const a=document.createElement('a');a.download=`epc-${mode}-${frame}.png`;a.href=renderer.domElement.toDataURL('image/png');a.click();};
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('app').requestFullscreen();}catch{$('status').textContent=L('브라우저가 전체화면을 허용하지 않습니다.','Fullscreen unavailable in this browser.');}};
 document.addEventListener('fullscreenchange',()=>{$('app').style.height=document.fullscreenElement?'100vh':'640px';resize();});
-if(isSite){$('legend-title').textContent=L('설계 모델 · 실치수','Design model · metre scale');$('gradient').style.display='none';$('legend-scale').textContent=L('컨테이너 / PCS / 변압기 / 수조','Enclosure / PCS / transformer / tank');}
+if(isSite){$('legend-title').textContent=L('설계 모델 · 실치수','Design model · metre scale');$('gradient').style.display='none';$('legend-scale').textContent=L('배터리 / PCS / TR / 수조 / E-House / 방유제 / 소화전 / 저류조','Battery / PCS / TR / Tank / E-House / Bund / Hydrant / Basin');}
 else if(isFire){$('legend-title').textContent=L('계산된 랙 상태 · 화염은 설명용','Calculated rack states · illustrative flames');$('gradient').style.display='none';$('legend-scale').style.display='block';stateNames.forEach((s,i)=>{const el=document.createElement('span');el.textContent=`■ ${s}  `;el.style.color=stateColors[i];$('legend-scale').append(el);});}
 else if(mode==='smoke'){$('legend-title').textContent=L('계산된 연기층 경계 · 녹색선 2 m','Computed layer interface · green line 2 m');$('gradient').style.display='none';$('legend-scale').textContent=L('플룸 형상은 설명용','Plume geometry illustrative');}
 else {$('legend-title').textContent=mode==='structure'?L('기초 지지압 · 변형 미산정','Bearing pressure · no deformation solved'):L('깊이 평균 공기온도 · 바닥 투영','Depth-averaged air temperature · floor projection');$('legend-scale').innerHTML=`<span>${format(minVal)}</span><span>${format(maxVal)} ${D.unit}</span>`;}

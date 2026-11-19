@@ -154,7 +154,8 @@ def run_ebop_engineer_module():
                                      key=f"vdrop_{v_class}")
             material    = st.selectbox(t("p4_cable_mat"), [t("p4_cable_cu"), t("p4_cable_al")])
             is_cu = "Cu" in material or "동" in material
-            rho = 1.72e-8 if is_cu else 2.82e-8
+            pf_cable = st.number_input("부하 역률 (cos φ)" if is_ko else "Power Factor (cos φ)",
+                                       min_value=0.70, max_value=1.00, value=0.95, step=0.01)
             st.markdown("**" + ("단락 열적강도" if is_ko else "Short-circuit withstand") + "**")
             i_sc  = st.number_input("단락전류 I_sc (kA)" if is_ko else "Fault current I_sc (kA)",
                                     min_value=0.1, max_value=100.0, value=25.0, step=0.5)
@@ -171,18 +172,44 @@ def run_ebop_engineer_module():
                                     min_value=0.1, max_value=1.0, value=0.8, step=0.05)
 
         with col2:
-            V_drop   = V_line * (voltage_drop / 100.0)
-            # 3상 전압강하 ΔV(L-L) = √3·I·L·R′ — 왕복 계수 2는 DC/단상용이라 √3으로 교정
-            # (리액턴스 X 무시 — 저항 지배 가정의 스크리닝 값)
-            vd_area  = (rho * np.sqrt(3.0) * length * current) / V_drop * 1e6
+            # 3상 전압강하 정밀 산정 (IEC 60287 / IEEE 141):
+            # 도체 75°C 저항(R') 및 선로 인덕턴스에 의한 리액턴스(X'=0.10 Ω/km, cosφ 반영)를 모두 고려
+            vd_area = EP.vdrop_min_area_mm2(
+                v_line_v=V_line,
+                current_a=current,
+                length_m=length,
+                target_vdrop_pct=voltage_drop,
+                is_cu=is_cu,
+                power_factor=pf_cable,
+            )
             sc_area  = EP.sc_min_area_mm2(i_sc, t_clr, EP.SC_K[k_key])
             min_area = max(vd_area, sc_area)
             std_areas = [16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400, 500, 630, 800, 1000]
             rec_area  = next((a for a in std_areas if a >= min_area), None)
+
+            # 선정된 표준 규격 기준 실제 정밀 전압강하율 계산
+            if rec_area:
+                vdrop_result = EP.calc_cable_vdrop(
+                    v_line_v=V_line,
+                    current_a=current,
+                    length_m=length,
+                    area_mm2=rec_area,
+                    is_cu=is_cu,
+                    power_factor=pf_cable,
+                )
+                actual_vd_pct = vdrop_result["vdrop_pct"]
+                actual_dv_v = vdrop_result["delta_v"]
+            else:
+                actual_vd_pct = 99.9
+                actual_dv_v = 0.0
+
             st.caption(f"{circuit_v} → **{v_class}** · " +
                        (f"전압강하 기준 {EP.VDROP_LIMIT_PCT[v_class]:.0f}% (bess-cable-engineer)" if is_ko
                         else f"voltage-drop limit {EP.VDROP_LIMIT_PCT[v_class]:.0f}% (bess-cable-engineer)"))
-            st.metric(("② 전압강하 최소 단면적" if is_ko else "② Min area — voltage drop"), f"{vd_area:.1f} mm²")
+            st.metric(("② 전압강하 최소 단면적" if is_ko else "② Min area — voltage drop"),
+                      f"{vd_area:.1f} mm²" if vd_area < 9000 else "> 1,000 mm²",
+                      help=(f"IEC 60287 / IEEE 141 정밀식 (R' @75°C + X' {EP.CABLE_REACTANCE_OHM_PER_KM} Ω/km, cos φ={pf_cable:.2f})"
+                            if is_ko else f"IEC 60287 / IEEE 141 exact formula (R' @75°C + X' {EP.CABLE_REACTANCE_OHM_PER_KM} Ω/km, cos φ={pf_cable:.2f})"))
             st.metric(("③ 단락 열적강도 최소 단면적" if is_ko else "③ Min area — short-circuit"),
                       f"{sc_area:.1f} mm²", help=f"S = I·√t / k, k = {EP.SC_K[k_key]:.0f} ({k_key}, IEC 60364-4-43)")
             if rec_area is None:
@@ -191,6 +218,8 @@ def run_ebop_engineer_module():
             else:
                 st.success(f"**{t('p4_cable_std')}:** {rec_area} mm² "
                            + ("(②·③ 중 큰 값)" if is_ko else "(max of ② and ③)"))
+                st.caption(f"⚡ 실제 전압강하: **{actual_dv_v:.1f} V ({actual_vd_pct:.2f}%)** ≤ 허용 {voltage_drop:.1f}%" if is_ko
+                           else f"⚡ Actual voltage drop: **{actual_dv_v:.1f} V ({actual_vd_pct:.2f}%)** ≤ allowable {voltage_drop:.1f}%")
             # ① 허용전류 — U = I_load / (I_base·∏k) ≤ 1/1.25 (설계여유 1.25배)
             if i_base:
                 u = current / (i_base * k_der)

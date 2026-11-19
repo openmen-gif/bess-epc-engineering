@@ -16,10 +16,16 @@ from utils import site_layout as SL
 from utils.engineering_viewer import render_viewer, site_payload
 
 _KIND = {  # 종류 → (한글, 영문, 색)
-    "enc":  ("배터리 인클로저", "Battery enclosure", "#3fb950"),
-    "pcs":  ("PCS/MV 스키드", "PCS/MV skid", "#58a6ff"),
-    "tr":   ("주변압기 (POI)", "Main transformer (POI)", "#e3b341"),
-    "tank": ("소방 수조", "Fire water tank", "#79c0ff"),
+    "enc":        ("배터리 인클로저", "Battery enclosure", "#3fb950"),
+    "pcs":        ("PCS/MV 스키드", "PCS/MV skid", "#58a6ff"),
+    "tr":         ("주변압기 (POI)", "Main transformer (POI)", "#e3b341"),
+    "bund":       ("변압기 방유제 (Bund)", "Transformer Bund Wall", "#8b949e"),
+    "ehouse":     ("E-House (수배전반/제어실)", "E-House (Switchgear/Control)", "#00b4d8"),
+    "pump_house": ("소방 가압 펌프실", "Fire Pump House", "#d90429"),
+    "tank":       ("소방 수조", "Fire water tank", "#79c0ff"),
+    "storage":    ("O&M 자재 보관소", "O&M parts storage", "#4a5568"),
+    "basin":      ("비상 저류조 (침사지)", "Emergency Retention Basin", "#2a9d8f"),
+    "hydrant":    ("옥외 소화전", "Fire Hydrant", "#e63946"),
 }
 _SRC = {"p01": "01 프로젝트 설정", "p02": "02 시스템 설계", "p04": "04 전기 BOP", "p05": "05 토목 BOP"}
 _SRC_EN = {"p01": "01 Project Setup", "p02": "02 System Eng", "p04": "04 EBOP", "p05": "05 CBOP"}
@@ -81,7 +87,7 @@ def run_site_layout_module():
     # ── 배치 기준 ──────────────────────────────────────────────────────────
     mk = EP.market_key(inp["target_market"][0])
     sep = EP.SEPARATION_BY_MARKET[mk]
-    with st.expander(L("⚙️ 배치 기준 (시장: ", "⚙️ Layout criteria (market: ") + f"{mk})", expanded=False):
+    with st.expander(L("⚙️ 배치 기준 & 케이블 루트 최적화 (시장: ", "⚙️ Layout Criteria & Cable Routing (Market: ") + f"{mk})", expanded=False):
         st.caption(f"{sep['src']} {sep['tag']} — " + L("값 소유: bess-fire-engineer", "owner: bess-fire-engineer"))
         c1, c2 = st.columns(2)
         unit_gap = c1.number_input(L("유닛 간 이격 (m)", "Unit separation (m)"), 0.3, 20.0,
@@ -95,9 +101,46 @@ def run_site_layout_module():
                                    help=L("IEC 61936-1·FM Global DS 5-4 에서 절연유량·내화등급별로 정함 — 조항 확인 전 스크리닝 값",
                                           "Set by IEC 61936-1 / FM Global DS 5-4 per oil volume & fire rating — screening value"))
 
+        st.markdown("**" + L("케이블 루트 & 연계 최적화 설정", "Cable Routing & Interconnection Optimization") + "**")
+        tc1, tc2 = st.columns(2)
+        topo_choice = tc1.selectbox(
+            L("블록 배치 구조 (Topology)", "Block Topology"),
+            [L("중앙 집중형 (Center-Fed, PCS 중심 대칭) [권장]", "Center-Fed Cluster (Symmetric around PCS) [Recommended]"),
+             L("선형 일렬형 (Linear, PCS 말단 배치)", "Linear (PCS at end)")],
+            index=0,
+            help=L("중앙 집중형: PCS를 블록 가운데 두고 배터리를 대칭 배치하여 DC 케이블 최대 거리 및 스트링 간 편차를 최소화합니다.",
+                   "Center-Fed: Places PCS in the center with symmetric battery pairs to minimize DC cable run and imbalance.")
+        )
+        tr_pos_choice = tc2.selectbox(
+            L("주변압기(POI) 연계 위치", "Main TR Location"),
+            [L("남측 부하 중심 (Center Load Point) [권장]", "South Load Center [Recommended]"),
+             L("남서측 모서리 (Corner)", "South-West Corner")],
+            index=0,
+            help=L("부하 중심: 주변압기를 남측 중앙에 두어 MV 케이블 최장 경로와 트렌치 총연장을 25~35% 단축합니다.",
+                   "Load Center: Centers the main TR along the south band, cutting MV cable route by 25-35%.")
+        )
+        include_ehouse = st.checkbox(
+            L("E-House (수배전반 및 제어실 40ft HC) 포함 [권장]", "Include E-House (Switchgear & Control Room 40ft HC) [Recommended]"),
+            value=True,
+            help=L("MV Switchgear(VCB/보호계전기), EMS/SCADA 서버랙, 소방수신반(FACP), UPS를 내장한 프리패브 E-House를 남측 간선에 배치합니다.",
+                   "Places a prefabricated 40ft HC E-House containing MV switchgear, EMS/SCADA racks, FACP, and UPS along the south trunk.")
+        )
+        include_infra = st.checkbox(
+            L("부지 방재·인프라 (방유제 · 소화전 · 펌프실 · 저류조 · 보관소) 포함 [권장]",
+              "Include Site Infra (Bund · Hydrants · Pump House · Basin · Storage) [Recommended]"),
+            value=True,
+            help=L("NFPA 850 오일 방유제, NFPA 24 소화전 시스템(45m 간격), 소방 펌프실, 환경 배수 저류조, O&M 보관소를 실물 배치합니다.",
+                   "Places oil bund, perimeter fire hydrants (45m spacing), pump house, retention basin, and O&M storage container.")
+        )
+
+    topology_val = "center_fed" if "Center-Fed" in topo_choice or "중앙" in topo_choice else "linear"
+    tr_pos_val = "center" if "Center" in tr_pos_choice or "중심" in tr_pos_choice else "corner"
+
     lay = SL.build_layout(inp["n_enc"][0], inp["n_pcs"][0], inp["enc_l"][0], inp["enc_w"][0],
                           unit_gap=unit_gap, boundary=boundary, aisle=aisle, tr_clear=tr_clear,
-                          trench_w=inp["trench_w"][0], water_m3=inp["water_m3"][0])
+                          trench_w=inp["trench_w"][0], water_m3=inp["water_m3"][0],
+                          topology=topology_val, tr_pos=tr_pos_val, include_ehouse=include_ehouse,
+                          include_infra=include_infra)
     m, chk = lay["metrics"], SL.check_layout(lay)
 
     # ── 기준안 비교 — 설계값을 바꾸기 전 배치를 저장해 두면 변화량·이전 윤곽을 함께 보여준다 ──────
@@ -133,9 +176,57 @@ def run_site_layout_module():
              delta=_delta("longest_cable_m", "m", 1), delta_color="inverse",
              help=L("PCS → 주변압기 직각 경로 길이 (여장·단말 미포함)",
                     "PCS → main TR orthogonal route (no slack/termination allowance)"))
+
+    # ── 케이블 루트 및 인버터-배터리 연계 최적화 세부 지표 ────────────────────
+    c_opt1, c_opt2, c_opt3, c_opt4 = st.columns(4)
+    c_opt1.metric(
+        L("DC 케이블 최장 거리", "Max DC Cable Run"),
+        f"{m.get('dc_max_cable_m', 0.0):.1f} m",
+        delta=L("대칭 배치로 단축됨", "Optimized by Center-Fed") if topology_val == "center_fed" else None,
+        delta_color="normal",
+        help=L("인클로저 -> 담당 PCS 간 최장 거리 (Center-Fed 대칭 배치 시 50% 단축)",
+               "Longest distance from battery to its PCS (50% shorter with Center-Fed)")
+    )
+    c_opt2.metric(
+        L("DC 스트링 경로 편차 (최장-최단)", "DC String Imbalance"),
+        f"{m.get('dc_cable_imbalance_m', 0.0):.1f} m",
+        help=L("블록 내 배터리 간 DC 케이블 길이 편차. 편차가 작을수록 스트링 간 순환전류와 조기 열화가 억제됩니다.",
+               "Delta between longest and shortest DC strings. Lower delta prevents circulating currents.")
+    )
+    ratio_enc_pcs = m['n_enc'] / max(m['n_pcs'], 1)
+    c_opt3.metric(
+        L("PCS 1기당 배터리 연계비율", "Battery per PCS Ratio"),
+        f"{ratio_enc_pcs:.1f} : 1",
+        help=L(f"블록당 평균 {ratio_enc_pcs:.1f}기 배터리 인클로저가 PCS 1기에 연계됩니다.",
+               f"Average {ratio_enc_pcs:.1f} battery enclosures connected per PCS skid.")
+    )
+    c_opt4.metric(
+        L("E-House (수배전반/EMS)", "E-House Facility"),
+        f"{m.get('ehouse_m2', 0.0):.1f} m²" if m.get("include_ehouse") else L("미포함", "Excluded"),
+        delta=L("40ft HC 프리패브", "40ft HC Prefab") if m.get("include_ehouse") else None,
+        delta_color="normal",
+        help=L("MV Switchgear(VCB/보호계전기), EMS/SCADA 서버랙, FACP 및 UPS가 내장된 통합 운영 하우스",
+               "Integrated operational facility housing MV switchgear, EMS/SCADA racks, FACP and UPS.")
+    )
     if base:
         st.caption(L(f"Δ = {base['ts']} 저장한 기준안 대비 (Δ 없음 = 기준안과 같음) · 3D 의 회색 점선 = 기준안 윤곽",
                      f"Δ = vs baseline saved at {base['ts']} (no Δ = unchanged) · grey dashed outline in 3D = baseline"))
+
+    cov = SL.check_fire_coverage(lay, radius_m=40.0) if m.get("include_infra") else None
+    if m.get("include_infra"):
+        st.caption(L(f"🧯 **부지 방재·인프라 설비 요약:** 옥외 소화전 **{m.get('num_hydrants', 0)}기** (NFPA 24 / 45m 간격) · "
+                     f"변압기 방유제 **{m.get('bund_area_m2', 0)} m²** (IEEE 980) · "
+                     f"소방폐수·우수 저류조 **{m.get('basin_m3', 0)} m³** · 20ft 소방펌프실 및 O&M 자재보관소",
+                     f"🧯 **Site Safety & Infra:** **{m.get('num_hydrants', 0)} Fire Hydrants** (NFPA 24 / 45m spacing) · "
+                     f"TR Oil Bund **{m.get('bund_area_m2', 0)} m²** (IEEE 980) · "
+                     f"Retention Basin **{m.get('basin_m3', 0)} m³** · 20ft Pump House & Storage"))
+        if cov:
+            if cov["all_covered"]:
+                st.success(L(f"🚒 **소화전 방수 커버리지 100% 충족 (NFPA 24 / NFPC 109 PASS):** 부지 내 모든 {cov['total_assets']}기 주요 설비(배터리·PCS·TR·E-House)가 소화전 반경 40m 내에 완벽히 방호됩니다. (최장 도달거리 {cov['max_dist_m']}m, 평균 {cov['avg_dist_m']}m)",
+                             f"🚒 **100% Fire Hydrant Coverage (NFPA 24 PASS):** All {cov['total_assets']} critical assets within 40m hydrant reach. (Max distance {cov['max_dist_m']}m, avg {cov['avg_dist_m']}m)"))
+            else:
+                st.warning(L(f"⚠️ **소방 사각지대 {len(cov['uncovered'])}개소 감지:** 커버리지 {cov['coverage_pct']}% (소화전 40m 초과 설비: {', '.join([u['label'] for u in cov['uncovered'][:4]])})",
+                             f"⚠️ **Fire Blind Spots ({len(cov['uncovered'])} assets):** Coverage {cov['coverage_pct']}% (Exceeding 40m: {', '.join([u['label'] for u in cov['uncovered'][:4]])})"))
 
     st.subheader(L("실물형 3D · 설계 모델 탐색", "Spatial 3D · design model explorer"))
     render_viewer(site_payload(lay, inp["pad_l"][0], inp["pad_w"][0], inp["trench_d"][0],
@@ -145,7 +236,16 @@ def run_site_layout_module():
     st.subheader(L("정량 배치도 · 기초 및 트렌치", "Analytical layout · foundations and trenches"))
     # ── 3D ────────────────────────────────────────────────────────────────
     views = [L("등각", "Isometric"), L("위에서", "Top"), L("구조 (기초·트렌치)", "Structure (pads·trench)")]
-    view = st.radio(L("시점", "View"), views, horizontal=True, key="sl_view", label_visibility="collapsed")
+    vc_col1, vc_col2 = st.columns([3, 2])
+    with vc_col1:
+        view = st.radio(L("시점", "View"), views, horizontal=True, key="sl_view", label_visibility="collapsed")
+    with vc_col2:
+        show_hydrant_cov = st.checkbox(
+            L("🚒 소화전 40m 방수반경 가시화", "🚒 Show Hydrant 40m Coverage"),
+            value=True,
+            help=L("NFPA 24 기준 옥외 소화전 40m 유효 방호 구역을 붉은색 링 및 반투명 돔으로 표시합니다.",
+                   "Displays 40m hose stream coverage circles and domes around fire hydrants (NFPA 24).")
+        ) if m.get("include_infra") else False
     struct = view == views[2]
     fig = go.Figure()
     for kind, (kn, en, col) in _KIND.items():
@@ -162,6 +262,20 @@ def run_site_layout_module():
                 t_ += f"<br>{inp['main_tr_mva'][0]} MVA"
             if kind == "tank":
                 t_ += f"<br>{m['tank_m3']:.1f} m³"
+            if kind == "ehouse":
+                t_ += L("<br>40ft HC (MV 수배전반 · EMS/SCADA 제어실)", "<br>40ft HC (MV Switchgear · EMS/SCADA)")
+            if kind == "bund":
+                t_ += L(f"<br>변압기 절연유 방유턱 (면적 {m.get('bund_area_m2', 0)} m² · IEEE 980)",
+                        f"<br>Oil Retention Bund ({m.get('bund_area_m2', 0)} m² · IEEE 980)")
+            if kind == "hydrant":
+                t_ += L("<br>옥외 소화전 (NFPA 24 / 45m 간격 배치)", "<br>Outdoor Fire Hydrant (NFPA 24 / 45m spacing)")
+            if kind == "pump_house":
+                t_ += L("<br>소방 가압 펌프실 (주펌프+디젤예비펌프 패키지)", "<br>Fire Pump Room (Duty+Diesel Standby)")
+            if kind == "storage":
+                t_ += L("<br>20ft O&M 예비품 및 안전장구 보관소", "<br>20ft O&M Parts & Tools Storage")
+            if kind == "basin":
+                t_ += L(f"<br>우수 및 소방 오염수 차집 저류조 ({m.get('basin_m3', 0)} m³)",
+                        f"<br>Emergency Retention Basin ({m.get('basin_m3', 0)} m³)")
             hover += [t_] * 8
         fig.add_trace(go.Mesh3d(x=xs, y=ys, z=zs, i=ii, j=jj, k=kk, color=col, opacity=0.25 if struct else 0.9,
                                 name=L(kn, en), hovertext=hover, hoverinfo="text", flatshading=True,
@@ -204,6 +318,24 @@ def run_site_layout_module():
                                z=[0] * len(fx) + [None] + [EP.FENCE_HEIGHT_M] * len(fx), mode="lines",
                                line=dict(color="#8b949e", width=3), name=L("울타리·부지경계", "Fence / boundary"),
                                hoverinfo="skip"))
+    if show_hydrant_cov and m.get("include_infra"):
+        # 소화전 40m 지표면 원형 링
+        hx, hy, hz = SL.hydrant_coverage_circles(lay, radius_m=40.0)
+        fig.add_trace(go.Scatter3d(
+            x=hx, y=hy, z=hz, mode="lines",
+            line=dict(color="#e63946", width=4, dash="dot"),
+            name=L("소화전 40m 방수반경 (NFPA 24)", "Hydrant 40m Coverage Ring (NFPA 24)"),
+            hoverinfo="skip"
+        ))
+        # 소화전 40m 반투명 돔 메쉬
+        dxs, dys, dzs, dii, djj, dkk = SL.hydrant_coverage_dome_mesh(lay, radius_m=40.0)
+        if dxs:
+            fig.add_trace(go.Mesh3d(
+                x=dxs, y=dys, z=dzs, i=dii, j=djj, k=dkk,
+                color="#e63946", opacity=0.08, flatshading=True,
+                name=L("소화전 40m 방호구역 (돔)", "Hydrant 40m Coverage Dome"),
+                hoverinfo="skip", showlegend=True
+            ))
     # 기준안이 더 크면 축 범위를 넓혀 이전 윤곽이 잘리지 않게
     bw = max([x["x"] + x["dx"] for x in base["boxes"]], default=0.0) if base else 0.0
     bh = max([x["y"] + x["dy"] for x in base["boxes"]], default=0.0) if base else 0.0
