@@ -87,8 +87,9 @@ def _solve_via_api(nx, ny, dx, dy, ambient, heat_sources, hvac_kw, area_m2, sim_
 def make_3d_rack_meshes(sources, dx, dy, con_h, is_liquid=True):
     """
     배터리 랙 실물 형상 (스틸 프레임 + 8단 모듈 슬릿 + BMS 헤더 + 액랭 콜드플레이트) 3D 트레이스 생성.
+    현실적인 BESS 컨테이너 규격(가로 0.85m × 깊이 0.55m × 높이 2.15m) 및 통로 대향형 정렬 적용.
     """
-    rack_w, rack_l, rack_h = 0.60, 0.85, min(2.20, con_h * 0.85)
+    rack_w, rack_d, rack_h = 0.85, 0.55, min(2.15, con_h * 0.85)
     r_traces = []
 
     rx0, ry0, rz0 = [], [], []
@@ -96,11 +97,16 @@ def make_3d_rack_meshes(sources, dx, dy, con_h, is_liquid=True):
     offset_idx = 0
 
     slit_lines_x, slit_lines_y, slit_lines_z = [], [], []
+    branch_pipe_x, branch_pipe_y, branch_pipe_z = [], [], []
+
+    # 전체 컨테이너 중앙 Y 좌표 추정
+    all_ys = [s[1] * dy for s in sources] if sources else [1.22]
+    mid_y = (min(all_ys) + max(all_ys)) / 2.0 if len(all_ys) > 1 else 1.22
 
     for s in sources:
         cx, cy = s[0] * dx, s[1] * dy
         x0, x1 = cx - rack_w / 2.0, cx + rack_w / 2.0
-        y0, y1 = cy - rack_l / 2.0, cy + rack_l / 2.0
+        y0, y1 = cy - rack_d / 2.0, cy + rack_d / 2.0
         z0, z1 = 0.0, rack_h
 
         # 8개 꼭짓점
@@ -123,14 +129,27 @@ def make_3d_rack_meshes(sources, dx, dy, con_h, is_liquid=True):
             r_kk.append(tri[2] + offset_idx)
         offset_idx += 8
 
-        # 8단 배터리 모듈 분할선 (전면 슬릿)
-        for m in range(1, 8):
-            hz = z0 + m * (rack_h * 0.85 / 8.0)
-            slit_lines_x.extend([x0 + 0.05, x1 - 0.05, None])
-            slit_lines_y.extend([y0 + 0.02, y0 + 0.02, None])
+        # 전면(Front Face): 중앙 점검 통로(Aisle)를 바라보는 면에 슬릿 형성
+        # 남측 랙(cy < mid_y)은 북쪽(+Y, y1), 북측 랙(cy >= mid_y)은 남쪽(-Y, y0)이 전면
+        is_south = (cy <= mid_y)
+        front_y = (y1 - 0.015) if is_south else (y0 + 0.015)
+
+        # 8단 배터리 모듈 분할선 (전면 슬릿 및 모듈 트레이)
+        mod_h = rack_h * 0.82 / 8.0
+        for m in range(1, 9):
+            hz = z0 + 0.05 + m * mod_h
+            slit_lines_x.extend([x0 + 0.03, x1 - 0.03, None])
+            slit_lines_y.extend([front_y, front_y, None])
             slit_lines_z.extend([hz, hz, None])
 
-    # 랙 본체 Mesh3d
+        # 액랭식 분기 배관 (랙 바닥 콜드플레이트 -> 중앙 매니폴드 연결 T-pipe)
+        if is_liquid:
+            pipe_y_target = mid_y - 0.15 if is_south else mid_y + 0.15
+            branch_pipe_x.extend([cx, cx, None])
+            branch_pipe_y.extend([cy, pipe_y_target, None])
+            branch_pipe_z.extend([0.08, 0.08, None])
+
+    # 1. 랙 본체 Mesh3d (외장 스틸 프레임)
     r_traces.append(go.Mesh3d(
         x=rx0, y=ry0, z=rz0, i=r_ii, j=r_jj, k=r_kk,
         color="#1e293b", opacity=0.88,
@@ -138,38 +157,44 @@ def make_3d_rack_meshes(sources, dx, dy, con_h, is_liquid=True):
         hoverinfo="skip"
     ))
 
-    # 8단 모듈 슬릿 라인
+    # 2. 8단 모듈 슬릿 라인
     r_traces.append(go.Scatter3d(
         x=slit_lines_x, y=slit_lines_y, z=slit_lines_z, mode="lines",
-        line=dict(color="#64748b", width=2),
+        line=dict(color="#38bdf8", width=2.5),
         name="8단 배터리 팩 모듈 트레이",
         hoverinfo="skip"
     ))
 
-    # 액랭식일 경우 냉매 공급관 (Blue) & 환수관 (Red) 매니폴드 배관
+    # 3. 액랭식 전용 메쉬 (하부 콜드플레이트 + 냉매 매니폴드 공급/환수 배관 + 칠러 스키드)
     if is_liquid and sources:
         all_xs = [s[0] * dx for s in sources]
-        all_ys = [s[1] * dy for s in sources]
-        min_x, max_x = min(all_xs) - 0.5, max(all_xs) + 0.5
-        avg_y = sum(all_ys) / len(all_ys)
+        min_x, max_x = min(all_xs) - 0.6, max(all_xs) + 0.6
 
-        # 공급관 (청색 #0284c7)
+        # 청색 냉매 공급관 (Coolant Supply: 20~23°C)
         r_traces.append(go.Scatter3d(
-            x=[min_x, max_x], y=[avg_y + 0.35, avg_y + 0.35], z=[0.10, 0.10],
-            mode="lines", line=dict(color="#0284c7", width=6),
+            x=[min_x, max_x], y=[mid_y - 0.15, mid_y - 0.15], z=[0.08, 0.08],
+            mode="lines", line=dict(color="#0284c7", width=7),
             name="냉매 공급 매니폴드 (20~23°C)",
             hovertext="Coolant Supply Header (22°C)", hoverinfo="text"
         ))
-        # 환수관 (적색 #ef4444)
+        # 적색 냉각수 환수관 (Coolant Return: 25~28°C)
         r_traces.append(go.Scatter3d(
-            x=[min_x, max_x], y=[avg_y + 0.35, avg_y + 0.35], z=[0.20, 0.20],
-            mode="lines", line=dict(color="#ef4444", width=6),
+            x=[min_x, max_x], y=[mid_y + 0.15, mid_y + 0.15], z=[0.14, 0.14],
+            mode="lines", line=dict(color="#ef4444", width=7),
             name="냉각수 환수 매니폴드 (25~28°C)",
             hovertext="Coolant Return Header (26°C)", hoverinfo="text"
         ))
-        # 칠러 스키드 유닛 마커
+        # 콜드플레이트 분기 배관 (Branch Pipes)
+        if branch_pipe_x:
+            r_traces.append(go.Scatter3d(
+                x=branch_pipe_x, y=branch_pipe_y, z=branch_pipe_z, mode="lines",
+                line=dict(color="#64748b", width=3),
+                name="콜드플레이트 분기 배관 (Branch Pipes)",
+                hoverinfo="skip"
+            ))
+        # 칠러 스키드 유닛 (컨테이너 단부 공조실 배치)
         r_traces.append(go.Scatter3d(
-            x=[min_x - 0.8], y=[avg_y], z=[con_h * 0.45],
+            x=[min_x - 0.8], y=[mid_y], z=[con_h * 0.45],
             mode="markers+text", marker=dict(size=14, color="#94a3b8", symbol="square"),
             text=["💧 칠러 스키드"], textposition="top center",
             name="액체 칠러 펌프 스키드 유닛",
@@ -195,15 +220,33 @@ def solve_temperature_transient(nx, ny, dx, dy, ambient, heat_sources,
 
 
 def make_heat_sources(nx, ny, n_racks, T_rack):
-    sources, count = [], 0
-    cols_g = max(1, int(np.sqrt(n_racks)))
-    rows_g = int(np.ceil(n_racks / cols_g))
-    xs = np.linspace(2, nx - 3, cols_g, dtype=int)
-    ys = np.linspace(2, ny - 3, rows_g, dtype=int)
-    for iy in ys:
-        for ix in xs:
+    """
+    실제 BESS 컨테이너 내부 랙 배치 (중앙 점검 통로 Aisle + 양쪽 벽면 2행 대향형 정렬).
+    Y축(폭 2.44m)은 중앙 통로(Aisle)를 확보하고 양 벽면에 2행(소형 1행) 배치하며,
+    X축(길이 12.19m) 방향으로 랙들이 균등하게 정렬됩니다.
+    """
+    sources = []
+    if n_racks <= 3:
+        # 소형: 단열 배치 (남측 벽면 1행)
+        n_rows = 1
+        n_cols = n_racks
+        ys = [max(2, int(ny * 0.22))]
+    else:
+        # 표준 BESS: 복열 대향형 (남측/북측 양 벽면 2행, 중앙 1.0~1.2m 통로 확보)
+        n_rows = 2
+        n_cols = int(np.ceil(n_racks / 2.0))
+        # Y ≈ 0.22 (남측 행 Y≈0.5m), Y ≈ 0.78 (북측 행 Y≈1.9m) -> 중앙 Y=0.5(1.2m)는 시원한 통로
+        ys = [max(2, int(ny * 0.22)), min(ny - 3, int(ny * 0.78))]
+
+    # X축: 컨테이너 길이 방향 균등 분할
+    xs = np.linspace(max(2, int(nx * 0.12)), min(nx - 3, int(nx * 0.88)), n_cols, dtype=int)
+    count = 0
+    for r_idx in range(n_rows):
+        iy = ys[r_idx]
+        for c_idx in range(n_cols):
             if count >= n_racks:
                 break
+            ix = xs[c_idx]
             sources.append((int(ix), int(iy), T_rack))
             count += 1
     return sources

@@ -84,10 +84,48 @@ def run_site_layout_module():
                      "⚪ not run = page not opened yet, default [assumed] used · "
                      "⚠️ recompute = 01 inputs changed since that page last ran"))
 
-    # ── 배치 기준 ──────────────────────────────────────────────────────────
+    # ── 파워블록 구성 & PCS 연계 비율 메인 설정 (상단 전면 노출) ───────────────────────
+    st.markdown("### ⚡ " + L("파워블록 연계 비율 & 전기 아키텍처 설정", "Power Block Coupling Ratio & Electrical Architecture"))
+    st.caption(L("실제 BESS 현장 표준 비율(1:1, 1:2, 1:3, 1:4, 2:3)에 따라 PCS 대당 배터리 수량을 즉시 설정하고 최적 배치합니다.",
+                 "Configures PCS-to-battery ratio (1:1, 1:2, 1:3, 1:4, 2:3) to optimize layout and power block boundaries."))
+
+    pbc1, pbc2, pbc3 = st.columns([1.5, 1.2, 1.2])
+    pb_ratio_opts = [
+        L("02 시스템 설계값 자동 연동 (Auto from 02 System Eng)", "Auto from 02 System Engineering"),
+        L("1 : 2 (PCS 1대당 배터리 2대 - 0.5C 표준형) [권장]", "1 : 2 (1 PCS : 2 Batteries - 0.5C Standard) [Recommended]"),
+        L("1 : 4 (PCS 1대당 배터리 4대 - 0.25C 장주기 대칭형)", "1 : 4 (1 PCS : 4 Batteries - 0.25C Long-Duration Symmetric)"),
+        L("1 : 3 (PCS 1대당 배터리 3대 - 3.45MW 대용량형)", "1 : 3 (1 PCS : 3 Batteries - 3.45MW High-Cap)"),
+        L("1 : 1 (PCS 1대당 배터리 1대 - 1C 고출력 단독형)", "1 : 1 (1 PCS : 1 Battery - 1C High-Power)"),
+        L("2 : 3 (PCS 2대당 배터리 3대 - 듀얼 인버터 공유형)", "2 : 3 (2 PCS : 3 Batteries - Dual-Inverter Shared)"),
+        L("사용자 직접 지정 (Custom)", "Custom Manual Entry"),
+    ]
+    pb_choice = pbc1.selectbox(
+        L("⚡ 파워블록 연계 비율 (PCS : Battery)", "Power Block Ratio (PCS : Bat)"),
+        pb_ratio_opts, index=0, key="sl_pb_ratio",
+        help=L("실제 BESS 현장의 표준 파워블록 연계 비율(1:1, 1:2, 1:3, 1:4, 2:3)을 선택하여 PCS 대수와 구획을 자동 재편합니다.",
+               "Selects industry standard power block coupling ratio (1:1, 1:2, 1:3, 1:4, 2:3) to size PCS skids.")
+    )
+    topo_choice = pbc2.selectbox(
+        L("블록 배치 구조 (Topology)", "Block Topology"),
+        [L("중앙 집중형 (Center-Fed 대칭) [권장]", "Center-Fed Cluster [Recommended]"),
+         L("선형 일렬형 (Linear, 말단 배치)", "Linear (PCS at end)")],
+        index=0,
+        help=L("중앙 집중형: PCS를 블록 가운데 두고 배터리를 대칭 배치하여 DC 케이블 최대 거리 및 스트링 간 편차를 최소화합니다.",
+               "Center-Fed: Places PCS in the center with symmetric battery pairs to minimize DC cable run and imbalance.")
+    )
+    tr_pos_choice = pbc3.selectbox(
+        L("주변압기(POI) 위치", "Main TR Location"),
+        [L("남측 부하 중심 (Center) [권장]", "South Load Center [Recommended]"),
+         L("남서측 모서리 (Corner)", "South-West Corner")],
+        index=0,
+        help=L("부하 중심: 주변압기를 남측 중앙에 두어 MV 케이블 최장 경로와 트렌치 총연장을 25~35% 단축합니다.",
+               "Load Center: Centers the main TR along the south band, cutting MV cable route by 25-35%.")
+    )
+
+    # ── 부지 세부 이격거리 설정 (Expander) ─────────────────────────────────
     mk = EP.market_key(inp["target_market"][0])
     sep = EP.SEPARATION_BY_MARKET[mk]
-    with st.expander(L("⚙️ 배치 기준 & 케이블 루트 최적화 (시장: ", "⚙️ Layout Criteria & Cable Routing (Market: ") + f"{mk})", expanded=False):
+    with st.expander(L("⚙️ 세부 이격거리 & 인프라 설정 (시장: ", "⚙️ Clearance & Infra Parameters (Market: ") + f"{mk})", expanded=False):
         st.caption(f"{sep['src']} {sep['tag']} — " + L("값 소유: bess-fire-engineer", "owner: bess-fire-engineer"))
         c1, c2 = st.columns(2)
         unit_gap = c1.number_input(L("유닛 간 이격 (m)", "Unit separation (m)"), 0.3, 20.0,
@@ -100,41 +138,6 @@ def run_site_layout_module():
                                    0.0, 30.0, EP.TRANSFORMER_CLEARANCE_M, 0.5,
                                    help=L("IEC 61936-1·FM Global DS 5-4 에서 절연유량·내화등급별로 정함 — 조항 확인 전 스크리닝 값",
                                           "Set by IEC 61936-1 / FM Global DS 5-4 per oil volume & fire rating — screening value"))
-
-        st.markdown("**" + L("케이블 루트 & 연계 최적화 설정", "Cable Routing & Interconnection Optimization") + "**")
-        tc1, tc2 = st.columns(2)
-        topo_choice = tc1.selectbox(
-            L("블록 배치 구조 (Topology)", "Block Topology"),
-            [L("중앙 집중형 (Center-Fed, PCS 중심 대칭) [권장]", "Center-Fed Cluster (Symmetric around PCS) [Recommended]"),
-             L("선형 일렬형 (Linear, PCS 말단 배치)", "Linear (PCS at end)")],
-            index=0,
-            help=L("중앙 집중형: PCS를 블록 가운데 두고 배터리를 대칭 배치하여 DC 케이블 최대 거리 및 스트링 간 편차를 최소화합니다.",
-                   "Center-Fed: Places PCS in the center with symmetric battery pairs to minimize DC cable run and imbalance.")
-        )
-        tr_pos_choice = tc2.selectbox(
-            L("주변압기(POI) 연계 위치", "Main TR Location"),
-            [L("남측 부하 중심 (Center Load Point) [권장]", "South Load Center [Recommended]"),
-             L("남서측 모서리 (Corner)", "South-West Corner")],
-            index=0,
-            help=L("부하 중심: 주변압기를 남측 중앙에 두어 MV 케이블 최장 경로와 트렌치 총연장을 25~35% 단축합니다.",
-                   "Load Center: Centers the main TR along the south band, cutting MV cable route by 25-35%.")
-        )
-
-        pb_ratio_opts = [
-            L("02 시스템 설계값 자동 연동 (Auto from 02 System Eng)", "Auto from 02 System Engineering"),
-            L("1 : 2 (PCS 1대당 배터리 2대 - 0.5C 표준형) [권장]", "1 : 2 (1 PCS : 2 Batteries - 0.5C Standard) [Recommended]"),
-            L("1 : 4 (PCS 1대당 배터리 4대 - 0.25C 장주기 대칭형)", "1 : 4 (1 PCS : 4 Batteries - 0.25C Long-Duration Symmetric)"),
-            L("1 : 3 (PCS 1대당 배터리 3대 - 3.45MW 대용량형)", "1 : 3 (1 PCS : 3 Batteries - 3.45MW High-Cap)"),
-            L("1 : 1 (PCS 1대당 배터리 1대 - 1C 고출력 단독형)", "1 : 1 (1 PCS : 1 Battery - 1C High-Power)"),
-            L("2 : 3 (PCS 2대당 배터리 3대 - 듀얼 인버터 공유형)", "2 : 3 (2 PCS : 3 Batteries - Dual-Inverter Shared)"),
-            L("사용자 직접 지정 (Custom)", "Custom Manual Entry"),
-        ]
-        pb_choice = st.selectbox(
-            L("⚡ 파워블록 연계 비율 (PCS : Battery Ratio)", "Power Block Coupling Ratio (PCS : Bat)"),
-            pb_ratio_opts, index=0, key="sl_pb_ratio",
-            help=L("실제 BESS 현장의 표준 파워블록 연계 비율(1:1, 1:2, 1:3, 1:4, 2:3)을 선택하여 PCS 대수와 구획을 자동 재편합니다.",
-                   "Selects industry standard power block coupling ratio (1:1, 1:2, 1:3, 1:4, 2:3) to size PCS skids.")
-        )
 
         include_ehouse = st.checkbox(
             L("E-House (수배전반 및 제어실 40ft HC) 포함 [권장]", "Include E-House (Switchgear & Control Room 40ft HC) [Recommended]"),

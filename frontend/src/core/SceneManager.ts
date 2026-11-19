@@ -214,14 +214,19 @@ export class SceneManager {
       if (kind === 'rack') {
         const nModules = 8;
         const modH = (dz * 0.82) / nModules;
-        const slitMat = new THREE.LineBasicMaterial({ color: '#64748b', transparent: true, opacity: 0.8 });
+        const slitMat = new THREE.LineBasicMaterial({ color: '#38bdf8', transparent: true, opacity: 0.85 });
+
+        // 중앙 통로(Aisle) 대향형: 남측 랙은 북쪽(+Z in Three, -y in layout), 북측 랙은 남쪽이 전면
+        const midContainerY = this.sceneData.size[1] / 2;
+        const isSouthRack = (y + dy / 2) <= midContainerY;
+        const frontZ = isSouthRack ? (-y - dy + 0.015) : (-y - 0.015);
         
-        // 8단 배터리 모듈 분할선 (전면 및 후면)
+        // 8단 배터리 모듈 분할선 (전면 슬릿)
         for (let m = 1; m < nModules; m++) {
           const slitY = dz * 0.08 + m * modH;
           const slitGeo = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(x + 0.02, slitY, -y - dy + 0.01),
-            new THREE.Vector3(x + dx - 0.02, slitY, -y - dy + 0.01),
+            new THREE.Vector3(x + 0.03, slitY, frontZ),
+            new THREE.Vector3(x + dx - 0.03, slitY, frontZ),
           ]);
           this.groups.equipment.add(new THREE.Line(slitGeo, slitMat));
         }
@@ -233,16 +238,16 @@ export class SceneManager {
         bms.position.set(x + dx / 2, dz * 0.94, -y - dy / 2);
         this.groups.equipment.add(bms);
 
-        // 녹색 정상 가동 LED 인디케이터
+        // 녹색 정상 가동 LED 인디케이터 (전면 표시)
         const ledGeo = new THREE.SphereGeometry(dx * 0.03, 8, 8);
         const ledMat = new THREE.MeshBasicMaterial({ color: '#10b981' });
         const led = new THREE.Mesh(ledGeo, ledMat);
-        led.position.set(x + dx * 0.85, dz * 0.94, -y - dy * 0.98);
+        led.position.set(x + dx * 0.85, dz * 0.94, frontZ);
         this.groups.equipment.add(led);
 
         // 하부 액랭 콜드 플레이트 (알루미늄 열교환 베이스)
         const cpGeo = new THREE.BoxGeometry(dx * 0.96, dz * 0.05, dy * 0.96);
-        const cpMat = new THREE.MeshStandardMaterial({ color: '#38bdf8', metalness: 0.8, roughness: 0.2 });
+        const cpMat = new THREE.MeshStandardMaterial({ color: '#64748b', metalness: 0.8, roughness: 0.2 });
         const cp = new THREE.Mesh(cpGeo, cpMat);
         cp.position.set(x + dx / 2, dz * 0.03, -y - dy / 2);
         this.groups.equipment.add(cp);
@@ -275,39 +280,51 @@ export class SceneManager {
       }
     });
 
-    // ── 액랭식(Liquid Cooled) 냉매 순환 매니폴드 배관 및 칠러 유닛 렌더링 ──
+    // ── 액랭식(Liquid Cooled) 전용: 냉매 순환 매니폴드 배관 및 칠러 유닛 렌더링 ──
     const rackBoxes = this.sceneData.boxes.filter(b => b.kind === 'rack');
-    if (rackBoxes.length > 0) {
+    if (this.sceneData.cooling_mode === 'liquid' && rackBoxes.length > 0) {
       // 랙 열을 따라 흐르는 이중 매니폴드 파이프라인 (청색 공급관, 적색 환수관)
       const minX = Math.min(...rackBoxes.map(b => b.x));
       const maxX = Math.max(...rackBoxes.map(b => b.x + b.dx));
-      const avgY = rackBoxes.reduce((acc, b) => acc + b.y + b.dy / 2, 0) / rackBoxes.length;
+      const midY = this.sceneData.size[1] / 2;
 
       // 1. 청색 냉매 공급관 (Coolant Supply Header - 20~23°C)
       const supplyPoints = [
-        new THREE.Vector3(minX - 0.5, 0.08, -avgY + 0.35),
-        new THREE.Vector3(maxX + 0.5, 0.08, -avgY + 0.35),
+        new THREE.Vector3(minX - 0.5, 0.08, -midY + 0.18),
+        new THREE.Vector3(maxX + 0.5, 0.08, -midY + 0.18),
       ];
       const supCurve = new THREE.LineCurve3(supplyPoints[0], supplyPoints[1]);
-      const supGeo = new THREE.TubeGeometry(supCurve, 32, 0.025, 8, false);
-      const supMat = new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.5, roughness: 0.3 });
+      const supGeo = new THREE.TubeGeometry(supCurve, 32, 0.028, 8, false);
+      const supMat = new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.6, roughness: 0.2 });
       this.groups.utilities.add(new THREE.Mesh(supGeo, supMat));
 
       // 2. 적색 냉매 환수관 (Coolant Return Header - 25~28°C)
       const returnPoints = [
-        new THREE.Vector3(minX - 0.5, 0.16, -avgY + 0.35),
-        new THREE.Vector3(maxX + 0.5, 0.16, -avgY + 0.35),
+        new THREE.Vector3(minX - 0.5, 0.15, -midY - 0.18),
+        new THREE.Vector3(maxX + 0.5, 0.15, -midY - 0.18),
       ];
       const retCurve = new THREE.LineCurve3(returnPoints[0], returnPoints[1]);
-      const retGeo = new THREE.TubeGeometry(retCurve, 32, 0.025, 8, false);
-      const retMat = new THREE.MeshStandardMaterial({ color: '#ef4444', metalness: 0.5, roughness: 0.3 });
+      const retGeo = new THREE.TubeGeometry(retCurve, 32, 0.028, 8, false);
+      const retMat = new THREE.MeshStandardMaterial({ color: '#ef4444', metalness: 0.6, roughness: 0.2 });
       this.groups.utilities.add(new THREE.Mesh(retGeo, retMat));
 
-      // 3. 컨테이너 단부 액체 칠러 펌프 스키드 유닛 (Liquid Chiller Skid Unit)
-      const chGeo = new THREE.BoxGeometry(0.8, this.sceneData.size[2] * 0.85, 1.2);
+      // 3. 각 랙 바닥 콜드플레이트로 분기되는 지관 (Branch Pipes)
+      rackBoxes.forEach(b => {
+        const rcx = b.x + b.dx / 2;
+        const rcy = b.y + b.dy / 2;
+        const bGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(rcx, 0.06, -rcy),
+          new THREE.Vector3(rcx, 0.06, -midY),
+        ]);
+        const bMat = new THREE.LineBasicMaterial({ color: '#64748b', linewidth: 2 });
+        this.groups.utilities.add(new THREE.Line(bGeo, bMat));
+      });
+
+      // 4. 컨테이너 단부 액체 칠러 펌프 스키드 유닛 (Liquid Chiller Skid Unit)
+      const chGeo = new THREE.BoxGeometry(0.85, this.sceneData.size[2] * 0.85, 1.3);
       const chMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.7, roughness: 0.3 });
       const chiller = new THREE.Mesh(chGeo, chMat);
-      chiller.position.set(minX - 0.9, (this.sceneData.size[2] * 0.85) / 2, -avgY);
+      chiller.position.set(minX - 0.9, (this.sceneData.size[2] * 0.85) / 2, -midY);
       this.groups.equipment.add(chiller);
     }
 
