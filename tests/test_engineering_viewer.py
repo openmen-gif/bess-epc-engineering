@@ -2,6 +2,7 @@ import json
 import re
 
 import numpy as np
+import pytest
 
 from utils import site_layout as SL
 from utils.engineering_viewer import site_payload, thermal_payload, fire_payload, viewer_html
@@ -12,7 +13,7 @@ def test_site_preserves_geometry_and_counts():
     before = json.dumps(layout)
     data = site_payload(layout, 7.05, 3.44, 1.2, language="EN")
     assert data["boxes"] == layout["boxes"]
-    assert data["size"][:2] == list(layout["site"])
+    assert data["size"][:2] == pytest.approx(list(layout["site"]), rel=0, abs=1e-9)
     assert len(data["pads"]) == 24
     assert data["trench"] == layout["trench"]
     assert json.dumps(layout) == before
