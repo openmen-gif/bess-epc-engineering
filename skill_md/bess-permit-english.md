@@ -1,6 +1,12 @@
 ---
 name: bess-permit-english
-description: "인허가 전문가(영어권). US/AU/UK FERC, AEMO, Ofgem, G99, NER, NEPA, Interconnection"
+id: "PRM-002"
+description: 인허가 전문가(영어권). US/AU/UK FERC, AEMO, Ofgem, G99, NER, NEPA, Interconnection
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -130,6 +136,20 @@ NEPA, EPBC, G99, NER, IRA, ITC, Planning Permission, Interconnection
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- US FERC Order 2023/2222 Cluster Study, AU NER Chapter 5, UK G99/G100 연계가 스킬에 정리됨 — 근거: `00_Skill_MD/bess-permit-english.md`
+- UK 인허가 소요기간 참조값: Grid Connection **9~18개월**(초기 스크리닝 2~3 + 상세 엔지니어링·비용산정 6~12 + 계약 1~2), Planning Permission **4~9개월**, Environmental Review **4~8개월**(민감지역 +1~3개월) — 근거: `sessions/2026-07-20T09-18-57/bess-permit-english.md`
+- 근거 법령·절차: UK = Town & Country Planning Act + **EIA Regulations 2017**(LPA·Environment Agency), US = **FERC Order 2222** 기반 Cluster Study(12개월+), AU = **NER Chapter 5** + GPS(Generator Performance Standards) 준수 — 근거: `sessions/2026-07-20T09-18-57/bess-permit-english.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ UK 계통운영자를 "National Grid Energy(NGESO)"로 표기하고 DNO와 동렬 배치 → ✅ 2024년 이후 **NESO**(구 National Grid ESO)가 시스템 운영자이며, DNO(배전)·TO(송전)와 역할이 다르다(가드레일 §1 UK 행) — 근거: `sessions/2026-07-20T09-18-57/bess-permit-english.md`
+- ❌ "JCFC (Joint Committee on Tariff Classification), 미국 CBP 구성" → ✅ permit-asia 정의(Fire Code)와 상충, 미검증 약어로 사용 금지 — 근거: `sessions/2026-05-20T13-36-03/bess-permit-english.md`
+- ❌ HS코드/관세분류로 표류 → ✅ permit 도메인은 인허가 시퀀스/서류에 한정 — 근거: `sessions/2026-05-20T13-36-03/bess-permit-english.md`
+- ❌ "NER (National Enforcement Requirements)"로 오확장 후 UK·범용 EU에 적용 → ✅ NER=호주 National Electricity Rules(AU 전용 약어), UK 계통연계는 Ofgem G99/G100 + DNO Connection Agreement로 기술, EU는 국가별 TSO/그리드코드로 분기 — 근거: `sessions/2026-06-19T04-01-52/bess-permit-english.md`
+- ❌ permit-english critic이 "**SiC 기반 IGBT 인버터**"의 비용·규제 모니터링만 다룸(US/AU/UK 인허가 절차·서류·리드타임 지표 0건) → ✅ SiC 전력소자는 **MOSFET**이 주류이고 IGBT는 Si 소자다(소자 표기는 pcs-expert 소관). critic 이탈(§0-9)로 지식 마이닝 제외 — 근거: `sessions/2026-10-21T00-20-57/bess-permit-english_critic.md`, `sessions/2026-10-22T11-31-25/bess-permit-english_critic.md`(예방정비 사이버보안·system-engineer 과잉 일반화만 지적, US/AU/UK 인허가 지표 0건, 재발, 2026-10-22), `sessions/2026-10-26T16-39-36/bess-permit-english_critic.md`(공급망·다중 공급업체 전략만 비평, US/AU/UK 인허가 지표 0건, 재발, 2026-10-26) · 재발 `sessions/2026-11-06T21-10-27/bess-permit-english_critic.md` · 재발 `sessions/2026-11-09T13-47-43/bess-permit-english_critic.md` · 재발 `sessions/2026-11-17T01-26-46/bess-permit-english_critic.md`(사회적 영향 지표·esg-finance TCFD 낙관론만 비평, US/AU/UK 인허가 절차·서류·리드타임 지표 0건) · 재발 `sessions/2026-11-21T04-23-52/bess-permit-english_critic.md`(견적서의 IRA 세액공제 정책 변동·민감도 분석과 tax-incentive 낙관만 비평 — IRA는 tax-incentive, UKCA는 제품 적합성 표시로 인허가 절차가 아님, US/AU/UK 인허가 지표 0건) · 재발 `sessions/2026-11-22T13-52-11/bess-permit-english_critic.md`(조직문화 KPI·training-expert 교육 낙관만 비평, US/AU/UK 인허가 지표 0건) · 재발 `sessions/2026-11-22T15-36-39/bess-permit-english_critic.md`(빠뜨린 관점을 "**KPX와 같은 공공 에너지 시장**"의 정책 변화로 채우고 cost-analyst AI 화재예방 비용 낙관만 비평 — KR 시장으로 담당 시장 이탈, US/AU/UK 인허가 지표 0건, 2026-11-22) · 재발 `sessions/2026-11-25T06-52-28/bess-permit-english_critic.md`(변압기 손실 회차에서 고조파 관리 누락·system-engineer 기술 최적화 편향·O&M 비용·환경영향만 비평, US/AU/UK 인허가 절차·서류·리드타임 지표 0건, 2026-11-26)
 
 ## 인허가 수행 절차 (Interconnection Process)
 
@@ -438,17 +458,3 @@ G99 Compliance 지연          ★★★      Type Test 사전 확보, 벤더 �
 Generation Licence 요건      ★★       50MW 이상 Ofgem 라이선스 사전 준비
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- US FERC Order 2023/2222 Cluster Study, AU NER Chapter 5, UK G99/G100 연계가 스킬에 정리됨 — 근거: `00_Skill_MD/bess-permit-english.md`
-- UK 인허가 소요기간 참조값: Grid Connection **9~18개월**(초기 스크리닝 2~3 + 상세 엔지니어링·비용산정 6~12 + 계약 1~2), Planning Permission **4~9개월**, Environmental Review **4~8개월**(민감지역 +1~3개월) — 근거: `sessions/2026-07-20T09-18-57/bess-permit-english.md`
-- 근거 법령·절차: UK = Town & Country Planning Act + **EIA Regulations 2017**(LPA·Environment Agency), US = **FERC Order 2222** 기반 Cluster Study(12개월+), AU = **NER Chapter 5** + GPS(Generator Performance Standards) 준수 — 근거: `sessions/2026-07-20T09-18-57/bess-permit-english.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ UK 계통운영자를 "National Grid Energy(NGESO)"로 표기하고 DNO와 동렬 배치 → ✅ 2024년 이후 **NESO**(구 National Grid ESO)가 시스템 운영자이며, DNO(배전)·TO(송전)와 역할이 다르다(가드레일 §1 UK 행) — 근거: `sessions/2026-07-20T09-18-57/bess-permit-english.md`
-- ❌ "JCFC (Joint Committee on Tariff Classification), 미국 CBP 구성" → ✅ permit-asia 정의(Fire Code)와 상충, 미검증 약어로 사용 금지 — 근거: `sessions/2026-05-20T13-36-03/bess-permit-english.md`
-- ❌ HS코드/관세분류로 표류 → ✅ permit 도메인은 인허가 시퀀스/서류에 한정 — 근거: `sessions/2026-05-20T13-36-03/bess-permit-english.md`
-- ❌ "NER (National Enforcement Requirements)"로 오확장 후 UK·범용 EU에 적용 → ✅ NER=호주 National Electricity Rules(AU 전용 약어), UK 계통연계는 Ofgem G99/G100 + DNO Connection Agreement로 기술, EU는 국가별 TSO/그리드코드로 분기 — 근거: `sessions/2026-06-19T04-01-52/bess-permit-english.md`
-- ❌ permit-english critic이 "**SiC 기반 IGBT 인버터**"의 비용·규제 모니터링만 다룸(US/AU/UK 인허가 절차·서류·리드타임 지표 0건) → ✅ SiC 전력소자는 **MOSFET**이 주류이고 IGBT는 Si 소자다(소자 표기는 pcs-expert 소관). critic 이탈(§0-9)로 지식 마이닝 제외 — 근거: `sessions/2026-10-21T00-20-57/bess-permit-english_critic.md`, `sessions/2026-10-22T11-31-25/bess-permit-english_critic.md`(예방정비 사이버보안·system-engineer 과잉 일반화만 지적, US/AU/UK 인허가 지표 0건, 재발, 2026-10-22), `sessions/2026-10-26T16-39-36/bess-permit-english_critic.md`(공급망·다중 공급업체 전략만 비평, US/AU/UK 인허가 지표 0건, 재발, 2026-10-26) · 재발 `sessions/2026-11-06T21-10-27/bess-permit-english_critic.md` · 재발 `sessions/2026-11-09T13-47-43/bess-permit-english_critic.md`

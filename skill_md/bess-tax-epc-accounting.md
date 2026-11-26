@@ -1,6 +1,12 @@
 ---
 name: bess-tax-epc-accounting
-description: "법인세, VAT/GST, EPC 턴키 PO 회계, 국가별 세무 신고, 이전가격, OECD BEPS, 영구사업장(PE), 부가세 환급"
+id: "TAX-002"
+description: 법인세, VAT/GST, EPC 턴키 PO 회계, 국가별 세무 신고, 이전가격, OECD BEPS, 영구사업장(PE), 부가세 환급
+department: "재무본부 (CFO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -103,6 +109,18 @@ bess-tax-epc-accounting
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- POC(공정률) 매출인식 = IFRS 15 / ASC 606. 미수금·미청구공사(초과청구 시 이연수익) 분리, 환차익/환차손 매매·비매매 구분 회계 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
+- 국가별 법인세 비교: KR 24%(+지방세 2.4%), US 연방 21%+주세, EU 독일 30%·프랑스 25%, VAT 19~27%. US BEAT, OECD BEPS 마스터/로컬파일, 이중과세조약(DTA)·외국납부세액공제 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
+- PE(영구사업장) 리스크: 종속대리인 규정 검토 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ KR 법인세 "24% + 지방세 2.4%" vs tax-korea의 "21~24%" 불일치 → ✅ 본 문서(24%+2.4%)가 정확, tax-korea 정렬 기준으로 채택 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md` vs `sessions/2026-06-08T01-43-37/bess-tax-korea.md`
+- ❌ KR에 "신재생에너지 관련 ITC(투자세액공제)" 표현 사용(ITC는 US IRA 용어) → ✅ 한국은 조특법 §24 시설투자세액공제로 표기, US→KR 용어 오적용 금지 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
+- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-tax-epc-accounting_critic`이 법인세·VAT·매출인식(POC)·PE 판단 0건으로 EMC 노이즈 필터 신뢰성·emc-analyst 비평만 수행 → 세무·회계 지식 마이닝에서 제외 — 근거: `sessions/2026-10-19T03-15-34/bess-tax-epc-accounting_critic.md`, `sessions/2026-10-22T19-27-10/bess-tax-epc-accounting_critic.md`(Pillar 2 "모니터링" 1줄 외 법인세·VAT·POC·PE 판단 0건, 본문은 미국↔한국 인증 상호인정 비평, 재발), `sessions/2026-10-23T09-27-20/bess-tax-epc-accounting_critic.md`(근로자 안전교육·환경 지속가능성·cost-analyst 교육비만 비평, 세무 지표 0건, 재발, 2026-10-23) · 재발 `sessions/2026-11-14T13-50-22/bess-tax-epc-accounting_critic.md`(SiC 시장 수용성·전환 비용·cost-analyst 낙관 편향만 비평, 법인세·VAT·POC·PE 판단 0건), `sessions/2026-11-14T17-18-12/bess-tax-epc-accounting_critic.md`(외국인 인력 안전교육·training-expert만 비평, 세무 지표 0건, 2026-11-14) · 재발 `sessions/2026-11-16T07-36-15/bess-tax-epc-accounting_critic.md`(정책·규제 시나리오와 LFP/NMC 공급망 일반론·cost-analyst 기술 비용 낙관만 비평, 법인세·VAT·POC·PE 판단 0건, 2026-11-16) · 재발 `sessions/2026-11-20T00-56-36/bess-tax-epc-accounting_critic.md`(원격 근무 데이터 보안·직원 프라이버시 교육과 cost-analyst 역량 개발 프로그램 효과성만 비평, 법인세·VAT·POC·PE 판단 0건, 2026-11-20) · 재발 `sessions/2026-11-21T09-12-23/bess-tax-epc-accounting_critic.md`(일본 프로젝트 법인세 과제에서 탄소 배출권 거래 참여 일반론과 tax-korea의 한일 조세조약 검토 부족만 비평, POC·VAT/소비세·PE 판단 0건. "탄소 배출권을 **구매**하거나 거래를 통해 비용을 절감"은 배출권 구매가 비용 증가라 인과가 거꾸로이며 일본 배출권 제도 적용 여부는 `[요확인]`, 2026-11-21)
+
 ## 시장별 핵심 세법 요점
 
 ### 한국 (KR)
@@ -157,15 +175,3 @@ EPC 매출 인식 옵션:
 - BEPS Action 8-10(이전가격): 무형자산(브랜드·IP), 위험·자본 정합
 - Master File / Local File / CbCR 보고(매출 €750M+ 또는 KRW 1조+)
 - Pillar 2 GloBE: 글로벌 최저세율 15% — 추가과세 메커니즘(IIR/UTPR/QDMTT)
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- POC(공정률) 매출인식 = IFRS 15 / ASC 606. 미수금·미청구공사(초과청구 시 이연수익) 분리, 환차익/환차손 매매·비매매 구분 회계 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
-- 국가별 법인세 비교: KR 24%(+지방세 2.4%), US 연방 21%+주세, EU 독일 30%·프랑스 25%, VAT 19~27%. US BEAT, OECD BEPS 마스터/로컬파일, 이중과세조약(DTA)·외국납부세액공제 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
-- PE(영구사업장) 리스크: 종속대리인 규정 검토 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ KR 법인세 "24% + 지방세 2.4%" vs tax-korea의 "21~24%" 불일치 → ✅ 본 문서(24%+2.4%)가 정확, tax-korea 정렬 기준으로 채택 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md` vs `sessions/2026-06-08T01-43-37/bess-tax-korea.md`
-- ❌ KR에 "신재생에너지 관련 ITC(투자세액공제)" 표현 사용(ITC는 US IRA 용어) → ✅ 한국은 조특법 §24 시설투자세액공제로 표기, US→KR 용어 오적용 금지 — 근거: `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
-- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-tax-epc-accounting_critic`이 법인세·VAT·매출인식(POC)·PE 판단 0건으로 EMC 노이즈 필터 신뢰성·emc-analyst 비평만 수행 → 세무·회계 지식 마이닝에서 제외 — 근거: `sessions/2026-10-19T03-15-34/bess-tax-epc-accounting_critic.md`, `sessions/2026-10-22T19-27-10/bess-tax-epc-accounting_critic.md`(Pillar 2 "모니터링" 1줄 외 법인세·VAT·POC·PE 판단 0건, 본문은 미국↔한국 인증 상호인정 비평, 재발), `sessions/2026-10-23T09-27-20/bess-tax-epc-accounting_critic.md`(근로자 안전교육·환경 지속가능성·cost-analyst 교육비만 비평, 세무 지표 0건, 재발, 2026-10-23)
