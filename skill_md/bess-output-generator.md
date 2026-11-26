@@ -1,6 +1,12 @@
 ---
 name: bess-output-generator
-description: "전사 문서 표준화, 출력 형식 선택, A4/A3 인쇄, Excel/Word/PDF/Python 파일 생성"
+id: "SCV-500"
+description: 전사 문서 표준화, 출력 형식 선택, A4/A3 인쇄, Excel/Word/PDF/Python 파일 생성
+department: "Support / Document Team"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -115,6 +121,28 @@ bess-output-generator
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 견적서(Q)/BOM 필수항목 스키마: 부품명/부품번호/제조사/모델/단가/수량/총액/세금·운송 + 참고출처(URL+수집일) 의무 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- A4 인쇄 표준 "옵션 A": 단면 대칭, 25mm 4-방향 여백, 헤더/푸터/페이지번호/제목행 반복 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- 자동화 파이프라인 규약: CSV→pandas→FPDF/Excel 자동 생성, BOM↔견적 데이터 연계(변경 자동 반영), 계층 BOM 추적성 — 근거: `sessions/2026-05-21T06-28-02/bess-output-generator.md`
+- 출처 표기 규약: 모든 데이터에 [출처명]-[URL/문서참조]-[수집일] 3요소(CLAUDE.md 하이퍼링크 증거 원칙과 일치) — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
+- 견적서·BOM 출력 규약: 인쇄 옵션 **A(단면 대칭, 25 mm 4-방향 여백)**, 3페이지 이상이면 점선 TOC + 페이지 번호 필수, 계산·수식은 Excel(.xlsx)로 관리하고 최종 배포본은 PDF로 고정 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+- 통합 보고서 자동 생성기의 자동 검증 4항목: ①수식 오류값(`#REF!`·`#DIV/0!`) 스캔 ②모든 수치의 출처 3요소([출처명]-[URL/문서]-[수집일]) 존재 ③여백 옵션 A/B/C 중 선택값 적용 ④3페이지 이상이면 점선 TOC·페이지 번호 생성 — 근거: `sessions/2026-10-22T01-03-29/bess-output-generator.md`
+- 견적서 필수 섹션: 요약(총 비용) / 부품 목록(부품명·부품번호·제조사·모델·단가·수량·총액·세금·운송비) / 총 비용 / **참고 출처** / `[요확인]` 항목 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 단가·수량을 공급업체 견적 기준으로만 표기하고 조회 기준일 누락 → ✅ 모든 금액 항목에 **기준일과 출처**를 병기하고, 환율 적용 시 적용일·환율값을 함께 기재 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
+- ❌ frontmatter `department: "Support / Document Team"`(영문) vs 타 도메인 "운영본부(COO 산하)" 드리프트 → ✅ 부서명 "운영본부(COO 산하)" 한글 단일 표기 — 근거: `00_Skill_MD/bess-output-generator.md`
+- ❌ 예시 출처 placeholder 환각(examplebattery.com / 2023-04-15 등 가짜 URL·과거일자) → ✅ 실제 출처로 치환 강제, example.com·과거 placeholder 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-output-generator.md`
+- ❌ bess-output-generator 세션이 BOM 원가·물량산출·IRA 관세혜택 등 콘텐츠 분석까지 수행(역할경계 위반, 2026-07-05~07-13 배치 세션 다수 반복) → ✅ 콘텐츠(단가·수치·규정해석)는 bess-epc-bom/bess-cost-analyst/bess-tax-incentive 담당, output-generator는 형식·서식 표준화만 수행 — 근거: `sessions/2026-07-05T08-50-30/bess-output-generator.md`
+- ❌ 생성 파일 저장 위치를 "**`/mnt/user-data/outputs/`** 경로에 저장 후 전달"로 명시 → ✅ 이 조직의 산출물 저장 규칙은 `output/` 번호 폴더(예: `02_reports/`, `10_tools/`)와 비-Python 결과물용 `02. 작업중/`이며, 파일명은 `[프로젝트코드]_[문서유형]_v[버전]_[YYYYMMDD]`를 따른다(00_Skill_MD/CLAUDE.md "출력 저장 경로"). 다른 실행 환경의 경로를 표준으로 옮겨 적지 않는다 — 근거: `sessions/2026-10-22T01-03-29/bess-output-generator.md`
+- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-output-generator_critic`이 출력 지표(형식·여백·TOC·출처 표기·파일명 규칙) 0건으로 각국 배터리 재활용 규제·cost-analyst LFP/NMC 단가만 비평 → 출력 지식 마이닝에서 제외 — 근거: `sessions/2026-10-21T06-08-58/bess-output-generator_critic.md` · 재발 `sessions/2026-11-09T16-03-06/bess-output-generator_critic.md` · 재발 `sessions/2026-11-16T04-08-48/bess-output-generator_critic.md`(클라우드 업그레이드의 GDPR·개인정보보호법·IEC 62443·cost-analyst 보안 비용만 비평, 출력 지표 0건) · 재발 `sessions/2026-11-23T07-38-15/bess-output-generator_critic.md`(지역별 시장 수용성·financial-analysis 낙관 편향·다중 시나리오만 비평, 출력 지표 0건) · 재발 `sessions/2026-11-24T09-23-41/bess-output-generator_critic.md`(FTA 전략의 환경영향평가 통합·cost-analyst 나트륨이온 낙관만 비평), `sessions/2026-11-24T11-11-34/bess-output-generator_critic.md`(지역 정책·사회 수용성·배터리 기술 다각화만 비평), `sessions/2026-11-24T23-44-46/bess-output-generator_critic.md`(규제·사회 수용성·cost-analyst 나트륨이온 비용 민감도만 비평) — 3건 모두 형식·여백·TOC·출처 표기·파일명 규칙 지표 0건이고 같은 "cost-analyst 나트륨이온 낙관" 문형을 반복, 2026-11-25
+- ❌ "테이블 열 너비 합이 **160 mm (A4 본문 폭의 약 63%)**를 넘지 않도록" → ✅ 여백 옵션 A(좌우 25 mm)에서 본문 폭은 210 − 25 − 25 = **160 mm**이므로 160 mm는 본문 폭의 **100%**(용지 폭 210 mm 대비 **약 76%**)다. 본 MD 기준은 "col_widths 합계 = 160 mm(옵션 A/B/C 공통)"이며, 비율을 덧붙일 때는 분모(본문 폭/용지 폭)를 명시해 검산한다(공통 가드레일 §5 단위·검산) — 근거: `sessions/2026-11-13T03-24-30/bess-output-generator.md`
+- ❌ **reportlab 자동화 예시 코드가 그대로는 동작하지 않음**: ①`c.drawImage(..., 50, height - 100, width=width*0.8, height=height*0.6)` — reportlab 좌표는 **좌하단 원점**이고 y는 이미지 **아래 변** 위치라, 아래 변 y = 742 pt에 높이 약 505 pt를 그리면 위 변이 약 1,247 pt로 A4 높이(841.9 pt)를 넘어 페이지 밖으로 잘린다 ②`open("bess_report.pdf", "rb")`로 연 파일에 `write()`를 호출(읽기 전용 모드라 `io.UnsupportedOperation`)하고, 완성된 PDF 끝에 `b"<pdf>참고 출처…</pdf>"` 바이트를 덧붙이는 방식은 PDF 객체 구조 밖이라 화면에 표시되지 않는다 → ✅ 이미지는 `y + 높이 ≤ 페이지 높이 − 상단 여백`으로 배치를 검산하고, 참고 출처는 `c.save()` **전에** `drawString`/Platypus `Paragraph`로 본문에 넣는다. 예시 코드는 산출 전 1회 실행해 PDF가 열리는지 확인한다(본 MD 출처 삽입 규칙·§4 출력 품질) — 근거: `sessions/2026-11-13T03-24-30/bess-output-generator.md`
+- ❌ 라운드 2 근거 점검에서 NEWS-ID를 발언자처럼 "**@bess-20261112-a01 (시장 동향)**"으로 지목하고, 같은 라운드에서 marketer 템플릿(SiC 기사 `a01`을 "리튬 가격", 입찰 기사 `a02`를 "코발트 가격"으로 재라벨)을 "**근거 ✓**"로 판정 → ✅ `@`는 스킬 카탈로그 이름(전문가)에만 쓰고 NEWS-ID는 `bess-YYYYMMDD-aNN` 식별자로 인용한다. 근거 ✓는 인용 ID가 그 주장을 직접 뒷받침할 때만 준다 — 출력관리자의 출처 3요소 검증은 **ID와 기사 주제의 일치**까지 포함한다(공통 가드레일 §4 NEWS-ID 라벨 무결성) — 근거: `sessions/2026-11-13T03-24-30/bess-output-generator.md`
 
 ## 출처(Sources) 포함 원칙 (모든 출력물 필수)
 
@@ -813,7 +841,7 @@ Sources 최소     5건             10건            20건           29건+
 ```
 ---
 
-## 핵심 역량 및 업무 범위
+## 핵심 역량 및 업무 범위 (수행 절차)
 
 > 출력관리자의 핵심 업무 절차는 아래 형식별 생성 가이드(Excel/Word/Python/PDF/인쇄패키지/복합출력)와 콘텐츠×형식 매핑에 따라 수행한다.
 
@@ -1057,25 +1085,3 @@ TOC 검증 (raw `{ TOC \o "1-2" }` 필드 금지 — LibreOffice PDF 목차 누�
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 견적서(Q)/BOM 필수항목 스키마: 부품명/부품번호/제조사/모델/단가/수량/총액/세금·운송 + 참고출처(URL+수집일) 의무 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-- A4 인쇄 표준 "옵션 A": 단면 대칭, 25mm 4-방향 여백, 헤더/푸터/페이지번호/제목행 반복 — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-- 자동화 파이프라인 규약: CSV→pandas→FPDF/Excel 자동 생성, BOM↔견적 데이터 연계(변경 자동 반영), 계층 BOM 추적성 — 근거: `sessions/2026-05-21T06-28-02/bess-output-generator.md`
-- 출처 표기 규약: 모든 데이터에 [출처명]-[URL/문서참조]-[수집일] 3요소(CLAUDE.md 하이퍼링크 증거 원칙과 일치) — 근거: `sessions/2026-06-05T01-17-31/bess-output-generator.md`
-- 견적서·BOM 출력 규약: 인쇄 옵션 **A(단면 대칭, 25 mm 4-방향 여백)**, 3페이지 이상이면 점선 TOC + 페이지 번호 필수, 계산·수식은 Excel(.xlsx)로 관리하고 최종 배포본은 PDF로 고정 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
-- 통합 보고서 자동 생성기의 자동 검증 4항목: ①수식 오류값(`#REF!`·`#DIV/0!`) 스캔 ②모든 수치의 출처 3요소([출처명]-[URL/문서]-[수집일]) 존재 ③여백 옵션 A/B/C 중 선택값 적용 ④3페이지 이상이면 점선 TOC·페이지 번호 생성 — 근거: `sessions/2026-10-22T01-03-29/bess-output-generator.md`
-- 견적서 필수 섹션: 요약(총 비용) / 부품 목록(부품명·부품번호·제조사·모델·단가·수량·총액·세금·운송비) / 총 비용 / **참고 출처** / `[요확인]` 항목 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 단가·수량을 공급업체 견적 기준으로만 표기하고 조회 기준일 누락 → ✅ 모든 금액 항목에 **기준일과 출처**를 병기하고, 환율 적용 시 적용일·환율값을 함께 기재 — 근거: `sessions/2026-07-29T02-57-48/bess-output-generator.md`
-- ❌ frontmatter `department: "Support / Document Team"`(영문) vs 타 도메인 "운영본부(COO 산하)" 드리프트 → ✅ 부서명 "운영본부(COO 산하)" 한글 단일 표기 — 근거: `00_Skill_MD/bess-output-generator.md`
-- ❌ 예시 출처 placeholder 환각(examplebattery.com / 2023-04-15 등 가짜 URL·과거일자) → ✅ 실제 출처로 치환 강제, example.com·과거 placeholder 금지 — 근거: `sessions/2026-06-05T13-23-17/bess-output-generator.md`
-- ❌ bess-output-generator 세션이 BOM 원가·물량산출·IRA 관세혜택 등 콘텐츠 분석까지 수행(역할경계 위반, 2026-07-05~07-13 배치 세션 다수 반복) → ✅ 콘텐츠(단가·수치·규정해석)는 bess-epc-bom/bess-cost-analyst/bess-tax-incentive 담당, output-generator는 형식·서식 표준화만 수행 — 근거: `sessions/2026-07-05T08-50-30/bess-output-generator.md`
-- ❌ 생성 파일 저장 위치를 "**`/mnt/user-data/outputs/`** 경로에 저장 후 전달"로 명시 → ✅ 이 조직의 산출물 저장 규칙은 `output/` 번호 폴더(예: `02_reports/`, `10_tools/`)와 비-Python 결과물용 `02. 작업중/`이며, 파일명은 `[프로젝트코드]_[문서유형]_v[버전]_[YYYYMMDD]`를 따른다(00_Skill_MD/CLAUDE.md "출력 저장 경로"). 다른 실행 환경의 경로를 표준으로 옮겨 적지 않는다 — 근거: `sessions/2026-10-22T01-03-29/bess-output-generator.md`
-- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-output-generator_critic`이 출력 지표(형식·여백·TOC·출처 표기·파일명 규칙) 0건으로 각국 배터리 재활용 규제·cost-analyst LFP/NMC 단가만 비평 → 출력 지식 마이닝에서 제외 — 근거: `sessions/2026-10-21T06-08-58/bess-output-generator_critic.md` · 재발 `sessions/2026-11-09T16-03-06/bess-output-generator_critic.md`
-- ❌ "테이블 열 너비 합이 **160 mm (A4 본문 폭의 약 63%)**를 넘지 않도록" → ✅ 여백 옵션 A(좌우 25 mm)에서 본문 폭은 210 − 25 − 25 = **160 mm**이므로 160 mm는 본문 폭의 **100%**(용지 폭 210 mm 대비 **약 76%**)다. 본 MD 기준은 "col_widths 합계 = 160 mm(옵션 A/B/C 공통)"이며, 비율을 덧붙일 때는 분모(본문 폭/용지 폭)를 명시해 검산한다(공통 가드레일 §5 단위·검산) — 근거: `sessions/2026-11-13T03-24-30/bess-output-generator.md`
-- ❌ **reportlab 자동화 예시 코드가 그대로는 동작하지 않음**: ①`c.drawImage(..., 50, height - 100, width=width*0.8, height=height*0.6)` — reportlab 좌표는 **좌하단 원점**이고 y는 이미지 **아래 변** 위치라, 아래 변 y = 742 pt에 높이 약 505 pt를 그리면 위 변이 약 1,247 pt로 A4 높이(841.9 pt)를 넘어 페이지 밖으로 잘린다 ②`open("bess_report.pdf", "rb")`로 연 파일에 `write()`를 호출(읽기 전용 모드라 `io.UnsupportedOperation`)하고, 완성된 PDF 끝에 `b"<pdf>참고 출처…</pdf>"` 바이트를 덧붙이는 방식은 PDF 객체 구조 밖이라 화면에 표시되지 않는다 → ✅ 이미지는 `y + 높이 ≤ 페이지 높이 − 상단 여백`으로 배치를 검산하고, 참고 출처는 `c.save()` **전에** `drawString`/Platypus `Paragraph`로 본문에 넣는다. 예시 코드는 산출 전 1회 실행해 PDF가 열리는지 확인한다(본 MD 출처 삽입 규칙·§4 출력 품질) — 근거: `sessions/2026-11-13T03-24-30/bess-output-generator.md`
-- ❌ 라운드 2 근거 점검에서 NEWS-ID를 발언자처럼 "**@bess-20261112-a01 (시장 동향)**"으로 지목하고, 같은 라운드에서 marketer 템플릿(SiC 기사 `a01`을 "리튬 가격", 입찰 기사 `a02`를 "코발트 가격"으로 재라벨)을 "**근거 ✓**"로 판정 → ✅ `@`는 스킬 카탈로그 이름(전문가)에만 쓰고 NEWS-ID는 `bess-YYYYMMDD-aNN` 식별자로 인용한다. 근거 ✓는 인용 ID가 그 주장을 직접 뒷받침할 때만 준다 — 출력관리자의 출처 3요소 검증은 **ID와 기사 주제의 일치**까지 포함한다(공통 가드레일 §4 NEWS-ID 라벨 무결성) — 근거: `sessions/2026-11-13T03-24-30/bess-output-generator.md`

@@ -1,6 +1,12 @@
 ---
 name: bess-substation-engineer
-description: "변전소 레이아웃·SLD, GIS/AIS, 주변압기, 보호계전기, POI, IEC62271, IEC61850, 모선, 접지망"
+id: "SUB-001"
+description: 변전소 레이아웃·SLD, GIS/AIS, 주변압기, 보호계전기, POI, IEC62271, IEC61850, 모선, 접지망
+department: "기술본부 (CTO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -110,6 +116,34 @@ POI, 계통연계점, SCADA, 보호협조, TCC, 87T, 87B, RTU
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 변전소 표준 매핑: IEC 60076(변압기), IEC 62271(개폐장치), IEC 60071(절연협조), IEC 61850(자동화), IEC 62351(보안) — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- GIS(도심/공간효율) vs AIS 선정, 모선 배치 최적화로 케이블 길이↓ 전압강하↓ — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- 보호 검증 시 KEPCO/KPX 기술기준 + IEC 규격 동시 준수 확인 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- IEC 61850 자동화 서비스: GOOSE(고속 이벤트)·MMS(클라이언트-서버)·SV(Sampled Values); 통신 보안은 IEC 62351로 보강 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md`
+- GIS 전용 규격은 IEC 62271-203; SF6 차단기는 누출 감시·교체주기 준수가 신뢰성 핵심 요인 — 근거: `sessions/2026-06-24T02-17-24/bess-substation-engineer.md`
+- 변압기 여유용량 관례: KEPCO 22.9kV 배전 연계 변전소는 최소 10% 이상 여유용량 권장, 변압기 주변 최소 접근공간 1.5m 이상 확보 — 근거: `sessions/2026-07-05T06-47-53/bess-substation-engineer.md`
+- 정기점검 주기 관례: 변압기 절연성능검사 연 1회(또는 수명주기별), 접지저항 측정 최소 분기별 측정·기록 — 근거: `sessions/2026-07-09T18-40-01/bess-substation-engineer.md`
+- KPX 154kV 연계 변전소 케이블 관례치: 단면적 240~300mm²(부하분석 확정 전 참고치), 허용 전압강하 목표 통상 1% 이내, 케이블 온도상승 제한 70°C 이하 — 근거: `sessions/2026-07-17T01-44-18/bess-substation-engineer.md`
+- 변전소 Arc Flash 위험평가는 IEEE 1584(계산)와 NFPA 70E(PPE·안전거리 등급)를 함께 적용 — 근거: `sessions/2026-07-26T04-44-42/bess-substation-engineer.md`
+- 변전소 보조전원 통합: UPS + 디젤 발전기 + (선택)재생에너지 하이브리드 구성, SCADA 연동 자동 전환으로 신뢰성 확보. 변압기·보조전원 물리 배치를 최적화해 케이블 손실과 제어 신호 지연을 동시 저감 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ 변압기 유형을 "ONAN(On-Load Tap Changer) 및 ONAN(Off-Load Tap Changer)"로 기재(냉각방식과 탭절환 혼동, 동일 약어 중복) → ✅ **ONAN/ONAF/OFAF는 냉각방식**(Oil Natural/Forced, Air Natural/Forced), **OLTC/DETC는 탭절환 방식**으로 축을 분리 표기 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
+- ❌ UPS·보조전원 근거로 **IEC 62340**(원전 I&C 공통원인고장) 인용 → ✅ UPS는 **IEC 62040** 계열, 변전소 전기설비는 IEC 61936-1을 인용 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
+- ❌ 변압기 효율 등급에 모터용 **IE3** 적용 → ✅ IEC 60076-20 / EU EcoDesign Tier 기준 사용(상세: transformer-expert 소관) — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
+- ❌ TCC를 "Transient Current Capability"로 풀이 → ✅ "Time-Current Curve(시간-전류 곡선)", 보호협조 곡선 의미 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- ❌ 전압강하 계산을 "IEC 60076 규격에 맞는 케이블"로 귀속 → ✅ IEC 60076은 변압기 규격, 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
+- ❌ 등전위 본딩·접지망 설계를 "IEC 60076"에 귀속 → ✅ IEC 60076은 변압기 규격; 변전소 접지는 IEEE 80/IEC 61936-1, 절연협조는 IEC 60071 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md` · 재발 `sessions/2026-11-18T02-41-30/bess-substation-engineer.md`("모선 및 접지망 설계: IEC 60076 및 IEEE 80 기준")
+- ❌ 변압기 효율 등급을 "**IE2 또는 IE3**"로 권고(재발, 2026-09-22) → ✅ IE 등급은 **모터** 효율(IEC 60034-30)이다. 변압기 효율은 **IEC 60076-20 / EU EcoDesign Tier** 기준으로 인용(가드레일 §3.1) — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
+- ❌ 보호협조 곡선(TCC)을 "**IEC 60071** 규격에 따라 검토" → ✅ IEC 60071은 **절연협조**다. 보호협조는 **IEC 60255**(계전기)·**IEEE C37.112**(역한시 특성식)와 KEPCO 보호협조 기준으로 인용 — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
+- ❌ IEEE 80·IEC 61936-1 준수 조건으로 "**접촉전압 ≤ 80 V, 보폭전압 ≤ 240 V**" 고정값 제시 → ✅ IEEE 80-2013 허용 Etouch·Estep(§8.3)은 **표면층 저항률 ρs·감소계수 Cs·고장지속시간 ts·체중 기준(50/70 kg)** 의 함수로 산출하는 값이다. 산출은 grounding-engineer 소관값을 인용 — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md` · 재발 `sessions/2026-11-18T02-41-30/bess-substation-engineer.md`("접촉전압 ≤ 80V, 보폭전압 ≤ 240V를 준수하여 접지망을 설계" — 같은 고정값 재출현)
+- ❌ "**LFP 배터리의 열 안정성**은 **변압기** 설계 시 열 관리 부담을 크게 줄여준다" → ✅ 변압기 온도상승은 **자체 손실(무부하손+부하손)과 냉각방식**(IEC 60076-2)으로 결정되며 배터리 화학종과 무관하다(같은 배치 circuit-breaker-expert 동시 검출) — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
+- ❌ 변전소 critic이 SLD·GIS/AIS·모선 구성·POI·보호계전기 배치 언급 **0건**으로 인도 시장 환경영향·탄소발자국·화재 예방 비용(cost-analyst 비평)만 다룸(도메인 무관 대체 + 대상 8개 시장 밖 IN 주 분석) → ✅ 변전소 critic은 **모선 구성·차단 용량(kA)·보호계전 배치·접지망 연계·POI 조건**을 기준으로 비평하고, 인도 시장은 bess-emerging-markets 소관으로 분리한다(가드레일 §0-9·§1.1) — 근거: `sessions/2026-10-18T08-30-36/bess-substation-engineer_critic.md`, `sessions/2026-10-21T11-58-57/bess-substation-engineer_critic.md`, `sessions/2026-10-22T23-00-24/bess-substation-engineer_critic.md`, `sessions/2026-10-26T00-13-51/bess-substation-engineer_critic.md`, `sessions/2026-10-27T20-24-07/bess-substation-engineer_critic.md`(네트워크 보안 패치·network-engineer 공급망 의존만 비평, 변전소 지표 0건, 재발, 2026-10-27) · 재발 `sessions/2026-11-09T22-53-46/bess-substation-engineer_critic.md` · 재발 `sessions/2026-11-11T04-23-05/bess-substation-engineer_critic.md` · 재발 `sessions/2026-11-19T03-21-27/bess-substation-engineer_critic.md`(FIDIC 시장별 조항·legal-expert 공급망 낙관 가정만 비평, 변전소 지표 0건) · 재발 `sessions/2026-11-20T11-57-21/bess-substation-engineer_critic.md`(환경영향·탄소발자국과 mlops-engineer AI 모델 드리프트·편향만 비평하고 권고도 "모델 성능 테스트·재학습", 변전소 지표 0건)
+- ❌ "변전소 레이아웃 및 SLD 설계 분석" 본문을 뉴스팩 `bess-20261117-a01~a05`(삼성SDI 차세대 배터리 공개·수주, Charge Power 텍사스 수주, 중국 저장 확대 계획) 해설로 채우고 핵심 결론을 "**변전소 내 배터리 시스템에 LFP 배터리 채택**"으로 내며, 라운드 2에서 수주 보도 `a02`를 배터리 운송 온도·충격 관리 근거로 인용 — 모선 구성·차단 용량(kA)·보호계전기 배치·POI 조건 등 **변전소 소유 지표 수치 0건** → ✅ 변전소 결론은 **모선 방식(단일/이중/1.5 CB)·GIS/AIS 선정·차단 용량 kA·보호계전 배치·접지망 연계**로 낸다(위 critic 항목의 비평 기준과 동일 축). 배터리 화학종 선택은 battery-expert, 운송 조건은 logistics-expert 소관이며, 수주·제품 공개 보도는 설계 결론·물류 조건의 근거가 아니다(가드레일 §0-7·§4 NEWS-ID 라벨 무결성) — 근거: `sessions/2026-11-18T02-41-30/bess-substation-engineer.md`
 
 ## 시장별 변전소 설계 기준
 
@@ -367,30 +401,3 @@ BESS 연계 변전소 보호 체계 (단선도 상향):
   87T(TR 차동): 순시 (선택성 예외)
 ```
 ---
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 변전소 표준 매핑: IEC 60076(변압기), IEC 62271(개폐장치), IEC 60071(절연협조), IEC 61850(자동화), IEC 62351(보안) — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- GIS(도심/공간효율) vs AIS 선정, 모선 배치 최적화로 케이블 길이↓ 전압강하↓ — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- 보호 검증 시 KEPCO/KPX 기술기준 + IEC 규격 동시 준수 확인 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- IEC 61850 자동화 서비스: GOOSE(고속 이벤트)·MMS(클라이언트-서버)·SV(Sampled Values); 통신 보안은 IEC 62351로 보강 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md`
-- GIS 전용 규격은 IEC 62271-203; SF6 차단기는 누출 감시·교체주기 준수가 신뢰성 핵심 요인 — 근거: `sessions/2026-06-24T02-17-24/bess-substation-engineer.md`
-- 변압기 여유용량 관례: KEPCO 22.9kV 배전 연계 변전소는 최소 10% 이상 여유용량 권장, 변압기 주변 최소 접근공간 1.5m 이상 확보 — 근거: `sessions/2026-07-05T06-47-53/bess-substation-engineer.md`
-- 정기점검 주기 관례: 변압기 절연성능검사 연 1회(또는 수명주기별), 접지저항 측정 최소 분기별 측정·기록 — 근거: `sessions/2026-07-09T18-40-01/bess-substation-engineer.md`
-- KPX 154kV 연계 변전소 케이블 관례치: 단면적 240~300mm²(부하분석 확정 전 참고치), 허용 전압강하 목표 통상 1% 이내, 케이블 온도상승 제한 70°C 이하 — 근거: `sessions/2026-07-17T01-44-18/bess-substation-engineer.md`
-- 변전소 Arc Flash 위험평가는 IEEE 1584(계산)와 NFPA 70E(PPE·안전거리 등급)를 함께 적용 — 근거: `sessions/2026-07-26T04-44-42/bess-substation-engineer.md`
-- 변전소 보조전원 통합: UPS + 디젤 발전기 + (선택)재생에너지 하이브리드 구성, SCADA 연동 자동 전환으로 신뢰성 확보. 변압기·보조전원 물리 배치를 최적화해 케이블 손실과 제어 신호 지연을 동시 저감 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ 변압기 유형을 "ONAN(On-Load Tap Changer) 및 ONAN(Off-Load Tap Changer)"로 기재(냉각방식과 탭절환 혼동, 동일 약어 중복) → ✅ **ONAN/ONAF/OFAF는 냉각방식**(Oil Natural/Forced, Air Natural/Forced), **OLTC/DETC는 탭절환 방식**으로 축을 분리 표기 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
-- ❌ UPS·보조전원 근거로 **IEC 62340**(원전 I&C 공통원인고장) 인용 → ✅ UPS는 **IEC 62040** 계열, 변전소 전기설비는 IEC 61936-1을 인용 — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
-- ❌ 변압기 효율 등급에 모터용 **IE3** 적용 → ✅ IEC 60076-20 / EU EcoDesign Tier 기준 사용(상세: transformer-expert 소관) — 근거: `sessions/2026-08-01T19-21-30/bess-substation-engineer.md`
-- ❌ TCC를 "Transient Current Capability"로 풀이 → ✅ "Time-Current Curve(시간-전류 곡선)", 보호협조 곡선 의미 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- ❌ 전압강하 계산을 "IEC 60076 규격에 맞는 케이블"로 귀속 → ✅ IEC 60076은 변압기 규격, 케이블은 IEC 60502/60287 — 근거: `sessions/2026-06-04T13-20-44/bess-substation-engineer.md`
-- ❌ 등전위 본딩·접지망 설계를 "IEC 60076"에 귀속 → ✅ IEC 60076은 변압기 규격; 변전소 접지는 IEEE 80/IEC 61936-1, 절연협조는 IEC 60071 — 근거: `sessions/2026-06-20T21-18-29/bess-substation-engineer.md`
-- ❌ 변압기 효율 등급을 "**IE2 또는 IE3**"로 권고(재발, 2026-09-22) → ✅ IE 등급은 **모터** 효율(IEC 60034-30)이다. 변압기 효율은 **IEC 60076-20 / EU EcoDesign Tier** 기준으로 인용(가드레일 §3.1) — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
-- ❌ 보호협조 곡선(TCC)을 "**IEC 60071** 규격에 따라 검토" → ✅ IEC 60071은 **절연협조**다. 보호협조는 **IEC 60255**(계전기)·**IEEE C37.112**(역한시 특성식)와 KEPCO 보호협조 기준으로 인용 — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
-- ❌ IEEE 80·IEC 61936-1 준수 조건으로 "**접촉전압 ≤ 80 V, 보폭전압 ≤ 240 V**" 고정값 제시 → ✅ IEEE 80-2013 허용 Etouch·Estep(§8.3)은 **표면층 저항률 ρs·감소계수 Cs·고장지속시간 ts·체중 기준(50/70 kg)** 의 함수로 산출하는 값이다. 산출은 grounding-engineer 소관값을 인용 — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
-- ❌ "**LFP 배터리의 열 안정성**은 **변압기** 설계 시 열 관리 부담을 크게 줄여준다" → ✅ 변압기 온도상승은 **자체 손실(무부하손+부하손)과 냉각방식**(IEC 60076-2)으로 결정되며 배터리 화학종과 무관하다(같은 배치 circuit-breaker-expert 동시 검출) — 근거: `sessions/2026-09-22T17-16-49/bess-substation-engineer.md`
-- ❌ 변전소 critic이 SLD·GIS/AIS·모선 구성·POI·보호계전기 배치 언급 **0건**으로 인도 시장 환경영향·탄소발자국·화재 예방 비용(cost-analyst 비평)만 다룸(도메인 무관 대체 + 대상 8개 시장 밖 IN 주 분석) → ✅ 변전소 critic은 **모선 구성·차단 용량(kA)·보호계전 배치·접지망 연계·POI 조건**을 기준으로 비평하고, 인도 시장은 bess-emerging-markets 소관으로 분리한다(가드레일 §0-9·§1.1) — 근거: `sessions/2026-10-18T08-30-36/bess-substation-engineer_critic.md`, `sessions/2026-10-21T11-58-57/bess-substation-engineer_critic.md`, `sessions/2026-10-22T23-00-24/bess-substation-engineer_critic.md`, `sessions/2026-10-26T00-13-51/bess-substation-engineer_critic.md`, `sessions/2026-10-27T20-24-07/bess-substation-engineer_critic.md`(네트워크 보안 패치·network-engineer 공급망 의존만 비평, 변전소 지표 0건, 재발, 2026-10-27) · 재발 `sessions/2026-11-09T22-53-46/bess-substation-engineer_critic.md` · 재발 `sessions/2026-11-11T04-23-05/bess-substation-engineer_critic.md`

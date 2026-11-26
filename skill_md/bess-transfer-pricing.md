@@ -1,6 +1,12 @@
 ---
 name: bess-transfer-pricing
-description: "이전가격(TP), OECD TPG, BEPS Action 8-10·13, APA, CbCR, Master File·Local File, Pillar 2 GloBE(IIR/UTPR/QDMTT), TNMM·CUP·RPM·CPM, BESS 다국적 EPC 그룹사 거래 가격 설계"
+id: "TPS-001"
+description: 이전가격(TP), OECD TPG, BEPS Action 8-10·13, APA, CbCR, Master File·Local File, Pillar 2 GloBE(IIR/UTPR/QDMTT), TNMM·CUP·RPM·CPM, BESS 다국적 EPC 그룹사 거래 가격 설계
+department: "재무본부 (CFO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -114,6 +120,17 @@ bess-transfer-pricing
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- 세션 미축적(직접 세션 0건) — 공통 가드레일 준수, 향후 세션 누적 시 갱신. 단 tax-korea·tax-epc-accounting 세션에서 TP가 부수 언급(외국 모법인 거래 이전가격 적정성, OECD BEPS 마스터/로컬파일 3-tier, TPS-001 협업) — 근거: `sessions/2026-06-08T07-19-19/bess-tax-korea.md`, `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
+### 정합성 가드레일 (반복 오류 차단)
+- 해당 없음
+- ⚠️ critic 이탈(§0-9 ①): `bess-transfer-pricing_critic`이 이전가격·BEPS·Pillar 2·APA 판단 **0건**으로 한·일 BESS 규제 모니터링과 표준화 참여 권고만 수행 → 이전가격 지식 마이닝에서 제외 — 근거: `sessions/2026-10-22T04-32-32/bess-transfer-pricing_critic.md` · 재발 `sessions/2026-11-09T04-42-53/bess-transfer-pricing_critic.md`, `sessions/2026-11-09T09-02-23/bess-transfer-pricing_critic.md`, `sessions/2026-11-09T11-24-52/bess-transfer-pricing_critic.md` · 재발 `sessions/2026-11-12T01-08-53/bess-transfer-pricing_critic.md`(이전가격 0건, POI GIS/AIS 데이터 보안·legal-expert 지역 규제 검토만 비평, 2026-11-12) · 재발 `sessions/2026-11-21T06-42-49/bess-transfer-pricing_critic.md`(이전가격 0건, 접지망 설계와 통신 인프라 접지·grounding-engineer의 대지저항률 ρ = 100 Ω·m 가정만 비평, 2026-11-21)
+- ❌ **Pillar 2를 가격 설계 목표로 사용**: "연결 매출 EUR 750M 이상인 **프로젝트**의 경우 … **최저세율 15% ETR을 준수하는 가격 구조를 설계**", "이전가격 최적화로 **세금 효율성 극대화**·국제 프로젝트 **경쟁력 강화**" → ✅ EUR 750M은 프로젝트가 아니라 **다국적기업 그룹의 연결 매출**(직전 4개 회계연도 중 2개 연도 이상, 본 문서 Pillar 2 절) 기준이다. GloBE ETR은 **국가 단위(jurisdictional blending)**로 산정해 15% 미달분을 IIR·UTPR·QDMTT로 추가 과세하는 구조라, 특수관계 거래 가격을 15%에 맞춰 역산할 대상이 아니다. 특수관계 가격은 **정상가격원칙(OECD TPG 제1장)**과 기능·위험·자산(FAR) 분석으로 정하며, "경쟁력 강화·세금 최소화"를 가격 결정 목적으로 쓰면 세무조사 시 정상가격 입증과 충돌한다 — 근거: `sessions/2026-10-22T09-47-07/bess-transfer-pricing.md`
+- ❌ 벤치마킹 갱신 주기를 "**매년 거래 신규 또는 5년마다** 벤치마킹 분석"으로 기재, 원가가산법을 "**Cost Plus Method (CPM)**"로 약기 → ✅ OECD TPG 5.38은 비교대상 **DB 검색을 3년마다 갱신**하고 그 사이 **비교대상 재무자료는 매년 갱신**하도록 권고한다(5년 주기는 근거 없음). 미국 재무부 규칙(§1.482-5)에서 **CPM은 Comparable Profits Method(비교이익법)**를 뜻하므로 원가가산법은 "Cost Plus(C+)"로 표기해 약어 충돌을 피한다 — 본 문서 거래 유형 매트릭스의 "CPM (Cost Plus Method)" 표기도 인용 시 같은 기준으로 읽는다(가드레일 §2 약어) — 근거: `sessions/2026-10-22T09-47-07/bess-transfer-pricing.md`
+
 ## BESS 다국적 EPC 거래 유형 매트릭스
 
 ### 1. 재화 거래 (Tangible Goods)
@@ -208,14 +225,3 @@ DEMPE = Development, Enhancement, Maintenance, Protection, Exploitation of IP
 | **Master File** | 그룹 전체 (조직·사업·IP·금융·세무) | 본사 | 세무당국 요청 시 |
 | **Local File** | 현지법인 (그룹 내 거래·기능·재무 분석) | 현지법인 | 신고 시점 |
 | **CbCR** | 그룹 전체 (국가별 요약) | 본사 → 자동 교환 | 회계연도 후 12개월 |
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- 세션 미축적(직접 세션 0건) — 공통 가드레일 준수, 향후 세션 누적 시 갱신. 단 tax-korea·tax-epc-accounting 세션에서 TP가 부수 언급(외국 모법인 거래 이전가격 적정성, OECD BEPS 마스터/로컬파일 3-tier, TPS-001 협업) — 근거: `sessions/2026-06-08T07-19-19/bess-tax-korea.md`, `sessions/2026-05-16T22-16-15/bess-tax-epc-accounting.md`
-### 정합성 가드레일 (반복 오류 차단)
-- 해당 없음
-- ⚠️ critic 이탈(§0-9 ①): `bess-transfer-pricing_critic`이 이전가격·BEPS·Pillar 2·APA 판단 **0건**으로 한·일 BESS 규제 모니터링과 표준화 참여 권고만 수행 → 이전가격 지식 마이닝에서 제외 — 근거: `sessions/2026-10-22T04-32-32/bess-transfer-pricing_critic.md` · 재발 `sessions/2026-11-09T04-42-53/bess-transfer-pricing_critic.md`, `sessions/2026-11-09T09-02-23/bess-transfer-pricing_critic.md`, `sessions/2026-11-09T11-24-52/bess-transfer-pricing_critic.md` · 재발 `sessions/2026-11-12T01-08-53/bess-transfer-pricing_critic.md`(이전가격 0건, POI GIS/AIS 데이터 보안·legal-expert 지역 규제 검토만 비평, 2026-11-12)
-- ❌ **Pillar 2를 가격 설계 목표로 사용**: "연결 매출 EUR 750M 이상인 **프로젝트**의 경우 … **최저세율 15% ETR을 준수하는 가격 구조를 설계**", "이전가격 최적화로 **세금 효율성 극대화**·국제 프로젝트 **경쟁력 강화**" → ✅ EUR 750M은 프로젝트가 아니라 **다국적기업 그룹의 연결 매출**(직전 4개 회계연도 중 2개 연도 이상, 본 문서 Pillar 2 절) 기준이다. GloBE ETR은 **국가 단위(jurisdictional blending)**로 산정해 15% 미달분을 IIR·UTPR·QDMTT로 추가 과세하는 구조라, 특수관계 거래 가격을 15%에 맞춰 역산할 대상이 아니다. 특수관계 가격은 **정상가격원칙(OECD TPG 제1장)**과 기능·위험·자산(FAR) 분석으로 정하며, "경쟁력 강화·세금 최소화"를 가격 결정 목적으로 쓰면 세무조사 시 정상가격 입증과 충돌한다 — 근거: `sessions/2026-10-22T09-47-07/bess-transfer-pricing.md`
-- ❌ 벤치마킹 갱신 주기를 "**매년 거래 신규 또는 5년마다** 벤치마킹 분석"으로 기재, 원가가산법을 "**Cost Plus Method (CPM)**"로 약기 → ✅ OECD TPG 5.38은 비교대상 **DB 검색을 3년마다 갱신**하고 그 사이 **비교대상 재무자료는 매년 갱신**하도록 권고한다(5년 주기는 근거 없음). 미국 재무부 규칙(§1.482-5)에서 **CPM은 Comparable Profits Method(비교이익법)**를 뜻하므로 원가가산법은 "Cost Plus(C+)"로 표기해 약어 충돌을 피한다 — 본 문서 거래 유형 매트릭스의 "CPM (Cost Plus Method)" 표기도 인용 시 같은 기준으로 읽는다(가드레일 §2 약어) — 근거: `sessions/2026-10-22T09-47-07/bess-transfer-pricing.md`

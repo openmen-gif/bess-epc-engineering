@@ -1,6 +1,12 @@
 ---
 name: bess-standards-usa
-description: "BESS EPC 미국(US) 규격·표준·인허가 상세"
+id: "STD-005"
+description: BESS EPC 미국(US) 규격·표준·인허가 상세
+department: "운영본부 (COO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -115,6 +121,35 @@ bess-standards-usa
 
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
+
+## 운영 학습
+
+> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
+### 재사용 지식 (세션 누적)
+- IEEE 1547-2018(Category I/II/III 전압·주파수 응답, THD ≤5%), UL 9540/9540A, NFPA 855(이격거리·소화), AHJ 승인 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
+- 연방 FERC Order 841(ESS 도매시장 참여), NERC CIP-002~014(사이버보안); 주별 CPUC(CA)/PUCT(TX/ERCOT) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
+- IRA/ITC: ESS 최대 40% 세액공제(국내제조·에너지커뮤니티 조건), MACRS 5/7년 가속상각 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
+- 인허가 시퀀스: FERC MBR → ISO/RTO Interconnection Study → 주 PUC → 환경/지방허가 → 시운전 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
+- 인허가 리드타임·비용 정량: FERC MBR 60~90일, ISO/RTO Interconnection Study 3~48개월·$10,000~$500,000+; NERC CIP는 100MW 이상 BESS를 Medium Impact BES Cyber System으로 분류 — 근거: `sessions/2026-06-23T19-39-00/bess-standards-usa.md`
+- FERC Order 2222(2020): 분산자원 집합(DER aggregation) 도매시장 참여(Order 841과 별개); IEEE 2030.2.1(BESS 설계·시험 가이드); UL 9540/9540A 적용 범위 50V DC 초과 또는 240VA 초과 — 근거: `sessions/2026-06-23T19-39-00/bess-standards-usa.md`
+- HTS 세부: 리튬이온 BESS 8507.60.00(기본 0%, USMCA 특혜 적용 가능), 8507.60.50(특정 조건 추가 세분류); HTS는 HS 6자리에 미국 고유 세분류 추가 — 근거: `sessions/2026-06-25T17-45-30/bess-standards-usa.md`
+- NFPA 855(2026년판) 강화 3축: ①**TRPP(열폭주 확산 방지)** — 셀→모듈→랙→캐비닛 확산 차단 설계 의무화, ②화재 원인 범위를 배선·냉각계통·BMS 등 **BOS 전체 상호작용**까지 확대, ③능동 안전장치(능동 방폭·구획화·열차폐재·물분무/가스 소화·오프가스 감지 자동 셧다운) — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
+- BESS 사이버·펌웨어 영역의 US 참조 문서: **NIST SP 800-82**(ICS 보안 가이드) + NERC CIP. 계통 연계 응답 기준은 IEEE 1547-2018 — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
+### 정합성 가드레일 (반복 오류 차단)
+- ❌ NFPA 855를 펌웨어 무결성·사이버보안 요구사항의 근거로 확장 인용 → ✅ NFPA 855는 **설치·방화** 기준이며, 펌웨어·보안 요구는 NIST SP 800-82 / IEC 62443-4-1 / NERC CIP로 분리 — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
+- ❌ BMS HS코드 "8514.10" → ✅ 8514는 산업용 전기로(furnace), BMS는 전자제어로 8537/8504 계열이 적절([요확인]) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
+- ❌ ISO 14698을 "수소 저장 및 분배 시스템 안전·성능 기준"으로 인용 → ✅ ISO 14698은 클린룸·생물오염관리(Biocontamination Control) 표준, 수소 관련 표준은 ISO 19880(수소 충전소)·ISO 26142(수소 검출기)·ISO 14687(수소 연료 품질) 등을 별도 확인 필요 — 근거: `sessions/2026-07-09T11-22-07/bess-standards-usa.md`
+- ❌ "IEEE 1547-2018은 **FERC·NERC 규제 하의 주들에서 필수**, 특히 **대규모 BESS에서는 이 표준 준수가 필수**" → ✅ IEEE 1547은 **배전계통 연계 DER** 표준이며 채택 여부는 **주 PUC의 연계 규칙**이 정한다. **송전망에 연계되는 대규모 인버터 기반 자원(IBR)** 은 **IEEE 2800-2022**가 기준이고, FERC 연계 절차(LGIP/SGIP)·NERC 신뢰도 기준과는 별개 축이다. 연계 전압 레벨을 먼저 특정한 뒤 표준을 고른다 — 근거: `sessions/2026-10-19T13-15-43/bess-standards-usa.md` · 재발 `sessions/2026-11-22T22-53-31/bess-standards-usa.md`("FERC와 NERC 규제 하에 있는 주들에서 필수적으로 준수" 본문 + 라운드 2 자기 판정 "명확한 근거 제공", 2026-11-22)
+- ❌ 한국 적용 가능성 비교에서 "**한국에는 FERC와 유사한 역할의 기관이 없다**", "주 PUC 역할은 **KEPCO와 지자체 전력 관리 기관**이 수행" → ✅ 한국의 전기사업 규제 기관은 **산업통상자원부 소속 전기위원회**(발전사업 허가 심의·분쟁 조정)이고, KEPCO는 규제기관이 아니라 **송배전 사업자**, 시장 운영은 **KPX**다. 한국 측 대응 기관·법령은 standards-korea 값을 인용한다(공통 가드레일 §1.1) — 근거: `sessions/2026-10-19T13-15-43/bess-standards-usa.md` · 재발 `sessions/2026-11-20T21-15-52/bess-standards-usa.md`("한국의 경우 **주별 전력 규제 기관(KEPCO 포함)** 의 세부 규칙", "**한국의 주별 연계 규칙**과 IEEE 1547-2018 일치 여부" 4회 — 한국은 주(州) 단위 연계 규칙이 없고 KEPCO 분산형전원 배전계통 연계 기술기준 단일 체계) · 재발 `sessions/2026-11-22T22-53-31/bess-standards-usa.md`("KEC는 **한국전기공사협회**가 제정, **IEEE 1547-2018을 기반**으로 조정", "KPX는 IEEE 표준을 준수하면서 KEC를 적용" — KEC 운영기관은 대한전기협회(KEA)이고 IEC 60364 계열 기반이며 KPX는 시장 운영기관으로 설비 표준 적용 주체가 아니다, 2026-11-22)
+- ❌ "**IEEE 1547-2023**: 2023년 버전에서 더 엄격한 전압·주파수 응답 기준 도입"으로 표준 업데이트 분석의 핵심 근거를 구성 → ✅ IEEE 1547 본표준 현행은 **IEEE 1547-2018**(+ 개정판 **IEEE 1547a-2020**: 비정상 운전 Category III 관련), 시험 표준은 **IEEE 1547.1-2020**이다. "1547-2023"은 존재하지 않는 판번이며 판번 드리프트는 공통 가드레일 §3.1 반복 오류다 — 근거: `sessions/2026-10-25T02-13-08/bess-standards-usa.md`
+- ❌ "**Medium Impact BESS Cyber System**"으로 표기하고 "100 MW 이상 BESS는 대부분 Medium Impact"를 단정 → ✅ NERC CIP-002의 분류 대상은 **BES Cyber System**(BES = Bulk Electric System)이며 BESS가 아니다. CIP-002-5.1a Attachment 1의 Medium Impact 발전 기준은 **단일 연계계통 내 한 지점 합계 1,500 MW 이상** 등이고 High Impact는 주로 **제어센터** 기준이라, 단독 100 MW급 BESS는 다른 기준(계획기관 지정 등)에 해당하지 않으면 **Low Impact**일 수 있다. 본 스킬 재사용 지식 133행·본문 'Medium Impact: 대부분 BESS 해당'·'High Impact ≥1,500MW 연결점' 표기는 원문 대조 후 정정 대상(사용자 승인) `[요확인: CIP-002-5.1a Attachment 1 기준 원문]` — 근거: `sessions/2026-10-25T02-13-08/bess-standards-usa.md` · 재발 `sessions/2026-11-16T11-21-42/bess-standards-usa_critic.md`(critic이 cybersecurity-expert의 "**Medium Impact BESS Cyber System**" 단정을 다시 지적 — 용어·분류 오류가 타 도메인에서 지속, 2026-11-16) · 재발 `sessions/2026-11-20T21-15-52/bess-standards-usa.md`("영향 등급: **BESS 시스템의 사이버 보안 영향 등급 분류** (High/Medium/Low Impact)" — 분류 대상을 BES Cyber System이 아닌 BESS로 표기)
+- ❌ US critic이 이전가격 세션에서 사이버보안 비용의 이전가격 반영과 **한국 전기사업법·환경영향평가법 준수 비용** 분석을 권고하고 **US 지표(IEEE 1547-2018·UL 9540/9540A·NFPA 855·NERC CIP-002 분류 기준) 조항 0건**, 2026-11-16 세션 주장의 근거로 **다른 날짜 세션 경로**(`sessions/2026-10-25T02-13-08/bess-standards-usa.md`)를 부착 → ✅ critic 이탈(§0-9): KR 법규는 standards-korea, 이전가격은 bess-transfer-pricing 소관이다. US critic은 US 조항 누락만 지적하고, 근거 경로는 **지적 대상 발언이 실린 같은 세션 파일**로 단다(다른 세션 파일은 "선례"로 구분 표기) — 근거: `sessions/2026-11-16T11-21-42/bess-standards-usa_critic.md` · 재발 `sessions/2026-11-18T07-46-05/bess-standards-usa_critic.md`(세제 혜택 세부 조건 분석·사이버보안 투자비 통합을 권고하고 국내 사이버 위협을 언급, US 지표는 NERC CIP 명칭 1회뿐 조항·CIP-002 분류 기준과 IEEE 1547-2018·UL 9540/9540A·NFPA 855 0건 — 세제는 bess-tax-incentive 소관, "유럽 Clean Energy Package 세부 조항"을 세제 혜택처럼 인용 `[요확인: CEP는 EU 전력시장 입법 패키지로 세제 제도 여부]`, 2026-11-18) · 재발 `sessions/2026-11-23T15-32-00/bess-standards-usa_critic.md`(패치 관리·공급망 공격·제로데이 대응과 legal-expert의 "NERC CIP 구체 적용 방안 부재"를 지적하면서 정작 해당 CIP 조항(CIP-007 패치 관리·CIP-013 공급망)과 CIP-002 분류 기준은 0건, IEEE 1547-2018·UL 9540/9540A·NFPA 855도 0건 — 권고는 "통합 모니터링·규제 변화 추적" 일반론, 2026-11-23) · 재발 `sessions/2026-11-25T05-03-35/bess-standards-usa_critic.md`(HAZOP 교육 회차에서 사이버-물리 보안 상호연관성과 cybersecurity-expert 낙관 편향만 비평하고 "보안 패치 지속 적용"·"HAZOP·사이버 점검 주기적 재검토"를 일반론으로 권고 — 패치 관리 조항 CIP-007, IEEE 1547-2018·UL 9540/9540A·NFPA 855 모두 0건, 2026-11-26)
+- ❌ US critic이 **AI 데이터센터용 배터리**의 NERC CIP 준수를 핵심 누락으로 지적하면서 CIP 적용 대상인지(BES 해당 여부) 판정 없이 "CIP-002 등 규정 준수 검토"를 권고하고, 그 근거로 삼성SDI 신제품 보도 NEWS-ID `bess-20261119-a01`을 부착 → ✅ NERC CIP는 **BES(Bulk Electric System) Cyber System**에 적용되므로, 데이터센터 구내(계량점 후단) BESS는 먼저 NERC BES 정의(연계 전압·용량 기준)와 등록 여부로 적용 대상인지 판정한다 `[요확인: NERC Glossary BES 정의 원문]`. 비대상이면 보안 기준은 NIST SP 800-82·IEC 62443 축으로 귀속(재사용 지식 "BESS 사이버·펌웨어 US 참조 문서" 줄). NEWS-ID는 보도가 서술한 사건에만 달고 규정 적용성의 근거로 쓰지 않는다(공통 가드레일 §4 NEWS-ID 라벨 무결성) — 근거: `sessions/2026-11-19T10-08-32/bess-standards-usa_critic.md`
+- ❌ IEEE 1547-2018 핵심 요건을 "**전압 응답: Category I (0-100V), Category II (100-250V), Category III (250V 이상)**", "**주파수 응답: ±0.02Hz 이내 유지**", "전력 품질: **THD ≤ 5%**"로 요약 → ✅ Category I/II/III는 공칭전압 구간이 아니라 **비정상 운전(전압·주파수 Ride-Through) 성능 범주**이고, 정상 운전 무효전력 능력은 **Category A/B**로 따로 구분한다. 판정값은 본 MD 「IEEE 1547-2018 보호 기준」 표처럼 **p.u.·Hz·차단 시간(s)** 으로 쓴다. "±0.02Hz 유지"는 1547 조항으로 확인되지 않는다 `[요확인: 주파수-유효전력 응답 불감대 원문값]`. 계통 주입 고조파는 전압 THD가 아니라 **전류 TDD <5%**(§7.3, qaqc-engineer MD 같은 가드레일)로 쓴다 — 근거: `sessions/2026-11-20T21-15-52/bess-standards-usa.md`
+- ❌ 근거 점검 라운드에서 "미국 주요 표준인 **UL 9600 시리즈**와 NESC가 안전성과 성능을 보장 — **근거 ✓: UL 표준 문서 및 관련 보고서 확인**"으로 판정 → ✅ "UL 9600 시리즈"는 BESS 표준으로 확인되지 않는다 `[요확인]`. US ESS 안전 축은 **UL 9540(시스템)·UL 9540A(화재 전파 시험)·UL 1973(배터리)·UL 1741(인버터)**(본 MD 「UL 9540 / NFPA 855 핵심 요건」)이다. 근거 ✓는 조항·판번을 대조한 경우에만 주고, "문서 확인"이라는 서술만으로 주지 않는다(hr-manager MD '근거 ✓ 남발' 항목과 같은 축) — 근거: `sessions/2026-11-20T21-15-52/bess-standards-usa.md`
+- ❌ NFPA 855 분리 거리를 "**화재 확산 방지를 위한 배선 및 냉각 시스템 간의 분리 거리**"로 요약 → ✅ NFPA 855의 이격은 **ESS 유닛 간 3 ft(0.9 m)**, **가연성 외벽 건축물·공공 도로와 10 ft(3 m)**, 위험물과 50 ft(15 m) 등 **ESS 유닛과 노출물(exposure) 사이** 거리다(본 MD 「UL 9540 / NFPA 855 핵심 요건」 실외 ESS 절, 2023판 기준 — 2026판 변경은 재사용 지식 '2026년판 강화 3축' 참조). 배선·냉각계통은 이격 대상이 아니라 2026판에서 화재 원인 검토 범위(BOS)로 들어온 항목이다 — 근거: `sessions/2026-11-20T21-15-52/bess-standards-usa.md`
+- ❌ "**ENTSO-E의 Synchrophasor 표준 (IEC 61890 시리즈)**"이 미국 시장에서도 참고된다고 서술 → ✅ 동기위상(PMU) 측정 표준은 **IEEE C37.118.1/.2**(현행 측정부는 **IEC/IEEE 60255-118-1**로 이관)이며 "IEC 61890"은 동기위상 표준으로 확인되지 않는다 `[요확인]`. ENTSO-E는 표준 발행기관이 아니라 EU TSO 연합(네트워크 코드 RfG·DCC 소관)이다. US 문서에 EU 기구를 넣지 않는다(§3.1 번호 창작·§1.1 기구 오귀속, standards-korea 같은 회차 "ENTSO-E = EN 50000 시리즈"와 동일 축) — 근거: `sessions/2026-11-22T22-53-31/bess-standards-usa.md`
+- ❌ 장기 메모리 NEWS-ID `bess-20260731-01`(2026-07-29 발행, "KPX가 3차 ESS 중앙계약시장을 **8월 중 공고** 계획")을 2026-11-22 회차에 "**공고를 계획하고 있으며**"처럼 현재 진행형으로 인용 → ✅ 트렌드 패킷 규칙대로 발행일이 지난 사실의 **현재 상태는 `[요확인]`** 으로 표기하고("2026-07-29 기준 8월 공고 예정 — 현 공고·낙찰 여부 `[요확인]`"), 같은 패킷의 후속 사실(`bess-20261108-a01`, 3차 입찰 진행 관련 보도)과 시점을 맞춘다. KR 시장 사실의 해석 소유자는 standards-korea·power-market-expert다(NEWS-ID 시점 무결성) — 근거: `sessions/2026-11-22T22-53-31/bess-standards-usa.md`
 
 ## 🇺🇸 미국 (United States)
 
@@ -285,7 +320,7 @@ MACRS 감가상각:
 > ⚠️ 2025년 이후 보너스 감가상각 축소 주의
 ```
 
-## 핵심 역량 및 업무 범위
+## 핵심 역량 및 업무 범위 (수행 절차)
 
 > 본 분석가는 위 규격·법령을 프로젝트 사양에 매핑하고, 아래 인허가 절차에 따라 컴플라이언스 로드맵을 수립한다.
 ### 인허가 절차 (상세)
@@ -426,25 +461,3 @@ NEC (NFPA 70) Article 706 — ESS 배선 기준:
 ├── Agricultural (A): 주별 상이, Special Use Permit
 └── Residential (R): 대부분 불허 (소규모 residential ESS 제외)
 ```
-
-## 운영 학습
-
-> 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
-### 재사용 지식 (세션 누적)
-- IEEE 1547-2018(Category I/II/III 전압·주파수 응답, THD ≤5%), UL 9540/9540A, NFPA 855(이격거리·소화), AHJ 승인 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
-- 연방 FERC Order 841(ESS 도매시장 참여), NERC CIP-002~014(사이버보안); 주별 CPUC(CA)/PUCT(TX/ERCOT) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
-- IRA/ITC: ESS 최대 40% 세액공제(국내제조·에너지커뮤니티 조건), MACRS 5/7년 가속상각 — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
-- 인허가 시퀀스: FERC MBR → ISO/RTO Interconnection Study → 주 PUC → 환경/지방허가 → 시운전 — 근거: `sessions/2026-06-05T04-35-43/bess-standards-usa.md`
-- 인허가 리드타임·비용 정량: FERC MBR 60~90일, ISO/RTO Interconnection Study 3~48개월·$10,000~$500,000+; NERC CIP는 100MW 이상 BESS를 Medium Impact BES Cyber System으로 분류 — 근거: `sessions/2026-06-23T19-39-00/bess-standards-usa.md`
-- FERC Order 2222(2020): 분산자원 집합(DER aggregation) 도매시장 참여(Order 841과 별개); IEEE 2030.2.1(BESS 설계·시험 가이드); UL 9540/9540A 적용 범위 50V DC 초과 또는 240VA 초과 — 근거: `sessions/2026-06-23T19-39-00/bess-standards-usa.md`
-- HTS 세부: 리튬이온 BESS 8507.60.00(기본 0%, USMCA 특혜 적용 가능), 8507.60.50(특정 조건 추가 세분류); HTS는 HS 6자리에 미국 고유 세분류 추가 — 근거: `sessions/2026-06-25T17-45-30/bess-standards-usa.md`
-- NFPA 855(2026년판) 강화 3축: ①**TRPP(열폭주 확산 방지)** — 셀→모듈→랙→캐비닛 확산 차단 설계 의무화, ②화재 원인 범위를 배선·냉각계통·BMS 등 **BOS 전체 상호작용**까지 확대, ③능동 안전장치(능동 방폭·구획화·열차폐재·물분무/가스 소화·오프가스 감지 자동 셧다운) — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
-- BESS 사이버·펌웨어 영역의 US 참조 문서: **NIST SP 800-82**(ICS 보안 가이드) + NERC CIP. 계통 연계 응답 기준은 IEEE 1547-2018 — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
-### 정합성 가드레일 (반복 오류 차단)
-- ❌ NFPA 855를 펌웨어 무결성·사이버보안 요구사항의 근거로 확장 인용 → ✅ NFPA 855는 **설치·방화** 기준이며, 펌웨어·보안 요구는 NIST SP 800-82 / IEC 62443-4-1 / NERC CIP로 분리 — 근거: `sessions/2026-07-31T22-44-24/bess-standards-usa.md`
-- ❌ BMS HS코드 "8514.10" → ✅ 8514는 산업용 전기로(furnace), BMS는 전자제어로 8537/8504 계열이 적절([요확인]) — 근거: `sessions/2026-06-05T16-47-22/bess-standards-usa.md`
-- ❌ ISO 14698을 "수소 저장 및 분배 시스템 안전·성능 기준"으로 인용 → ✅ ISO 14698은 클린룸·생물오염관리(Biocontamination Control) 표준, 수소 관련 표준은 ISO 19880(수소 충전소)·ISO 26142(수소 검출기)·ISO 14687(수소 연료 품질) 등을 별도 확인 필요 — 근거: `sessions/2026-07-09T11-22-07/bess-standards-usa.md`
-- ❌ "IEEE 1547-2018은 **FERC·NERC 규제 하의 주들에서 필수**, 특히 **대규모 BESS에서는 이 표준 준수가 필수**" → ✅ IEEE 1547은 **배전계통 연계 DER** 표준이며 채택 여부는 **주 PUC의 연계 규칙**이 정한다. **송전망에 연계되는 대규모 인버터 기반 자원(IBR)** 은 **IEEE 2800-2022**가 기준이고, FERC 연계 절차(LGIP/SGIP)·NERC 신뢰도 기준과는 별개 축이다. 연계 전압 레벨을 먼저 특정한 뒤 표준을 고른다 — 근거: `sessions/2026-10-19T13-15-43/bess-standards-usa.md`
-- ❌ 한국 적용 가능성 비교에서 "**한국에는 FERC와 유사한 역할의 기관이 없다**", "주 PUC 역할은 **KEPCO와 지자체 전력 관리 기관**이 수행" → ✅ 한국의 전기사업 규제 기관은 **산업통상자원부 소속 전기위원회**(발전사업 허가 심의·분쟁 조정)이고, KEPCO는 규제기관이 아니라 **송배전 사업자**, 시장 운영은 **KPX**다. 한국 측 대응 기관·법령은 standards-korea 값을 인용한다(공통 가드레일 §1.1) — 근거: `sessions/2026-10-19T13-15-43/bess-standards-usa.md`
-- ❌ "**IEEE 1547-2023**: 2023년 버전에서 더 엄격한 전압·주파수 응답 기준 도입"으로 표준 업데이트 분석의 핵심 근거를 구성 → ✅ IEEE 1547 본표준 현행은 **IEEE 1547-2018**(+ 개정판 **IEEE 1547a-2020**: 비정상 운전 Category III 관련), 시험 표준은 **IEEE 1547.1-2020**이다. "1547-2023"은 존재하지 않는 판번이며 판번 드리프트는 공통 가드레일 §3.1 반복 오류다 — 근거: `sessions/2026-10-25T02-13-08/bess-standards-usa.md`
-- ❌ "**Medium Impact BESS Cyber System**"으로 표기하고 "100 MW 이상 BESS는 대부분 Medium Impact"를 단정 → ✅ NERC CIP-002의 분류 대상은 **BES Cyber System**(BES = Bulk Electric System)이며 BESS가 아니다. CIP-002-5.1a Attachment 1의 Medium Impact 발전 기준은 **단일 연계계통 내 한 지점 합계 1,500 MW 이상** 등이고 High Impact는 주로 **제어센터** 기준이라, 단독 100 MW급 BESS는 다른 기준(계획기관 지정 등)에 해당하지 않으면 **Low Impact**일 수 있다. 본 스킬 재사용 지식 133행·본문 'Medium Impact: 대부분 BESS 해당'·'High Impact ≥1,500MW 연결점' 표기는 원문 대조 후 정정 대상(사용자 승인) `[요확인: CIP-002-5.1a Attachment 1 기준 원문]` — 근거: `sessions/2026-10-25T02-13-08/bess-standards-usa.md`

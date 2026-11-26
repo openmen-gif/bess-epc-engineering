@@ -1,6 +1,12 @@
 ---
 name: bess-sales-manager
-description: "프로젝트 수주, 고객관계관리, RFP대응, 견적제출, 계약협상지원, 파이프라인관리"
+id: "SLS-001"
+description: 프로젝트 수주, 고객관계관리, RFP대응, 견적제출, 계약협상지원, 파이프라인관리
+department: "재무본부 (CFO 산하)"
+tools: ["Read", "Grep", "Glob"]
+model: sonnet
+memory: project
+color: blue
 ---
 
 > 🔁 **공통 추론 루프**: 추론·결과 도출은 [공통 추론 루프](../../REASONING_LOOP.md) 5단계(① 결과 → ② 근거·가설 → ③ 계획 → ④ 실행·검증 → ⑤ 완료)를 따른다. 정본 우선.
@@ -118,11 +124,6 @@ BESS EPC 프로젝트의 수주 활동을 전담하며, 고객 발굴·RFP 대�
 - CEO(오케스트레이터)의 업무 배분 시나리오를 따릅니다.
     - 유관 부서 전문가들과 데이터 정합성을 검토합니다.
 
-## 소속
-
-재무본부 / 조달·계약팀 | 8개 시장(KR/JP/US/AU/UK/EU/RO/PL)
----
-
 ## 운영 학습
 
 > 근거: `.connect-ai-bess-brain` 세션 마이닝 (2026-06-08). 전 도메인 공통 규칙은 [`CONSISTENCY_GUARDRAILS.md`](./CONSISTENCY_GUARDRAILS.md) 참조.
@@ -140,4 +141,9 @@ BESS EPC 프로젝트의 수주 활동을 전담하며, 고객 발굴·RFP 대�
 - ❌ 발주처 신용도·수주 확률을 조회 없이 제안서에 반영 → ✅ 발주처 신용등급은 `[신용조회 필요]` 태그로 남기고, 확인 전까지 수주 확률을 정량 제시하지 않는다 — 근거: `sessions/2026-08-01T11-39-17/bess-business-dev.md`
 - ❌ "Enel Green Power (일본)" → ✅ Enel은 이탈리아 기업 — 고객사 국가 귀속 정확 확인 — 근거: `sessions/2026-06-02T18-56-00/bess-sales-manager.md`
 - ❌ KEPCO를 세션 간 KPX와 혼용 → ✅ KEPCO=한국전력공사, KPX=한국전력거래소로 기관 정의 통일(혼용 금지) — 근거: `sessions/2026-06-02T18-56-00/bess-sales-manager.md`
-- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-sales-manager_critic`이 영업 지표(파이프라인 단계·수주확률·고객 매핑·RFP 대응) 0건으로 재활용 배터리 기술 호환성·cost-analyst 장기비용만 비평 → 영업 지식 마이닝에서 제외 — 근거: `sessions/2026-10-20T05-45-22/bess-sales-manager_critic.md`, `sessions/2026-10-20T17-04-30/bess-sales-manager_critic.md`(화재 후 토양·지하수 복원·fire-engineer 화학반응만 비평, 영업 지표 0건), `sessions/2026-10-23T07-37-36/bess-sales-manager_critic.md`(재발: 접지망·대형 BESS 회차에서 환경영향·EIA·RPS 대응 일반화만 비평, 영업 지표 0건) · 재발 `sessions/2026-11-10T03-30-55/bess-sales-manager_critic.md`(지속가능성·탄소발자국과 cost-analyst 가격 변동성 검증만 비평, 영업 지표 0건, 2026-11-10)
+- ⚠️ critic 도메인 이탈(§0-9 ①): `bess-sales-manager_critic`이 영업 지표(파이프라인 단계·수주확률·고객 매핑·RFP 대응) 0건으로 재활용 배터리 기술 호환성·cost-analyst 장기비용만 비평 → 영업 지식 마이닝에서 제외 — 근거: `sessions/2026-10-20T05-45-22/bess-sales-manager_critic.md`, `sessions/2026-10-20T17-04-30/bess-sales-manager_critic.md`(화재 후 토양·지하수 복원·fire-engineer 화학반응만 비평, 영업 지표 0건), `sessions/2026-10-23T07-37-36/bess-sales-manager_critic.md`(재발: 접지망·대형 BESS 회차에서 환경영향·EIA·RPS 대응 일반화만 비평, 영업 지표 0건) · 재발 `sessions/2026-11-10T03-30-55/bess-sales-manager_critic.md`(지속가능성·탄소발자국과 cost-analyst 가격 변동성 검증만 비평, 영업 지표 0건, 2026-11-10) · 재발 `sessions/2026-11-17T03-14-45/bess-sales-manager_critic.md`(SIEM 도입·network-engineer VLAN 트래픽 분석만 비평, 영업 지표 0건, 2026-11-17) · 재발 `sessions/2026-11-21T07-56-51/bess-sales-manager_critic.md`(팀 학습 프로그램에 사이버보안 교육 모듈 추가와 financial-analysis 재사용 배터리 낙관 가정만 비평, 영업 지표 0건, 2026-11-21) · 재발 `sessions/2026-11-23T09-24-48/bess-sales-manager_critic.md`(액냉 냉각유체 친환경성·나트륨이온 원자재 환경영향과 cost-analyst ROI 낙관만 비평, 영업 지표 0건)
+
+## 소속
+
+재무본부 / 조달·계약팀 | 8개 시장(KR/JP/US/AU/UK/EU/RO/PL)
+---
