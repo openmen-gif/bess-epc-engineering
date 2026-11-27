@@ -1,0 +1,2 @@
+# Keep mirrored skill_md files in LF to match canonical 00_Skill_MD and prevent daily CRLF false diffs on Windows
+skill_md/*.md text eol=lf
